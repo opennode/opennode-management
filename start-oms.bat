@@ -1,0 +1,1 @@
+c:\Python27\Scripts\twistd.py -ny opennode\oms.tac
