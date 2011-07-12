@@ -1,6 +1,7 @@
 from twisted.python import log
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
+from opennode.oms.endpoint.occi.compute import ComputeResource
 
 
 class OCCIServer(resource.Resource):
@@ -15,23 +16,13 @@ class OCCIServer(resource.Resource):
 
     def getChild(self, path, request):
         log.msg('Request received: %s, parameters: %s' % (request.path, request.args))
+        # decide on the processor
+        if path == 'compute':
+            return ComputeResource(self.dbpool)
+
         return self
 
     def render(self, request):
-        d = self.dbpool.runQuery('SELECT name FROM compute WHERE category=?', ["VM"])
-
-        def _success(names):
-            for vm in names:
-                request.write(str(vm[0]))
-            request.finish()
-
-        d.addCallback(_success)
-
-        def _error(failure):
-            log.err("Rendering failed", failure)
-            request.write(str(failure))
-            request.finish()
-
-        d.addErrback(_error)
-
-        return NOT_DONE_YET
+        msg = "Unsupported operation: %s" % request.path
+        log.err(msg)
+        return msg
