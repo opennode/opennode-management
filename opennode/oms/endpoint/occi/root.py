@@ -1,6 +1,5 @@
 from twisted.python import log
 from twisted.web import resource
-from twisted.web.server import NOT_DONE_YET
 from opennode.oms.endpoint.occi.compute import ComputeResource
 
 
@@ -19,7 +18,6 @@ class OCCIServer(resource.Resource):
         # decide on the processor
         if path == 'compute':
             return ComputeResource(self.dbpool)
-
         return self
 
     def render(self, request):
