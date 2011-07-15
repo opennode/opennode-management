@@ -8,10 +8,10 @@ class OCCIServer(resource.Resource):
     Root resource for OMS.
     """
 
-    def __init__(self, dbpool):
+    def __init__(self, avatar=None):
         ## Twisted Resource is a not a new style class, so emulating a super-call
         resource.Resource.__init__(self)
-        self.dbpool = dbpool
+        self.avatar = avatar
 
     def getChild(self, path, request):
         log.msg('Request received: %s, parameters: %s' % (request.path, request.args))

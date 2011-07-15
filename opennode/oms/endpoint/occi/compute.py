@@ -14,10 +14,10 @@ class ComputeResource(resource.Resource):
     Operations on compute.
     """
 
-    def __init__(self, dbpool):
+    def __init__(self, avatar = None):
         ## Twisted Resource is a not a new style class, so emulating a super-call
         resource.Resource.__init__(self)
-        self.dbpool = dbpool
+        self.avatar = avatar
 
     def getChild(self, path, request):
         return self
@@ -40,7 +40,6 @@ class ComputeResource(resource.Resource):
             log.err("Rendering failed", failure)
             request.write(str(failure))
             request.finish()
-
 
         return NOT_DONE_YET
 
