@@ -1,7 +1,7 @@
 from twisted.enterprise import adbapi
 
 
-DB_NAME='oms.db'
+DB_NAME = 'oms.db'
 
 
 class DBPool():
