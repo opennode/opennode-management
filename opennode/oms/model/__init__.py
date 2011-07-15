@@ -1,3 +1,3 @@
 """
-Data model + ORM of OMS.
+Data model of OMS.
 """
