@@ -8,7 +8,7 @@ from twisted.application import service, internet
 from twisted.web import static, server
 
 from opennode.oms.endpoint.occi.root import OCCIServer
-from opennode.oms.db import DB_NAME, DBPool
+from opennode.oms.db import DB_NAME, create_connection_pool
 
 
 def create_application():
@@ -46,7 +46,7 @@ def create_application():
         conn.close()
 
     # OCCI-compliant endpoint
-    occi_server = OCCIServer(DBPool().get_connection())
+    occi_server = OCCIServer(create_connection_pool())
     occi_site = server.Site(resource=occi_server)
     # TODO: WebSocket endpoint
     tcp_server = internet.TCPServer(8080, occi_site)
