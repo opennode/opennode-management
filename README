@@ -5,4 +5,6 @@ OpenNode Management Service
 
 1. Install Twisted and Zope.Interface: http://twistedmatrix.com/trac/wiki/Downloads
 2. git clone git@github.com:opennode/opennode-management.git
-3. start-oms.bat/start-oms.sh 
+3. git submodule init
+4. git submodule update
+5. start-oms.bat/start-oms.sh 
