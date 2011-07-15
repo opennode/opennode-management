@@ -1,6 +1,7 @@
 from twisted.python import log
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
+from opennode.oms.bo import compute
 
 try:
     import json
@@ -21,21 +22,25 @@ class ComputeResource(resource.Resource):
     def getChild(self, path, request):
         return self
 
-    def render_GET(self, request):
-        d = self.dbpool.runQuery('SELECT name FROM compute WHERE category=?', ["VM"])
+    def render_POST(self, request):
+        """ Create a new compute instance """
 
-        def on_success(names):
-            res = {}
-            for n in names:
-                res[str(n[0])] = 'operating'
-            request.write(json.dumps([res, res]))
+        print "Creating a new instance."
+    def render_GET(self, id, request):
+        print "Getting compute id: ", id
+        d = compute.get_compute_basic(id)
+
+        @d.addCallback
+        def on_success(info):
+            request.write(json.dumps(info))
             request.finish()
-        d.addCallback(on_success)
 
+        @d.addErrback
         def on_error(failure):
             log.err("Rendering failed", failure)
             request.write(str(failure))
             request.finish()
-        d.addErrback(on_error)
+
 
         return NOT_DONE_YET
+
