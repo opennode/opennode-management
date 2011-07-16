@@ -8,7 +8,7 @@ from twisted.application import service, internet
 from twisted.web import static, server
 
 from opennode.oms.endpoint.occi.root import OCCIServer
-from opennode.oms.db import DB_NAME, create_connection_pool
+from opennode.oms.db import DB_NAME
 
 
 def create_application():
