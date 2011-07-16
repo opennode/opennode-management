@@ -9,6 +9,10 @@ except ImportError:
     import simplejson as json
 
 
+# TODO: Move to a future config file/module.
+DEBUG = True
+
+
 class ComputeListResource(resource.Resource):
 
     def __init__(self, avatar = None):
@@ -26,9 +30,30 @@ class ComputeListResource(resource.Resource):
         return ComputeItemResource(path, avatar=self.avatar)
 
     def render_POST(self, request):
-        """ Create a new compute instance """
+        # TODO: This should be handled generically.
+        data = dict((k, request.args.get(k, [None])[0])
+                    for k in ['name', 'hostname', 'ip', 'category'])
+        deferred = ComputeBO().create_compute(data)
 
-        print "Creating a new instance."
+        @deferred
+        def on_success((success, ret)):
+            if success:
+                request.setResponseCode(201, 'Created')
+                request.setHeader('Location', ret)
+            else:
+                request.setResponseCode(400, 'Bad Request')
+            request.finish()
+
+        @deferred
+        def on_error(failure):
+            failure = str(failure)
+            log.err("Failed to create Compute", failure)
+            request.setResponseCode(500, 'Server Error')
+            if DEBUG: request.write(failure)
+            request.finish()
+
+        return NOT_DONE_YET
+
 
     def render_GET(self, request):
         deferred = ComputeBO().get_compute_all_basic()
@@ -40,8 +65,10 @@ class ComputeListResource(resource.Resource):
 
         @deferred
         def on_error(failure):
-            log.err("Rendering failed", failure)
-            request.write(str(failure))
+            failure = str(failure)
+            log.err("Failed to retrieve Compute list", failure)
+            request.setResponseCode(500, 'Server Error')
+            if DEBUG: request.write(failure)
             request.finish()
 
         return NOT_DONE_YET
@@ -87,8 +114,10 @@ class ComputeItemResource(resource.Resource):
 
         @deferred
         def on_error(failure):
-            log.err("Rendering failed", failure)
-            request.write(str(failure))
+            failure = str(failure)
+            log.err("Failed to retrieve Compute with ID %s" % self.compute_id, failure)
+            request.setResponseCode(500, 'Server Error')
+            if DEBUG: request.write(failure)
             request.finish()
 
         return NOT_DONE_YET

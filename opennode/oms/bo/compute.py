@@ -18,3 +18,18 @@ class ComputeBO(object):
         result = store.execute('SELECT name FROM compute WHERE id = "%s"' % compute_id)
         row = result.get_one()
         return {'name': row[0]} if row else None
+
+    @db.transact
+    def create_compute(self, store, data):
+        """Creates a new Compute."""
+
+        if 'is_valid':
+            uri = 'http://www.neti.ee/'
+            success, ret = True, uri
+        else:
+            validation_errors = {
+                'some_field': 'Some validation message/code',
+            }
+            success, ret = False, validation_errors
+
+        return success, ret
