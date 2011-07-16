@@ -13,7 +13,7 @@ DEBUG = True
 
 class ComputeListResource(resource.Resource):
 
-    def __init__(self, avatar = None):
+    def __init__(self, avatar=None):
         ## Twisted Resource is a not a new style class, so emulating a super-call
         resource.Resource.__init__(self)
 
