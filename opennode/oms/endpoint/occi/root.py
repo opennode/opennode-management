@@ -1,6 +1,6 @@
 from twisted.python import log
 from twisted.web import resource
-from opennode.oms.endpoint.occi.compute import ComputeResource
+from opennode.oms.endpoint.occi.compute import ComputeListResource
 
 
 class OCCIServer(resource.Resource):
@@ -17,7 +17,7 @@ class OCCIServer(resource.Resource):
         log.msg('Request received: %s, parameters: %s' % (request.path, request.args))
         # decide on the processor
         if path == 'compute':
-            return ComputeResource(self.dbpool)
+            return ComputeListResource()
         return self
 
     def render(self, request):

@@ -1,11 +1,20 @@
-""" Operations on compute instances. """
-from opennode.oms.model.compute import Compute
-from twisted.internet.defer import Deferred
+from opennode.oms import db
 
-def get_compute_basic(id):
-    # XXX call to DB
-    return Deferred()
 
-def get_compute_full(id):
-    # XXX call to DB
-    return Deferred()
+class ComputeBO(object):
+
+    @db.transact
+    def get_compute_all_basic(self, store):
+        """Returns basic information about all computes."""
+
+        result = store.execute('SELECT name FROM compute')
+        return [{'name': row[0]} for row in result.get_all()]
+
+
+    @db.transact
+    def get_compute_one_basic(self, store, compute_id):
+        """Returns basic information about a single compute."""
+
+        result = store.execute('SELECT name FROM compute WHERE id = "%s"' % compute_id)
+        row = result.get_one()
+        return {'name': row[0]} if row else None
