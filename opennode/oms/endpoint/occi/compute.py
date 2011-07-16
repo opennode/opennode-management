@@ -31,14 +31,14 @@ class ComputeListResource(resource.Resource):
         print "Creating a new instance."
 
     def render_GET(self, request):
-        d = ComputeBO().get_compute_all_basic()
+        deferred = ComputeBO().get_compute_all_basic()
 
-        @d.addCallback
+        @deferred
         def on_success(info):
             request.write(json.dumps(info, indent=2) + '\n')
             request.finish()
 
-        @d.addErrback
+        @deferred
         def on_error(failure):
             log.err("Rendering failed", failure)
             request.write(str(failure))
@@ -72,9 +72,9 @@ class ComputeItemResource(resource.Resource):
             request.setResponseCode(404, 'Not Found')
             return ''
 
-        d = ComputeBO().get_compute_one_basic(self.compute_id)
+        deferred = ComputeBO().get_compute_one_basic(self.compute_id)
 
-        @d.addCallback
+        @deferred
         def on_success(info):
             if not info:
                 request.setResponseCode(404, 'Not Found')
@@ -85,7 +85,7 @@ class ComputeItemResource(resource.Resource):
                 request.write(json.dumps(info, indent=2) + '\n')
                 request.finish()
 
-        @d.addErrback
+        @deferred
         def on_error(failure):
             log.err("Rendering failed", failure)
             request.write(str(failure))
