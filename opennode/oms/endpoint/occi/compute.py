@@ -1,12 +1,10 @@
+import json
+
 from twisted.python import log
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
-from opennode.oms.bo.compute import ComputeBO
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from opennode.oms.bo.compute import ComputeBO
 
 
 # TODO: Move to a future config file/module.
