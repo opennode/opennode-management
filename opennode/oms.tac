@@ -2,13 +2,13 @@
 #    twistd -ny oms.tac
 
 import os
-
 import sqlite3
+
 from twisted.application import service, internet
 from twisted.web import static, server
 
-from opennode.oms.endpoint.occi.root import OCCIServer
 from opennode.oms.db import DB_NAME
+from opennode.oms.endpoint.occi.root import OCCIServer
 
 
 def create_application():
@@ -22,7 +22,6 @@ def create_application():
 
     application = service.Application("OpenNode Management Service")
     tcp_server.setServiceParent(application)
-
 
     return application
 
