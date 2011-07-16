@@ -21,6 +21,5 @@ class OCCIServer(resource.Resource):
         return self
 
     def render(self, request):
-        msg = "Unsupported operation: %s" % request.path
-        log.err(msg)
-        return msg
+        request.setResponseCode(404, 'Not Found')
+        return ''
