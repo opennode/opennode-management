@@ -4,7 +4,7 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms import db
-from opennode.oms.endpoint.occi.base import IView
+from opennode.oms.endpoint.occi.base import IHttpRestView
 from opennode.oms.model.root import Root
 from opennode.oms.model.traversal import ITraverser
 
@@ -62,7 +62,7 @@ class OCCIServer(resource.Resource):
         if not obj or unresolved_path:
             return None
         else:
-            view = IView(obj)
+            view = IHttpRestView(obj)
             return view.render(request, store)
 
     def traverse(self, store, path):
