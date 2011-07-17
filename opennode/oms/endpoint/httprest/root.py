@@ -4,12 +4,12 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms import db
-from opennode.oms.endpoint.occi.base import IHttpRestView
+from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.root import Root
 from opennode.oms.model.traversal import ITraverser
 
 
-class OCCIServer(resource.Resource):
+class HttpRestServer(resource.Resource):
     """Restful HTTP API interface for OMS.
 
     Exposes a JSON web service to communicate with OMS.
