@@ -4,29 +4,28 @@ from opennode.oms.model.compute import Compute
 class ComputeBO(object):
 
     @db.transact
-    def get_computes(self, store, tags):
+    def get_computes(self, tags):
         """Returns basic information about all computes."""
-        result = store.find(Compute)
+        result = db.get_store().find(Compute)
         return [{'name': c.hostname} for c in result]
 
     @db.transact
-    def get_compute_all_basic(self, store):
+    def get_compute_all_basic(self):
         """Returns basic information about all computes."""
 
-        result = store.execute('SELECT name FROM compute')
+        result = db.get_store().execute('SELECT name FROM compute')
         return [{'name': row[0]} for row in result.get_all()]
 
-
     @db.transact
-    def get_compute_one_basic(self, store, compute_id):
+    def get_compute_one_basic(self, compute_id):
         """Returns basic information about a single compute."""
 
-        result = store.execute('SELECT name FROM compute WHERE id = "%s"' % compute_id)
+        result = db.get_store().execute('SELECT name FROM compute WHERE id = "%s"' % compute_id)
         row = result.get_one()
         return {'name': row[0]} if row else None
 
     @db.transact
-    def create_compute(self, store, data):
+    def create_compute(self, data):
         """Creates a new Compute."""
 
         if 'is_valid':

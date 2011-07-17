@@ -48,9 +48,6 @@ def init():
 def transact(fun):
     """Marks a method as runnable inside a Storm transaction.
 
-    Passes a thread local Storm store instance as the first non-self
-    argument, which must be called 'store'.
-
     Methods marked with this decorator are deferred to a thread pool
     and executed in the context of a global Storm ORM Transactor
     object. No ORM objects should be returned from the method.
@@ -61,17 +58,15 @@ def transact(fun):
     arglist = inspect.getargspec(fun).args
     if not arglist or arglist[0] != 'self':
         raise TypeError("Only instance methods can be wrapped")
-    elif len(arglist) < 2 or arglist[1] != 'store':
-        raise TypeError("Wrapped methods must take 'store' as the first argument after 'self'")
 
     global transactor
     if not transactor: init()
 
     @wraps(fun)
     def wrapper(self, *args, **kwargs):
-        def inner(self, *args, **kwargs):
-            zstorm = getUtility(IZStorm)
-            store = zstorm.get('main')
-            return fun(self, store, *args, **kwargs)
-        return transactor.run(inner, self, *args, **kwargs)
+        return transactor.run(fun, self, *args, **kwargs)
     return wrapper
+
+
+def get_store():
+    return getUtility(IZStorm).get('main')
