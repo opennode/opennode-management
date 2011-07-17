@@ -8,9 +8,6 @@ from opennode.oms.endpoint.occi.base import IHttpRestView
 from opennode.oms.model.root import Root
 from opennode.oms.model.traversal import ITraverser
 
-import opennode.oms.endpoint.occi.view
-import opennode.oms.model.traverser
-
 
 class OCCIServer(resource.Resource):
     """Restful HTTP API interface for OMS.

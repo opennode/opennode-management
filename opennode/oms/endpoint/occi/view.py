@@ -1,7 +1,8 @@
 from zope.component import adapts, provideAdapter
 
 from opennode.oms.endpoint.occi.base import HttpRestView
-from opennode.oms.model.root import Root, ComputeList, Compute
+from opennode.oms.model.compute import ComputeList, Compute
+from opennode.oms.model.root import Root
 
 
 class RootView(HttpRestView):
@@ -15,7 +16,7 @@ class ComputeListView(HttpRestView):
     adapts(ComputeList)
 
     def render(self, request, store):
-        return [{'name': compute} for compute in self.context.get_all()]
+        return [{'name': str(compute)} for compute in self.context.get_all()]
 
 
 class ComputeView(HttpRestView):

@@ -1,15 +1,12 @@
-class Root(object):
-    pass
+from opennode.oms.model.compute import ComputeList
+from opennode.oms.model.base import Model
 
 
-class ComputeList(object):
-    def get_all(self):
-        return ['foo', 'bar', 'baz']
+class Root(Model):
 
-
-class Compute(object):
-    def __init__(self, id):
-        self.id = id
+    def __getitem__(self, key):
+        if key == 'compute':
+            return ComputeList()
 
     def __str__(self):
-        return 'Compute %s' % self.id
+        return 'OMS root'
