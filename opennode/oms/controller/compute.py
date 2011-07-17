@@ -1,7 +1,13 @@
 from opennode.oms import db
-
+from opennode.oms.model.compute import Compute
 
 class ComputeBO(object):
+
+    @db.transact
+    def get_computes(self, store, tags):
+        """Returns basic information about all computes."""
+        result = store.find(Compute)
+        return [{'name': c.hostname} for c in result]
 
     @db.transact
     def get_compute_all_basic(self, store):
