@@ -8,23 +8,21 @@ class RootView(View):
     adapts(Root)
 
     def render(self, request, store):
-        request.setResponseCode(404, 'Not Found')
-        request.write('404 Not Found')
+        return None
 
 
 class ComputeListView(View):
     adapts(ComputeList)
 
     def render(self, request, store):
-        for compute in self.context.get_all():
-            request.write(compute + '\n')
+        return [{'name': compute} for compute in self.context.get_all()]
 
 
 class ComputeView(View):
     adapts(Compute)
 
     def render(self, request, store):
-        request.write(str(self.context))
+        return {'name': str(self.context)}
 
 
 provideAdapter(RootView)

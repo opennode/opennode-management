@@ -1,3 +1,5 @@
+import json
+
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
@@ -25,7 +27,20 @@ class OCCIServer(resource.Resource):
         self.avatar = avatar
 
     def render(self, request):
+
         deferred = self.handle_request(request)
+
+        @deferred
+        def on_success(ret):
+            if ret is not None:
+                response_text = json.dumps(ret, indent=2)
+                response_text += '\n'
+                request.write(response_text)
+                request.finish()
+            else:
+                request.setResponseCode(404, 'Not Found')
+                request.write('404 Not Found\n')
+                request.finish()
 
         @deferred
         def on_error(failure):
@@ -36,17 +51,19 @@ class OCCIServer(resource.Resource):
 
     @db.transact
     def handle_request(self, store, request):
+        """Takes a request, maps it to a domain object and a
+        corresponding IHttpRestView, and returns the rendered output
+        of that view.
+
+        """
+
         obj, unresolved_path = self.traverse(store, request.path)
 
         if not obj or unresolved_path:
-            request.setResponseCode(404, 'Not Found')
-            request.write('404 Not Found\n')
-            request.finish()
+            return None
         else:
             view = IView(obj)
-            view.render(request, store)
-            request.write('\n')
-            request.finish()
+            return view.render(request, store)
 
     def traverse(self, store, path):
         """Using the given store, traverses the objects in the
