@@ -1,5 +1,4 @@
-from opennode.oms.model.compute import ComputeList
-from opennode.oms.model.base import Model
+from opennode.oms.model.model import Model, ComputeList
 
 
 class Root(Model):

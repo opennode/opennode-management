@@ -1,7 +1,7 @@
 from zope.component import adapts, provideAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView
-from opennode.oms.model.compute import ComputeList, Compute
+from opennode.oms.model.model import ComputeList, Compute
 from opennode.oms.model.root import Root
 
 

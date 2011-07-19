@@ -1,7 +1,7 @@
 from zope.component import adapts, provideAdapter
 
-from opennode.oms.model.base import Model
 from opennode.oms.model.traversal import Traverser
+from opennode.oms.model.model import Model
 
 
 class ModelTraverser(Traverser):
