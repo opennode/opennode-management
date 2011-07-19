@@ -3,6 +3,8 @@ from storm.locals import Int, Unicode, Float
 from storm.references import ReferenceSet, Reference
 from storm.base import Storm
 
+from opennode.oms import db
+
 
 class Model(Storm):
     def __getitem__(self, key):
@@ -22,6 +24,10 @@ class Template(Model):
 
 
 class ComputeList(Model):
+
+    def get_all(self):
+        return db.get_store().find(Compute)
+
     def __getitem__(self, key):
         try:
             compute_id = int(key)
@@ -30,7 +36,8 @@ class ComputeList(Model):
         except ValueError:
             return None
         else:
-            return None
+            return db.get_store().get(Compute, compute_id)
+
 
 class Compute(Model):
     __storm_table__ = 'compute'

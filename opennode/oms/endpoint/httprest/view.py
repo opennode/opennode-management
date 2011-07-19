@@ -16,14 +16,14 @@ class ComputeListView(HttpRestView):
     adapts(ComputeList)
 
     def render(self, request, store):
-        return [{'name': str(compute)} for compute in self.context.get_all()]
+        return [{'name': compute.hostname} for compute in self.context.get_all()]
 
 
 class ComputeView(HttpRestView):
     adapts(Compute)
 
     def render(self, request, store):
-        return {'name': str(self.context)}
+        return {'name': self.context.hostname}
 
 
 provideAdapter(RootView)
