@@ -47,12 +47,14 @@ class HttpRestServer(resource.Resource):
         return NOT_DONE_YET
 
     @db.transact
-    def handle_request(self, store, request):
+    def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
         corresponding IHttpRestView, and returns the rendered output
         of that view.
 
         """
+
+        store = db.get_store()
 
         obj, unresolved_path = self.traverse(store, request.path)
 
