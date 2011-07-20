@@ -2,6 +2,7 @@ import json
 
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
+from twisted.internet import defer
 
 from opennode.oms import db
 from opennode.oms.endpoint.httprest.base import IHttpRestView
@@ -24,27 +25,24 @@ class HttpRestServer(resource.Resource):
         self.avatar = avatar
 
     def render(self, request):
+        self._render(request)
+        return NOT_DONE_YET
 
-        deferred = self.handle_request(request)
-
-        @deferred
-        def on_success(ret):
+    @defer.inlineCallbacks
+    def _render(self, request):
+        try:
+            ret = yield self.handle_request(request)
             if ret is not None:
                 response_text = json.dumps(ret, indent=2)
                 response_text += '\n'
                 request.write(response_text)
-                request.finish()
             else:
                 request.setResponseCode(404, 'Not Found')
                 request.write('404 Not Found\n')
-                request.finish()
-
-        @deferred
-        def on_error(failure):
-            request.write(str(failure))
+        except Exception as e:
+            request.write(str(e))
+        finally:
             request.finish()
-
-        return NOT_DONE_YET
 
     @db.transact
     def handle_request(self, request):
