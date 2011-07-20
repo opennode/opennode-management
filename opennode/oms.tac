@@ -6,7 +6,7 @@ from opennode.oms.endpoint.httprest.root import HttpRestServer
 
 
 def create_application():
-    occi_server = HttpRestServer(authz_avatar=None)
+    occi_server = HttpRestServer(avatar=None)
     occi_site = server.Site(resource=occi_server)
 
     tcp_server = internet.TCPServer(8080, occi_site)
