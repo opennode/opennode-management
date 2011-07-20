@@ -1,20 +1,12 @@
-# You can run this file directly with:
-#    twistd -ny oms.tac
-
-import os
-import sqlite3
-
+#!/usr/bin/env twistd -ny
 from twisted.application import service, internet
-from twisted.web import static, server
+from twisted.web import server
 
-from opennode.oms.db import DB_NAME
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 
 
 def create_application():
-    # OCCI-compliant endpoint
-    authz_avatar = None
-    occi_server = HttpRestServer(authz_avatar)
+    occi_server = HttpRestServer(authz_avatar=None)
     occi_site = server.Site(resource=occi_server)
 
     tcp_server = internet.TCPServer(8080, occi_site)
