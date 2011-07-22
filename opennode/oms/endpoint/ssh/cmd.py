@@ -102,3 +102,21 @@ class cmd_pwd(Cmd):
     def __call__(self, *args):
         self.terminal.write(self.protocol._cwd())
         self.terminal.nextLine()
+
+
+class cmd_cat(Cmd):
+    @db.transact
+    def __call__(self, *args):
+        if not args:
+            obj = self.current_obj
+            obj = db.deref(obj)
+        else:
+            self.terminal.write('Not implemented\n (%s)' % repr(args))
+            return
+
+        data = obj.to_dict()
+        if data:
+            max_key_len = max(len(key) for key in data)
+            for key, value in sorted(data.items()):
+                self.terminal.write('%s\t%s\n' % ((key + ':').ljust(max_key_len),
+                                                  str(value).encode('utf8')))
