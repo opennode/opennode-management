@@ -1,14 +1,10 @@
 import re
-import string
 
 from twisted.conch import recvline
-from twisted.conch.insults import insults
 from twisted.internet import defer
 
-from opennode.oms import db
 from opennode.oms.endpoint.ssh.history import History
 from opennode.oms.model.root import Root
-from opennode.oms.model.traversal import ITraverser
 from opennode.oms.endpoint.ssh import cmd
 
 
