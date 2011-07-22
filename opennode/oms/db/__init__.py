@@ -70,3 +70,19 @@ def transact(fun):
 
 def get_store():
     return getUtility(IZStorm).get('main')
+
+
+def deref(obj_or_ref):
+    if isinstance(obj_or_ref, tuple):
+        storm_cls, obj_id = obj_or_ref
+        assert hasattr(storm_cls, '__storm_table__')
+        return get_store().get(storm_cls, obj_id)
+    else:
+        return obj_or_ref
+
+
+def ref(obj):
+    if hasattr(obj, '__storm_table__'):
+        return (type(obj), obj.id)
+    else:
+        return obj
