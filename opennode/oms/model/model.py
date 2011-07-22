@@ -8,13 +8,17 @@ from opennode.oms import db
 
 class Model(Storm):
     children = {}
+    nicknames = []
 
     def __getitem__(self, key):
         if key in self.children:
             return self.children[key]()
 
-    def __iter__(self):
+    def listnames(self):
         return self.children.iterkeys()
+
+    def listcontent(self):
+        return self.children.itervalues()
 
 
 class Template(Model):
@@ -35,9 +39,12 @@ class ComputeList(Model):
     def get_all(self):
         return db.get_store().find(Compute)
 
-    def __iter__(self):
+    def listnames(self):
         for c in self.get_all():
             yield '%s' % c.id
+
+    def listcontent(self):
+        return self.get_all()
 
     def __getitem__(self, key):
         try:
@@ -65,6 +72,14 @@ class Compute(Model):
     @property
     def name(self):
         return str(self.id)
+
+    @property
+    def nicknames(self):
+        return [
+            'c%s' % self.id,
+            'compute%s' % self.id,
+            self.hostname,
+        ]
 
 
 class Network(Model):

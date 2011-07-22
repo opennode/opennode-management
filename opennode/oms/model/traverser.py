@@ -10,8 +10,5 @@ class ModelTraverser(Traverser):
     def traverse(self, name, store):
         return self.context[name]
 
-    def list(self, store):
-        return list(self.context)
-
 
 provideAdapter(ModelTraverser)
