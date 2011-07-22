@@ -68,6 +68,11 @@ def transact(fun):
     return wrapper
 
 
+def ensure_transaction(fun):
+    # TODO: Check if there is a transaction currently running.
+    return fun
+
+
 def get_store():
     return getUtility(IZStorm).get('main')
 
