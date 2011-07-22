@@ -47,7 +47,7 @@ class cmd_cd(Cmd):
         for name in path:
             success = yield defer.maybeDeferred(self._do_cmd, name)
             if not success:
-                self.terminal.write('No such file or directory: %s' % name)
+                self.terminal.write('No such object: %s' % name)
                 self.terminal.nextLine()
                 break
 
