@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from columnize import columnize
 
 from opennode.oms import db
 from opennode.oms.model.traversal import ITraverser
@@ -60,3 +61,21 @@ class cmd_cd(Cmd):
             self.protocol.path.append(next_obj.name + '/')
             self.protocol.obj_path.append(db.ref(next_obj))
             return True
+
+
+
+class cmd_ls(Cmd):
+
+    @db.transact
+    def __call__(self, *args):
+        obj = db.deref(self.protocol.obj_path[-1])
+
+        if '-l' in args:
+            for item in obj.listcontent():
+                self.protocol.terminal.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
+                self.protocol.terminal.nextLine()
+        else:
+            items = list(obj.listnames())
+            if items:
+                output = columnize(items, displaywidth=self.protocol.width)
+                self.protocol.terminal.write(output)
