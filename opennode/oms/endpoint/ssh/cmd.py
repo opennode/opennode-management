@@ -10,7 +10,6 @@ class Cmd(object):
         self.protocol = protocol
 
 
-
 class cmd_cd(Cmd):
 
     @defer.inlineCallbacks
@@ -63,7 +62,6 @@ class cmd_cd(Cmd):
             return True
 
 
-
 class cmd_ls(Cmd):
 
     @db.transact
@@ -82,7 +80,6 @@ class cmd_ls(Cmd):
 
 
 class cmd_pwd(Cmd):
-
     def __call__(self, *args):
         self.protocol.terminal.write(self.protocol._cwd())
         self.protocol.terminal.nextLine()
