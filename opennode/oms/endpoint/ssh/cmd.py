@@ -8,6 +8,25 @@ from opennode.oms.model.traversal import ITraverser
 class Cmd(object):
     def __init__(self, protocol):
         self.protocol = protocol
+        self.terminal = protocol.terminal
+
+    @property
+    def path(self):
+        return self.protocol.path
+    @path.setter
+    def _set_path(self, path):
+        self.protocol.path = path
+
+    @property
+    def obj_path(self):
+        return self.protocol.obj_path
+    @obj_path.setter
+    def _set_obj_path(self, path):
+        self.protocol.obj_path = path
+
+    @property
+    def current_obj(self):
+        return self.obj_path[-1]
 
 
 class cmd_cd(Cmd):
@@ -22,18 +41,18 @@ class cmd_cd(Cmd):
         for name in path.split('/'):
             success = yield defer.maybeDeferred(self._do_cmd, name)
             if not success:
-                self.protocol.terminal.write('No such file or directory: %s' % name)
-                self.protocol.terminal.nextLine()
+                self.terminal.write('No such file or directory: %s' % name)
+                self.terminal.nextLine()
                 break
 
     def _do_cmd(self, name):
         if not name:
-            self.protocol.path = [self.protocol.path[0]]
-            self.protocol.obj_path = [self.protocol.obj_path[0]]
+            self.path = [self.path[0]]
+            self.obj_path = [self.obj_path[0]]
         elif name == '..':
-            if len(self.protocol.path) > 1:
-                self.protocol.path.pop()
-                self.protocol.obj_path.pop()
+            if len(self.path) > 1:
+                self.path.pop()
+                self.obj_path.pop()
         elif name == '.':
             pass
         else:
@@ -50,15 +69,15 @@ class cmd_cd(Cmd):
 
         """
 
-        obj = db.deref(self.protocol.obj_path[-1])
+        obj = db.deref(self.obj_path[-1])
         traverser = ITraverser(obj)
         next_obj = traverser.traverse(name, store=db.get_store())
 
         if not next_obj:
             return False
         else:
-            self.protocol.path.append(next_obj.name + '/')
-            self.protocol.obj_path.append(db.ref(next_obj))
+            self.path.append(next_obj.name + '/')
+            self.obj_path.append(db.ref(next_obj))
             return True
 
 
@@ -66,20 +85,20 @@ class cmd_ls(Cmd):
 
     @db.transact
     def __call__(self, *args):
-        obj = db.deref(self.protocol.obj_path[-1])
+        obj = db.deref(self.obj_path[-1])
 
         if '-l' in args:
             for item in obj.listcontent():
-                self.protocol.terminal.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
-                self.protocol.terminal.nextLine()
+                self.terminal.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
+                self.terminal.nextLine()
         else:
             items = list(obj.listnames())
             if items:
                 output = columnize(items, displaywidth=self.protocol.width)
-                self.protocol.terminal.write(output)
+                self.terminal.write(output)
 
 
 class cmd_pwd(Cmd):
     def __call__(self, *args):
-        self.protocol.terminal.write(self.protocol._cwd())
-        self.protocol.terminal.nextLine()
+        self.terminal.write(self.protocol._cwd())
+        self.terminal.nextLine()
