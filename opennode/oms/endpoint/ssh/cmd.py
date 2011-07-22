@@ -116,10 +116,20 @@ class cmd_cat(Cmd):
         if not args:
             obj = self.current_obj
             obj = db.deref(obj)
+            objs = [obj]
         else:
-            self.terminal.write('Not implemented\n (%s)' % repr(args))
-            return
+            objs = []
+            for name in args:
+                obj = self.cmd('cd').traverse(name)
+                objs.append(obj)
 
+        for obj in objs:
+            if obj:
+                self._do_cat(obj)
+            else:
+                self.terminal.write('No such object: %s\n' % name)
+
+    def _do_cat(self, obj):
         data = obj.to_dict()
         if data:
             max_key_len = max(len(key) for key in data)
