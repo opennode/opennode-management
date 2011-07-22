@@ -34,7 +34,11 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         cmd_name, cmd_args = line.partition(' ')[::2]
         cmd_handler = getattr(cmd, 'cmd_' + cmd_name, None)
         if cmd_handler:
-            cmd_args = re.split(r'\s+', cmd_args.strip())
+            cmd_args = cmd_args.strip()
+            if cmd_args:
+                cmd_args = re.split(r'\s+', cmd_args)
+            else:
+                cmd_args = []
             deferred = defer.maybeDeferred(cmd_handler(self), *cmd_args)
         else:
             if line:

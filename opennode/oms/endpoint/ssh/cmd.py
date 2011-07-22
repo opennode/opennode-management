@@ -36,9 +36,9 @@ class cmd_cd(Cmd):
         if len(args) > 1:
             raise Exception('cd takes at most 1 argument')
         else:
-            path = args[0] if args else None
+            path = args[0].split('/') if args else []
 
-        for name in path.split('/'):
+        for name in path:
             success = yield defer.maybeDeferred(self._do_cmd, name)
             if not success:
                 self.terminal.write('No such file or directory: %s' % name)
