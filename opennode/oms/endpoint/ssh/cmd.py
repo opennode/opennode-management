@@ -62,29 +62,29 @@ class cmd_cd(Cmd):
         elif name == '.':
             pass
         else:
-            return self._traverse(name)
+            return self._do_traverse(name)
+
         return True
 
     @db.transact
-    def _traverse(self, name):
-        """Using the given store, traverses the objects in the
-        database to find an object that matches the given path.
+    def _do_traverse(self, name):
+        obj = self.traverse(name)
+        if obj:
+            self.path.append(obj.name + '/')
+            self.obj_path.append(db.ref(obj))
+        return bool(obj)
 
-        Returns the object up to which the traversal was successful,
-        and the part of the path that could not be resolved.
+    @db.ensure_transaction
+    def traverse(self, name):
+        """Traverser the current object (cwd) in the database to find
+        an object that matches the given name.
+
+        Returns the object if the traversal was successful.
 
         """
-
         obj = db.deref(self.obj_path[-1])
         traverser = ITraverser(obj)
-        next_obj = traverser.traverse(name, store=db.get_store())
-
-        if not next_obj:
-            return False
-        else:
-            self.path.append(next_obj.name + '/')
-            self.obj_path.append(db.ref(next_obj))
-            return True
+        return traverser.traverse(name, store=db.get_store())
 
 
 class cmd_ls(Cmd):
