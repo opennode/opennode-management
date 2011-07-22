@@ -20,6 +20,11 @@ class Model(Storm):
     def listcontent(self):
         return self.children.itervalues()
 
+    def to_dict(self):
+        if hasattr(self, '_storm_columns'):
+            return dict((col.name, getattr(self, col.name)) for col in self._storm_columns.values())
+        return {}
+
 
 class Template(Model):
     __storm_table__ = 'template'
