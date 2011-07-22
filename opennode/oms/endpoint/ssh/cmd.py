@@ -79,3 +79,10 @@ class cmd_ls(Cmd):
             if items:
                 output = columnize(items, displaywidth=self.protocol.width)
                 self.protocol.terminal.write(output)
+
+
+class cmd_pwd(Cmd):
+
+    def __call__(self, *args):
+        self.protocol.terminal.write(self.protocol._cwd())
+        self.protocol.terminal.nextLine()
