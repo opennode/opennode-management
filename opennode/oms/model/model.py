@@ -7,8 +7,14 @@ from opennode.oms import db
 
 
 class Model(Storm):
+    children = {}
+
     def __getitem__(self, key):
-        return None
+        if key in self.children:
+            return self.children[key]()
+
+    def __iter__(self):
+        return self.children.iterkeys()
 
 
 class Template(Model):
@@ -24,9 +30,14 @@ class Template(Model):
 
 
 class ComputeList(Model):
+    name = 'compute'
 
     def get_all(self):
         return db.get_store().find(Compute)
+
+    def __iter__(self):
+        for c in self.get_all():
+            yield '%s' % c.id
 
     def __getitem__(self, key):
         try:
@@ -50,6 +61,10 @@ class Compute(Model):
     template_id = Int()
     template = Reference(template_id, Template.id)
     network_devices = ReferenceSet(id, 'NetworkDevice.compute_id')
+
+    @property
+    def name(self):
+        return str(self.id)
 
 
 class Network(Model):
