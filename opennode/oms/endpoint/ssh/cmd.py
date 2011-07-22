@@ -50,7 +50,7 @@ class cmd_cd(Cmd):
 
         """
 
-        obj = self.protocol.obj_path[-1]
+        obj = db.deref(self.protocol.obj_path[-1])
         traverser = ITraverser(obj)
         next_obj = traverser.traverse(name, store=db.get_store())
 
@@ -58,5 +58,5 @@ class cmd_cd(Cmd):
             return False
         else:
             self.protocol.path.append(next_obj.name + '/')
-            self.protocol.obj_path.append(next_obj)
+            self.protocol.obj_path.append(db.ref(next_obj))
             return True
