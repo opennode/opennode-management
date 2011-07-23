@@ -1,1 +1,1 @@
-twistd -ny opennode/oms.tac
+./twistd-autoreload.py -ny opennode/oms.tac
