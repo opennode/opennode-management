@@ -1,5 +1,6 @@
 import inspect
 import sqlite3
+from collections import namedtuple
 from functools import wraps
 
 #~ from storm.twisted.transact import Transactor
@@ -77,17 +78,23 @@ def get_store():
     return getUtility(IZStorm).get('main')
 
 
+class Ref(namedtuple('Ref', ['cls', 'id'])):
+    def __str__(self):
+        return 'Ref[%s:%s]' % (self.cls.__name__, self.id)
+
+
 def deref(obj_or_ref):
     if isinstance(obj_or_ref, tuple):
-        storm_cls, obj_id = obj_or_ref
-        assert hasattr(storm_cls, '__storm_table__')
-        return get_store().get(storm_cls, obj_id)
+        ref = obj_or_ref
+        assert hasattr(ref.cls, '__storm_table__')
+        obj = get_store().get(ref.cls, ref.id)
     else:
-        return obj_or_ref
+        obj = obj_or_ref
+    return obj
 
 
 def ref(obj):
     if hasattr(obj, '__storm_table__'):
-        return (type(obj), obj.id)
+        return Ref(type(obj), obj.id)
     else:
         return obj
