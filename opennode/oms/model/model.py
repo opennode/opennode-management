@@ -24,6 +24,11 @@ class Model(Storm):
             return dict((col.name, getattr(self, col.name)) for col in self._storm_columns.values())
         return {}
 
+    def get_path(self):
+        if not hasattr(self, 'parent'):
+            raise Exception('Model object has no defined parent')
+        return '%s%s/' % (self.parent.get_path(), self.name)
+
 
 class SingletonModel(Model):
     _instance = None
@@ -43,6 +48,9 @@ class Root(SingletonModel):
 
     def __str__(self):
         return 'OMS root'
+
+    def get_path(self):
+        return '/'
 
 
 class Template(Model):
