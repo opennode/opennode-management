@@ -2,7 +2,7 @@ from twisted.internet import defer
 from columnize import columnize
 
 from opennode.oms import db
-from opennode.oms.model.traversal import ITraverser
+from opennode.oms.model.traversal import traverse_path
 
 
 class Cmd(object):
@@ -37,54 +37,52 @@ class Cmd(object):
 
 class cmd_cd(Cmd):
 
-    @defer.inlineCallbacks
     def __call__(self, *args):
         if len(args) > 1:
             raise Exception('cd takes at most 1 argument')
-        else:
-            path = args[0].split('/') if args else []
 
-        for name in path:
-            success = yield defer.maybeDeferred(self._do_cmd, name)
-            if not success:
-                self.terminal.write('No such object: %s' % name)
-                self.terminal.nextLine()
-                break
-
-    def _do_cmd(self, name):
-        if not name:
+        if not args:
             self.path = [self.path[0]]
             self.obj_path = [self.obj_path[0]]
-        elif name == '..':
-            if len(self.path) > 1:
-                self.path.pop()
-                self.obj_path.pop()
-        elif name == '.':
-            pass
-        else:
-            return self._do_traverse(name)
+            return
 
-        return True
+        path = args[0]
+        deferred = self._do_traverse(path)
+
+        @deferred
+        def on_error(f):
+            self.terminal.write(str(f))
+
+        d = defer.Deferred()
+        deferred.addBoth(lambda *args: d.callback(None))
+        return d
 
     @db.transact
-    def _do_traverse(self, name):
-        obj = self.traverse(name)
-        if obj:
-            self.path.append(obj.name + '/')
-            self.obj_path.append(db.ref(obj))
-        return bool(obj)
+    def _do_traverse(self, path):
+        objs, unresolved_path = traverse_path(db.deref(self.current_obj), path)
 
-    @db.ensure_transaction
-    def traverse(self, name):
-        """Traverser the current object (cwd) in the database to find
-        an object that matches the given name.
+        if not objs or unresolved_path:
+            self.terminal.write('No such object: %s' % path)
+            self.terminal.nextLine()
+            return
 
-        Returns the object if the traversal was successful.
-
-        """
-        obj = db.deref(self.obj_path[-1])
-        traverser = ITraverser(obj)
-        return traverser.traverse(name, store=db.get_store())
+        # The following algorithm works for both up-the-tree,
+        # down-the-tree and mixed traversals. So all of the following
+        # arguments to the 'cd' command work out as expected:
+        #     foo/bar # foo/./../foo ../foo/../.  ../.././foo
+        for obj in objs:
+            ref = db.ref(obj)
+            try:
+                # Try to find the object in the current path:
+                overlap = self.obj_path.index(ref)
+            except ValueError:
+                # ... if not found, add it:
+                self.obj_path.append(ref)
+                self.path.append(obj.name)
+            else:
+                # ... otherwise remove everything that follows it:
+                self.obj_path[overlap+1:] = []
+                self.path[overlap+1:] = []
 
 
 class cmd_ls(Cmd):

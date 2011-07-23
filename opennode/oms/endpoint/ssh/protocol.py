@@ -21,7 +21,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         self.killRing = []
         self.history = History()
         super(OmsSshProtocol, self).__init__()
-        self.path = ['/']
+        self.path = ['']
         self.obj_path = [Root()]
 
     def lineReceived(self, line):
@@ -63,7 +63,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         return [ps1, '... ']
 
     def _cwd(self):
-        ret = ''.join(self.path)
+        ret = '/'.join(self.path)
         if len(ret) > 1:
             ret = ret.rstrip('/')
         return ret
