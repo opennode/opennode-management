@@ -32,13 +32,13 @@ class HttpRestServer(resource.Resource):
     def _render(self, request):
         try:
             ret = yield self.handle_request(request)
-            if ret is not None:
+            if ret is False:
+                request.setResponseCode(404, 'Not Found')
+                request.write('404 Not Found\n')
+            elif ret is not None:
                 response_text = json.dumps(ret, indent=2)
                 response_text += '\n'
                 request.write(response_text)
-            else:
-                request.setResponseCode(404, 'Not Found')
-                request.write('404 Not Found\n')
         except Exception as e:
             request.write(str(e))
         finally:
@@ -55,8 +55,13 @@ class HttpRestServer(resource.Resource):
         objs, unresolved_path = traverse_path(Root(), request.path[1:])
 
         if not objs or unresolved_path:
-            return None
+            return False
         else:
             obj = objs[-1]
+            if obj.get_path() != request.path:
+                request.setResponseCode(301, 'See canonical URL')
+                request.setHeader('Location', obj.get_path())
+                return None
+
             view = IHttpRestView(obj)
             return view.render(request, store=db.get_store())
