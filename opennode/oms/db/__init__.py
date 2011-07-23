@@ -13,7 +13,7 @@ from zope.component import getUtility, provideUtility
 from opennode.oms.db.storm_twisted import Transactor
 
 
-__all__ = ['transact']
+__all__ = ['transact', 'ensure_transaction', 'get_store', 'ref', 'deref']
 
 
 # TODO: Move this to an external, locally overridable configuration file/module.
