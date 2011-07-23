@@ -34,6 +34,21 @@ class SingletonModel(Model):
         return cls._instance
 
 
+class Root(SingletonModel):
+    name = ''
+
+    def __str__(self):
+        return 'OMS root'
+
+    @property
+    def parent(self):
+        return self
+
+    @property
+    def children(self):
+        return {'compute': ComputeList, }
+
+
 class Template(Model):
     __storm_table__ = 'template'
     id = Int(primary=True)

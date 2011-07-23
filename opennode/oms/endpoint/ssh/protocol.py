@@ -5,7 +5,7 @@ from twisted.internet import defer
 
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.history import History
-from opennode.oms.model.root import Root
+from opennode.oms.model.model import Root
 
 
 class OmsSshProtocol(recvline.HistoricRecvLine):
