@@ -7,7 +7,7 @@ from twisted.internet import defer
 from opennode.oms import db
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.root import Root
-from opennode.oms.model.traversal import ITraverser
+from opennode.oms.model.traversal import traverse_path
 
 
 class HttpRestServer(resource.Resource):
@@ -52,40 +52,11 @@ class HttpRestServer(resource.Resource):
 
         """
 
-        store = db.get_store()
+        objs, unresolved_path = traverse_path(Root(), request.path[1:])
 
-        obj, unresolved_path = self.traverse(store, request.path)
-
-        if not obj or unresolved_path:
+        if not objs or unresolved_path:
             return None
         else:
+            obj = objs[-1]
             view = IHttpRestView(obj)
-            return view.render(request, store)
-
-    def traverse(self, store, path):
-        """Using the given store, traverses the objects in the
-        database to find an object that matches the given path.
-
-        Returns the object up to which the traversal was successful,
-        and the part of the path that could not be resolved.
-
-        """
-
-        path = path.split('/')[1:]
-
-        # Allow one extra slash at the end:
-        if path[-1] == '': path.pop()
-
-        obj = Root()
-        while path:
-            name = path[0]
-            traverser = ITraverser(obj)
-
-            next_obj = traverser.traverse(name, store=store)
-
-            if not next_obj: break
-
-            obj = next_obj
-            path = path[1:]
-
-        return obj, path
+            return view.render(request, store=db.get_store())
