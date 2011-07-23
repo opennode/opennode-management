@@ -1,11 +1,12 @@
-from twisted.internet import defer
 from columnize import columnize
+from twisted.internet import defer
 
 from opennode.oms import db
 from opennode.oms.model.traversal import traverse_path
 
 
 class Cmd(object):
+
     def __init__(self, protocol):
         self.protocol = protocol
         self.terminal = protocol.terminal
@@ -103,6 +104,7 @@ class cmd_pwd(Cmd):
 
 
 class cmd_cat(Cmd):
+
     @db.transact
     def __call__(self, *args):
         for name in args:

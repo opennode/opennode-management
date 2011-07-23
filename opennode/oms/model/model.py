@@ -1,7 +1,6 @@
-
+from storm.base import Storm
 from storm.locals import Int, Unicode, Float
 from storm.references import ReferenceSet, Reference
-from storm.base import Storm
 
 from opennode.oms import db
 

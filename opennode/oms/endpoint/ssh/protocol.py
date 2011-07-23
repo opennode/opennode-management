@@ -3,9 +3,9 @@ import re
 from twisted.conch import recvline
 from twisted.internet import defer
 
+from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.history import History
 from opennode.oms.model.root import Root
-from opennode.oms.endpoint.ssh import cmd
 
 
 class OmsSshProtocol(recvline.HistoricRecvLine):
