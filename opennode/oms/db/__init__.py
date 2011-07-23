@@ -70,20 +70,45 @@ def transact(fun):
 
 
 def ensure_transaction(fun):
+    """Ensures that there is a running transaction (which has been
+    started by Transactor.run) in the current thread, and
+    (optionally?) starts one if not.
+
+    *Not implemented!*
+
+    """
     # TODO: Check if there is a transaction currently running.
     return fun
 
 
 def get_store():
+    """An convenience alias for zope.component.getUtility(IZStorm).get('main')."""
     return getUtility(IZStorm).get('main')
 
 
 class Ref(namedtuple('Ref', ['cls', 'id'])):
+    """Represents a reference to a DB backed model object.
+
+    The reason this is needed is because the Storm ORM forbids passing
+    of DB backed objects outside of thread boundaries for thread
+    safety.
+
+    Stores the class and the ID of the referenced object.
+
+    """
+
     def __str__(self):
         return 'Ref[%s:%s]' % (self.cls.__name__, self.id)
 
 
 def deref(obj_or_ref):
+    """Dereferences a reference to a DB backed Storm ORM object.
+
+    If passed a non-reference, simply returns it. This is useful when
+    dealing with model objects that are not DB backed and do not need
+    to be stored as references.
+
+    """
     if isinstance(obj_or_ref, tuple):
         ref = obj_or_ref
         assert hasattr(ref.cls, '__storm_table__')
@@ -94,6 +119,13 @@ def deref(obj_or_ref):
 
 
 def ref(obj):
+    """Creates a thread safe reference to a DB backed Storm ORM object.
+
+    If the passed in object is not a Storm backed model object,
+    returns the object. This is useful when dealing with model objects
+    that are not DB backed and do not need to be stored as references.
+
+    """
     if hasattr(obj, '__storm_table__'):
         return Ref(type(obj), obj.id)
     else:
