@@ -105,24 +105,12 @@ class cmd_pwd(Cmd):
 class cmd_cat(Cmd):
     @db.transact
     def __call__(self, *args):
-        if not args:
-            obj = self.current_obj
-            obj = db.deref(obj)
-            objs = [obj]
-        else:
-            objs = []
-            for name in args:
-                objs, unresolved_path = traverse_path(db.deref(self.current_obj), name)
-                if not objs or unresolved_path:
-                    objs.append(None)
-                else:
-                    objs.append(objs[-1])
-
-        for obj in objs:
-            if obj:
-                self._do_cat(obj)
-            else:
+        for name in args:
+            objs, unresolved_path = traverse_path(db.deref(self.current_obj), name)
+            if not objs or unresolved_path:
                 self.terminal.write('No such object: %s\n' % name)
+            else:
+                self._do_cat(objs[-1])
 
     def _do_cat(self, obj):
         data = obj.to_dict()
