@@ -75,6 +75,9 @@ class ComputeList(SingletonModel):
         else:
             return db.get_store().get(Compute, compute_id)
 
+    def __str__(self):
+        return self.name
+
 
 class Compute(Model):
     __storm_table__ = 'compute'
@@ -103,6 +106,9 @@ class Compute(Model):
             'compute%s' % self.id,
             self.hostname,
         ]
+
+    def __str__(self):
+        return 'compute%s' % (self.id, )
 
 
 class Network(Model):
