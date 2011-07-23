@@ -49,7 +49,8 @@ class cmd_cd(Cmd):
 
         @deferred
         def on_error(f):
-            self.write(str(f))
+            f.printDetailedTraceback(self.terminal)
+            self.write('\n')
 
         d = defer.Deferred()
         deferred.addBoth(lambda *args: d.callback(None))

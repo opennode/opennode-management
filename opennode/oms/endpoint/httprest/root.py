@@ -3,6 +3,7 @@ import json
 from twisted.internet import defer
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
+from twisted.python.failure import Failure
 
 from opennode.oms.db import db
 from opennode.oms.endpoint.httprest.base import IHttpRestView
@@ -40,8 +41,8 @@ class HttpRestServer(resource.Resource):
                 response_text = json.dumps(ret, indent=2)
                 response_text += '\n'
                 request.write(response_text)
-        except Exception as e:
-            request.write(str(e))
+        except Exception:
+            Failure().printDetailedTraceback(request)
         finally:
             request.finish()
 
