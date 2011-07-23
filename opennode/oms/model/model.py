@@ -10,8 +10,7 @@ class Model(Storm):
     nicknames = []
 
     def __getitem__(self, key):
-        if key in self.children:
-            return self.children[key]()
+        return self.children.get(key)
 
     def listnames(self):
         return self.children.iterkeys()
@@ -44,7 +43,7 @@ class Root(SingletonModel):
 
     def __init__(self):
         self.parent = self
-        self.children = {'compute': ComputeList, }
+        self.children = {'compute': ComputeList(), }
 
     def __str__(self):
         return 'OMS root'
