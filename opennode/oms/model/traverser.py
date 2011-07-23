@@ -8,7 +8,15 @@ class ModelTraverser(Traverser):
     adapts(Model)
 
     def traverse(self, name, store):
-        return self.context[name]
+        if name == '..':
+            if hasattr(self.context, 'parent'):
+                return self.context.parent
+            else:
+                raise Exception('Traversal error: %s has no parent defined' % str(self.context.name))
+        elif name == '.':
+            return self.context
+        else:
+            return self.context[name]
 
 
 provideAdapter(ModelTraverser)
