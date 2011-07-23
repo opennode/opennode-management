@@ -28,6 +28,9 @@ class Cmd(object):
     def current_obj(self):
         return self.obj_path[-1]
 
+    def write(self, *args):
+        self.terminal.write(*args)
+
 
 class cmd_cd(Cmd):
 
@@ -45,7 +48,7 @@ class cmd_cd(Cmd):
 
         @deferred
         def on_error(f):
-            self.terminal.write(str(f))
+            self.write(str(f))
 
         d = defer.Deferred()
         deferred.addBoth(lambda *args: d.callback(None))
@@ -56,7 +59,7 @@ class cmd_cd(Cmd):
         objs, unresolved_path = traverse_path(db.deref(self.current_obj), path)
 
         if not objs or unresolved_path:
-            self.terminal.write('No such object: %s' % path)
+            self.write('No such object: %s' % path)
             self.terminal.nextLine()
             return
 
@@ -87,18 +90,18 @@ class cmd_ls(Cmd):
 
         if '-l' in args:
             for item in obj.listcontent():
-                self.terminal.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
+                self.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
                 self.terminal.nextLine()
         else:
             items = list(obj.listnames())
             if items:
                 output = columnize(items, displaywidth=self.protocol.width)
-                self.terminal.write(output)
+                self.write(output)
 
 
 class cmd_pwd(Cmd):
     def __call__(self, *args):
-        self.terminal.write(self.protocol._cwd())
+        self.write(self.protocol._cwd())
         self.terminal.nextLine()
 
 
@@ -108,7 +111,7 @@ class cmd_cat(Cmd):
         for name in args:
             objs, unresolved_path = traverse_path(db.deref(self.current_obj), name)
             if not objs or unresolved_path:
-                self.terminal.write('No such object: %s\n' % name)
+                self.write('No such object: %s\n' % name)
             else:
                 self._do_cat(objs[-1])
 
@@ -117,5 +120,5 @@ class cmd_cat(Cmd):
         if data:
             max_key_len = max(len(key) for key in data)
             for key, value in sorted(data.items()):
-                self.terminal.write('%s\t%s\n' % ((key + ':').ljust(max_key_len),
-                                                  str(value).encode('utf8')))
+                self.write('%s\t%s\n' % ((key + ':').ljust(max_key_len),
+                                         str(value).encode('utf8')))
