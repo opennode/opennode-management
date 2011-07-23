@@ -4,11 +4,20 @@ from opennode.oms.db import db
 
 
 class ITraverser(Interface):
+    """Classes providing object traversal should implement this interface."""
+
     def traverse(name, store):
-        pass
+        """Takes the name of the object to traverse to, and a Storm ORM Store instance.
+
+        Implementers must remember to also provide traversal logic for
+        the `.` and `..` paths.
+
+        """
 
 
 class Traverser(object):
+    """Base class for all object traversers."""
+
     implements(ITraverser)
 
     def __init__(self, context):
@@ -16,11 +25,12 @@ class Traverser(object):
 
 
 def traverse_path(obj, path):
-    """Using the given store, traverses the objects in the
-    database to find an object that matches the given path.
+    """Starting from the given object, traverses all its descendant
+    objects to find an object that matches the given path.
 
-    Returns the object up to which the traversal was successful,
-    and the part of the path that could not be resolved.
+    Returns a tuple that contains the object up to which the traversal
+    was successful plus all objects that led to that object, and the
+    part of the path that could not be resolved.
 
     """
 
