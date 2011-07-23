@@ -39,10 +39,9 @@ def traverse_path(obj, path):
 
     store = db.get_store()
 
+    if path.endswith('/'):
+        path = path[:-1]
     path = path.split('/')
-
-    # Allow one extra slash at the end:
-    if  path[-1] == '': path.pop()
 
     ret = [obj]
     while path:
