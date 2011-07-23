@@ -42,8 +42,8 @@ class cmd_cd(Cmd):
             raise Exception('cd takes at most 1 argument')
 
         if not args:
-            self.path = [self.path[0]]
-            self.obj_path = [self.obj_path[0]]
+            self.protocol.path = [self.path[0]]
+            self.protocol.obj_path = [self.obj_path[0]]
             return
 
         path = args[0]
