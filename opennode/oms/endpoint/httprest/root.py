@@ -30,6 +30,7 @@ class HttpRestServer(resource.Resource):
 
     @defer.inlineCallbacks
     def _render(self, request):
+        request.setHeader('Content-type', 'application/x-json')
         try:
             ret = yield self.handle_request(request)
             if ret is False:
