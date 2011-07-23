@@ -8,7 +8,7 @@ class RootView(HttpRestView):
     adapts(Root)
 
     def render(self, request, store):
-        return None
+        return False
 
 
 class ComputeListView(HttpRestView):
