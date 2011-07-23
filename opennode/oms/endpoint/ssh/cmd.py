@@ -118,8 +118,11 @@ class cmd_cat(Cmd):
         else:
             objs = []
             for name in args:
-                obj = self.cmd('cd').traverse(name)
-                objs.append(obj)
+                objs, unresolved_path = traverse_path(db.deref(self.current_obj), name)
+                if not objs or unresolved_path:
+                    objs.append(None)
+                else:
+                    objs.append(objs[-1])
 
         for obj in objs:
             if obj:
