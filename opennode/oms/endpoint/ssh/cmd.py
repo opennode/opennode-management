@@ -28,12 +28,6 @@ class Cmd(object):
     def current_obj(self):
         return self.obj_path[-1]
 
-    def cmd(self, cmd_name):
-        cmd_cls_name = ('cmd_%s' % cmd_name)
-        assert cmd_cls_name in globals()
-        cmd_cls = globals()[cmd_cls_name]
-        return cmd_cls(self.protocol)
-
 
 class cmd_cd(Cmd):
 
