@@ -25,7 +25,7 @@ def traverse_path(obj, path):
     """
 
     if not path:
-        return obj
+        return [obj], ''
 
     store = db.get_store()
 
