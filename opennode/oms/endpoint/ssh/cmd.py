@@ -59,8 +59,7 @@ class cmd_cd(Cmd):
         objs, unresolved_path = traverse_path(db.deref(self.current_obj), path)
 
         if not objs or unresolved_path:
-            self.write('No such object: %s' % path)
-            self.terminal.nextLine()
+            self.write('No such object: %s\n' % path)
             return
 
         # The following algorithm works for both up-the-tree,
@@ -90,8 +89,7 @@ class cmd_ls(Cmd):
 
         if '-l' in args:
             for item in obj.listcontent():
-                self.write(item.name + '\t' + ':'.join(item.nicknames).encode('utf8'))
-                self.terminal.nextLine()
+                self.write(('%s\t%s\n' % (item.name, ':'.join(item.nicknames))).encode('utf8'))
         else:
             items = list(obj.listnames())
             if items:
@@ -101,8 +99,7 @@ class cmd_ls(Cmd):
 
 class cmd_pwd(Cmd):
     def __call__(self, *args):
-        self.write(self.protocol._cwd())
-        self.terminal.nextLine()
+        self.write('%s\n' % self.protocol._cwd())
 
 
 class cmd_cat(Cmd):
