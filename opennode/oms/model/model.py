@@ -41,6 +41,11 @@ class Template(Model):
 class ComputeList(Model):
     name = 'compute'
 
+    @property
+    def parent(self):
+        from opennode.oms.model.root import Root
+        return Root()
+
     def get_all(self):
         return db.get_store().find(Compute)
 
@@ -73,6 +78,10 @@ class Compute(Model):
     template_id = Int()
     template = Reference(template_id, Template.id)
     network_devices = ReferenceSet(id, 'NetworkDevice.compute_id')
+
+    @property
+    def parent(self):
+        return ComputeList()
 
     @property
     def name(self):

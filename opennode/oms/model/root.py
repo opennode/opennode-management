@@ -7,3 +7,7 @@ class Root(Model):
 
     def __str__(self):
         return 'OMS root'
+
+    @property
+    def parent(self):
+        return self
