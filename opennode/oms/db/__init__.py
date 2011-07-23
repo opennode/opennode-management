@@ -109,7 +109,7 @@ def deref(obj_or_ref):
     to be stored as references.
 
     """
-    if isinstance(obj_or_ref, tuple):
+    if isinstance(obj_or_ref, Ref):
         ref = obj_or_ref
         assert hasattr(ref.cls, '__storm_table__')
         obj = get_store().get(ref.cls, ref.id)
