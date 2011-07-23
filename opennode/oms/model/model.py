@@ -37,16 +37,12 @@ class SingletonModel(Model):
 class Root(SingletonModel):
     name = ''
 
+    def __init__(self):
+        self.parent = self
+        self.children = {'compute': ComputeList, }
+
     def __str__(self):
         return 'OMS root'
-
-    @property
-    def parent(self):
-        return self
-
-    @property
-    def children(self):
-        return {'compute': ComputeList, }
 
 
 class Template(Model):
@@ -64,10 +60,8 @@ class Template(Model):
 class ComputeList(SingletonModel):
     name = 'compute'
 
-    @property
-    def parent(self):
-        from opennode.oms.model.root import Root
-        return Root()
+    def __init__(self):
+        self.parent = Root()
 
     def get_all(self):
         return db.get_store().find(Compute)
