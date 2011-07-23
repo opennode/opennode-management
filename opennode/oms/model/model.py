@@ -47,7 +47,7 @@ class Template(Model):
     computes = ReferenceSet(id, 'Compute.template_id')
 
 
-class ComputeList(Model):
+class ComputeList(SingletonModel):
     name = 'compute'
 
     @property

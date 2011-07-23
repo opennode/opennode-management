@@ -1,7 +1,7 @@
-from opennode.oms.model.model import Model, ComputeList
+from opennode.oms.model.model import ComputeList, SingletonModel
 
 
-class Root(Model):
+class Root(SingletonModel):
     name = ''
     children = {'compute': ComputeList,}
 
