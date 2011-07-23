@@ -1,4 +1,4 @@
-from opennode.oms import db
+from opennode.oms.db import db
 from opennode.oms.model.compute import Compute
 
 class ComputeBO(object):

@@ -1,7 +1,7 @@
 from columnize import columnize
 from twisted.internet import defer
 
-from opennode.oms import db
+from opennode.oms.db import db
 from opennode.oms.model.traversal import traverse_path
 
 

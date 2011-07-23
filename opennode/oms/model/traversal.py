@@ -1,6 +1,6 @@
 from zope.interface import Interface, implements
 
-from opennode.oms import db
+from opennode.oms.db import db
 
 
 class ITraverser(Interface):

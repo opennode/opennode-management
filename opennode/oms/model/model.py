@@ -2,7 +2,7 @@ from storm.base import Storm
 from storm.locals import Int, Unicode, Float
 from storm.references import ReferenceSet, Reference
 
-from opennode.oms import db
+from opennode.oms.db import db
 
 
 class Model(Storm):
