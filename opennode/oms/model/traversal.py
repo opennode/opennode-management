@@ -1,3 +1,5 @@
+import re
+
 from zope.interface import Interface, implements
 
 from opennode.oms.db import db
@@ -39,8 +41,12 @@ def traverse_path(obj, path):
 
     store = db.get_store()
 
+    path = re.sub(r'\/+', '/', path)
     if path.endswith('/'):
         path = path[:-1]
+    if path.startswith('/'):
+        path = path[1:]
+
     path = path.split('/')
 
     ret = [obj]
