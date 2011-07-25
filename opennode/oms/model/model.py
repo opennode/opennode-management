@@ -133,7 +133,7 @@ class ComputeList(SingletonModel):
         return db.get_store().find(Compute)
 
     def listnames(self):
-        return (str(c.id) for c in self.list_content())
+        return (str(c.id) for c in self.listcontent())
 
     def __getitem__(self, key):
         """Returns the Compute instance with the ID specified by the given key."""
