@@ -14,7 +14,7 @@ class ComputeBO(object):
         """Returns basic information about all computes."""
 
         result = db.get_store().execute('SELECT name FROM compute')
-        return [{'name': row[0]} for row in result.get_all()]
+        return [{'name': row[0]} for row in result.listcontent()]
 
     @db.transact
     def get_compute_one_basic(self, compute_id):

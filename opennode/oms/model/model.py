@@ -105,27 +105,20 @@ class ComputeList(SingletonModel):
     name = 'compute'
     parent = property(lambda self: Root())
 
-    def get_all(self):
-        """Returns all Compute instances stored in the database."""
+    def listcontent(self):
         return db.get_store().find(Compute)
 
     def listnames(self):
-        for c in self.get_all():
-            yield '%s' % c.id
-
-    def listcontent(self):
-        return self.get_all()
+        return (str(c.id) for c in self.list_content())
 
     def __getitem__(self, key):
         """Returns the Compute instance with the ID specified by the given key."""
         try:
-            compute_id = int(key)
-            if compute_id < 0:
-                raise ValueError()
+            id = int(key)
         except ValueError:
             return None
         else:
-            return db.get_store().get(Compute, compute_id)
+            return db.get_store().get(Compute, id)
 
     def __str__(self):
         return self.name

@@ -17,7 +17,7 @@ class ComputeListView(HttpRestView):
     adapts(ComputeList)
 
     def render(self, request, store):
-        return [{'name': compute.hostname} for compute in self.context.get_all()]
+        return [{'name': compute.hostname} for compute in self.context.listcontent()]
 
 
 class ComputeView(HttpRestView):
