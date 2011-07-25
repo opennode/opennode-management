@@ -3,6 +3,7 @@ from twisted.internet import defer
 
 from opennode.oms.db import db
 from opennode.oms.model.traversal import traverse_path
+from opennode.oms.model.model import Root
 
 
 class Cmd(object):
@@ -31,6 +32,12 @@ class Cmd(object):
 
     def write(self, *args):
         self.terminal.write(*args)
+
+    def traverse(self, path):
+        if path.startswith('/'):
+            return traverse_path(Root(), path[1:])
+        else:
+            return traverse_path(db.deref(self.current_obj), path)
 
 
 class cmd_cd(Cmd):
