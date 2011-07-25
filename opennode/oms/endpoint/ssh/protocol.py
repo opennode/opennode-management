@@ -63,7 +63,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         return [ps1, '... ']
 
     def _cwd(self):
-        ret = '/'.join(self.path)
+        ret = '/'.join(self.path) + '/'
         if len(ret) > 1:
             ret = ret.rstrip('/')
         return ret
