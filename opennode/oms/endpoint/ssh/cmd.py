@@ -65,7 +65,7 @@ class cmd_cd(Cmd):
 
     @db.transact
     def _do_traverse(self, path):
-        objs, unresolved_path = traverse_path(db.deref(self.current_obj), path)
+        objs, unresolved_path = self.traverse(path)
 
         if not objs or unresolved_path:
             self.write('No such object: %s\n' % path)
@@ -116,7 +116,7 @@ class cmd_cat(Cmd):
     @db.transact
     def __call__(self, *args):
         for name in args:
-            objs, unresolved_path = traverse_path(db.deref(self.current_obj), name)
+            objs, unresolved_path = self.traverse(name)
             if not objs or unresolved_path:
                 self.write('No such object: %s\n' % name)
             else:
