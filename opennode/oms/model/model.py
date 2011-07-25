@@ -74,10 +74,10 @@ class Root(SingletonModel):
     """
 
     name = ''
-
-    def __init__(self):
-        self.parent = self
-        self.children = {'compute': ComputeList(), }
+    parent = property(lambda self: self)
+    children = property(lambda self: {
+        'compute': ComputeList(),
+    })
 
     def __str__(self):
         return 'OMS root'
@@ -103,9 +103,7 @@ class ComputeList(SingletonModel):
     """Represents the container that contains all Compute instances stored in the database."""
 
     name = 'compute'
-
-    def __init__(self):
-        self.parent = Root()
+    parent = property(lambda self: Root())
 
     def get_all(self):
         """Returns all Compute instances stored in the database."""
