@@ -49,3 +49,13 @@ CREATE TABLE network_device
   FOREIGN KEY (compute_id) REFERENCES compute(id)
 );
 
+CREATE TABLE template
+(
+  id INTEGER PRIMARY KEY,
+  name VARCHAR,
+  base_type VARCHAR,
+  min_cores INTEGER,
+  max_cores INTEGER,
+  min_memory INTEGER,
+  max_memory INTEGER
+);

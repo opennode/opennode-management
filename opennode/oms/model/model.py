@@ -77,6 +77,7 @@ class Root(SingletonModel):
     parent = property(lambda self: self)
     children = property(lambda self: {
         'compute': ComputeList(),
+        'template': TemplateList(),
     })
 
     def __str__(self):
@@ -85,6 +86,29 @@ class Root(SingletonModel):
     def get_path(self):
         """Returns the string '/'."""
         return '/'
+
+
+class TemplateList(SingletonModel):
+    name = 'template'
+    parent = property(lambda self: Root())
+
+    def listcontent(self):
+        return db.get_store().find(Template)
+
+    def listnames(self):
+        return (tpl.name for tpl in self.listcontent())
+
+    def __getitem__(self, key):
+        """Returns the Template instance with the ID specified by the given key."""
+        try:
+            id = int(key)
+        except ValueError:
+            return None
+        else:
+            return db.get_store().get(Template, id)
+
+    def __str__(self):
+        return 'Template list'
 
 
 class Template(Model):
