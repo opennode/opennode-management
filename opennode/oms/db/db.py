@@ -83,6 +83,7 @@ def ensure_transaction(fun):
 
 def get_store():
     """An convenience alias for zope.component.getUtility(IZStorm).get('main')."""
+    if not transactor: init()
     return getUtility(IZStorm).get('main')
 
 
