@@ -138,10 +138,10 @@ class cmd_cat(Cmd):
 
     @db.transact
     def __call__(self, *args):
-        for name in args:
-            obj = self.traverse(name)
+        for path in args:
+            obj = self.traverse(path)
             if not obj:
-                self.write('No such object: %s\n' % name)
+                self.write('No such object: %s\n' % path)
             else:
                 self._do_cat(obj)
 
