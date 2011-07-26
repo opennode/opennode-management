@@ -102,9 +102,24 @@ class cmd_ls(Cmd):
 
     @db.transact
     def __call__(self, *args):
-        obj = db.deref(self.obj_path[-1])
+        args = list(args)
 
-        if '-l' in args:
+        self.opts_long = '-l' in args and args.pop(args.index('-l'))
+        if self.opts_long:
+            args.pop(args.index('-l'))
+
+        if args:
+            for path in args:
+                obj = self.traverse(path)
+                if not obj:
+                    self.write('No such object: %s\n' % path)
+                else:
+                    self._do_ls(obj)
+        else:
+            self._do_ls(db.deref(self.obj_path[-1]))
+
+    def _do_ls(self, obj):
+        if self.opts_long:
             for item in obj.listcontent():
                 self.write(('%s\t%s\n' % (item.name, ':'.join(item.nicknames))).encode('utf8'))
         else:
