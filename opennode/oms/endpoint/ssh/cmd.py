@@ -33,11 +33,19 @@ class Cmd(object):
     def write(self, *args):
         self.terminal.write(*args)
 
-    def traverse(self, path):
+    def traverse_full(self, path):
         if path.startswith('/'):
             return traverse_path(Root(), path[1:])
         else:
             return traverse_path(db.deref(self.current_obj), path)
+
+    def traverse(self, path):
+        objs, unresolved_path = self.traverse_full(path)
+        if not objs or unresolved_path:
+            return None
+        else:
+            return objs[-1]
+
 
 
 class cmd_cd(Cmd):
@@ -65,7 +73,7 @@ class cmd_cd(Cmd):
 
     @db.transact
     def _do_traverse(self, path):
-        objs, unresolved_path = self.traverse(path)
+        objs, unresolved_path = self.traverse_full(path)
 
         if not objs or unresolved_path:
             self.write('No such object: %s\n' % path)
@@ -116,11 +124,11 @@ class cmd_cat(Cmd):
     @db.transact
     def __call__(self, *args):
         for name in args:
-            objs, unresolved_path = self.traverse(name)
-            if not objs or unresolved_path:
+            obj = self.traverse(name)
+            if not obj:
                 self.write('No such object: %s\n' % name)
             else:
-                self._do_cat(objs[-1])
+                self._do_cat(obj)
 
     def _do_cat(self, obj):
         data = obj.to_dict()
