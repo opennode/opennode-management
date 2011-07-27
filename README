@@ -18,3 +18,58 @@ OpenNode Management Service
 
 5. Start the Twisted twistd server on port 8080 by executing
    `./start-oms.sh` on Unix systems and `start-oms.bat` on Windows.
+
+
+=== High level architecture ===
+
+The core consists of:
+
+* The models:
+
+    These are mostly ORM backed and some transient classes which
+    contain CRUD and most of the domain logic.
+
+* Traversal:
+
+    Mapping of URIs/paths to model objects,
+    i.e. /datacentres/123/computes/9 -> <Compute object>.
+
+* Interaction layers a.k.a endpoints (in Twisted terminology):
+
+    This is a thin layer that takes an incoming request/interaction
+    (either SSH/vconsole, HTTP or WebSocket) which is always bound to
+    a URI/path (cwd in SSH, request URI in HTTP/Websocket) and maps
+    it, using traversal, to a domain object and executes appropriate
+    methods and returns a result.
+
+    This layer can be thought of as the controller.
+
+    The interaction layer is as thin as possible as traversal, domain
+    logic and security are in the core, and serialisation is generic.
+
+
+=== Interaction layers/endpoints ===
+
+The primary interaction layer is the HTTP REST endpoint which contains
+an HTTP request handler and a set of views, one for each content
+type. The views can either be generic over content types, or
+specialised for specific models. Generic is preferred over specialised
+though.
+
+The WebSocket endpoint is in big part complementary to the HTTP REST
+endpoint. It is mostly an alternative carrier or transport mechanism
+for individual HTTP-like requests. In addition, it is used to push a
+stream of data/events to the browser for real time updates of the UI.
+As HTTP REST like requests can be transported from client to server
+over this layer, it also provides a performance boost over classic
+HTTP as it eliminates any request overhead both in terms of
+responsiveness and network/resource usage. It is also easier to manage
+than classic HTTP as browser security restrictions do not apply to
+WebSocket connections.
+
+The SSH virtual console endpoint provides a bash-like pseudo shell
+over SSH that exposes a filesystem-like hierarchy to navigate in and
+manage the server infrastructure environment. It provides or will
+provide all the basic shell-like commands such as `cd`, `ls`, `pwd`,
+`cat`, `mv`, `cp` and `rm`. It also provides the generic command `set`
+to modify attributes of objects.
