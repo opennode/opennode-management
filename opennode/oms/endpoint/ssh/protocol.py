@@ -63,4 +63,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         return [ps1, '... ']
 
     def _cwd(self):
-        return '/'.join(self.path) or '/'
+        return self.make_path(self.path)
+
+    @staticmethod
+    def make_path(path):
+        return '/'.join(path) or '/'
