@@ -3,7 +3,18 @@ OpenNode Management Service
 
 === Setup ===
 
-1. git clone git@github.com:opennode/opennode-management.git
-2. Install dependencies: pip install -r requirements.txt
-3. Create db structure: create_db.sh
-5. start-oms.bat/start-oms.sh
+1. `git clone git@github.com:opennode/opennode-management.git`.
+
+2. Create a Python virtualenv either by using the `virtualenv` command,
+   or `mkvirtualenv` bundled with virtualenvwrapper.
+
+   It is recommended to use the `--no-site-packages` option for an
+   isolated and clean environment, especially in production deployments.
+
+2. Install dependencies by running `pip install -r requirements.txt`
+   in the repository root.
+
+3. Create the database schema: `./create_db.sh`.
+
+5. Start the Twisted twistd server on port 8080 by executing
+   `./start-oms.sh` on Unix systems and `start-oms.bat` on Windows.
