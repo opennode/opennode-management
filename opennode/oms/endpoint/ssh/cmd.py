@@ -28,7 +28,7 @@ class Cmd(object):
 
     @property
     def current_obj(self):
-        return self.obj_path[-1]
+        return db.deref(self.obj_path[-1])
 
     def write(self, *args):
         self.terminal.write(*args)
@@ -37,7 +37,7 @@ class Cmd(object):
         if path.startswith('/'):
             return traverse_path(Root(), path[1:])
         else:
-            return traverse_path(db.deref(self.current_obj), path)
+            return traverse_path(self.current_obj, path)
 
     def traverse(self, path):
         objs, unresolved_path = self.traverse_full(path)
@@ -116,7 +116,7 @@ class cmd_ls(Cmd):
                 else:
                     self._do_ls(obj)
         else:
-            self._do_ls(db.deref(self.obj_path[-1]))
+            self._do_ls(self.current_obj)
 
     def _do_ls(self, obj):
         if self.opts_long:
