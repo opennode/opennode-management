@@ -9,7 +9,7 @@ class RootView(HttpRestView):
 
     def render(self, request, store):
         return {
-            'compute': self.context['compute'].get_path(),
+            'compute': self.context['compute'].get_url(),
         }
 
 

@@ -46,10 +46,14 @@ class Model(Storm):
         return {}
 
     def get_path(self):
-        """Returns the canonical path of this model object."""
+        """Return the path to this object starting from the root as a list of object names."""
+        return self.parent.get_path() + [self.name]
+
+    def get_url(self):
+        """Returns the canonical URL of this model object without the URI scheme and domain parts."""
         if not hasattr(self, 'parent'):
             raise Exception('Model object has no defined parent')
-        return '%s%s/' % (self.parent.get_path(), self.name)
+        return '%s%s/' % (self.parent.get_url(), self.name)
 
 
 class SingletonModel(Model):
@@ -84,6 +88,10 @@ class Root(SingletonModel):
         return 'OMS root'
 
     def get_path(self):
+        """Returns ['']."""
+        return ['']
+
+    def get_url(self):
         """Returns the string '/'."""
         return '/'
 

@@ -60,9 +60,9 @@ class HttpRestServer(resource.Resource):
             return False
         else:
             obj = objs[-1]
-            if obj.get_path() != request.path:
+            if obj.get_url() != request.path:
                 request.setResponseCode(301, 'See canonical URL')
-                request.setHeader('Location', obj.get_path())
+                request.setHeader('Location', obj.get_url())
                 return None
 
             view = IHttpRestView(obj)
