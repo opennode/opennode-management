@@ -32,6 +32,9 @@ class Cmd(object):
     def current_obj(self):
         return db.deref(self.obj_path[-1])
 
+    def current_path(self):
+        return self.path[-1]
+
     def write(self, *args):
         if not isInIOThread():
             reactor.callFromThread(self.terminal.write, *args)
