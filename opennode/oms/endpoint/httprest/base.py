@@ -2,7 +2,7 @@ from zope.interface import Interface, implements
 
 
 class IHttpRestView(Interface):
-    def render(request, store):
+    def render(request):
         pass
 
 

@@ -52,9 +52,12 @@ def traverse_path(obj, path):
     ret = [obj]
     while path:
         name = path[0]
-        traverser = ITraverser(ret[-1])
+        try:
+            traverser = ITraverser(ret[-1])
+        except TypeError:
+            break
 
-        next_obj = traverser.traverse(name, store=store)
+        next_obj = traverser.traverse(name)
 
         if not next_obj: break
 

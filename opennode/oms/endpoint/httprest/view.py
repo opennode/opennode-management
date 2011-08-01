@@ -1,43 +1,42 @@
 from zope.component import adapts, provideAdapter
 
-from opennode.oms.endpoint.httprest.base import HttpRestView
-from opennode.oms.model.model import ComputeList, Compute, Root, TemplateList
+from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
+from opennode.oms.model.model import Computes, Compute, OmsRoot, Templates
 
 
 class RootView(HttpRestView):
-    adapts(Root)
+    adapts(OmsRoot)
 
-    def render(self, request, store):
-        return {
-            'compute': self.context['compute'].get_url(),
-        }
+    def render(self, request):
+        return dict((name, self.context[name].get_url()) for name in self.context.listnames())
 
 
-class ComputeListView(HttpRestView):
-    adapts(ComputeList)
 
-    def render(self, request, store):
-        return [{'name': compute.hostname} for compute in self.context.listcontent()]
+class ComputesView(HttpRestView):
+    adapts(Computes)
+
+    def render(self, request):
+        return [IHttpRestView(compute).render(request) for compute in self.context.listcontent()]
 
 
 class ComputeView(HttpRestView):
     adapts(Compute)
 
-    def render(self, request, store):
-        return {'name': self.context.hostname}
+    def render(self, request):
+        return {'hostname': self.context.hostname, 'url': self.context.get_url()}
 
 
-class TemplateListView(HttpRestView):
-    adapts(TemplateList)
+class TemplatesView(HttpRestView):
+    adapts(Templates)
 
-    def render(self, request, store):
+    def render(self, request):
         return [{'name': name} for name in self.context.listnames()]
 
 
 provideAdapter(RootView)
-provideAdapter(ComputeListView)
+provideAdapter(ComputesView)
 provideAdapter(ComputeView)
-provideAdapter(TemplateListView)
+provideAdapter(TemplatesView)
 
 
 

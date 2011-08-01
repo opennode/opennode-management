@@ -5,8 +5,7 @@ from twisted.internet import defer
 
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.history import History
-from opennode.oms.model.model import Root
-
+from opennode.oms.zodb import db
 
 class OmsSshProtocol(recvline.HistoricRecvLine):
     """Simple echo protocol.
@@ -22,7 +21,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         self.history = History()
         super(OmsSshProtocol, self).__init__()
         self.path = ['']
-        self.obj_path = [Root()]
+        self.obj_path = [db.ref(db.get_root()['oms_root'])]
 
     def lineReceived(self, line):
         line = line.strip()

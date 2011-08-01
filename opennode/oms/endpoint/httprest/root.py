@@ -1,14 +1,21 @@
 import json
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.python.failure import Failure
 
-from opennode.oms.db import db
 from opennode.oms.endpoint.httprest.base import IHttpRestView
-from opennode.oms.model.model import Root
 from opennode.oms.model.traversal import traverse_path
+from opennode.oms.zodb import db
+
+
+class EmptyResponse(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
 
 
 class HttpRestServer(resource.Resource):
@@ -34,15 +41,17 @@ class HttpRestServer(resource.Resource):
         request.setHeader('Content-type', 'application/x-json')
         try:
             ret = yield self.handle_request(request)
-            if ret is False:
-                request.setResponseCode(404, 'Not Found')
-                request.write('404 Not Found\n')
-            elif ret is not None:
-                response_text = json.dumps(ret, indent=2)
-                response_text += '\n'
-                request.write(response_text)
+            if ret is EmptyResponse:
+                raise ret
+        except EmptyResponse:
+            pass
+        except NotFound:
+            request.setResponseCode(404, "Not Found")
+            request.write("404 Not Found\n")
         except Exception:
             Failure().printDetailedTraceback(request)
+        else:
+            request.write(json.dumps(ret, indent=2) + '\n')
         finally:
             request.finish()
 
@@ -53,17 +62,17 @@ class HttpRestServer(resource.Resource):
         of that view.
 
         """
-
-        objs, unresolved_path = traverse_path(Root(), request.path[1:])
-
+        oms_root = db.get_root()['oms_root']
+        objs, unresolved_path = traverse_path(oms_root, request.path[1:])
         if not objs or unresolved_path:
-            return False
+            raise NotFound
         else:
             obj = objs[-1]
+
             if obj.get_url() != request.path:
-                request.setResponseCode(301, 'See canonical URL')
-                request.setHeader('Location', obj.get_url())
-                return None
+                reactor.callFromThread(request.setResponseCode, 301, 'See canonical URL')
+                reactor.callFromThread(request.setHeader, 'Location', obj.get_url())
+                return EmptyResponse
 
             view = IHttpRestView(obj)
-            return view.render(request, store=db.get_store())
+            return view.render(request)

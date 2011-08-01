@@ -1,88 +1,135 @@
-from storm.base import Storm
-from storm.locals import Int, Unicode, Float
-from storm.references import ReferenceSet, Reference
+import persistent
+from BTrees.IOBTree import IOBTree
+from zope.interface import implements, Interface, Attribute
+from zope.interface.interface import InterfaceClass
 
-from opennode.oms.db import db
+
+class IModel(Interface):
+    __name__ = Attribute("Name")
+    __parent__ = Attribute("Parent")
 
 
-class Model(Storm):
-    """Base class for all models.
+class IContainer(IModel):
 
-    Provides generic implementations for:
-      * child traversal
-      * listing of contained content
-      * serialisation to simple Python dicts
-      * computation of paths
-
-    In addition, classes inheriting from this base class must
-    implement a 'name' and 'parent' property for traversal and
-    computation of paths to work.
-
-    Containers whose contained items are database backed (as opposed
-    to singletons such as Root and ComputeList whose children are
-    hardcoded) must override __getitem__, listnames and listcontent.
-
-    """
-
-    children = {}
-    nicknames = []
-
-    def __getitem__(self, key):
+    def __getitem__(key):
         """Returns the child item in this container with the given name."""
-        return self.children.get(key)
 
-    def listnames(self):
+    def listnames():
         """Lists the names of all items contained in this container."""
-        return self.children.iterkeys()
 
-    def listcontent(self):
+    def listcontent():
         """Lists all the items contained in this container."""
-        return self.children.itervalues()
+
+
+class Model(persistent.Persistent):
+    implements(IModel)
+
+    __parent__ = None
+    __name__ = None
 
     def to_dict(self):
         """Returns a dict representation of this model object."""
-        if hasattr(self, '_storm_columns'):
-            return dict((col.name, getattr(self, col.name)) for col in self._storm_columns.values())
-        return {}
+        raise NotImplementedError
 
     def get_path(self):
         """Return the path to this object starting from the root as a list of object names."""
-        return self.parent.get_path() + [self.name]
+        return self.__parent__.get_path() + [self.__name__]
 
     def get_url(self):
         """Returns the canonical URL of this model object without the URI scheme and domain parts."""
-        if not hasattr(self, 'parent'):
-            raise Exception('Model object has no defined parent')
-        return '%s%s/' % (self.parent.get_url(), self.name)
+        if not self.__parent__:
+            raise Exception('Model object has no parent')
+        return '%s%s/' % (self.__parent__.get_url(), self.__name__)
 
 
-class SingletonModel(Model):
-    """Base class for all models of which there should exist only a single instance."""
+class ReadonlyContainer(Model):
+    """A container whose items cannot be modified, i.e. are predefined."""
+    implements(IContainer)
 
-    _instance = None
+    def __getitem__(self, key):
+        return self._items.get(key)
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(SingletonModel, cls).__new__(cls, *args, **kwargs)
-        return cls._instance
+    def listnames(self):
+        return self._items.keys()
+
+    def listcontent(self):
+        return self._items.values()
 
 
-class Root(SingletonModel):
-    """The root model.
+class Container(ReadonlyContainer):
+    """A base class for containers whose items are identified by
+    sequential integer IDs.
 
-    This model is the root of the object hierarchy.
-    The parent object of this object is the object itself.
-
-    Non-relative object traversals start from this object.
+    Does not support `__setitem__`; use `add(...)` instead.
 
     """
 
-    name = ''
-    parent = property(lambda self: self)
-    children = property(lambda self: {
-        'compute': ComputeList(),
-        'template': TemplateList(),
+    __contains__ = Interface
+
+    def __init__(self):
+        self._items = IOBTree()
+
+    def add(self, item):
+        if isinstance(self.__contains__, InterfaceClass):
+            if not self.__contains__.providedBy(item):
+                raise Exception('Container can only contain items that provide %s' % self.__contains__.__name__)
+        else:
+            if not isinstance(item, self.__contains__):
+                raise Exception('Container can only contain items that are instances of %s' % self.__contains__.__name__)
+
+        if item.__parent__:
+            if item.__parent__ is self:
+                return
+            item.__parent__.remove(item)
+        item.__parent__ = self
+
+        newid = self._items.maxKey() + 1 if self._items else 1
+        self._items[newid] = item
+        item.__name__ = str(newid)
+
+    def remove(self, item):
+        del self._items[item.__name__]
+
+    def __delitem__(self, key):
+        try:
+            intkey = int(key)
+        except ValueError:
+            raise KeyError(key)
+        else:
+            del self._items[intkey]
+
+    def __getitem__(self, key):
+        """Returns the Template instance with the ID specified by the given key."""
+        try:
+            return self._items.get(int(key))
+        except ValueError:
+            return None
+
+
+class OmsRoot(ReadonlyContainer):
+    """The root of the OMS DB.
+
+    This model is the root of the object hierarchy.
+
+    Absolute object traversals start from this object.
+
+    """
+
+    __name__ = ''
+
+    _items = property(lambda self: {
+        'computes': self.computes,
+        'templates': self.templates,
     })
+
+    def __init__(self):
+        self.computes = Computes()
+        self.computes.__parent__ = self
+        self.computes.__name__ = 'computes'
+
+        self.templates = Templates()
+        self.templates.__parent__ = self
+        self.templates.__name__ = 'templates'
 
     def __str__(self):
         return 'OMS root'
@@ -96,88 +143,33 @@ class Root(SingletonModel):
         return '/'
 
 
-class TemplateList(SingletonModel):
-    name = 'template'
-    parent = property(lambda self: Root())
+class Template(Model):
+    def __init__(self, name, base_type, min_cores, max_cores, min_memory, max_memory):
+        self.name = name
+        self.base_type = base_type
+        self.min_cores = min_cores
+        self.max_cores = max_cores
+        self.min_memory = min_memory
+        self.max_memory = max_memory
+        self.computes = []
 
-    def listcontent(self):
-        return db.get_store().find(Template)
 
-    def listnames(self):
-        return (tpl.name for tpl in self.listcontent())
-
-    def __getitem__(self, key):
-        """Returns the Template instance with the ID specified by the given key."""
-        try:
-            id = int(key)
-        except ValueError:
-            return None
-        else:
-            return db.get_store().get(Template, id)
+class Templates(Container):
+    __contains__ = Template
 
     def __str__(self):
         return 'Template list'
 
 
-class Template(Model):
-    __storm_table__ = 'template'
-    id = Int(primary=True)
-    name = Unicode()
-    base_type = Unicode() # Ubuntu|Redhat|Custom|Windows
-    min_cores = Int()
-    max_cores = Int()
-    min_memory = Int()
-    max_memory = Int()
-    computes = ReferenceSet(id, 'Compute.template_id')
-
-
-class ComputeList(SingletonModel):
-    """Represents the container that contains all Compute instances stored in the database."""
-
-    name = 'compute'
-    parent = property(lambda self: Root())
-
-    def listcontent(self):
-        return db.get_store().find(Compute)
-
-    def listnames(self):
-        return (str(c.id) for c in self.listcontent())
-
-    def __getitem__(self, key):
-        """Returns the Compute instance with the ID specified by the given key."""
-        try:
-            id = int(key)
-        except ValueError:
-            return None
-        else:
-            return db.get_store().get(Compute, id)
-
-    def __str__(self):
-        return self.name
-
-
 class Compute(Model):
-    """Represents a compute."""
 
-    __storm_table__ = 'compute'
-    id = Int(primary=True)
-    architecture = Unicode() # 'x86' | 'x64'
-    hostname = Unicode()
-    speed = Float() # 2.1 GHz
-    memory = Float() # 2.1 GiB
-    state = Unicode() # 'active' | 'inactive' | 'suspended'
-    template_id = Int()
-    template = Reference(template_id, Template.id)
-    network_devices = ReferenceSet(id, 'NetworkDevice.compute_id')
-
-    @property
-    def parent(self):
-        """Returns the single ComputeList instance."""
-        return ComputeList()
-
-    @property
-    def name(self):
-        return str(self.id)
+    def __init__(self, architecture, hostname, speed, memory, state, template=None):
+        self.architecture = architecture
+        self.hostname = hostname
+        self.speed = speed
+        self.memory = memory
+        self.state = state
+        self.template = template
 
     @property
     def nicknames(self):
@@ -189,54 +181,51 @@ class Compute(Model):
 
         """
         return [
-            'c%s' % self.id,
-            'compute%s' % self.id,
+            'c%s' % self.__name__,
+            'compute%s' % self.__name__,
             self.hostname,
         ]
 
     def __str__(self):
-        return 'compute%s' % (self.id, )
+        return 'compute%s' % self.__name__
+
+
+class Computes(Container):
+    __contains__ = Compute
+
+    def __str__(self):
+        return 'Compute list'
 
 
 class Network(Model):
-    __storm_table__ = 'network'
-    id = Int(primary=True)
-    vlan = Unicode()
-    label = Unicode()
-    state = Unicode()
+    def __init__(self, vlan, label, state):
+        self.vlan = vlan
+        self.label = label
+        self.state = state
 
-    # ip-network
-    ipv4_address_range = Unicode()
-    ipv4_gateway = Unicode()
-    ipv6_address_range = Unicode()
-    ipv6_gateway = Unicode()
-    allocation = Unicode() # dynamic | static
-    devices = ReferenceSet(id, 'NetworkDevice.network_id')
+        self.ipv4_address_range = None
+        self.ipv4_gateway = None
+        self.ipv6_address_range = None
+        self.ipv6_gateway = None
+        self.allocation = None
+        self.devices = []
 
 
 class NetworkDevice(Model):
-    __storm_table__ = 'network_device'
-    id = Int(primary=True)
-    interface = Unicode()
-    mac = Unicode()
-    state = Unicode() # active | inactive
-    network_id = Int()
-    network = Reference(network_id, Network.id)
-    compute_id = Int()
-    compute = Reference(compute_id, Compute.id)
+    def __init__(self, interface, mac, state, network, compute):
+        self.interface = interface
+        self.mac = mac
+        self.state = state
+        self.network = network
+        self.compute = compute
 
 
 class Storage(Model):
-    __storm_table__ = 'storage'
-    id = Int(primary=True)
-    size = Float() # 1.1 GiB
-    state = Unicode() # online | offline | backup | snapshot | resize | degraded
+    def __init__(self, size, state):
+        self.size = size  # 1.1 GiB
+        self.state = state  # online | offline | backup | snapshot | resize | degraded
 
 
 class Tag(Model):
-    __storm_table__ = 'tag'
-    id = Int(primary=True)
-    name = Unicode()
-
-
-
+    def __init__(self, name):
+        self.name = name

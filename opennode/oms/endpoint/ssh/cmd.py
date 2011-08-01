@@ -1,9 +1,10 @@
 from columnize import columnize
-from twisted.internet import defer
+from twisted.internet import defer, reactor
+from twisted.python.failure import Failure
 
-from opennode.oms.db import db
+from opennode.oms.zodb import db
 from opennode.oms.model.traversal import traverse_path
-from opennode.oms.model.model import Root
+from opennode.oms.model.model import IContainer
 
 
 class Cmd(object):
@@ -31,11 +32,11 @@ class Cmd(object):
         return db.deref(self.obj_path[-1])
 
     def write(self, *args):
-        self.terminal.write(*args)
+        reactor.callFromThread(self.terminal.write, *args)
 
     def traverse_full(self, path):
         if path.startswith('/'):
-            return traverse_path(Root(), path[1:])
+            return traverse_path(db.get_root()['oms_root'], path[1:])
         else:
             return traverse_path(self.current_obj, path)
 
@@ -79,6 +80,10 @@ class cmd_cd(Cmd):
             self.write('No such object: %s\n' % path)
             return
 
+        if not IContainer.providedBy(objs[-1]):
+            self.write('Cannot cd to a non-container\n')
+            return
+
         # The following algorithm works for both up-the-tree,
         # down-the-tree and mixed traversals. So all of the following
         # arguments to the 'cd' command work out as expected:
@@ -91,7 +96,7 @@ class cmd_cd(Cmd):
             except ValueError:
                 # ... if not found, add it:
                 self.obj_path.append(ref)
-                self.path.append(obj.name)
+                self.path.append(obj.__name__)
             else:
                 # ... otherwise remove everything that follows it:
                 self.obj_path[overlap+1:] = []
