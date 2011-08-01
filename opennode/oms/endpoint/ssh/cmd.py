@@ -1,6 +1,7 @@
 from columnize import columnize
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
+from twisted.python.threadable import isInIOThread
 
 from opennode.oms.zodb import db
 from opennode.oms.model.traversal import traverse_path
@@ -32,7 +33,10 @@ class Cmd(object):
         return db.deref(self.obj_path[-1])
 
     def write(self, *args):
-        reactor.callFromThread(self.terminal.write, *args)
+        if not isInIOThread():
+            reactor.callFromThread(self.terminal.write, *args)
+        else:
+            self.terminal.write(*args)
 
     def traverse_full(self, path):
         if path.startswith('/'):
