@@ -126,19 +126,28 @@ class cmd_ls(Cmd):
                 if not obj:
                     self.write('No such object: %s\n' % path)
                 else:
-                    self._do_ls(obj)
+                    self._do_ls(obj, path)
         else:
-            self._do_ls(self.current_obj)
+            try:
+                self._do_ls(self.current_obj, self.current_path)
+            except:
+                print Failure().printDetailedTraceback(self.terminal)
 
-    def _do_ls(self, obj):
+    def _do_ls(self, obj, path):
         if self.opts_long:
-            for item in obj.listcontent():
-                self.write(('%s\t%s\n' % (item.name, ':'.join(item.nicknames))).encode('utf8'))
+            if IContainer.providedBy(obj):
+                for item in obj.listcontent():
+                    self.write(('%s\t%s\n' % (item.__name__, ':'.join(item.nicknames))).encode('utf8'))
+            else:
+                self.write(('%s\t%s\n' % (obj.__name__, ':'.join(obj.nicknames))).encode('utf8'))
         else:
-            items = list(obj.listnames())
-            if items:
-                output = columnize(items, displaywidth=self.protocol.width)
-                self.write(output)
+            if IContainer.providedBy(obj):
+                items = list(obj.listnames())
+                if items:
+                    output = columnize(items, displaywidth=self.protocol.width)
+                    self.write(output)
+            else:
+                self.write('%s\n' % path)
 
 
 class cmd_pwd(Cmd):
