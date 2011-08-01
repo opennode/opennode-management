@@ -2,7 +2,8 @@ import re
 
 from zope.interface import Interface, implements
 
-from opennode.oms.db import db
+
+__all__ = ['traverse_path', 'traverse1']
 
 
 class ITraverser(Interface):
@@ -36,10 +37,8 @@ def traverse_path(obj, path):
 
     """
 
-    if not path:
-        return [obj], ''
-
-    store = db.get_store()
+    if not path or path == '/':
+        return [obj], []
 
     path = re.sub(r'\/+', '/', path)
     if path.endswith('/'):
@@ -65,3 +64,13 @@ def traverse_path(obj, path):
         path = path[1:]
 
     return ret[1:], path
+
+
+def traverse1(path):
+    from opennode.oms.zodb import db
+    oms_root = db.get_root()['oms_root']
+    objs, untraversed_path = traverse_path(oms_root, path)
+    if objs and not untraversed_path:
+        return objs[-1]
+    else:
+        return None
