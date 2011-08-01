@@ -3,6 +3,7 @@ storm
 transaction
 zope.component
 columnize
+ipython
 
 # Enable for twistd-autoreload.py to work:
 #pyutils
