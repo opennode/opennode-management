@@ -113,7 +113,7 @@ class cmd_ls(Cmd):
     def __call__(self, *args):
         args = list(args)
 
-        self.opts_long = '-l' in args and args.pop(args.index('-l'))
+        self.opts_long = ('-l' in args)
         if self.opts_long:
             args.pop(args.index('-l'))
 
