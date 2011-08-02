@@ -6,6 +6,7 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.python.failure import Failure
 
 from opennode.oms.endpoint.httprest.base import IHttpRestView
+from opennode.oms.model.location import ILocation
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
@@ -68,10 +69,11 @@ class HttpRestServer(resource.Resource):
             raise NotFound
         else:
             obj = objs[-1]
+            loc = ILocation(obj)
 
-            if obj.get_url() != request.path:
+            if loc.get_url() != request.path:
                 reactor.callFromThread(request.setResponseCode, 301, 'See canonical URL')
-                reactor.callFromThread(request.setHeader, 'Location', obj.get_url())
+                reactor.callFromThread(request.setHeader, 'Location', loc.get_url())
                 return EmptyResponse
 
             view = IHttpRestView(obj)

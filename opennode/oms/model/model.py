@@ -31,16 +31,6 @@ class Model(persistent.Persistent):
         """Returns a dict representation of this model object."""
         raise NotImplementedError
 
-    def get_path(self):
-        """Return the path to this object starting from the root as a list of object names."""
-        return self.__parent__.get_path() + [self.__name__]
-
-    def get_url(self):
-        """Returns the canonical URL of this model object without the URI scheme and domain parts."""
-        if not self.__parent__:
-            raise Exception('Model object has no parent')
-        return '%s%s/' % (self.__parent__.get_url(), self.__name__)
-
 
 class ReadonlyContainer(Model):
     """A container whose items cannot be modified, i.e. are predefined."""
@@ -133,14 +123,6 @@ class OmsRoot(ReadonlyContainer):
 
     def __str__(self):
         return 'OMS root'
-
-    def get_path(self):
-        """Returns ['']."""
-        return ['']
-
-    def get_url(self):
-        """Returns the string '/'."""
-        return '/'
 
 
 class Template(Model):

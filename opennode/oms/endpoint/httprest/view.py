@@ -1,6 +1,7 @@
 from zope.component import adapts, provideAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
+from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import Computes, Compute, OmsRoot, Templates
 
 
@@ -8,7 +9,7 @@ class RootView(HttpRestView):
     adapts(OmsRoot)
 
     def render(self, request):
-        return dict((name, self.context[name].get_url()) for name in self.context.listnames())
+        return dict((name, ILocation(self.context[name]).get_url()) for name in self.context.listnames())
 
 
 
@@ -23,7 +24,7 @@ class ComputeView(HttpRestView):
     adapts(Compute)
 
     def render(self, request):
-        return {'hostname': self.context.hostname, 'url': self.context.get_url()}
+        return {'hostname': self.context.hostname, 'url': ILocation(self.context).get_url()}
 
 
 class TemplatesView(HttpRestView):
