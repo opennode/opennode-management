@@ -3,11 +3,22 @@ from grokcore.component import context
 from opennode.oms.model.traversal import Traverser
 from opennode.oms.model.model import OmsRoot
 from opennode.oms.model.model import IContainer
+from opennode.oms.model.model import IModel
 
 
-class ContainerTraverser(Traverser):
-    """Generic traverser for all Model instances."""
+class ModelTraverser(Traverser):
+    """Generic traverser for all IModel instances."""
+    context(IModel)
 
+    def traverse(self, name):
+        if name == '..':
+            return self.context.__parent__
+        elif name == '.':
+            return self.context
+
+
+class ContainerTraverser(ModelTraverser):
+    """Generic traverser for all IContainer instances."""
     context(IContainer)
 
     def traverse(self, name):
@@ -19,10 +30,9 @@ class ContainerTraverser(Traverser):
         Returns the wrapped object if `name` is `.`.
 
         """
-        if name == '..':
-            return self.context.__parent__
-        elif name == '.':
-            return self.context
+        ret = super(ContainerTraverser, self).traverse(name)
+        if ret is not None:
+            return ret
         else:
             return self.context[name]
 
