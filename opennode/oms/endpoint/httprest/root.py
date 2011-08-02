@@ -19,6 +19,12 @@ class NotFound(Exception):
     pass
 
 
+class SeeCanonical(Exception):
+    def __init__(self, url, *args, **kwargs):
+        super(SeeCanonical, self).__init__(*args, **kwargs)
+        self.url = url
+
+
 class HttpRestServer(resource.Resource):
     """Restful HTTP API interface for OMS.
 
@@ -49,6 +55,9 @@ class HttpRestServer(resource.Resource):
         except NotFound:
             request.setResponseCode(404, "Not Found")
             request.write("404 Not Found\n")
+        except SeeCanonical as exc:
+            request.setResponseCode(301, 'Moved Permanently')
+            request.setHeader('Location', exc.url)
         except Exception:
             Failure().printDetailedTraceback(request)
         else:
@@ -72,9 +81,7 @@ class HttpRestServer(resource.Resource):
             loc = ILocation(obj)
 
             if loc.get_url() != request.path:
-                reactor.callFromThread(request.setResponseCode, 301, 'See canonical URL')
-                reactor.callFromThread(request.setHeader, 'Location', loc.get_url())
-                return EmptyResponse
+                raise SeeCanonical(loc.get_url())
 
             view = IHttpRestView(obj)
             return view.render(request)
