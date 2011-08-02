@@ -4,7 +4,6 @@ from twisted.conch import recvline
 from twisted.internet import defer
 
 from opennode.oms.endpoint.ssh import cmd
-from opennode.oms.endpoint.ssh.history import History
 from opennode.oms.zodb import db
 
 class OmsSshProtocol(recvline.HistoricRecvLine):
@@ -18,7 +17,6 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
 
     def __init__(self):
         self.killRing = []
-        self.history = History()
         super(OmsSshProtocol, self).__init__()
         self.path = ['']
         self.obj_path = [db.ref(db.get_root()['oms_root'])]

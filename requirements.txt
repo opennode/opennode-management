@@ -6,4 +6,6 @@ grokcore.component
 columnize
 ipython
 ZODB3
-pyutils
+pycrypto
+file:./lib/pyutils.tar.gz
+pyasn1

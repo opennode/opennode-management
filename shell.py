@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from IPython.Shell import IPShellEmbed
+#from IPython.Shell import IPShellEmbed
+import IPython
 import transaction
 
 from opennode.oms import discover_adapters
@@ -20,4 +21,4 @@ templates = oms_root['templates']
 commit = transaction.commit
 abort = transaction.abort
 
-IPShellEmbed()()
+IPython.embed()
