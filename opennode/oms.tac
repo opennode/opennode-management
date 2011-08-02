@@ -5,6 +5,7 @@ from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
 from twisted.cred import checkers, portal
 from twisted.web import server
 
+from opennode.oms import discover_adapters
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 
@@ -32,6 +33,8 @@ def create_ssh_server():
 
 
 def create_application():
+    discover_adapters()
+
     application = service.Application("OpenNode Management Service")
 
     create_httprest_server().setServiceParent(application)
