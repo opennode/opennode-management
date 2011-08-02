@@ -5,5 +5,5 @@ zope.component
 grokcore.component
 columnize
 ipython
-ZODB
+ZODB3
 pyutils
