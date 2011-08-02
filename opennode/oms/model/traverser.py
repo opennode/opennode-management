@@ -1,9 +1,7 @@
 from grokcore.component import context
 
+from opennode.oms.model.model import OmsRoot, IContainer, IModel
 from opennode.oms.model.traversal import Traverser
-from opennode.oms.model.model import OmsRoot
-from opennode.oms.model.model import IContainer
-from opennode.oms.model.model import IModel
 
 
 class ModelTraverser(Traverser):
@@ -11,6 +9,12 @@ class ModelTraverser(Traverser):
     context(IModel)
 
     def traverse(self, name):
+        """Traverses the object to find the next object in the path to
+        traverse.
+
+        Only traversing `.` and `..` is supported generically for all objects.
+
+        """
         if name == '..':
             return self.context.__parent__
         elif name == '.':
@@ -22,12 +26,10 @@ class ContainerTraverser(ModelTraverser):
     context(IContainer)
 
     def traverse(self, name):
-        """Traverses the wrapped Model object using the given store to
-        find the child object with the given name.
+        """Amends ModelTraverser.traverse to add the ability to
+        traverse child objects in IContainer instances.
 
-        Uses the `parent` property and the `__getitem__` accessor for traversal.
-
-        Returns the wrapped object if `name` is `.`.
+        Uses the `__parent__` property and the `__getitem__` accessor for traversal.
 
         """
         ret = super(ContainerTraverser, self).traverse(name)
