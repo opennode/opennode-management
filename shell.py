@@ -4,8 +4,10 @@ import transaction
 
 from opennode.oms import discover_adapters
 from opennode.oms.zodb import db
+from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import OmsRoot, Computes, Compute, Templates, Template
 from opennode.oms.model.traversal import traverse_path, traverse1
+from opennode.oms.endpoint.httprest.view import IHttpRestView
 
 discover_adapters()
 
