@@ -1,4 +1,5 @@
-from zope.interface import Interface, implements
+from grokcore.component import Adapter, implements
+from zope.interface import Interface
 
 
 class IHttpRestView(Interface):
@@ -6,8 +7,5 @@ class IHttpRestView(Interface):
         pass
 
 
-class HttpRestView(object):
+class HttpRestView(Adapter):
     implements(IHttpRestView)
-
-    def __init__(self, context):
-        self.context = context

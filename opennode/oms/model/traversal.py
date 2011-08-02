@@ -1,6 +1,7 @@
 import re
 
-from zope.interface import Interface, implements
+from grokcore.component import Adapter, implements
+from zope.interface import Interface
 
 
 __all__ = ['traverse_path', 'traverse1']
@@ -18,13 +19,10 @@ class ITraverser(Interface):
         """
 
 
-class Traverser(object):
+class Traverser(Adapter):
     """Base class for all object traversers."""
 
     implements(ITraverser)
-
-    def __init__(self, context):
-        self.context = context
 
 
 def traverse_path(obj, path):

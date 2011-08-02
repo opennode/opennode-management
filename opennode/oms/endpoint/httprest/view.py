@@ -1,4 +1,4 @@
-from zope.component import adapts, provideAdapter
+from grokcore.component import context
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.model.location import ILocation
@@ -6,7 +6,7 @@ from opennode.oms.model.model import Computes, Compute, OmsRoot, Templates
 
 
 class RootView(HttpRestView):
-    adapts(OmsRoot)
+    context(OmsRoot)
 
     def render(self, request):
         return dict((name, ILocation(self.context[name]).get_url()) for name in self.context.listnames())
@@ -14,30 +14,24 @@ class RootView(HttpRestView):
 
 
 class ComputesView(HttpRestView):
-    adapts(Computes)
+    context(Computes)
 
     def render(self, request):
         return [IHttpRestView(compute).render(request) for compute in self.context.listcontent()]
 
 
 class ComputeView(HttpRestView):
-    adapts(Compute)
+    context(Compute)
 
     def render(self, request):
         return {'hostname': self.context.hostname, 'url': ILocation(self.context).get_url()}
 
 
 class TemplatesView(HttpRestView):
-    adapts(Templates)
+    context(Templates)
 
     def render(self, request):
         return [{'name': name} for name in self.context.listnames()]
-
-
-provideAdapter(RootView)
-provideAdapter(ComputesView)
-provideAdapter(ComputeView)
-provideAdapter(TemplatesView)
 
 
 

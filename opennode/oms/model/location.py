@@ -1,7 +1,7 @@
 """Provides the ILocation aspect to OMS models."""
 
-from zope.component import adapts, provideAdapter
-from zope.interface import Interface, implements
+from grokcore.component import Adapter, context, implements
+from zope.interface import Interface
 
 from opennode.oms.model.model import IModel, OmsRoot
 
@@ -19,12 +19,9 @@ class ILocation(Interface):
         """Returns the canonical URL of the object object without the URI scheme and domain parts."""
 
 
-class ModelLocation(object):
+class ModelLocation(Adapter):
     implements(ILocation)
-    adapts(IModel)
-
-    def __init__(self, context):
-        self.context = context
+    context(IModel)
 
     def get_path(self):
         return ILocation(self.context.__parent__).get_path() + [self.context.__name__]
@@ -33,19 +30,12 @@ class ModelLocation(object):
         return '%s%s/' % (ILocation(self.context.__parent__).get_url(), self.context.__name__)
 
 
-class OmsRootLocation(object):
+class OmsRootLocation(Adapter):
     implements(ILocation)
-    adapts(OmsRoot)
-
-    def __init__(self, context):
-        pass
+    context(OmsRoot)
 
     def get_path(self):
         return ['']
 
     def get_url(self):
         return '/'
-
-
-provideAdapter(ModelLocation)
-provideAdapter(OmsRootLocation)

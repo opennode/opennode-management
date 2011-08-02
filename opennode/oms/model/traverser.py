@@ -1,4 +1,4 @@
-from zope.component import adapts, provideAdapter
+from grokcore.component import context
 
 from opennode.oms.model.traversal import Traverser
 from opennode.oms.model.model import OmsRoot
@@ -8,7 +8,7 @@ from opennode.oms.model.model import IContainer
 class ContainerTraverser(Traverser):
     """Generic traverser for all Model instances."""
 
-    adapts(IContainer)
+    context(IContainer)
 
     def traverse(self, name):
         """Traverses the wrapped Model object using the given store to
@@ -28,14 +28,10 @@ class ContainerTraverser(Traverser):
 
 
 class RootTraverser(ContainerTraverser):
-    adapts(OmsRoot)
+    context(OmsRoot)
 
     def traverse(self, name):
         if name == '..':
             return self.context
         else:
             return super(RootTraverser, self).traverse(name)
-
-
-provideAdapter(ContainerTraverser)
-provideAdapter(RootTraverser)
