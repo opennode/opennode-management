@@ -5,6 +5,5 @@ zope.component
 grokcore.component
 columnize
 ipython
-
-# Enable for twistd-autoreload.py to work:
-#pyutils
+ZODB
+pyutils
