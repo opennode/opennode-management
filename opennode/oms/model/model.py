@@ -2,6 +2,7 @@ import persistent
 from BTrees.IOBTree import IOBTree
 from zope.interface import implements, Interface, Attribute
 from zope.interface.interface import InterfaceClass
+from zope import schema
 
 
 class IModel(Interface):
@@ -143,7 +144,16 @@ class Templates(Container):
         return 'Template list'
 
 
+class ICompute(Interface):
+    architecture = schema.TextLine(title=u"Architecture", min_length=1)
+    hostname = schema.TextLine(title=u"Host name", min_length=1)
+    speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz")
+    memory = schema.Int(title=u"RAM Size", description=u"RAM size in megabytes")
+    state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
+
+
 class Compute(Model):
+    implements(ICompute)
 
     def __init__(self, architecture, hostname, speed, memory, state, template=None):
         self.architecture = architecture
