@@ -8,6 +8,4 @@ ipython>=0.11
 ZODB3
 pycrypto
 pyasn1
-
-# Install manually from lib/pyutils.tar.gz
-# pyutils
+https://bitbucket.org/miracle2k/pyutils/get/pyutils.tar.gz
