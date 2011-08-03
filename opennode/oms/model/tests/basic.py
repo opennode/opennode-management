@@ -4,7 +4,7 @@ from storm.database import create_database
 from storm.store import Store
 
 from opennode.oms.db.db import DB_URI
-from opennode.oms.model.model import Compute, Network, NetworkDevice
+from opennode.oms.model.model import compute, network
 
 
 class Test(unittest.TestCase):
@@ -18,21 +18,21 @@ class Test(unittest.TestCase):
         self.store.close()
 
     def testSimpleCreation(self):
-        compute = Compute()
+        compute = compute.Compute()
         compute.hostname = u'test.host'
         self.store.add(compute)
 
-        network = Network()
+        network = network.Network()
         network.ipv4_address_range = u'192.168.1.0/24'
         self.store.add(network)
 
-        network_device = NetworkDevice()
+        network_device = network.NetworkDevice()
         network_device.mac = u'aa:bb:cc:dd:ee:ee'
         network_device.compute = compute
         network_device.network = network
         self.store.add(network_device)
 
-        network_device = NetworkDevice()
+        network_device = network.NetworkDevice()
         network_device.mac = u'aa:bb:cc:dd:ee:ff'
         network_device.network = network
         self.store.add(network_device)

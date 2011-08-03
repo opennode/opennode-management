@@ -1,10 +1,11 @@
 """Provides the ILocation aspect to OMS models."""
+from __future__ import absolute_import
 
 from grokcore.component import Adapter, context, implements
 from zope.interface import Interface
 
-from opennode.oms.model.model import IModel, OmsRoot
-
+from .model.base import IModel
+import opennode.oms.model.model.root
 
 __all__ = ['ILocation']
 
@@ -32,7 +33,7 @@ class ModelLocation(Adapter):
 
 class OmsRootLocation(Adapter):
     implements(ILocation)
-    context(OmsRoot)
+    context(opennode.oms.model.model.root.OmsRoot)
 
     def get_path(self):
         return ['']

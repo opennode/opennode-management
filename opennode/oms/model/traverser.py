@@ -1,7 +1,7 @@
 from grokcore.component import context
-
-from opennode.oms.model.model import OmsRoot, IContainer, IModel
+from opennode.oms.model.model.base import IContainer, IModel
 from opennode.oms.model.traversal import Traverser
+import opennode.oms.model.model.root
 
 
 class ModelTraverser(Traverser):
@@ -40,7 +40,7 @@ class ContainerTraverser(ModelTraverser):
 
 
 class RootTraverser(ContainerTraverser):
-    context(OmsRoot)
+    context(opennode.oms.model.model.root.OmsRoot)
 
     def traverse(self, name):
         if name == '..':

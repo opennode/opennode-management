@@ -5,7 +5,7 @@ from twisted.python.threadable import isInIOThread
 
 from opennode.oms.zodb import db
 from opennode.oms.model.traversal import traverse_path
-from opennode.oms.model.model import IContainer
+from opennode.oms.model.model.base import IContainer
 
 
 class Cmd(object):
