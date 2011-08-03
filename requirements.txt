@@ -4,8 +4,10 @@ transaction
 zope.component
 grokcore.component
 columnize
-ipython
+ipython>=0.11
 ZODB3
 pycrypto
-file:./lib/pyutils.tar.gz
 pyasn1
+
+# Install manually from lib/pyutils.tar.gz
+# pyutils
