@@ -1,4 +1,5 @@
 import zope.schema
+from zope.schema.interfaces import IFromUnicode
 
 
 __all__ = ['apply_raw_data']
@@ -31,7 +32,7 @@ def apply_raw_data(raw_data, schema, obj):
             raw_value = raw_value.decode('utf8')
 
         try:
-            value = field.fromUnicode(raw_value)
+            value = IFromUnicode(field).fromUnicode(raw_value)
         except zope.schema.ValidationError as exc:
             errors.append((name, exc))
         else:
