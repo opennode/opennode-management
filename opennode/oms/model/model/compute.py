@@ -7,10 +7,10 @@ from .base import Model, Container
 
 
 class ICompute(Interface):
-    architecture = schema.TextLine(title=u"Architecture", min_length=1)
-    hostname = schema.TextLine(title=u"Host name", min_length=1)
+    architecture = schema.Choice(title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
+    hostname = schema.TextLine(title=u"Host name", min_length=3)
     speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz")
-    memory = schema.Int(title=u"RAM Size", description=u"RAM size in megabytes")
+    memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
     state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
 
 
