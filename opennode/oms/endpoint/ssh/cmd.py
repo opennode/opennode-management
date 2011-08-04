@@ -1,11 +1,15 @@
+import transaction
 from columnize import columnize
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
+import zope.schema
 
 from opennode.oms.zodb import db
+from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.util import get_direct_interfaces
 
 
 class Cmd(object):
@@ -167,9 +171,68 @@ class cmd_cat(Cmd):
                 self._do_cat(obj)
 
     def _do_cat(self, obj):
-        data = obj.to_dict()
+        schemas = get_direct_interfaces(obj)
+        if len(schemas) != 1:
+            self.write("Unable to create a printable representation.\n")
+            return
+        schema = schemas[0]
+
+        fields = zope.schema.getFieldsInOrder(schema)
+        data = {}
+        for name, field in fields:
+            key = field.description or field.title
+            key = key.encode('utf8')
+            data[key] = field.get(obj)
+
         if data:
             max_key_len = max(len(key) for key in data)
             for key, value in sorted(data.items()):
-                self.write('%s\t%s\n' % ((key + ':').ljust(max_key_len),
+                self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
                                          str(value).encode('utf8')))
+
+
+class cmd_set(Cmd):
+
+    @db.transact
+    def __call__(self, *args):
+        if not args:
+            self._usage()
+            return
+
+        path = args[0]
+        obj = self.traverse(path)
+        if not obj:
+            self.write("No such object: %s\n" % path)
+            return
+
+        raw_data = {}
+
+        attrs = args[1:]
+
+        if not all('=' in pair for pair in attrs):
+            self._usage()
+            return
+
+        for pair in attrs:
+            key, value = pair.split('=', 1)
+            raw_data[key] = value
+
+        schemas = get_direct_interfaces(obj)
+        if len(schemas) != 1:
+            self.write("No schema found for object: %s" % path)
+            return
+        schema = schemas[0]
+        errors = apply_raw_data(raw_data, schema, obj)
+
+        if errors:
+            for key, error in errors:
+                msg = error.doc().encode('utf8')
+                self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
+
+        transaction.commit()
+
+    def _usage(self):
+        self.write("Usage: set obj key=value [key=value ..]\n\n"
+                   "Sets attributes on objects.\n"
+                   "If setting or parsing of one of the attributes fails, "
+                   "the operation is cancelled and the object unchanged.\n")
