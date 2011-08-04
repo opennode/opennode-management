@@ -27,10 +27,6 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
-    def to_dict(self):
-        """Returns a dict representation of this model object."""
-        raise NotImplementedError
-
 
 class ReadonlyContainer(Model):
     """A container whose items cannot be modified, i.e. are predefined."""
