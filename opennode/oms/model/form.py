@@ -4,6 +4,10 @@ import zope.schema
 __all__ = ['apply_raw_data']
 
 
+class UnknownAttribute(zope.schema.ValidationError):
+    """Unknown attribute"""
+
+
 def apply_raw_data(raw_data, schema, obj):
     """Takes a dict containing raw data as key-value pairs, converts
     the data to appropriate Python data types according to the schema,
@@ -35,7 +39,7 @@ def apply_raw_data(raw_data, schema, obj):
 
     if raw_data:
         for key in raw_data:
-            errors.append((key, 'Unknown attribute'))
+            errors.append((key, UnknownAttribute()))
 
     if not errors:
         errors = zope.schema.getValidationErrors(schema, tmp_obj)
