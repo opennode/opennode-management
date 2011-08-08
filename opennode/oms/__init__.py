@@ -16,6 +16,4 @@ Deferred.__call__ = deferred_call
 
 def discover_adapters():
     from grokcore.component.testing import grok
-    grok('opennode.oms.model.location')
-    grok('opennode.oms.model.traverser')
-    grok('opennode.oms.endpoint.httprest.view')
+    grok('opennode.oms')
