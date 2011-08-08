@@ -2,6 +2,7 @@
 #from IPython.Shell import IPShellEmbed
 import IPython
 import transaction
+import logging
 
 from opennode.oms import discover_adapters
 from opennode.oms.zodb import db
@@ -10,6 +11,8 @@ from opennode.oms.model.model import OmsRoot, Computes, Compute, Templates, Temp
 from opennode.oms.model.traversal import traverse_path, traverse1
 from opennode.oms.endpoint.httprest.view import IHttpRestView
 
+
+logging.basicConfig()
 discover_adapters()
 
 
