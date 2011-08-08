@@ -1,7 +1,8 @@
 from zope.interface import Interface
-from grokcore.component import context, Adapter, implements
+
 
 class IJob(Interface):
+
     def run():
         pass
 
@@ -10,13 +11,12 @@ class IJob(Interface):
 
 
 class IFuncInstalled(Interface):
-    """Marker for for FUNC-controlled Computes."""
+    """Marker for FUNC-controlled Computes."""
 
 
 class IBotoManageable(Interface):
-    """Marker for machines controlled through boto library."""
+    """Marker for Computes controlled through the boto library."""
 
 
 class IGetComputeInfo(IJob):
-    """Returns general information about a host (os, architecture, devices, etc)."""
-
+    """Returns general information about a compute (os, architecture, devices, etc)."""
