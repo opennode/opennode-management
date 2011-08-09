@@ -72,11 +72,11 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/1')
 
         assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',), {}),
-            ('write', ('CPU Speed in MHz:\t2000\n',), {}),
-            ('write', ('Host name:      \ttux-for-test\n',), {}),
-            ('write', ('RAM size in MB: \t2000\n',), {}),
-            ('write', ('State:          \tactive\n',), {}),
+            ('write', ('Architecture:   \tlinux\n',)),
+            ('write', ('CPU Speed in MHz:\t2000\n',)),
+            ('write', ('Host name:      \ttux-for-test\n',)),
+            ('write', ('RAM size in MB: \t2000\n',)),
+            ('write', ('State:          \tactive\n',)),
         ]
 
     @run_in_reactor
@@ -89,9 +89,9 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/1')
         assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',), {}),
-            ('write', ('CPU Speed in MHz:\t2000\n',), {}),
-            ('write', ('Host name:      \tTUX-FOR-TEST\n',), {}),
-            ('write', ('RAM size in MB: \t2000\n',), {}),
-            ('write', ('State:          \tactive\n',), {}),
+            ('write', ('Architecture:   \tlinux\n',)),
+            ('write', ('CPU Speed in MHz:\t2000\n',)),
+            ('write', ('Host name:      \tTUX-FOR-TEST\n',)),
+            ('write', ('RAM size in MB: \t2000\n',)),
+            ('write', ('State:          \tactive\n',)),
         ]
