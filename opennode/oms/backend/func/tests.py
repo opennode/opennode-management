@@ -13,4 +13,4 @@ def setUpModule():
 def test_adaption():
     compute = Compute(architecture='linux', hostname='tuxtest', speed=2000, memory=2048, state='online')
     alsoProvides(compute, IFuncInstalled)
-    assert isinstance(IGetComputeInfo(compute), FuncGetComputeInfo)
+    assert isinstance(IGetComputeInfo(compute, None), FuncGetComputeInfo)
