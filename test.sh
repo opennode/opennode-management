@@ -1,2 +1,2 @@
 #!/bin/sh
-nosetests --nologcapture --detailed-errors
+nosetests --nologcapture --detailed-errors --nocapture
