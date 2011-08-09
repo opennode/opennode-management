@@ -21,7 +21,7 @@ _threadpool = None
 _connection = threading.local()
 
 
-def init():
+def init(test=False):
     global _db, _threadpool
 
     _threadpool = ThreadPool(minthreads=0, maxthreads=20)
@@ -29,8 +29,12 @@ def init():
     reactor.callWhenRunning(_threadpool.start)
     reactor.addSystemEventTrigger('during', 'shutdown', _threadpool.stop)
 
-    storage = ClientStorage('db/socket')
-    _db = DB(storage)
+    if not test:
+        storage = ClientStorage('db/socket')
+        _db = DB(storage)
+    else:
+        from ZODB.tests.util import DB
+        _db = DB()
 
     init_schema()
 
