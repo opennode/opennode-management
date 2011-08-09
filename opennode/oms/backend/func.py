@@ -45,11 +45,12 @@ class FuncBase(Adapter):
 FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info'}
 
 
-# iterate over supported func functions creating a new class with the correct Func action
-for interface, action in FUNC_ACTIONS.items():
-    cls_name = 'Func%s' % interface.__name__[1:]
-    cls = type(cls_name, (FuncBase, ), dict(func_action=action))
-    classImplements(cls, interface)
-    globals()[cls_name] = cls
-
-del cls
+# Avoid polluting the global namespace with temporary variables:
+def _generate_classes():
+    # Dynamically generate an adapter class for each supported Func function:
+    for interface, action in FUNC_ACTIONS.items():
+        cls_name = 'Func%s' % interface.__name__[1:]
+        cls = type(cls_name, (FuncBase, ), dict(func_action=action))
+        classImplements(cls, interface)
+        globals()[cls_name] = cls
+_generate_classes()
