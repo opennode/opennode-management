@@ -67,7 +67,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         computes = db.get_root()['oms_root']['computes']
-        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'online'))
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self._cmd('cat computes/1')
 
@@ -76,5 +76,32 @@ class SshTestCase(unittest.TestCase):
             ('write', ('CPU Speed in MHz:\t2000\n',), {}),
             ('write', ('Host name:      \ttux-for-test\n',), {}),
             ('write', ('RAM size in MB: \t2000\n',), {}),
-            ('write', ('State:          \tonline\n',), {}),
+            ('write', ('State:          \tactive\n',), {}),
+        ]
+
+    @run_in_reactor
+    def test_modify_compute(self):
+        computes = db.get_root()['oms_root']['computes']
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self._cmd('cat computes/1')
+        assert self.terminal.method_calls[:-1] == [
+            ('write', ('Architecture:   \tlinux\n',), {}),
+            ('write', ('CPU Speed in MHz:\t2000\n',), {}),
+            ('write', ('Host name:      \ttux-for-test\n',), {}),
+            ('write', ('RAM size in MB: \t2000\n',), {}),
+            ('write', ('State:          \tactive\n',), {}),
+        ]
+
+        self._cmd('set computes/1 hostname=TUX-FOR-TEST')
+
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/1')
+        assert self.terminal.method_calls[:-1] == [
+            ('write', ('Architecture:   \tlinux\n',), {}),
+            ('write', ('CPU Speed in MHz:\t2000\n',), {}),
+            ('write', ('Host name:      \tTUX-FOR-TEST\n',), {}),
+            ('write', ('RAM size in MB: \t2000\n',), {}),
+            ('write', ('State:          \tactive\n',), {}),
         ]
