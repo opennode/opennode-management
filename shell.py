@@ -4,7 +4,7 @@ import IPython
 import transaction
 import logging
 
-from opennode.oms import discover_adapters
+from opennode.oms import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import OmsRoot, Computes, Compute, Templates, Template
@@ -13,7 +13,7 @@ from opennode.oms.endpoint.httprest.view import IHttpRestView
 
 
 logging.basicConfig()
-discover_adapters()
+setup_environ()
 
 
 dbroot = db.get_root()

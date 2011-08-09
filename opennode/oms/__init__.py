@@ -14,6 +14,6 @@ def deferred_call(self, fun):
 Deferred.__call__ = deferred_call
 
 
-def discover_adapters():
+def setup_environ():
     from grokcore.component.testing import grok
     grok('opennode.oms')

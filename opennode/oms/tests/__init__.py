@@ -1,5 +1,5 @@
-from opennode.oms import discover_adapters
+from opennode.oms import setup_environ
 
 
 def setup_package():
-    discover_adapters()
+    setup_environ()
