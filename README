@@ -5,6 +5,9 @@ OpenNode Management Service
 
 Currently the only requirement is Python 2.7.
 
+On Mac OS X, Python 2.7 can be installed either manually, using
+MacPorts by running `sudo port install python27`, or using Homebrew by
+running `brew install python`.
 
 === Setup ===
 
