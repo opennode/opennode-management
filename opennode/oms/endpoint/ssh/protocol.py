@@ -54,6 +54,10 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             self.terminal.nextLine()
             self.terminal.write(self.ps[self.pn])
 
+        ret = defer.Deferred()
+        deferred.addBoth(ret.callback)
+        return ret
+
     @property
     def ps(self):
         ps1 = '%s@%s:%s%s ' % ('user', 'oms', self._cwd(), '#')
