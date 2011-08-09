@@ -11,11 +11,15 @@ OpenNode Management Service
    It is recommended to use the `--no-site-packages` option for an
    isolated and clean environment, especially in production deployments.
    
-   MacOSX example:
+   More info about virtualenvwrapper usage:
+   http://www.doughellmann.com/articles/pythonmagazine/completely-different/2008-05-virtualenvwrapper/index.html
+   
+   MacOSX example with MacPorts:
    `cd ~`
+   `sudo port install python27`
    `curl -s https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh | bash`
    `source /Users/<username>/.venvburrito/startup.sh`
-   `mkvirtualenv --no-site-packages oms`
+   `mkvirtualenv --no-site-packages --python=/opt/local/bin/python2.7 oms`
    `workon oms`
 
 2. Install dependencies by running `pip install -r requirements.txt`
