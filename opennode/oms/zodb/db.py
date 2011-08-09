@@ -68,14 +68,14 @@ def transact(fun):
 
     """
 
-    if not _db: init()
-
     # Verify that the wrapped callable has the required argument signature.
     arglist = inspect.getargspec(fun).args
     if not arglist or arglist[0] != 'self':
         raise TypeError("Only instance methods can be wrapped")
 
     def run_in_tx(fun, self, *args, **kwargs):
+        if not _db: init()
+
         try:
             result = fun(self, *args, **kwargs)
         except:
