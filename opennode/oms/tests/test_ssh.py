@@ -84,17 +84,7 @@ class SshTestCase(unittest.TestCase):
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
-        self._cmd('cat computes/1')
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',), {}),
-            ('write', ('CPU Speed in MHz:\t2000\n',), {}),
-            ('write', ('Host name:      \ttux-for-test\n',), {}),
-            ('write', ('RAM size in MB: \t2000\n',), {}),
-            ('write', ('State:          \tactive\n',), {}),
-        ]
-
         self._cmd('set computes/1 hostname=TUX-FOR-TEST')
-
         self.terminal.reset_mock()
 
         self._cmd('cat computes/1')
