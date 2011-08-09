@@ -10,6 +10,13 @@ OpenNode Management Service
 
    It is recommended to use the `--no-site-packages` option for an
    isolated and clean environment, especially in production deployments.
+   
+   MacOSX example:
+   `cd ~`
+   `curl -s https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh | bash`
+   `source /Users/<username>/.venvburrito/startup.sh`
+   `mkvirtualenv --no-site-packages oms`
+   `workon oms`
 
 2. Install dependencies by running `pip install -r requirements.txt`
    in the repository root.
