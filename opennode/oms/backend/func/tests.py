@@ -1,5 +1,3 @@
-import unittest
-
 from zope.interface import alsoProvides
 
 from opennode.oms import discover_adapters
@@ -12,13 +10,7 @@ def setUpModule():
     discover_adapters()
 
 
-class FuncTestCase(unittest.TestCase):
-
-    def testAdaption(self):
-        compute = Compute(architecture='linux', hostname='tuxtest', speed=2000, memory=2048, state='online')
-        alsoProvides(compute, IFuncInstalled)
-
-        self.assertIsInstance(
-            IGetComputeInfo(compute), FuncGetComputeInfo,
-            "A Compute with IFuncInstalled should adapt to the appropriate Func action handler"
-        )
+def test_adaption():
+    compute = Compute(architecture='linux', hostname='tuxtest', speed=2000, memory=2048, state='online')
+    alsoProvides(compute, IFuncInstalled)
+    assert isinstance(IGetComputeInfo(compute), FuncGetComputeInfo)
