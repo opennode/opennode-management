@@ -1,6 +1,11 @@
 OpenNode Management Service
 ---------------------------
 
+=== Requirements ===
+
+Currently the only requirement is Python 2.7.
+
+
 === Setup ===
 
 1. `git clone git@github.com:opennode/opennode-management.git`.
@@ -10,24 +15,21 @@ OpenNode Management Service
 
    It is recommended to use the `--no-site-packages` option for an
    isolated and clean environment, especially in production deployments.
-   
-   More info about virtualenvwrapper usage:
-   http://www.doughellmann.com/articles/pythonmagazine/completely-different/2008-05-virtualenvwrapper/index.html
-   
-   MacOSX example with MacPorts:
-   `cd ~`
-   `sudo port install python27`
-   `curl -s https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh | bash`
-   `source /Users/<username>/.venvburrito/startup.sh`
-   `mkvirtualenv --no-site-packages --python=/opt/local/bin/python2.7 oms`
-   `workon oms`
 
-2. Install dependencies by running `pip install -r requirements.txt`
+   More info about virtualenvwrapper usage:
+       http://www.doughellmann.com/articles/pythonmagazine/completely-different/2008-05-virtualenvwrapper/index.html
+
+   Example using the virtualenv-burrito package:
+
+       `curl -s https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh | bash`
+       `source ~/.venvburrito/startup.sh`
+       `mkvirtualenv --no-site-packages --python=python2.7 opennode-management`
+       `workon opennode-management`
+
+3. Install dependencies by running `pip install -r requirements.txt`
    in the repository root.
 
-3. Create the database schema: `./create_db.sh`.
-
-5. Start the Twisted twistd server on port 8080 by executing
+4. Start the Twisted twistd server on port 8080 by executing
    `./start-oms.sh` on Unix systems and `start-oms.bat` on Windows.
 
 
