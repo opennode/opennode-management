@@ -4,8 +4,7 @@ import threading
 
 import transaction
 from ZEO.ClientStorage import ClientStorage
-from ZODB import DB
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
 from twisted.python.threadpool import ThreadPool
 from twisted.python.threadable import isInIOThread
@@ -30,11 +29,13 @@ def init(test=False):
     reactor.addSystemEventTrigger('during', 'shutdown', _threadpool.stop)
 
     if not test:
+        from ZODB import DB
         storage = ClientStorage('db/socket')
         _db = DB(storage)
     else:
         from ZODB.tests.util import DB
         _db = DB()
+        _db.database_name = 'test'
 
     init_schema()
 
@@ -49,7 +50,7 @@ def init_schema():
 
 def get_db():
     if not _db: init()
-    if isInIOThread():
+    if isInIOThread() and not _db.database_name == 'test':
         raise Exception('The ZODB should not be accessed from the main thread')
     return _db
 
@@ -91,8 +92,12 @@ def transact(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
-        return deferToThreadPool(reactor, _threadpool,
-                                 lambda: run_in_tx(fun, self, *args, **kwargs))
+        if not _db.database_name == 'test':
+            return deferToThreadPool(reactor, _threadpool,
+                                     lambda: run_in_tx(fun, self, *args, **kwargs))
+        else:
+            # No threading during testing
+            return defer.succeed(run_in_tx(fun, self, *args, **kwargs))
     return wrapper
 
 
