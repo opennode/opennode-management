@@ -133,7 +133,7 @@ class TemplatesView(HttpRestView):
 #~                 request.setResponseCode(404, 'Not Found')
 #~                 request.finish()
 #~             else:
-#~                 #~ request.setHeader('Content-Type', 'application/x-json')
+#~                 #~ request.setHeader('Content-Type', 'application/json')
 #~                 #~ request.setHeader('Content-length', len(json.dumps(info) + '\n'))
 #~                 request.write(json.dumps(info, indent=2) + '\n')
 #~                 request.finish()
