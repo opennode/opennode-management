@@ -21,13 +21,17 @@ _connection = threading.local()
 _testing = False
 
 
-def init(test=False):
-    global _db, _threadpool, _testing
+def init_threadpool():
+    global _threadpool
 
     _threadpool = ThreadPool(minthreads=0, maxthreads=20)
 
     reactor.callWhenRunning(_threadpool.start)
     reactor.addSystemEventTrigger('during', 'shutdown', _threadpool.stop)
+
+
+def init(test=False):
+    global _db, _testing
 
     if not test:
         from ZODB import DB
@@ -73,6 +77,9 @@ def transact(fun):
     TODO: Add retry capability on ConflicErrors.
 
     """
+
+    if not _threadpool:
+        init_threadpool()
 
     # Verify that the wrapped callable has the required argument signature.
     arglist = inspect.getargspec(fun).args
