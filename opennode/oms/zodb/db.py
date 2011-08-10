@@ -18,10 +18,11 @@ __all__ = ['get_db', 'get_connection', 'get_root', 'transact', 'ref', 'deref']
 _db = None
 _threadpool = None
 _connection = threading.local()
+_testing = False
 
 
 def init(test=False):
-    global _db, _threadpool
+    global _db, _threadpool, _testing
 
     _threadpool = ThreadPool(minthreads=0, maxthreads=20)
 
@@ -35,7 +36,7 @@ def init(test=False):
     else:
         from ZODB.tests.util import DB
         _db = DB()
-        _db.database_name = 'test'
+        _testing = True
 
     init_schema()
 
@@ -50,7 +51,7 @@ def init_schema():
 
 def get_db():
     if not _db: init()
-    if isInIOThread() and not _db.database_name == 'test':
+    if isInIOThread() and not _testing:
         raise Exception('The ZODB should not be accessed from the main thread')
     return _db
 
@@ -92,7 +93,7 @@ def transact(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
-        if not _db.database_name == 'test':
+        if not _testing:
             return deferToThreadPool(reactor, _threadpool,
                                      lambda: run_in_tx(fun, self, *args, **kwargs))
         else:
