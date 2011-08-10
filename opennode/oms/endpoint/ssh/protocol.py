@@ -16,10 +16,14 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     """
 
     def __init__(self):
-        self.killRing = []
         super(OmsSshProtocol, self).__init__()
         self.path = ['']
-        self.obj_path = [db.ref(db.get_root()['oms_root'])]
+        # self.obj_path will be initialised in connectionMade
+
+    @defer.inlineCallbacks
+    def connectionMade(self):
+        super(OmsSshProtocol, self).connectionMade()
+        self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])
 
     def lineReceived(self, line):
         line = line.strip()
