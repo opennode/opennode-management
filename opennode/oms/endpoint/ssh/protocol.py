@@ -23,6 +23,11 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     @defer.inlineCallbacks
     def connectionMade(self):
         super(OmsSshProtocol, self).connectionMade()
+        # Here, we simply hope that self.obj_path won't actually be
+        # used until it's initialised.  A more fool-proof solution
+        # would be to block everything in the protocol while the ZODB
+        # query is processing, but that would require a more complex
+        # workaround.
         self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])
 
     def lineReceived(self, line):
