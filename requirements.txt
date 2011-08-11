@@ -7,5 +7,6 @@ columnize
 ipython>=0.11
 ZODB3
 pycrypto
+pyOpenSSL
 pyasn1
 https://bitbucket.org/miracle2k/pyutils/get/pyutils.tar.gz
