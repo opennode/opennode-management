@@ -28,7 +28,11 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         # would be to block everything in the protocol while the ZODB
         # query is processing, but that would require a more complex
         # workaround.
-        self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])
+        self.obj_path = yield self.get_root_path()
+
+    @db.transact
+    def get_root_path(self):
+        return [db.ref(db.get_root()['oms_root'])]
 
     def lineReceived(self, line):
         line = line.strip()
