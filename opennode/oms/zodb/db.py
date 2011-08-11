@@ -1,5 +1,4 @@
 import functools
-import inspect
 import threading
 
 import transaction
@@ -81,16 +80,11 @@ def transact(fun):
     if not _threadpool:
         init_threadpool()
 
-    # Verify that the wrapped callable has the required argument signature.
-    arglist = inspect.getargspec(fun).args
-    if not arglist or arglist[0] != 'self':
-        raise TypeError("Only instance methods can be wrapped")
-
-    def run_in_tx(fun, self, *args, **kwargs):
+    def run_in_tx(fun, *args, **kwargs):
         if not _db: init()
 
         try:
-            result = fun(self, *args, **kwargs)
+            result = fun(*args, **kwargs)
         except:
             transaction.abort()
             raise
@@ -99,13 +93,13 @@ def transact(fun):
             return result
 
     @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(*args, **kwargs):
         if not _testing:
             return deferToThreadPool(reactor, _threadpool,
-                                     lambda: run_in_tx(fun, self, *args, **kwargs))
+                                     lambda: run_in_tx(fun, *args, **kwargs))
         else:
             # No threading during testing
-            return defer.succeed(run_in_tx(fun, self, *args, **kwargs))
+            return defer.succeed(run_in_tx(fun, *args, **kwargs))
     return wrapper
 
 
