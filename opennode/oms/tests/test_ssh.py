@@ -47,6 +47,7 @@ class SshTestCase(unittest.TestCase):
             assert self.oms_ssh._cwd() == '/computes'
             self._cmd(cmd)
             assert self.oms_ssh._cwd() == '/'
+            self.terminal.reset_mock()
 
     @run_in_reactor
     def test_ls(self):
@@ -58,6 +59,7 @@ class SshTestCase(unittest.TestCase):
         for folder in ['computes', 'templates']:
             self._cmd('cat %s' % folder)
             assert self.terminal.method_calls[0] == ('write', ('Unable to create a printable representation.\n', ))
+            self.terminal.reset_mock()
 
     @run_in_reactor
     def test_cat_compute(self):
