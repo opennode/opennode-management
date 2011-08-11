@@ -42,7 +42,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             return
 
         cmd_name, cmd_args = line.partition(' ')[::2]
-        cmd_handler = getattr(cmd, 'cmd_' + cmd_name, None)
+        cmd_handler = cmd.commands().get(cmd_name, None)
         if cmd_handler:
             cmd_args = cmd_args.strip()
             if cmd_args:

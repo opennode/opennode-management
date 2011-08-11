@@ -236,3 +236,7 @@ class cmd_set(Cmd):
                    "Sets attributes on objects.\n"
                    "If setting or parsing of one of the attributes fails, "
                    "the operation is cancelled and the object unchanged.\n")
+
+def commands():
+    """Create a map of command names to command objects."""
+    return {name[4:]: cmd for name, cmd in globals().iteritems() if name.startswith('cmd_')}
