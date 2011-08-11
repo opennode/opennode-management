@@ -59,7 +59,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
 
         @deferred
         def on_error(f):
-            f.printDetailedTraceback(self.terminal)
+            f.raiseException()
             self.terminal.nextLine()
             self.terminal.write(self.ps[self.pn])
 
