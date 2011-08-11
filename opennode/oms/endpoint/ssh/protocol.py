@@ -18,21 +18,17 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     def __init__(self):
         super(OmsSshProtocol, self).__init__()
         self.path = ['']
-        # self.obj_path will be initialised in connectionMade
 
-    @defer.inlineCallbacks
-    def connectionMade(self):
-        super(OmsSshProtocol, self).connectionMade()
-        # Here, we simply hope that self.obj_path won't actually be
-        # used until it's initialised.  A more fool-proof solution
-        # would be to block everything in the protocol while the ZODB
-        # query is processing, but that would require a more complex
-        # workaround.
-        self.obj_path = yield self.get_root_path()
+        @defer.inlineCallbacks
+        def _get_obj_path():
+            # Here, we simply hope that self.obj_path won't actually be
+            # used until it's initialised.  A more fool-proof solution
+            # would be to block everything in the protocol while the ZODB
+            # query is processing, but that would require a more complex
+            # workaround.
+            self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])()
 
-    @db.transact
-    def get_root_path(self):
-        return [db.ref(db.get_root()['oms_root'])]
+        _get_obj_path()
 
     def lineReceived(self, line):
         line = line.strip()
