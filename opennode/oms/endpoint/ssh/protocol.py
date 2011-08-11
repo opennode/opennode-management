@@ -25,7 +25,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             # used until it's initialised.  A more fool-proof solution
             # would be to block everything in the protocol while the ZODB
             # query is processing, but that would require a more complex
-            # workaround.
+            # workaround.  This will not be a problem during testing as
+            # DB access is blocking when testing.
             self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])()
 
         _get_obj_path()
