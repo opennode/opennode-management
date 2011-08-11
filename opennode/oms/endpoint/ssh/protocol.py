@@ -6,6 +6,7 @@ from twisted.internet import defer
 from opennode.oms.endpoint.ssh import cmd, completion
 from opennode.oms.zodb import db
 
+
 class OmsSshProtocol(recvline.HistoricRecvLine):
     """Simple echo protocol.
 

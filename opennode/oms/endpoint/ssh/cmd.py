@@ -1,15 +1,15 @@
 import transaction
+import zope.schema
 from columnize import columnize
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
-import zope.schema
 
-from opennode.oms.zodb import db
 from opennode.oms.model.form import apply_raw_data
-from opennode.oms.model.traversal import traverse_path
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.traversal import traverse_path
 from opennode.oms.util import get_direct_interfaces
+from opennode.oms.zodb import db
 
 
 class Cmd(object):
@@ -57,7 +57,6 @@ class Cmd(object):
             return None
         else:
             return objs[-1]
-
 
 
 class cmd_cd(Cmd):
@@ -237,11 +236,13 @@ class cmd_set(Cmd):
                    "If setting or parsing of one of the attributes fails, "
                    "the operation is cancelled and the object unchanged.\n")
 
+
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
     def __call__(self, *args):
-        self.write('valid commands: %s\n' % (", ".join(commands().keys())))
+        self.write("valid commands: %s\n" % (', '.join(commands().keys())))
+
 
 def commands():
     """Create a map of command names to command objects."""
-    return {name[4:]: cmd for name, cmd in globals().iteritems() if name.startswith('cmd_')}
+    return dict((name[4:], cmd) for name, cmd in globals().iteritems() if name.startswith('cmd_'))

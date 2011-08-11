@@ -2,9 +2,8 @@ from grokcore.component import baseclass, context
 from zope.component import provideSubscriptionAdapter
 
 from opennode.oms.endpoint.ssh import cmd
+from opennode.oms.endpoint.ssh.completion import Completer
 from opennode.oms.model.model.base import IContainer
-
-from opennode.oms.endpoint.ssh.completion import ICompleter, Completer
 
 
 class CommandCompleter(Completer):
