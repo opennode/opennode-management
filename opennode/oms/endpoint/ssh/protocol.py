@@ -3,7 +3,7 @@ import re
 from twisted.conch import recvline
 from twisted.internet import defer
 
-from opennode.oms.endpoint.ssh import cmd
+from opennode.oms.endpoint.ssh import cmd, completion
 from opennode.oms.zodb import db
 
 class OmsSshProtocol(recvline.HistoricRecvLine):
@@ -70,6 +70,16 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         ret = defer.Deferred()
         deferred.addBoth(ret.callback)
         return ret
+
+    @db.transact
+    def handle_TAB(self):
+        patch = completion.complete(self, self.lineBuffer, self.lineBufferIndex)
+        if patch:
+            self.terminal.write(patch)
+            lead, rest = self.lineBuffer[0:self.lineBufferIndex], self.lineBuffer[self.lineBufferIndex:]
+            self.lineBuffer = lead + list(patch) + rest
+            self.lineBufferIndex += len(patch)
+
 
     @property
     def ps(self):
