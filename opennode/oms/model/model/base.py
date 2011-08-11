@@ -36,7 +36,8 @@ class ReadonlyContainer(Model):
         return self._items.get(key)
 
     def listnames(self):
-        return self._items.keys()
+        # Ensure the names are strings as _items might have integer keys.
+        return (str(key) for key in self._items.keys())
 
     def listcontent(self):
         return self._items.values()
