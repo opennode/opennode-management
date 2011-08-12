@@ -7,6 +7,14 @@ from opennode.oms.endpoint.ssh import cmd, completion
 from opennode.oms.zodb import db
 
 
+CTRL_A = '\x01'
+CTRL_E = '\x05'
+CTRL_D = '\x04'
+CTRL_K = '\x0b'
+CTRL_Y = '\x19'
+CTRL_BACKSLASH = '\x1c'
+CTRL_L = '\x0c'
+
 class OmsSshProtocol(recvline.HistoricRecvLine):
     """Simple echo protocol.
 
@@ -31,6 +39,18 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])()
 
         _get_obj_path()
+
+    def connectionMade(self):
+        super(OmsSshProtocol, self).connectionMade()
+
+        self.kill_ring = None
+        self.keyHandlers[CTRL_A] = self.handle_HOME
+        self.keyHandlers[CTRL_E] = self.handle_END
+        self.keyHandlers[CTRL_D] = self.handle_EOF
+        self.keyHandlers[CTRL_L] = self.handle_FF
+        self.keyHandlers[CTRL_K] = self.handle_KILL_LINE
+        self.keyHandlers[CTRL_Y] = self.handle_YANK
+        self.keyHandlers[CTRL_BACKSLASH] = self.handle_QUIT
 
     def lineReceived(self, line):
         line = line.strip()
@@ -78,6 +98,41 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             self.lineBuffer = lead + list(patch) + rest
             self.lineBufferIndex += len(patch)
 
+    def handle_EOF(self):
+        """Exit the shell on CTRL-D"""
+        if self.lineBuffer:
+            self.terminal.write('\a')
+        else:
+            self.handle_QUIT()
+
+    def handle_FF(self):
+        """Handle a 'form feed' byte - generally used to request a screen
+        refresh/redraw.
+        """
+        self.terminal.eraseDisplay()
+        self.terminal.cursorHome()
+        self.drawInputLine()
+
+    def handle_KILL_LINE(self):
+        """Deletes the rest of the line (from the cursor right), and keeps the content
+        in the kill ring for future pastes
+        """
+        self.terminal.eraseToLineEnd()
+        self.kill_ring = self.lineBuffer[self.lineBufferIndex:]
+        self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
+
+    def handle_YANK(self):
+        """Paste the content of the kill ring"""
+        if self.kill_ring:
+            self.terminal.write("".join(self.kill_ring))
+            lead, rest = self.lineBuffer[0:self.lineBufferIndex], self.lineBuffer[self.lineBufferIndex:]
+            self.lineBuffer = lead + self.kill_ring + rest
+            self.lineBufferIndex += len(self.kill_ring)
+
+    def handle_QUIT(self):
+        """Just copied from conch Manhole, no idea why it would be useful to differentiate it from CTRL-D,
+        but I guess it's here for a reason"""
+        self.terminal.loseConnection()
 
     @property
     def ps(self):
