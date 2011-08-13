@@ -78,17 +78,20 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
 
         @deferred
         def on_success(ret):
-            self.terminal.write(self.ps[self.pn])
+            self.print_prompt()
 
         @deferred
         def on_error(f):
             f.raiseException()
             self.terminal.nextLine()
-            self.terminal.write(self.ps[self.pn])
+            self.print_prompt()
 
         ret = defer.Deferred()
         deferred.addBoth(ret.callback)
         return ret
+
+    def print_prompt(self):
+        self.terminal.write(self.ps[self.pn])
 
     def insert_buffer(self, buf):
         """Insert some text at current cursor position. text is a char buffer"""
@@ -109,7 +112,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         elif len(completions) > 1:
             self.terminal.nextLine()
             self.terminal.write(columnize(completions))
-            self.terminal.write(self.ps[self.pn])
+            self.print_prompt()
             self.terminal.write("".join(self.lineBuffer))
             if len(rest):
                 self.terminal.cursorBackward(len(rest))
