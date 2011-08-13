@@ -18,7 +18,7 @@ def get_direct_interfaces(obj):
     ['IB']
 
     """
-    cls = type(obj)
+    cls = obj if isinstance(obj, type) else type(obj)
 
     interfaces = list(zope.interface.implementedBy(cls).interfaces())
 
@@ -27,3 +27,13 @@ def get_direct_interfaces(obj):
             interfaces.remove(interface)
 
     return interfaces
+
+
+def get_direct_interface(obj):
+    interfaces = get_direct_interfaces(obj)
+    if not interfaces:
+        return None
+    if len(interfaces) == 1:
+        return interfaces[0]
+    else:
+        raise Exception("Object implements more than 1 interface")
