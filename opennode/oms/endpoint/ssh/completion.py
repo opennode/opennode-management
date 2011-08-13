@@ -1,4 +1,3 @@
-from columnize import columnize
 from grokcore.component import Subscription, implements, baseclass, querySubscriptions
 from zope.interface import Interface
 
@@ -18,7 +17,6 @@ class Completer(Subscription):
 def complete(protocol, buf, pos):
     """Bash like dummy completion, not great like zsh completion.
     Problems: completion in the middle of a word will screw it (like bash)
-    Currently completes only a when there is an unique match.
     """
 
     line = ''.join(buf)
@@ -30,24 +28,12 @@ def complete(protocol, buf, pos):
 
     if len(tokens) > 1:
         # TODO: Instantiating the cmd just for adaption is smelly.
+        # (but, it's not only for adaptation, some adapters need the cmd objects)
         context = cmd.commands()[tokens[0]](protocol)
     else:
         context = None
 
     completers = querySubscriptions(context, ICompleter)
-    completions = []
-    for completer in completers:
-        completions.extend(completer.complete(partial))
+    completions = [completion for completer in completers for completion in completer.complete(partial)]
 
-    if len(completions) == 1:
-        space = '' if rest else ' '
-        return completions[0][len(partial):] + space
-    elif len(completions) > 1:
-        # TODO: move screen fiddling back to protocol.py
-        # this func should only contain high-level logic
-
-        protocol.terminal.nextLine()
-        protocol.terminal.write(columnize(completions))
-        protocol.terminal.write(protocol.ps[protocol.pn])
-        protocol.terminal.write(line)
-        protocol.terminal.cursorBackward(len(rest))
+    return (partial, rest, completions)
