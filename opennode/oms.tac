@@ -8,6 +8,7 @@ from twisted.web import server
 from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
 
 def create_httprest_server():
@@ -24,9 +25,15 @@ def create_ssh_server():
         return insults.ServerProtocol(OmsSshProtocol)
 
     checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(erik="1")
+    pubkey_checker = InMemoryPublicKeyCheckerDontUse()
     rlm = TerminalRealm()
     rlm.chainedProtocolFactory = chainProtocolFactory
-    conch_factory = ConchFactory(portal.Portal(rlm, [checker]))
+
+    the_portal = portal.Portal(rlm)
+    the_portal.registerChecker(checker)
+    the_portal.registerChecker(pubkey_checker)
+
+    conch_factory = ConchFactory(the_portal)
     ssh_server = internet.TCPServer(6022, conch_factory)
 
     return ssh_server
