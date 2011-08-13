@@ -257,6 +257,25 @@ class cmd_cat(Cmd):
                                          str(value).encode('utf8')))
 
 
+def fixup_cmd_set_args(args):
+    last = args[0]
+    new_args = []
+    for arg in args[1:]:
+        if last and last.startswith('='):
+            new_args.append(last[1:] + '=' + arg)
+            last = None
+        else:
+            if last:
+                new_args.append(last)
+            last = arg
+    if last:
+        if last.startswith('='):
+            new_args.append(last[1:] + '=')
+        else:
+            new_args.append(last)
+
+    return new_args
+
 class cmd_set(Cmd):
 
     @db.transact
@@ -264,6 +283,10 @@ class cmd_set(Cmd):
         if not args:
             self._usage()
             return
+
+        # compat: new tokenizer splits key=value into ["=key", "value"]
+        # in order to make it easier to declare keys as argparse options
+        args = fixup_cmd_set_args(args)
 
         path = args[0]
         obj = self.traverse(path)

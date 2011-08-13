@@ -6,6 +6,7 @@ from columnize import columnize
 import os
 
 from opennode.oms.endpoint.ssh import cmd, completion, cmdline
+from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.zodb import db
 
 
@@ -42,6 +43,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
 
         _get_obj_path()
 
+        self.tokenizer = CommandLineTokenizer()
+
     def connectionMade(self):
         super(OmsSshProtocol, self).connectionMade()
 
@@ -62,7 +65,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         if cmd_handler:
             cmd_args = cmd_args.strip()
             if cmd_args:
-                cmd_args = re.split(r'\s+', cmd_args)
+                cmd_args = self.tokenizer.tokenize(cmd_args)
             else:
                 cmd_args = []
             deferred = defer.maybeDeferred(cmd_handler(self), *cmd_args)

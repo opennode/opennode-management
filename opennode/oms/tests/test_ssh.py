@@ -1,8 +1,10 @@
 import unittest
 
 import mock
+from nose.tools import eq_
 
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
+from opennode.oms.endpoint.ssh.cmd import fixup_cmd_set_args
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor
 from opennode.oms.zodb import db
@@ -97,3 +99,27 @@ class SshTestCase(unittest.TestCase):
             ('write', ('RAM size in MB: \t2000\n',)),
             ('write', ('State:          \tactive\n',)),
         ]
+
+    def test_tokenizer(self):
+        arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes"'
+
+        eq_(self.oms_ssh.tokenizer.tokenize(arglist),
+                ['set', '/computes/some file  with spaces', '-v', '--help', '=key', 'value', '=other_key', 'quoted value', '=lastkey', 'escaped " quotes'])
+
+        got_exception = False
+        try:
+            self.oms_ssh.tokenizer.tokenize('ls " -l')
+        except CommandLineSyntaxError:
+            got_exception = True
+
+        assert got_exception
+
+        # TODO: handle "glued" quoted args
+        # arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes" cornercase="glued""quoted"'
+
+    def test_set_fixup(self):
+        args = ['something', '=key', 'value', 'something else', '=k', 'v', '=k']
+
+        eq_(fixup_cmd_set_args(args), ['something', 'key=value', 'something else', 'k=v', 'k='])
+
+        eq_(fixup_cmd_set_args(["value"]), ['value'])
