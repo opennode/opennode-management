@@ -3,6 +3,7 @@ import re
 from twisted.conch import recvline
 from twisted.internet import defer
 from columnize import columnize
+import os
 
 from opennode.oms.endpoint.ssh import cmd, completion
 from opennode.oms.zodb import db
@@ -94,10 +95,15 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         self.terminal.write(self.ps[self.pn])
 
     def insert_buffer(self, buf):
-        """Insert some text at current cursor position. text is a char buffer"""
+        """Insert some chars in the buffer at current cursor position."""
         lead, rest = self.lineBuffer[0:self.lineBufferIndex], self.lineBuffer[self.lineBufferIndex:]
         self.lineBuffer = lead + buf + rest
         self.lineBufferIndex += len(buf)
+
+    def insert_text(self, text):
+        """Insert some text at current cursor position and render it."""
+        self.terminal.write(text)
+        self.insert_buffer(list(text))
 
     @db.transact
     def handle_TAB(self):
@@ -107,15 +113,20 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         if len(completions) == 1:
             space = '' if rest else ' '
             patch = completions[0][len(partial):] + space
-            self.terminal.write(patch)
-            self.insert_buffer(list(patch))
+            self.insert_text(patch)
         elif len(completions) > 1:
-            self.terminal.nextLine()
-            self.terminal.write(columnize(completions))
-            self.print_prompt()
-            self.terminal.write("".join(self.lineBuffer))
-            if len(rest):
-                self.terminal.cursorBackward(len(rest))
+            common_prefix = os.path.commonprefix(completions)
+            patch = common_prefix[len(partial):]
+            self.insert_text(patch)
+
+            # postpone showing list of possible completions until next tab
+            if len(patch) == 0:
+                self.terminal.nextLine()
+                self.terminal.write(columnize(completions))
+                self.print_prompt()
+                self.terminal.write("".join(self.lineBuffer))
+                if len(rest):
+                    self.terminal.cursorBackward(len(rest))
 
     def handle_EOF(self):
         """Exit the shell on CTRL-D"""
