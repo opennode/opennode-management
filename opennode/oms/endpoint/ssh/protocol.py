@@ -111,7 +111,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             self.terminal.write(columnize(completions))
             self.terminal.write(self.ps[self.pn])
             self.terminal.write("".join(self.lineBuffer))
-            self.terminal.cursorBackward(len(rest))
+            if len(rest):
+                self.terminal.cursorBackward(len(rest))
 
     def handle_EOF(self):
         """Exit the shell on CTRL-D"""
