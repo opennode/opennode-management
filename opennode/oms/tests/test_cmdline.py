@@ -5,7 +5,7 @@ from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.cmd import cmd_ls
 
-from opennode.oms.endpoint.ssh.cmdline import VirtualConsoleArgumentParser, InstrumentableArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax
+from opennode.oms.endpoint.ssh.cmdline import PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax
 from grokcore.component import Subscription, implements, queryOrderedSubscriptions, querySubscriptions, context
 from zope.component import provideSubscriptionAdapter
 
@@ -34,14 +34,21 @@ class CmdLineParserTestCase(unittest.TestCase):
 
         assert got_exception
 
+class PartialCmdLineParserTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.terminal = mock.Mock()
+        self.parser = PartialVirtualConsoleArgumentParser(file=self.terminal)
+
     def test_partial(self):
         self.parser.add_argument('--foo')
         self.parser.add_argument('--bar')
 
-        args = self.parser.parse_args('--foo'.split(' '), partial=True)
+        args = self.parser.parse_args('--foo'.split(' '))
         assert args.foo == None
         assert args.bar == None
 
+        eq_(len(self.terminal.method_calls), 0)
 
 class CmdLineTestCase(unittest.TestCase):
 

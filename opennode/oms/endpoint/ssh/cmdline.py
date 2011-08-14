@@ -44,6 +44,9 @@ class InstrumentableArgumentParser(argparse.ArgumentParser):
 
 
 class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
+    """This parser avoids using the argparse help action, since it fires during the parsing,
+    We want to pospone the handling of help until after the args are parsed."""
+
     def __init__(self, *args, **kwargs):
         add_help = kwargs.pop('add_help', None)
 
@@ -52,21 +55,35 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         if add_help:
             self.add_argument('-h', '--help', action="store_true", help="show this help message and exit")
 
+    def parse_args(self, args=None, namespace=None):
+        args = super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
+        if args.help:
+            self.print_help()
+            # or shall we go back and use
+            raise ArgumentParsingInterrupted()
+        return args
 
-    def parse_args(self, args=None, namespace=None, partial=False):
-        """If partial is true, it will attempt also to parse an incomplete commandline,
-        useful during completion.
-        """
+class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
+    """Use this if you want to avoid printing error messages and retry on partial arglists"""
+
+    def __init__(self, *args, **kwargs):
+        class DevNull(object):
+            def write(self, *_):
+                pass
+
+        kwargs['file'] = DevNull()
+        super(PartialVirtualConsoleArgumentParser, self).__init__(*args, **kwargs)
+
+    def parse_args(self, args=None, namespace=None):
         try:
-            args = super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
-            if args.help and not partial:
-                self.print_help()
-                raise ArgumentParsingInterrupted()
-            return args
+            # yes, skip our direct parent
+            return super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
         except ArgumentParsingError as e:
-            if partial:
-                return super(VirtualConsoleArgumentParser, self).parse_args(args[:-2], namespace)
-            raise e
+            try:
+                return super(VirtualConsoleArgumentParser, self).parse_args(args[:-1], namespace)
+            except ArgumentParsingError:
+                # give up, probably we have mandatory positional args
+                return object()
 
 
 class ICmdArgumentsSyntax(Interface):

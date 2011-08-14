@@ -15,7 +15,7 @@ from grokcore.component import implements, context, Subscription, baseclass, ord
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
 from zope.component import provideSubscriptionAdapter
 import argparse
-from opennode.oms.endpoint.ssh.cmdline import VirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
 
 
 class Cmd(object):
@@ -41,11 +41,10 @@ class Cmd(object):
         if ICmdArgumentsSyntax.providedBy(self):
             parser_confs.append(self)
 
-        parser = VirtualConsoleArgumentParser(prog=self.command_name, add_help=True, parents=[conf.arguments() for conf in parser_confs])
-        # redirect messages like help to the terminal
-        parser.file = self.protocol.terminal
+        parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
+        parser = parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, parents=[conf.arguments() for conf in parser_confs])
 
-        return parser.parse_args(args, partial=partial)
+        return parser.parse_args(args)
 
     @property
     def command_name(self):
