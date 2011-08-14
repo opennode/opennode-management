@@ -32,8 +32,8 @@ class Cmd(object):
     def execute(args):
         """Subclasses should override this if you they need parsed arguments."""
 
-    def parse_args(self, args, partial=False):
-        """Parse command line arguments.
+    def arg_parser(self, partial=False):
+        """The argument parser for this command.
         Use partial=True if you want to tolerate incomplete last token
         and avoid executing the help action (e.g. during completion)."""
 
@@ -44,7 +44,12 @@ class Cmd(object):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
         parser = parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, parents=[conf.arguments() for conf in parser_confs])
 
-        return parser.parse_args(args)
+        return parser
+
+    def parse_args(self, args):
+        """Parse command line arguments."""
+
+        return self.arg_parser().parse_args(args)
 
     @property
     def command_name(self):
