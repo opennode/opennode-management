@@ -48,6 +48,10 @@ class CmdCompletionTestCase(unittest.TestCase):
         self._tab_after('t')
         eq_(len(self.terminal.method_calls), 0)
 
+    def test_complete_quotes(self):
+        self._tab_after('ls "comp')
+        eq_(self.terminal.method_calls, [('write', ('utes" ',), {})])
+
     def test_complete_prefix(self):
         self._tab_after('h')
         eq_(self.terminal.method_calls, [('write', ('el',), {})])

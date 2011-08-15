@@ -26,6 +26,11 @@ def complete(protocol, buf, pos):
 
     partial = tokens[-1]  # word to be completed
 
+    # Ignore leading quote when searching for completions.
+    # This isn't enough. We need a relaxed tokenizer.
+    if partial.startswith('"'):
+       partial = partial[1:]
+
     if len(tokens) > 1:
         # TODO: Instantiating the cmd just for adaption is smelly.
         # (but, it's not only for adaptation, some adapters need the cmd objects)
