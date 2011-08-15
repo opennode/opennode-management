@@ -243,6 +243,12 @@ class cmd_help(Cmd):
         self.write("valid commands: %s\n" % (', '.join(commands().keys())))
 
 
+class cmd_quit(Cmd):
+    """Quits the console."""
+    def __call__(self, *args):
+        self.terminal.loseConnection()
+
+
 def commands():
     """Create a map of command names to command objects."""
     return dict((name[4:], cmd) for name, cmd in globals().iteritems() if name.startswith('cmd_'))

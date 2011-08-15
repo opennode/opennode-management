@@ -57,10 +57,6 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     def lineReceived(self, line):
         line = line.strip()
 
-        if line == 'quit':
-            self.terminal.loseConnection()
-            return
-
         cmd_name, cmd_args = line.partition(' ')[::2]
         cmd_handler = cmd.commands().get(cmd_name, None)
         if cmd_handler:

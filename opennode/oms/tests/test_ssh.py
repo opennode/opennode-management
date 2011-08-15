@@ -20,7 +20,7 @@ class SshTestCase(unittest.TestCase):
 
     def test_quit(self):
         self._cmd('quit')
-        assert self.terminal.method_calls == [('loseConnection', )]
+        assert self.terminal.method_calls == [('loseConnection', ),('write', ('user@oms:/# ',), {})]
 
     def test_non_existent_cmd(self):
         self._cmd('non-existent-command')
