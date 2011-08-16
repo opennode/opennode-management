@@ -7,4 +7,8 @@ from .storage import Storage
 from .template import Templates, Template
 
 
-__all__ = [OmsRoot, Computes, Compute, Templates, Template, Network, NetworkDevice, Storage]
+__all__ = [OmsRoot, Computes, Compute, Templates, Template, Network, NetworkDevice, Storage, 'creatable_models']
+
+
+creatable_models = dict((cls.__name__.lower(), cls)
+                        for cls in [Compute, Template, Network, NetworkDevice, Storage])

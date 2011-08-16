@@ -10,6 +10,7 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
+from opennode.oms.model.model import creatable_models
 
 from grokcore.component import implements, context, Subscription, baseclass, order, queryOrderedSubscriptions
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
@@ -356,6 +357,27 @@ class cmd_set(Cmd):
                    "Sets attributes on objects.\n"
                    "If setting or parsing of one of the attributes fails, "
                    "the operation is cancelled and the object unchanged.\n")
+
+
+class cmd_mk(Cmd):
+    def __call__(self, *args):
+        if not args:
+            self._usage()
+            return
+
+        type_name = args[0]
+        model_cls = creatable_models.get(type_name)
+        if model_cls:
+            self.write("No such type: %s\n" % type_name)
+            return
+
+        obj = model_cls()
+
+    def _usage(self):
+        self.write("Usage: mk type key=value [key=value ..]\n\n"
+                   "Creates objects of given type.\n"
+                   "If setting or parsing of one of the attributes fails, "
+                   "the operation is cancelled and no object is created.\n")
 
 
 class cmd_help(Cmd):

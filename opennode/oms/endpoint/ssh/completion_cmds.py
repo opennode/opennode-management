@@ -5,6 +5,7 @@ import argparse
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.completion import Completer
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model import creatable_models
 
 
 class CommandCompleter(Completer):
@@ -51,6 +52,15 @@ class ArgSwitchCompleter(Completer):
 
         value = getattr(parsed, action.dest)
         return value != action.default
+
+
+class ObjectTypeCompleter(Completer):
+    """Completes object type names."""
+
+    context(cmd.cmd_mk)
+
+    def complete(self, token):
+        return [name for name in creatable_models.keys() if name.startswith(token)]
 
 
 # TODO: move to handler
