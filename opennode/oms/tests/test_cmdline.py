@@ -41,3 +41,15 @@ class CmdLineParserTestCase(unittest.TestCase):
         args = self.parser.parse_args('--foo'.split(' '), partial=True)
         assert args.foo == None
         assert args.bar == None
+
+
+class CmdLineTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.protocol = mock.Mock()
+        import opennode.oms.endpoint.ssh.cmd
+        self.cmd = cmd_ls(self.protocol)
+
+    def test_simple(self):
+        arg_parsers = queryOrderedSubscriptions(self.cmd, ICmdArgumentsSyntax)
+        eq_(len(arg_parsers), 1)

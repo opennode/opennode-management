@@ -97,20 +97,34 @@ class Cmd(object):
         else:
             return objs[-1]
 
+class CommonArgs(Subscription):
+    """Just an example of common args, not actually sure that -v is needed in every command"""
+    implements(ICmdArgumentsSyntax)
+    baseclass()
+    order(-1)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-v', '--verbose', action='count', help="be verbose, use it multiple times to increase verbosity")
+        return parser
+
 
 class cmd_cd(Cmd):
 
-    def __call__(self, *args):
-        if len(args) > 1:
-            raise Exception('cd takes at most 1 argument')
+    implements(ICmdArgumentsSyntax)
 
-        if not args:
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('path', nargs='?')
+        return parser
+
+    def execute(self, args):
+        if not args.path:
             self.protocol.path = [self.path[0]]
             self.protocol.obj_path = [self.obj_path[0]]
             return
 
-        path = args[0]
-        deferred = self._do_traverse(path)
+        deferred = self._do_traverse(args.path)
 
         @deferred
         def on_error(f):
@@ -154,16 +168,21 @@ class cmd_cd(Cmd):
 
 class cmd_ls(Cmd):
 
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-l', action='store_true')
+        parser.add_argument('-d', help="dummy param which takes a value")
+        parser.add_argument('paths', nargs='*')
+        return parser
+
     @db.transact
-    def __call__(self, *args):
-        args = list(args)
+    def execute(self, args):
+        self.opts_long = args.l
 
-        self.opts_long = ('-l' in args)
-        if self.opts_long:
-            args.pop(args.index('-l'))
-
-        if args:
-            for path in args:
+        if args.paths:
+            for path in args.paths:
                 obj = self.traverse(path)
                 if not obj:
                     self.write('No such object: %s\n' % path)
@@ -191,17 +210,26 @@ class cmd_ls(Cmd):
             else:
                 self.write('%s\n' % path)
 
+provideSubscriptionAdapter(CommonArgs, adapts=[cmd_ls])
+
 
 class cmd_pwd(Cmd):
-    def __call__(self, *args):
+    def execute(self, args):
         self.write('%s\n' % self.protocol._cwd())
 
 
 class cmd_cat(Cmd):
 
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('paths', nargs='+')
+        return parser
+
     @db.transact
-    def __call__(self, *args):
-        for path in args:
+    def execute(self, args):
+        for path in args.paths:
             obj = self.traverse(path)
             if not obj:
                 self.write('No such object: %s\n' % path)
@@ -278,13 +306,13 @@ class cmd_set(Cmd):
 
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
-    def __call__(self, *args):
+    def execute(self, args):
         self.write("valid commands: %s\n" % (', '.join(commands().keys())))
 
 
 class cmd_quit(Cmd):
     """Quits the console."""
-    def __call__(self, *args):
+    def execute(self, args):
         self.terminal.loseConnection()
 
 
