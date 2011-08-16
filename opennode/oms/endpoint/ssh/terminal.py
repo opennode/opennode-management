@@ -30,6 +30,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
     def connectionMade(self):
         super(InteractiveTerminal, self).connectionMade()
 
+        self.history_save_enabled = True
         self.restore_history()
 
         self.kill_ring = None
@@ -50,6 +51,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
             log.msg("cannot restore history: %s" % e)
 
     def save_history(self):
+        if not self.history_save_enabled:
+            return
+
         try:
             open(self.hist_file_name, 'w').writelines([line + '\n' for line in self.historyLines])
         except Exception as e:

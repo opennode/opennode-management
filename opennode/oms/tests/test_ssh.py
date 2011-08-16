@@ -14,6 +14,8 @@ class SshTestCase(unittest.TestCase):
 
     def setUp(self):
         self.oms_ssh = OmsSshProtocol()
+        self.oms_ssh.history_save_enabled = False
+
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 
