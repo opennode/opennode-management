@@ -29,6 +29,16 @@ class Cmd(object):
     def execute(args):
         """Subclasses should override this if you they need parsed arguments."""
 
+    def make_arg_parser(self, parents, partial=False):
+        parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
+        return parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, parents=parents)
+
+    def parent_parsers(self):
+        parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
+        if ICmdArgumentsSyntax.providedBy(self):
+            parser_confs.append(self)
+        return [conf.arguments() for conf in parser_confs]
+
     def arg_parser(self, partial=False):
         """Returns the argument parser for this command.
 
@@ -37,14 +47,7 @@ class Cmd(object):
 
         """
 
-        parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
-        if ICmdArgumentsSyntax.providedBy(self):
-            parser_confs.append(self)
-        parent_parsers = [conf.arguments() for conf in parser_confs]
-
-        parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        parser = parser_class(prog=self.name, file=self.protocol.terminal, add_help=True, parents=parent_parsers)
-        return parser
+        return self.make_arg_parser(self.parent_parsers(), partial=partial)
 
     def parse_args(self, args):
         """Parses command line arguments."""
