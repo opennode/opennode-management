@@ -112,8 +112,7 @@ class OmsSshProtocol(InteractiveTerminal):
             if not patch:
                 self.terminal.nextLine()
                 self.terminal.write(columnize(completions))
-                self.print_prompt()
-                self.terminal.write("".join(self.lineBuffer))
+                self.drawInputLine()
                 if len(rest):
                     self.terminal.cursorBackward(len(rest))
 

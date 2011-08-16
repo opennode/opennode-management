@@ -60,7 +60,7 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self.oms_ssh.handle_TAB()
 
-        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('help  hello\n',), {}), ('write', (self.oms_ssh.ps[0],), {}), ('write', ('hel',), {})])
+        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('help  hello\n',), {}), ('write', (self.oms_ssh.ps[0] + 'hel',), {})])
 
     def test_spaces_between_arg(self):
         self._tab_after('ls comp')
@@ -72,7 +72,7 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def test_mandatory_positional(self):
         self._tab_after('cat ')
-        eq_(len(self.terminal.method_calls), 5)
+        eq_(len(self.terminal.method_calls), 4)
 
     def test_complete_switches(self):
         self._tab_after('quit ')
@@ -84,7 +84,7 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         # now try with a dash
         self._tab_after('-')
-        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('-h  --help\n',), {}), ('write', (self.oms_ssh.ps[0],), {}), ('write', ('quit -',), {})])
+        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('-h  --help\n',), {}), ('write', (self.oms_ssh.ps[0] + 'quit -',), {})])
         # disambiguate
         self._tab_after('-')
         eq_(self.terminal.method_calls, [('write', ('help ',), {})])
