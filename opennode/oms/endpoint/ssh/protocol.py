@@ -127,7 +127,7 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
             self.insert_text(patch)
 
             # postpone showing list of possible completions until next tab
-            if len(patch) == 0:
+            if not patch:
                 self.terminal.nextLine()
                 self.terminal.write(columnize(completions))
                 self.print_prompt()

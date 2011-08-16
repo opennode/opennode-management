@@ -40,6 +40,8 @@ def complete(protocol, buf, pos):
        partial = partial[1:]
 
     completers = querySubscriptions(context, ICompleter)
-    completions = [completion for completer in completers for completion in completer.complete(partial, parsed_args)]
+    completions = [completion
+                   for completer in completers
+                   for completion in completer.complete(partial, parsed_args)]
 
     return (partial, rest, completions)
