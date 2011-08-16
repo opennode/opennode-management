@@ -5,7 +5,7 @@ from twisted.internet import defer
 from columnize import columnize
 import os
 
-from opennode.oms.endpoint.ssh import cmd, completion
+from opennode.oms.endpoint.ssh import cmd, completion, cmdline
 from opennode.oms.zodb import db
 
 
@@ -79,8 +79,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
 
         @deferred
         def on_error(f):
-            f.raiseException()
-            self.terminal.nextLine()
+            if not f.check(cmdline.ArgumentParsingError):
+                f.raiseException()
             self.print_prompt()
 
         ret = defer.Deferred()

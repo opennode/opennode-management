@@ -11,12 +11,51 @@ from opennode.oms.model.traversal import traverse_path
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
 
+from grokcore.component import implements, context, Subscription, baseclass, order, queryOrderedSubscriptions
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
+from zope.component import provideSubscriptionAdapter
+import argparse
+from opennode.oms.endpoint.ssh.cmdline import VirtualConsoleArgumentParser
+
 
 class Cmd(object):
 
     def __init__(self, protocol):
         self.protocol = protocol
         self.terminal = protocol.terminal
+
+    def __call__(self, *args):
+        """Subclasses should override this if you they need raw arguments."""
+
+        return self.execute(self.parse_args(args))
+
+    def execute(args):
+        """Subclasses should override this if you they need parsed arguments."""
+
+    def parse_args(self, args, partial=False):
+        """Parse command line arguments.
+        Use partial=True if you want to tolerate incomplete last token
+        and avoid executing the help action (e.g. during completion)."""
+
+        parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
+        if ICmdArgumentsSyntax.providedBy(self):
+            parser_confs.append(self)
+
+        parser = VirtualConsoleArgumentParser(prog=self.command_name, add_help=True, parents=[conf.arguments() for conf in parser_confs])
+        # redirect messages like help to the terminal
+        parser.file = self.protocol.terminal
+
+        return parser.parse_args(args, partial=partial)
+
+    @property
+    def command_name(self):
+        """The name of the current command"""
+
+        names = [name for name, cmd in commands().iteritems() if cmd == self.__class__]
+        # the command might not be in the list of known commands, if created dynamically for some reason
+        # it's class might also not follow the naming convention; it's not a problem the usage message will refer
+        # generically to him as 'cmd', everybody will understand, for now.
+        return names[0] if names else 'cmd'
 
     @property
     def path(self):
