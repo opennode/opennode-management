@@ -2,6 +2,7 @@ import re
 
 from twisted.conch import recvline
 from twisted.internet import defer
+from twisted.python import log
 from columnize import columnize
 import os
 
@@ -48,6 +49,8 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     def connectionMade(self):
         super(OmsSshProtocol, self).connectionMade()
 
+        self.restore_history()
+
         self.kill_ring = None
         self.keyHandlers[CTRL_A] = self.handle_HOME
         self.keyHandlers[CTRL_E] = self.handle_END
@@ -56,6 +59,20 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         self.keyHandlers[CTRL_K] = self.handle_KILL_LINE
         self.keyHandlers[CTRL_Y] = self.handle_YANK
         self.keyHandlers[CTRL_BACKSLASH] = self.handle_QUIT
+
+    def restore_history(self):
+        try:
+            if os.path.exists(self.hist_file_name):
+                self.historyLines = [line.strip() for line in open(self.hist_file_name, 'r').readlines()]
+                self.historyPosition = len(self.historyLines)
+        except Exception as e:
+            log.msg("cannot restore history: %s" % e)
+
+    def save_history(self):
+        try:
+            open(self.hist_file_name, 'w').writelines([line + '\n' for line in self.historyLines])
+        except Exception as e:
+            log.msg("cannot save history: %s" % e)
 
     def lineReceived(self, line):
         line = line.strip()
@@ -167,7 +184,17 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     def handle_QUIT(self):
         """Just copied from conch Manhole, no idea why it would be useful to differentiate it from CTRL-D,
         but I guess it's here for a reason"""
+        self.close_connection()
+
+    def close_connection(self):
+        """Closes the connection and saves history."""
+
+        self.save_history()
         self.terminal.loseConnection()
+
+    @property
+    def hist_file_name(self):
+        return os.path.expanduser("~/.oms_history")
 
     @property
     def ps(self):

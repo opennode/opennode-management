@@ -367,7 +367,7 @@ class cmd_help(Cmd):
 class cmd_quit(Cmd):
     """Quits the console."""
     def execute(self, args):
-        self.terminal.loseConnection()
+        self.protocol.close_connection()
 
 
 def commands():
