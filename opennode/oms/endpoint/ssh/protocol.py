@@ -60,21 +60,14 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
     def lineReceived(self, line):
         line = line.strip()
 
-        cmd_name, cmd_args = line.partition(' ')[::2]
-        cmd_handler = cmd.commands().get(cmd_name, None)
-        if cmd_handler:
-            cmd_args = cmd_args.strip()
-            if cmd_args:
-                cmd_args = self.tokenizer.tokenize(cmd_args)
-            else:
-                cmd_args = []
-            deferred = defer.maybeDeferred(cmd_handler(self), *cmd_args)
-        else:
-            if line:
-                self.terminal.write('No such command: %s' % cmd_name)
-                self.terminal.nextLine()
-            deferred = defer.Deferred()
-            deferred.callback(None)
+        try:
+            command, cmd_args = self.parse_line(line)
+        except CommandLineSyntaxError as e:
+            self.terminal.write("Syntax error: %s\n" % (e.message))
+            self.print_prompt()
+            return
+
+        deferred = defer.maybeDeferred(command, *cmd_args)
 
         @deferred
         def on_success(ret):
@@ -103,6 +96,17 @@ class OmsSshProtocol(recvline.HistoricRecvLine):
         """Insert some text at current cursor position and render it."""
         self.terminal.write(text)
         self.insert_buffer(list(text))
+
+    def parse_line(self, line):
+        """Returns a command instance and parsed cmdline argument list.
+        TODO: handle shell expansion here."""
+
+        cmd_name, cmd_args = line.partition(' ')[::2]
+        command_cls = cmd.get_command(cmd_name)
+
+        cmd_args = self.tokenizer.tokenize(cmd_args.strip())
+
+        return (command_cls(self), cmd_args)
 
     @db.transact
     def handle_TAB(self):

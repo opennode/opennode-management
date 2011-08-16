@@ -36,7 +36,7 @@ def complete(protocol, buf, pos):
         # (but, it's not only for adaptation, some adapters need the cmd objects)
         context = cmd.commands()[tokens[0]](protocol)
     else:
-        context = None
+        context = cmd.NoCommand(protocol)
 
     completers = querySubscriptions(context, ICompleter)
     completions = [completion for completer in completers for completion in completer.complete(partial)]

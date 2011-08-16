@@ -9,7 +9,7 @@ from opennode.oms.model.model.base import IContainer
 class CommandCompleter(Completer):
     """Completes a command."""
 
-    context(type(None))
+    context(cmd.NoCommand)
 
     def complete(self, token):
         return [name for name in cmd.commands().keys() if name.startswith(token)]
