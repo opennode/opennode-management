@@ -30,10 +30,10 @@ class InstrumentableArgumentParser(argparse.ArgumentParser):
         super(InstrumentableArgumentParser, self).__init__(*args, **kwargs)
 
     def _print_message(self, message, file=None):
-        if self.file != None: # not self.file doesn't play nicely with mocks
-            file = self.file
-
-        return super(InstrumentableArgumentParser, self)._print_message(message, file)
+        """Ensure that the file passed to the parser constructor is the one actually used
+        to output the message. Argparse's behavior is to default to stderr.
+        """
+        return super(InstrumentableArgumentParser, self)._print_message(message, self.file)
 
     def exit(self, status=0, message=None):
         raise ArgumentParsingInterrupted()
