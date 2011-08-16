@@ -50,7 +50,7 @@ class ArgSwitchCompleter(Completer):
         if action.nargs > 0 or isinstance(action, argparse._CountAction):
             return False
 
-        value = getattr(parsed, action.dest)
+        value = getattr(parsed, action.dest, action.default)
         return value != action.default
 
 
