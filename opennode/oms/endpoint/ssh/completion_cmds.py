@@ -1,5 +1,6 @@
 from grokcore.component import baseclass, context
 from zope.component import provideSubscriptionAdapter
+import argparse
 
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.completion import Completer
@@ -32,16 +33,24 @@ class ArgSwitchCompleter(Completer):
 
     def complete(self, token, parsed):
         if token.startswith("-"):
-            parser = self.context.arg_parser()
+            parser = self.context.arg_parser(partial=True)
 
             options = [option
                        for action_group in parser._action_groups
                        for action in action_group._group_actions
                        for option in action.option_strings
-                       if option.startswith(token)]
+                       if option.startswith(token) and not self.option_consumed(action, parsed)]
             return options
         else:
             return []
+
+    def option_consumed(self, action, parsed):
+        # "count" actions can be repeated
+        if action.nargs > 0 or isinstance(action, argparse._CountAction):
+            return False
+
+        value = getattr(parsed, action.dest)
+        return value != action.default
 
 
 # TODO: move to handler
