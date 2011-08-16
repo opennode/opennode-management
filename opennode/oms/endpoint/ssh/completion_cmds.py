@@ -11,7 +11,7 @@ class CommandCompleter(Completer):
 
     context(cmd.NoCommand)
 
-    def complete(self, token):
+    def complete(self, token, parsed):
         return [name for name in cmd.commands().keys() if name.startswith(token)]
 
 
@@ -19,7 +19,7 @@ class PathCompleter(Completer):
     """Completes a path name."""
     baseclass()
 
-    def complete(self, token):
+    def complete(self, token, parsed):
         obj = self.context.current_obj
         if IContainer.providedBy(obj):
             return [name for name in obj.listnames() if name.startswith(token)]
@@ -30,7 +30,7 @@ class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
     baseclass()
 
-    def complete(self, token):
+    def complete(self, token, parsed):
         if token.startswith("-"):
             parser = self.context.arg_parser()
 
@@ -42,6 +42,7 @@ class ArgSwitchCompleter(Completer):
             return options
         else:
             return []
+
 
 # TODO: move to handler
 for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set]:

@@ -5,8 +5,11 @@ from opennode.oms.endpoint.ssh import cmd
 
 
 class ICompleter(Interface):
-    def complete(token):
-        """Takes a token and returns a list of possible completions"""
+    def complete(token, parsed_args):
+        """Takes a token and returns a list of possible completions
+        according to the context given by the parsed (partial) command arguments object
+        and possibly other state contained in the adapted object (usually a Cmd).
+        """
 
 
 class Completer(Subscription):
@@ -26,19 +29,17 @@ def complete(protocol, buf, pos):
 
     partial = tokens[-1]  # word to be completed
 
+    context, tokenized_args = protocol.parse_line(lead.rstrip(partial).lstrip())
+
+    parser = context.arg_parser(partial=True)
+    parsed_args = parser.parse_args(tokenized_args)
+
     # Ignore leading quote when searching for completions.
     # This isn't enough. We need a relaxed tokenizer.
     if partial.startswith('"'):
        partial = partial[1:]
 
-    if len(tokens) > 1:
-        # TODO: Instantiating the cmd just for adaption is smelly.
-        # (but, it's not only for adaptation, some adapters need the cmd objects)
-        context = cmd.commands()[tokens[0]](protocol)
-    else:
-        context = cmd.NoCommand(protocol)
-
     completers = querySubscriptions(context, ICompleter)
-    completions = [completion for completer in completers for completion in completer.complete(partial)]
+    completions = [completion for completer in completers for completion in completer.complete(partial, parsed_args)]
 
     return (partial, rest, completions)
