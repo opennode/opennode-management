@@ -73,3 +73,18 @@ class CmdCompletionTestCase(unittest.TestCase):
     def test_mandatory_positional(self):
         self._tab_after('cat ')
         eq_(len(self.terminal.method_calls), 5)
+
+    def test_complete_switches(self):
+        self._tab_after('quit ')
+        eq_(len(self.terminal.method_calls), 0)
+
+        # hit tab twice
+        self.oms_ssh.handle_TAB()
+        eq_(len(self.terminal.method_calls), 0)
+
+        # now try with a dash
+        self._tab_after('-')
+        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('-h  --help\n',), {}), ('write', (self.oms_ssh.ps[0],), {}), ('write', ('quit -',), {})])
+        # disambiguate
+        self._tab_after('-')
+        eq_(self.terminal.method_calls, [('write', ('help ',), {})])
