@@ -1,8 +1,6 @@
 from grokcore.component import Subscription, implements, baseclass, querySubscriptions
 from zope.interface import Interface
 
-from opennode.oms.endpoint.ssh import cmd
-
 
 class ICompleter(Interface):
     def complete(token, parsed_args):
@@ -34,8 +32,8 @@ def complete(protocol, buf, pos):
     parser = context.arg_parser(partial=True)
     parsed_args = parser.parse_args(tokenized_args)
 
+    # TODO: This isn't enough. We need a relaxed tokenizer.
     # Ignore leading quote when searching for completions.
-    # This isn't enough. We need a relaxed tokenizer.
     if partial.startswith('"'):
        partial = partial[1:]
 
@@ -44,4 +42,4 @@ def complete(protocol, buf, pos):
                    for completer in completers
                    for completion in completer.complete(partial, parsed_args)]
 
-    return (partial, rest, completions)
+    return partial, rest, completions

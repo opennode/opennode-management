@@ -1,22 +1,19 @@
 import transaction
 import zope.schema
 from columnize import columnize
+from grokcore.component import implements, Subscription, baseclass, order, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
+from zope.component import provideSubscriptionAdapter
 
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
 from opennode.oms.model.form import apply_raw_data
+from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
-from opennode.oms.model.model import creatable_models
-
-from grokcore.component import implements, context, Subscription, baseclass, order, queryOrderedSubscriptions
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
-from zope.component import provideSubscriptionAdapter
-import argparse
-from opennode.oms.endpoint.ssh.cmdline import VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
 
 
 class Cmd(object):
@@ -34,33 +31,35 @@ class Cmd(object):
         """Subclasses should override this if you they need parsed arguments."""
 
     def arg_parser(self, partial=False):
-        """The argument parser for this command.
+        """Returns the argument parser for this command.
+
         Use partial=True if you want to tolerate incomplete last token
-        and avoid executing the help action (e.g. during completion)."""
+        and avoid executing the help action (e.g. during completion).
+
+        """
 
         parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
         if ICmdArgumentsSyntax.providedBy(self):
             parser_confs.append(self)
+        parent_parsers = [conf.arguments() for conf in parser_confs]
 
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        parser = parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, parents=[conf.arguments() for conf in parser_confs])
-
+        parser = parser_class(prog=self.name, file=self.protocol.terminal, add_help=True, parents=parent_parsers)
         return parser
 
     def parse_args(self, args):
-        """Parse command line arguments."""
-
+        """Parses command line arguments."""
         return self.arg_parser().parse_args(args)
 
     @property
-    def command_name(self):
-        """The name of the current command"""
+    def name(self):
+        """The name of the current command.
 
-        names = [name for name, cmd in commands().iteritems() if cmd == self.__class__]
-        # the command might not be in the list of known commands, if created dynamically for some reason
-        # it's class might also not follow the naming convention; it's not a problem the usage message will refer
-        # generically to him as 'cmd', everybody will understand, for now.
-        return names[0] if names else 'cmd'
+        If the command name is not in the form of `cmd_[name]`, it should be defined explicitly.
+
+        """
+        assert self.__class__.__name.startswith('cmd_')
+        return self.__class__.__name[4:]
 
     @property
     def path(self):
@@ -130,7 +129,7 @@ class NoCommand(Cmd):
 
 
 class CommonArgs(Subscription):
-    """Just an example of common args, not actually sure that -v is needed in every command"""
+    """Just an example of common args, not actually sure that -v is needed in every command."""
     implements(ICmdArgumentsSyntax)
     baseclass()
     order(-1)
@@ -142,7 +141,6 @@ class CommonArgs(Subscription):
 
 
 class cmd_cd(Cmd):
-
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -199,7 +197,6 @@ class cmd_cd(Cmd):
 
 
 class cmd_ls(Cmd):
-
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -251,7 +248,6 @@ class cmd_pwd(Cmd):
 
 
 class cmd_cat(Cmd):
-
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -264,7 +260,7 @@ class cmd_cat(Cmd):
         for path in args.paths:
             obj = self.traverse(path)
             if not obj:
-                self.write('No such object: %s\n' % path)
+                self.write("No such object: %s\n" % path)
             else:
                 self._do_cat(obj)
 
@@ -352,7 +348,6 @@ class cmd_set(Cmd):
 
         return new_args
 
-
     def _usage(self):
         self.write("Usage: set obj key=value [key=value ..]\n\n"
                    "Sets attributes on objects.\n"
@@ -361,6 +356,7 @@ class cmd_set(Cmd):
 
 
 class cmd_mk(Cmd):
+
     def __call__(self, *args):
         if not args:
             self._usage()
@@ -383,12 +379,14 @@ class cmd_mk(Cmd):
 
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
+
     def execute(self, args):
         self.write("valid commands: %s\n" % (', '.join(commands().keys())))
 
 
 class cmd_quit(Cmd):
     """Quits the console."""
+
     def execute(self, args):
         self.protocol.close_connection()
 
@@ -404,8 +402,11 @@ def commands():
 
 
 def get_command(name):
-    """Returns the command class for a given name. It might return a NoCommand class
-    if the name is void or an UnknownCommand class if there is no such command.
+    """Returns the command class for a given name.
+
+    Returns NoCommand if the name is empty.
+    Returns UnknownCommand if the command does not exist.
+
     """
 
     if not name:

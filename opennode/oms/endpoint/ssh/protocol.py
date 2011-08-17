@@ -1,19 +1,16 @@
-import re
-
-from twisted.conch import recvline
-from twisted.internet import defer
-from twisted.python import log
-from columnize import columnize
 import os
 
+from columnize import columnize
+from twisted.internet import defer
+
 from opennode.oms.endpoint.ssh import cmd, completion, cmdline
-from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal
+from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.zodb import db
 
 
 class OmsSshProtocol(InteractiveTerminal):
-    """Simple echo protocol.
+    """The OMS virtual console over SSH.
 
     Accepts lines of input and writes them back to its connection.  If
     a line consisting solely of "quit" is received, the connection
@@ -69,30 +66,33 @@ class OmsSshProtocol(InteractiveTerminal):
         self.terminal.write(self.ps[self.pn])
 
     def insert_buffer(self, buf):
-        """Insert some chars in the buffer at current cursor position."""
+        """Inserts some chars in the buffer at the current cursor position."""
         lead, rest = self.lineBuffer[0:self.lineBufferIndex], self.lineBuffer[self.lineBufferIndex:]
         self.lineBuffer = lead + buf + rest
         self.lineBufferIndex += len(buf)
 
     def insert_text(self, text):
-        """Insert some text at current cursor position and render it."""
+        """Inserts some text at the current cursor position and renders it."""
         self.terminal.write(text)
         self.insert_buffer(list(text))
 
     def parse_line(self, line):
         """Returns a command instance and parsed cmdline argument list.
-        TODO: handle shell expansion here."""
+
+        TODO: Shell expansion should be handled here.
+
+        """
 
         cmd_name, cmd_args = line.partition(' ')[::2]
         command_cls = cmd.get_command(cmd_name)
 
-        cmd_args = self.tokenizer.tokenize(cmd_args.strip())
+        tokenized_cmd_args = self.tokenizer.tokenize(cmd_args.strip())
 
-        return (command_cls(self), cmd_args)
+        return command_cls(self), tokenized_cmd_args
 
     @db.transact
     def handle_TAB(self):
-        """Handle tab completion"""
+        """Handles tab completion."""
         partial, rest, completions = completion.complete(self, self.lineBuffer, self.lineBufferIndex)
 
         if len(completions) == 1:
@@ -120,7 +120,7 @@ class OmsSshProtocol(InteractiveTerminal):
 
     @property
     def hist_file_name(self):
-        return os.path.expanduser("~/.oms_history")
+        return os.path.expanduser('~/.oms_history')
 
     @property
     def ps(self):
