@@ -100,6 +100,9 @@ class OmsSshProtocol(InteractiveTerminal):
             # handle quote closing
             if self.lineBuffer[self.lineBufferIndex - len(partial) - 1] == '"':
                 space = '" '
+            # Avoid space after '=' just for aestetics.
+            if completions[0].endswith('='):
+                space = ''
 
             patch = completions[0][len(partial):] + space
             self.insert_text(patch)
