@@ -6,6 +6,7 @@ from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.completion import Completer
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model import creatable_models
+from opennode.oms.zodb import db
 
 
 class CommandCompleter(Completer):
@@ -21,6 +22,7 @@ class PathCompleter(Completer):
     """Completes a path name."""
     baseclass()
 
+    @db.transact
     def complete(self, token, parsed):
         obj = self.context.current_obj
         if IContainer.providedBy(obj):

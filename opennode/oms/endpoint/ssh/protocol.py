@@ -90,10 +90,10 @@ class OmsSshProtocol(InteractiveTerminal):
 
         return command_cls(self), tokenized_cmd_args
 
-    @db.transact
+    @defer.inlineCallbacks
     def handle_TAB(self):
         """Handles tab completion."""
-        partial, rest, completions = completion.complete(self, self.lineBuffer, self.lineBufferIndex)
+        partial, rest, completions = yield completion.complete(self, self.lineBuffer, self.lineBufferIndex)
 
         if len(completions) == 1:
             space = '' if rest else ' '
