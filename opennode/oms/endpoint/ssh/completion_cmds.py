@@ -25,11 +25,41 @@ class PathCompleter(Completer):
 
     @db.transact
     def complete(self, token, parsed, parser):
-        obj = self.context.current_obj
-        if IContainer.providedBy(obj):
-            return [name for name in obj.listnames() if name.startswith(token)]
+
+        if not self.consumed(parsed, parser):
+            obj = self.context.current_obj
+            if IContainer.providedBy(obj):
+                return [name for name in obj.listnames() if name.startswith(token)]
 
         return []
+
+    def consumed(self, parsed, parser):
+        """Check whether we have already consumed all positional arguments."""
+
+        maximum = 0
+        actual = 0
+        for action_group in parser._action_groups:
+            for action in action_group._group_actions:
+                # For every positional argument:
+                if not action.option_strings:
+                    # Count how many of them we have already.
+                    values = getattr(parsed, action.dest, [])
+                    if values == action.default:  # don't count default values
+                        values = []
+                    if not isinstance(values, list):
+                        values = [values]
+                    actual += len(values)
+
+                    # And the maximum number of expected occurencies.
+                    if isinstance(action.nargs, int):
+                        maximum += action.nargs
+                    if action.nargs == argparse.OPTIONAL:
+                        maximum += 1
+                    else:
+                        maximum = float('inf')
+
+        return actual >= maximum
+
 
 class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
