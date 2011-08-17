@@ -1,13 +1,14 @@
 import transaction
 import zope.schema
 from columnize import columnize
-from grokcore.component import implements, Subscription, baseclass, order, queryOrderedSubscriptions
+from grokcore.component import implements, context, Subscription, baseclass, order, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
-from zope.component import provideSubscriptionAdapter
+from zope.component import provideSubscriptionAdapter, queryAdapter
+import argparse
 
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
@@ -59,6 +60,11 @@ class Cmd(object):
         """
 
         parser = self.arg_parser(partial=partial)
+
+        contextual = queryAdapter(self, IContextualCmdArgumentsSyntax)
+        if contextual:
+            parsed, rest = parser.parse_known_args(args)
+            return defer.maybeDeferred(contextual.arguments, parser, parsed, rest)
 
         return defer.succeed(parser)
 

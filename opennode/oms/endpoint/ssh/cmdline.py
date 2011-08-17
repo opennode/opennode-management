@@ -143,3 +143,13 @@ class GroupDictAction(argparse.Action):
 class ICmdArgumentsSyntax(Interface):
     def arguments():
         """Defines the command line arguments syntax."""
+
+class IContextualCmdArgumentsSyntax(Interface):
+    def arguments(parser, args, rest):
+        """Dynamically defines the command line arguments
+        based on the partially parsed arguments and possibly
+        and an unparsed trailing.
+
+        It can return a deferred, if necessary.
+
+        """
