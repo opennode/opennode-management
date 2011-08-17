@@ -101,25 +101,6 @@ class Cmd(object):
         else:
             return objs[-1]
 
-def undefined_command(cmd_name):
-    """Creates a temporary command class which complains about a missing command.
-    Currently OmsSshProtocol needs to needs to get a command class, like every other command,
-    and it will instantiate it.
-
-    We could return a function which then constructs a UndefinedCommand passing the cmd_name as constructor,
-    but dynamically creating classes like this is cheap in python,
-    so let's leverage the fact that cmd_name is in the lexical scope.
-    """
-
-    class UndefinedCommand(Cmd):
-        """Represents an undefined command."""
-
-        def __call__(self, *args):
-            """Report an error"""
-            self.terminal.write('No such command: %s' % cmd_name)
-            self.terminal.nextLine()
-    return UndefinedCommand
-
 
 class NoCommand(Cmd):
     """Represents the fact that there is no command yet."""
@@ -409,7 +390,14 @@ def get_command(name):
 
     """
 
+    # TODO: Remove this once we have the better command registration (described above).
     if not name:
         return NoCommand
 
-    return commands().get(name, undefined_command(name))
+    # TODO: Is this approach needed as opposed to handling it
+    # upstream? Is this a result of over engineering?
+    class UndefinedCommand(Cmd):
+        def __call__(self, *args):
+            self.terminal.write("No such command: %s\n" % name)
+
+    return commands().get(name, UndefinedCommand)
