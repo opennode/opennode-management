@@ -4,6 +4,7 @@ import argparse
 
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.completion import Completer
+from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model import creatable_models
 from opennode.oms.zodb import db
@@ -52,8 +53,26 @@ class ArgSwitchCompleter(Completer):
         if action.nargs > 0 or isinstance(action, argparse._CountAction):
             return False
 
-        value = getattr(parsed, action.dest, action.default)
+        if isinstance(action, GroupDictAction):
+            value = getattr(parsed, action.group, {}).get(action.dest, action.default)
+        else:
+            value = getattr(parsed, action.dest, action.default)
+
         return value != action.default
+
+class KeywordSwitchCompleter(ArgSwitchCompleter):
+    """Completes key=value argument switches based on the argparse grammar exposed for a command.
+    TODO: probably more can be shared with ArgSwitchCompleter."""
+
+    baseclass()
+
+    def complete(self, token, parsed, parser):
+        options = [option[1:] + '='
+                   for action_group in parser._action_groups
+                   for action in action_group._group_actions
+                   for option in action.option_strings
+                   if option.startswith('=' + token) and not self.option_consumed(action, parsed)]
+        return options
 
 
 class ObjectTypeCompleter(Completer):
@@ -71,3 +90,6 @@ for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set]:
 
 for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.cmd_quit]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=[command])
+
+for command in [cmd.cmd_set]:
+    provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=[command])
