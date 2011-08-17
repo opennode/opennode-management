@@ -50,7 +50,7 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def test_complete_quotes(self):
         self._tab_after('ls "comp')
-        eq_(self.terminal.method_calls, [('write', ('utes" ',), {})])
+        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
 
     def test_complete_prefix(self):
         self._tab_after('h')
@@ -64,11 +64,11 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def test_spaces_between_arg(self):
         self._tab_after('ls comp')
-        eq_(self.terminal.method_calls, [('write', ('utes ',), {})])
+        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
 
     def test_command_arg_spaces_before_command(self):
         self._tab_after(' ls comp')
-        eq_(self.terminal.method_calls, [('write', ('utes ',), {})])
+        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
 
     def test_mandatory_positional(self):
         self._tab_after('cat ')

@@ -101,8 +101,10 @@ class OmsSshProtocol(InteractiveTerminal):
             if self.lineBuffer[self.lineBufferIndex - len(partial) - 1] == '"':
                 space = '" '
             # Avoid space after '=' just for aestetics.
-            if completions[0].endswith('='):
-                space = ''
+            # Avoid space after '/' for functionality.
+            for i in ('=', '/'):
+                if completions[0].endswith(i):
+                    space = ''
 
             patch = completions[0][len(partial):] + space
             self.insert_text(patch)

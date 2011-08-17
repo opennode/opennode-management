@@ -1,6 +1,7 @@
 from grokcore.component import baseclass, context
 from zope.component import provideSubscriptionAdapter
 import argparse
+import os
 
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.endpoint.ssh.completion import Completer
@@ -25,11 +26,19 @@ class PathCompleter(Completer):
 
     @db.transact
     def complete(self, token, parsed, parser):
-
         if not self.consumed(parsed, parser):
-            obj = self.context.current_obj
-            if IContainer.providedBy(obj):
-                return [name for name in obj.listnames() if name.startswith(token)]
+            base_path = os.path.dirname(token)
+            container = self.context.traverse(base_path)
+
+            if IContainer.providedBy(container):
+                def dir_suffix(obj):
+                    return '/' if IContainer.providedBy(obj) else ''
+
+                def name(obj):
+                    return os.path.join(base_path, obj.__name__)
+
+                return [name(obj) + dir_suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
+
 
         return []
 
