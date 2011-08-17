@@ -388,18 +388,15 @@ provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
 
 
 class cmd_mk(Cmd):
+    implements(ICmdArgumentsSyntax)
 
-    def __call__(self, *args):
-        if not args:
-            self._usage()
-            return
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('type', choices=creatable_models.keys(), help="object type to be created")
+        return parser
 
-        type_name = args[0]
-        model_cls = creatable_models.get(type_name)
-        if model_cls:
-            self.write("No such type: %s\n" % type_name)
-            return
-
+    def execute(self, args):
+        model_cls = creatable_models.get(args.type)
         obj = model_cls()
 
     def _usage(self):
