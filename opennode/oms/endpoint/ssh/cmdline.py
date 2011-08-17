@@ -58,15 +58,7 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         super(VirtualConsoleArgumentParser, self).__init__(add_help=False, formatter_class=VirtualConsoleHelpFormatter, *args, **kwargs)
 
         if add_help:
-            self.add_argument('-h', '--help', action='store_true', default=argparse.SUPPRESS, help="show this help message and exit")
-
-    def parse_args(self, args=None, namespace=None):
-        args = super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
-        if getattr(args, 'help', None):
-            self.print_help()
-            # XXX: or shall we go back and use
-            raise ArgumentParsingInterrupted
-        return args
+            self.add_argument('-h', '--help', action=argparse._HelpAction, help="show this help message and exit")
 
 
 class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):

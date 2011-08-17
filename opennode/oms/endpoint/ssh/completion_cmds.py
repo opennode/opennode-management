@@ -60,9 +60,11 @@ class PathCompleter(Completer):
                     actual += len(values)
 
                     # And the maximum number of expected occurencies.
-                    if isinstance(action.nargs, int):
+                    if action.nargs is None:
+                        maximum += 1
+                    elif isinstance(action.nargs, int):
                         maximum += action.nargs
-                    if action.nargs == argparse.OPTIONAL:
+                    elif action.nargs == argparse.OPTIONAL:
                         maximum += 1
                     else:
                         maximum = float('inf')
