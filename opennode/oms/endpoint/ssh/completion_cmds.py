@@ -105,6 +105,29 @@ class KeywordSwitchCompleter(ArgSwitchCompleter):
         return options
 
 
+class KeywordValueCompleter(ArgSwitchCompleter):
+    """Completes the `value` part of key=value constructs based on the type of the keyword.
+    Currently works only for args which declare an explicit enumeration."""
+
+    baseclass()
+
+    def complete(self, token, parsed, parser):
+        if '=' in token:
+            keyword, value_prefix = token.split('=')
+
+            action = self.find_action(keyword, parsed, parser)
+            if action.choices:
+                return [keyword + '=' + value for value in action.choices if value.startswith(value_prefix)]
+
+        return []
+
+    def find_action(self, keyword, parsed, parser):
+        for action_group in parser._action_groups:
+            for action in action_group._group_actions:
+                if action.dest == keyword:
+                    return action
+
+
 class ObjectTypeCompleter(Completer):
     """Completes object type names."""
 
@@ -123,3 +146,6 @@ for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.cmd_quit]:
 
 for command in [cmd.cmd_set]:
     provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=[command])
+
+for command in [cmd.cmd_set]:
+    provideSubscriptionAdapter(KeywordValueCompleter, adapts=[command])
