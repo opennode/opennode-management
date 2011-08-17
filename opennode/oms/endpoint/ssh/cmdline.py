@@ -1,6 +1,7 @@
 import argparse, re
 
 from zope.interface import Interface
+from twisted.python import log
 
 
 class ArgumentParsingError(Exception):
@@ -85,9 +86,10 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
         except ArgumentParsingError:
             try:
                 return super(VirtualConsoleArgumentParser, self).parse_args(args[:-1], namespace)
-            except ArgumentParsingError:
+            except ArgumentParsingError as e:
                 # give up, probably we have mandatory positional args
-                return object()  # XXX: Why object()?
+                log.msg("Tried hard but cannot parse %s" % e)
+                return object()  # XXX: Why object()? mmikulicic: because the command could cope with a empty parse results.
 
 
 class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
