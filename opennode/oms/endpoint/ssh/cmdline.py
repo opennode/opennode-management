@@ -114,7 +114,7 @@ class GroupDictAction(argparse.Action):
                  dest,
                  nargs=None,
                  const=None,
-                 default=None,
+                 default=argparse.SUPPRESS,
                  type=None,
                  choices=None,
                  required=False,
