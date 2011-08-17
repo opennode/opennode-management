@@ -31,7 +31,7 @@ class Cmd(object):
 
     def make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, parents=parents)
+        return parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
 
     def parent_parsers(self):
         parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
