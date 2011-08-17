@@ -395,6 +395,11 @@ class cmd_quit(Cmd):
 
 def commands():
     """Create a map of command names to command objects."""
+    # TODO: We should use martian to create a directive to register
+    # commands by name.  This would rid us of the need to follow a
+    # naming convention for Cmd subclasses, and the need to have a
+    # dynamic name property. It would also enable us to avoid the
+    # special casing with NoCommand in get_command.
     return dict((name[4:], cmd) for name, cmd in globals().iteritems() if name.startswith('cmd_'))
 
 
