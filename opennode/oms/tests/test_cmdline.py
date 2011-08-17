@@ -5,7 +5,7 @@ from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.cmd import cmd_ls
 
-from opennode.oms.endpoint.ssh.cmdline import PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax
+from opennode.oms.endpoint.ssh.cmdline import PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax, GroupDictAction
 from grokcore.component import Subscription, implements, queryOrderedSubscriptions, querySubscriptions, context
 from zope.component import provideSubscriptionAdapter
 
@@ -33,6 +33,16 @@ class CmdLineParserTestCase(unittest.TestCase):
             got_exception = True
 
         assert got_exception
+
+    def test_group_dict(self):
+        self.parser.add_argument('--one', type=int, action=GroupDictAction)
+        self.parser.add_argument('--two', type=int, action=GroupDictAction)
+        self.parser.add_argument('--three', type=int, action=GroupDictAction, group='other')
+
+        res = self.parser.parse_args('--one 1 --two 2 --three 3'.split())
+        eq_(res.group, dict(one = 1, two = 2))
+        eq_(res.other, dict(three = 3))
+
 
 class PartialCmdLineParserTestCase(unittest.TestCase):
 

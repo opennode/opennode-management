@@ -98,6 +98,48 @@ class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
         return re.sub(r'=(\w*)', r'\1 =', help)
 
 
+class GroupDictAction(argparse.Action):
+    """Extends argparser with an action suited for key=value keyword arguments.
+    Each arg declared with a KeywordAction, will be put inside a dictionary
+    (by default called `keywords`) inside the resulting arg object.
+
+    This is particularly useful if you have a number of dynamically defined args
+    which would otherwise end up in cluttering the resulting arg object without
+    a clear way to enumerate them all.
+
+    You can override this grouping with the `group` parameter."""
+
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 nargs=None,
+                 const=None,
+                 default=None,
+                 type=None,
+                 choices=None,
+                 required=False,
+                 help=None,
+                 metavar=None,
+                 group='group'):
+        super(GroupDictAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=nargs,
+            const=const,
+            default=default,
+            type=type,
+            choices=choices,
+            required=required,
+            help=help,
+            metavar=metavar)
+        self.group=group
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        group = getattr(namespace, self.group, {})
+        group[self.dest] = values
+        setattr(namespace, self.group, group)
+
+
 class ICmdArgumentsSyntax(Interface):
     def arguments():
         """Defines the command line arguments syntax."""
