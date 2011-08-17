@@ -58,8 +58,8 @@ class Cmd(object):
         If the command name is not in the form of `cmd_[name]`, it should be defined explicitly.
 
         """
-        assert self.__class__.__name.startswith('cmd_')
-        return self.__class__.__name[4:]
+        assert self.__class__.__name__.startswith('cmd_')
+        return self.__class__.__name__[4:]
 
     @property
     def path(self):
@@ -104,6 +104,8 @@ class Cmd(object):
 
 class NoCommand(Cmd):
     """Represents the fact that there is no command yet."""
+
+    name = 'no-command'
 
     def __call__(self, *args):
         """Just do nothing."""
@@ -310,7 +312,8 @@ class cmd_set(Cmd):
 
         transaction.commit()
 
-    def fixup_args(self, args):
+    @staticmethod
+    def fixup_args(args):
         last = args[0]
         new_args = []
         for arg in args[1:]:

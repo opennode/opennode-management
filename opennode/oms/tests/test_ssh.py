@@ -4,7 +4,7 @@ import mock
 from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import fixup_cmd_set_args
+from opennode.oms.endpoint.ssh.cmd import cmd_set
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor
 from opennode.oms.zodb import db
@@ -26,7 +26,7 @@ class SshTestCase(unittest.TestCase):
 
     def test_non_existent_cmd(self):
         self._cmd('non-existent-command')
-        assert self.terminal.method_calls[0] == ('write', ('No such command: non-existent-command',))
+        assert self.terminal.method_calls[0] == ('write', ('No such command: non-existent-command\n',))
 
     @run_in_reactor
     def test_pwd(self):
@@ -120,6 +120,6 @@ class SshTestCase(unittest.TestCase):
     def test_set_fixup(self):
         args = ['something', '=key', 'value', 'something else', '=k', 'v', '=k']
 
-        eq_(fixup_cmd_set_args(args), ['something', 'key=value', 'something else', 'k=v', 'k='])
+        eq_(cmd_set.fixup_args(args), ['something', 'key=value', 'something else', 'k=v', 'k='])
 
-        eq_(fixup_cmd_set_args(["value"]), ['value'])
+        eq_(cmd_set.fixup_args(['value']), ['value'])
