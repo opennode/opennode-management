@@ -8,7 +8,7 @@ from twisted.python.threadable import isInIOThread
 from zope.component import provideSubscriptionAdapter, queryAdapter
 import argparse
 
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser, ArgumentParsingError
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
@@ -63,7 +63,14 @@ class Cmd(object):
 
         contextual = queryAdapter(self, IContextualCmdArgumentsSyntax)
         if contextual:
-            parsed, rest = parser.parse_known_args(args)
+            try:
+                parsed, rest = parser.parse_known_args(args)
+            except ArgumentParsingError:
+                # Fall back to uncontextualied parsed in case of parsing errors.
+                # This happens when the "context defining" argument is declared as mandatory
+                # but it's not yet present on the command line.
+                return parser
+
             return defer.maybeDeferred(contextual.arguments, parser, parsed, rest)
 
         return defer.succeed(parser)
