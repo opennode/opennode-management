@@ -22,16 +22,18 @@ class Cmd(object):
         self.protocol = protocol
         self.terminal = protocol.terminal
 
+    @defer.inlineCallbacks
     def __call__(self, *args):
         """Subclasses should override this if you they need raw arguments."""
-        return self.execute(self.parse_args(args))
+        parsed = yield defer.maybeDeferred(self.parse_args, args)
+        yield self.execute(parsed)
 
     def execute(args):
         """Subclasses should override this if you they need parsed arguments."""
 
     def make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self.command_name, file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
+        return parser_class(prog=self.name, file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
 
     def parent_parsers(self):
         parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
@@ -49,9 +51,23 @@ class Cmd(object):
 
         return self.make_arg_parser(self.parent_parsers(), partial=partial)
 
+    def contextual_arg_parser(self, args, partial=False):
+        """If the command is offers a contextual parser use it, otherwise
+        fallback to the normal parser.
+
+        Returns a deferred.
+        """
+
+        parser = self.arg_parser(partial=partial)
+
+        return defer.succeed(parser)
+
+    @defer.inlineCallbacks
     def parse_args(self, args):
-        """Parses command line arguments."""
-        return self.arg_parser().parse_args(args)
+        """Parse command line arguments. Return a deferred."""
+
+        parser = yield self.contextual_arg_parser(args)
+        defer.returnValue(parser.parse_args(args))
 
     @property
     def name(self):
