@@ -4,7 +4,7 @@ from zope.interface import Interface
 
 
 class ICompleter(Interface):
-    def complete(token, parsed_args):
+    def complete(token, parsed_args, parser):
         """Takes a token and returns a list of possible completions
         according to the context given by the parsed (partial) command arguments object
         and possibly other state contained in the adapted object (usually a Cmd).
@@ -43,7 +43,7 @@ def complete(protocol, buf, pos):
 
     completions = []
     for completer in completers:
-        completion = yield completer.complete(partial, parsed_args)
+        completion = yield completer.complete(partial, parsed_args, parser)
         completions.extend(completion)
 
     defer.returnValue((partial, rest, completions))
