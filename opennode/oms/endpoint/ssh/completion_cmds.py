@@ -142,7 +142,7 @@ class ObjectTypeCompleter(Completer):
 
     context(cmd.cmd_mk)
 
-    def complete(self, token):
+    def complete(self, token, parsed, parser):
         return [name for name in creatable_models.keys() if name.startswith(token)]
 
 
