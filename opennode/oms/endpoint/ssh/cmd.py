@@ -305,7 +305,7 @@ class cmd_set(Cmd):
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('path', nargs='?')
+        parser.add_argument('path')
         return parser
 
     def _schema(self, obj):
@@ -318,13 +318,6 @@ class cmd_set(Cmd):
     @db.transact
     def execute(self, args):
         parser = self.arg_parser()
-
-        # Currently we cannot set the `path` argument as mandatory
-        # otherwise even `help` won't work,
-        # so we have to manually check whether it exists.
-        if not args.path:
-            parser.print_usage()
-            return
 
         # Argparse doesn't currently return objects, but only paths
         # so we have to manually traverse it.
@@ -368,9 +361,6 @@ class SetCmdDynamicArguments(Adapter):
     @db.transact
     def arguments(self, parser, args, rest):
         # sanity checks
-        if not args.path:
-            return parser
-
         obj = self.context.traverse(args.path)
         if not obj:
             return parser
