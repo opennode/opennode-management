@@ -1,4 +1,4 @@
-import argparse
+import argparse, re
 
 from zope.interface import Interface
 
@@ -54,7 +54,7 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
     """
 
     def __init__(self, add_help=None, *args, **kwargs):
-        super(VirtualConsoleArgumentParser, self).__init__(add_help=False, *args, **kwargs)
+        super(VirtualConsoleArgumentParser, self).__init__(add_help=False, formatter_class=VirtualConsoleHelpFormatter, *args, **kwargs)
 
         if add_help:
             self.add_argument('-h', '--help', action='store_true', default=argparse.SUPPRESS, help="show this help message and exit")
@@ -88,6 +88,14 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
             except ArgumentParsingError:
                 # give up, probably we have mandatory positional args
                 return object()  # XXX: Why object()?
+
+
+class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
+    """Takes care of presenting our special keyworded options in their canonic key = value form"""
+
+    def format_help(self):
+        help = super(VirtualConsoleHelpFormatter, self).format_help()
+        return re.sub(r'=(\w*)', r'\1 =', help)
 
 
 class ICmdArgumentsSyntax(Interface):
