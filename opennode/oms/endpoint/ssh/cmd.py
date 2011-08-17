@@ -1,14 +1,14 @@
 import transaction
 import zope.schema
 from columnize import columnize
-from grokcore.component import implements, context, Subscription, baseclass, order, queryOrderedSubscriptions
+from grokcore.component import implements, context, Adapter, Subscription, baseclass, order, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
 from zope.component import provideSubscriptionAdapter, queryAdapter
 import argparse
 
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
@@ -294,39 +294,52 @@ class cmd_cat(Cmd):
 
 class cmd_set(Cmd):
 
-    @db.transact
-    def __call__(self, *args):
-        if not args:
-            self._usage()
-            return
+    implements(ICmdArgumentsSyntax)
 
-        # compat: new tokenizer splits key=value into ["=key", "value"]
-        # in order to make it easier to declare keys as argparse options
-        args = self.fixup_args(args)
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('path', nargs='?')
+        return parser
 
-        path = args[0]
-        obj = self.traverse(path)
-        if not obj:
-            self.write("No such object: %s\n" % path)
-            return
-
-        raw_data = {}
-
-        attrs = args[1:]
-
-        if not all('=' in pair for pair in attrs):
-            self._usage()
-            return
-
-        for pair in attrs:
-            key, value = pair.split('=', 1)
-            raw_data[key] = value
-
+    def _schema(self, obj):
         schemas = get_direct_interfaces(obj)
+
         if len(schemas) != 1:
-            self.write("No schema found for object: %s" % path)
             return
-        schema = schemas[0]
+        return schemas[0]
+
+    @db.transact
+    def execute(self, args):
+        parser = self.arg_parser()
+
+        # Currently we cannot set the `path` argument as mandatory
+        # otherwise even `help` won't work,
+        # so we have to manually check whether it exists.
+        if not args.path:
+            parser.print_usage()
+            return
+
+        # Argparse doesn't currently return objects, but only paths
+        # so we have to manually traverse it.
+        obj = self.traverse(args.path)
+        if not obj:
+            self.write("No such object: %s\n" % args.path)
+            return
+
+        # Dynamic arguments will end up in the `keywords` arg
+        # thanks to GroupDictAction, but it's not guaranteed that
+        # at least one argument exists.
+        raw_data = getattr(args, 'keywords', {})
+
+        schema = self._schema(obj)
+        if not schema:
+            self.write("No schema found for object: %s\n" % args.path)
+            return
+
+        if args.verbose:
+            for key, value in raw_data.items():
+                self.write("Setting %s=%s\n" % (key, value))
+
         errors = apply_raw_data(raw_data, schema, obj)
 
         if errors:
@@ -336,31 +349,45 @@ class cmd_set(Cmd):
 
         transaction.commit()
 
-    @staticmethod
-    def fixup_args(args):
-        last = args[0]
-        new_args = []
-        for arg in args[1:]:
-            if last and last.startswith('='):
-                new_args.append(last[1:] + '=' + arg)
-                last = None
-            else:
-                if last:
-                    new_args.append(last)
-                last = arg
-        if last:
-            if last.startswith('='):
-                new_args.append(last[1:] + '=')
-            else:
-                new_args.append(last)
 
-        return new_args
+class SetCmdDynamicArguments(Adapter):
+    """Dynamically creates the key=value arguments for the `set` command
+    based upon the object being edited.
+    """
 
-    def _usage(self):
-        self.write("Usage: set obj key=value [key=value ..]\n\n"
-                   "Sets attributes on objects.\n"
-                   "If setting or parsing of one of the attributes fails, "
-                   "the operation is cancelled and the object unchanged.\n")
+    implements(IContextualCmdArgumentsSyntax)
+    context(cmd_set)
+
+    @db.transact
+    def arguments(self, parser, args, rest):
+        # sanity checks
+        if not args.path:
+            return parser
+
+        obj = self.context.traverse(args.path)
+        if not obj:
+            return parser
+
+        schema = self.context._schema(obj)
+        if not schema:
+            return parser
+
+        # Adds dynamically generated keywords to the parser taking them from the object's schema.
+        # Handles choices and the int type.
+        for name, field in zope.schema.getFields(schema).items():
+            choices = None
+            type = None
+            if isinstance(field, zope.schema.Choice):
+                choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
+            if isinstance(field, zope.schema.Int):
+                type = int
+
+            parser.add_argument('=' + name, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+
+        return parser
+
+
+provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
 
 
 class cmd_mk(Cmd):

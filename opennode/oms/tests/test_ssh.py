@@ -4,7 +4,6 @@ import mock
 from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import cmd_set
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor
 from opennode.oms.zodb import db
@@ -118,10 +117,3 @@ class SshTestCase(unittest.TestCase):
 
         # TODO: handle "glued" quoted args
         # arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes" cornercase="glued""quoted"'
-
-    def test_set_fixup(self):
-        args = ['something', '=key', 'value', 'something else', '=k', 'v', '=k']
-
-        eq_(cmd_set.fixup_args(args), ['something', 'key=value', 'something else', 'k=v', 'k='])
-
-        eq_(cmd_set.fixup_args(['value']), ['value'])
