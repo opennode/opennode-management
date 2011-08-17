@@ -1,7 +1,7 @@
-import sys, argparse
+import argparse
 
-from grokcore.component import Subscription, implements, baseclass, querySubscriptions
 from zope.interface import Interface
+
 
 class ArgumentParsingError(Exception):
 
@@ -10,7 +10,8 @@ class ArgumentParsingError(Exception):
         self.message = message
 
     def __str__(self):
-        return "ArgumentParsingError(%s)" % (self.message)
+        return 'ArgumentParsingError(%s)' % (self.message)
+
 
 class ArgumentParsingInterrupted(ArgumentParsingError):
 
@@ -18,25 +19,28 @@ class ArgumentParsingInterrupted(ArgumentParsingError):
         pass
 
     def __str__(self):
-        return "ArgumentParsingInterrupted()"
+        return 'ArgumentParsingInterrupted()'
 
 
 class InstrumentableArgumentParser(argparse.ArgumentParser):
-    """ArgumentParser subclass which returns an exception instead of exiting in case of errors,
-    and allows all output to be redirected to a custom output stream."""
+    """ArgumentParser subclass that raises an exception instead of exiting in case of errors,
+    and allows all output to be redirected to a custom output stream.
 
-    def __init__(self, *args, **kwargs):
-        self.file = kwargs.pop('file', None)
+    """
+
+    def __init__(self, file=None, *args, **kwargs):
+        self.file = file
         super(InstrumentableArgumentParser, self).__init__(*args, **kwargs)
 
     def _print_message(self, message, file=None):
         """Ensure that the file passed to the parser constructor is the one actually used
         to output the message. Argparse's behavior is to default to stderr.
+
         """
         return super(InstrumentableArgumentParser, self)._print_message(message, self.file)
 
     def exit(self, status=0, message=None):
-        raise ArgumentParsingInterrupted()
+        raise ArgumentParsingInterrupted
 
     def error(self, message):
         print >>self.file, message
@@ -45,11 +49,11 @@ class InstrumentableArgumentParser(argparse.ArgumentParser):
 
 class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
     """This parser avoids using the argparse help action, since it fires during the parsing,
-    We want to pospone the handling of help until after the args are parsed."""
+    We want to pospone the handling of help until after the args are parsed.
 
-    def __init__(self, *args, **kwargs):
-        add_help = kwargs.pop('add_help', None)
+    """
 
+    def __init__(self, add_help=None, *args, **kwargs):
         super(VirtualConsoleArgumentParser, self).__init__(add_help=False, *args, **kwargs)
 
         if add_help:
@@ -59,33 +63,33 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         args = super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
         if args.help:
             self.print_help()
-            # or shall we go back and use
-            raise ArgumentParsingInterrupted()
+            # XXX: or shall we go back and use
+            raise ArgumentParsingInterrupted
         return args
 
-class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
-    """Use this if you want to avoid printing error messages and retry on partial arglists"""
 
-    def __init__(self, *args, **kwargs):
+class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
+    """Use this if you want to avoid printing error messages and retry on partial arglists."""
+
+    def __init__(self, file=None, *args, **kwargs):
         class DevNull(object):
             def write(self, *_):
                 pass
 
-        kwargs['file'] = DevNull()
-        super(PartialVirtualConsoleArgumentParser, self).__init__(*args, **kwargs)
+        super(PartialVirtualConsoleArgumentParser, self).__init__(file=DevNull(), *args, **kwargs)
 
     def parse_args(self, args=None, namespace=None):
         try:
             # yes, skip our direct parent
             return super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
-        except ArgumentParsingError as e:
+        except ArgumentParsingError:
             try:
                 return super(VirtualConsoleArgumentParser, self).parse_args(args[:-1], namespace)
             except ArgumentParsingError:
                 # give up, probably we have mandatory positional args
-                return object()
+                return object()  # XXX: Why object()?
 
 
 class ICmdArgumentsSyntax(Interface):
     def arguments():
-        """Defines the command line arguments syntax"""
+        """Defines the command line arguments syntax."""

@@ -24,7 +24,6 @@ class Cmd(object):
 
     def __call__(self, *args):
         """Subclasses should override this if you they need raw arguments."""
-
         return self.execute(self.parse_args(args))
 
     def execute(args):
