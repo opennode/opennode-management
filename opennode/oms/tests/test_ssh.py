@@ -21,6 +21,8 @@ class SshTestCase(unittest.TestCase):
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 
+        self.oms_ssh.enable_colors = False
+
     def _cmd(self, cmd):
         self.oms_ssh.lineReceived(cmd)
 

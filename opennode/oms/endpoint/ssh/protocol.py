@@ -1,11 +1,11 @@
 import os
 
-from columnize import columnize
+from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from twisted.internet import defer
 from twisted.python import log
 
 from opennode.oms.endpoint.ssh import cmd, completion, cmdline
-from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal
+from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.zodb import db
 
@@ -108,6 +108,7 @@ class OmsSshProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
+                completions = [self.colorize(BLUE, item) if item.endswith('/') else item for item in completions]
                 self.terminal.write(columnize(completions, self.width))
                 self.drawInputLine()
                 if len(rest):

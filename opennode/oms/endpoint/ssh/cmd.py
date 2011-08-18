@@ -1,6 +1,6 @@
 import transaction
 import zope.schema
-from columnize import columnize
+from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
@@ -9,6 +9,7 @@ from zope.component import provideSubscriptionAdapter, queryAdapter
 import argparse
 
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser, ArgumentParsingError
+from opennode.oms.endpoint.ssh.terminal import BLUE
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
@@ -241,7 +242,7 @@ class cmd_ls(Cmd):
     def _do_ls(self, obj, path=None):
         def pretty_name(item):
             if IContainer.providedBy(item):
-                return item.__name__ + '/'
+                return self.protocol.colorize(BLUE, item.__name__ + '/')
             return item.__name__
 
         if self.opts_long:

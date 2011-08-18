@@ -14,6 +14,8 @@ CTRL_BACKSLASH = '\x1c'
 CTRL_L = '\x0c'
 CTRL_T = '\x14'
 
+BLUE = '\x1b[1;34m'
+RESET_COLOR = '\x1b[0m'
 
 class InteractiveTerminal(recvline.HistoricRecvLine):
     """Advanced interactive terminal. Handles history, line editing,
@@ -25,6 +27,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
     def connectionMade(self):
         super(InteractiveTerminal, self).connectionMade()
 
+        self.enable_colors = True
         self.history_save_enabled = True
         self.restore_history()
 
@@ -158,6 +161,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         """Just copied from conch Manhole, no idea why it would be useful to differentiate it from CTRL-D,
         but I guess it's here for a reason"""
         self.close_connection()
+
+    def colorize(self, color, text):
+        return color + text + RESET_COLOR if self.enable_colors else text
 
     def close_connection(self):
         """Closes the connection and saves history."""

@@ -2,7 +2,27 @@
 """Return compact set of columns as a string with newlines for an
 array of strings.
 
-Adapted from the routine of the same name inside cmd.py"""
+Adapted from the routine of the same name inside cmd.py
+
+mmikulicic: taken from http://pypi.python.org/pypi/columnize and adapted for strings containing
+ansi escapes (should work mostly for colors).
+
+"""
+
+
+import re
+clean_color_re = re.compile('\x1b[^;]*;?..?m')
+
+def bw(text):
+    """Plain black and white text."""
+    return clean_color_re.sub('', text)
+
+def color_ljust(text, size):
+    return text.ljust(size + len(text) - len(bw(text)))
+
+def color_rjust(text, size):
+    return text.rjust(size + len(text) - len(bw(text)))
+
 
 def columnize(array, displaywidth=80, colsep = '  ', 
               arrange_vertical=True, ljust=True, lineprefix=''):
@@ -52,7 +72,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
                     i = array_index(nrows, row, col)
                     if i >= size: break
                     x = array[i]
-                    colwidth = max(colwidth, len(x))
+                    colwidth = max(colwidth, len(bw(x)))
                     pass
                 colwidths.append(colwidth)
                 totwidth += colwidth + len(colsep)
@@ -80,9 +100,9 @@ def columnize(array, displaywidth=80, colsep = '  ',
                 del texts[-1]
             for col in range(len(texts)):
                 if ljust:
-                    texts[col] = texts[col].ljust(colwidths[col])
+                    texts[col] = color_ljust(texts[col], colwidths[col])
                 else:
-                    texts[col] = texts[col].rjust(colwidths[col])
+                    texts[col] = color_rjust(texts[col], colwidths[col])
                     pass
                 pass
             s += "%s%s\n" % (lineprefix, str(colsep.join(texts)))
@@ -107,7 +127,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
                         if i >= rounded_size: break
                         elif i < size:
                             x = array[i]
-                            colwidth = max(colwidth, len(x))
+                            colwidth = max(colwidth, len(bw(x)) )
                             pass
                         pass
                     colwidths.append(colwidth)
@@ -142,9 +162,9 @@ def columnize(array, displaywidth=80, colsep = '  ',
                 pass
             for col in range(len(texts)):
                 if ljust:
-                    texts[col] = texts[col].ljust(colwidths[col])
+                    texts[col] = color_ljust(texts[col], colwidths[col])
                 else:
-                    texts[col] = texts[col].rjust(colwidths[col])
+                    texts[col] = color_rjust(texts[col], colwidths[col])
                     pass
                 pass
             s += "%s%s\n" % (lineprefix, str(colsep.join(texts)))
