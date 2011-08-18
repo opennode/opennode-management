@@ -459,6 +459,18 @@ class cmd_quit(Cmd):
     def execute(self, args):
         self.protocol.close_connection()
 
+class cmd_last_error(Cmd):
+    """Prints out the last error.
+    Useful for devs, and users reporting to issue tracker.
+    (Inspired by xsbt)
+
+    """
+
+    def execute(self, args):
+        if self.protocol.last_error:
+            cmdline, failure = self.protocol.last_error
+            self.write("Error executing '%s': %s" % (cmdline, failure))
+
 
 def commands():
     """Create a map of command names to command objects."""

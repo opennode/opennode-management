@@ -2,6 +2,7 @@ import os
 
 from columnize import columnize
 from twisted.internet import defer
+from twisted.python import log
 
 from opennode.oms.endpoint.ssh import cmd, completion, cmdline
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal
@@ -21,6 +22,7 @@ class OmsSshProtocol(InteractiveTerminal):
     def __init__(self):
         super(OmsSshProtocol, self).__init__()
         self.path = ['']
+        self.last_error = None
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -55,7 +57,11 @@ class OmsSshProtocol(InteractiveTerminal):
         @deferred
         def on_error(f):
             if not f.check(cmdline.ArgumentParsingError):
-                f.raiseException()
+                self.terminal.write("Command returned an unhandled error: %s\n" % f.getErrorMessage())
+                self.last_error = (line, f)
+                log.msg("Got exception executing '%s': %s" % self.last_error)
+                self.terminal.write("type last_error for more details\n")
+
             self.print_prompt()
 
         ret = defer.Deferred()
