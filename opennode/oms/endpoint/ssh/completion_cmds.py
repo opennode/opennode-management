@@ -20,37 +20,20 @@ class CommandCompleter(Completer):
         return [name for name in cmd.commands().keys() if name.startswith(token)]
 
 
-class PathCompleter(Completer):
-    """Completes a path name."""
+class PositionalCompleter(Completer):
+    """Base class for positional completers."""
+
     baseclass()
 
-    @db.transact
-    def complete(self, token, parsed, parser):
-        if not self.consumed(parsed, parser):
-            base_path = os.path.dirname(token)
-            container = self.context.traverse(base_path)
-
-            if IContainer.providedBy(container):
-                def dir_suffix(obj):
-                    return '/' if IContainer.providedBy(obj) else ''
-
-                def name(obj):
-                    return os.path.join(base_path, obj.__name__)
-
-                return [name(obj) + dir_suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
-
-
-        return []
-
-    def consumed(self, parsed, parser):
-        """Check whether we have already consumed all positional arguments."""
-
-        maximum = 0
-        actual = 0
+    def expected_action(self, parsed, parser):
+        """Currently expected action. It looks at the cardinalities """
         for action_group in parser._action_groups:
             for action in action_group._group_actions:
                 # For every positional argument:
                 if not action.option_strings:
+                    actual = 0
+                    maximum = 0
+
                     # Count how many of them we have already.
                     values = getattr(parsed, action.dest, [])
                     if values == action.default:  # don't count default values
@@ -69,7 +52,32 @@ class PathCompleter(Completer):
                     else:
                         maximum = float('inf')
 
-        return actual >= maximum
+                    if actual < maximum:
+                        return action
+
+
+class PathCompleter(PositionalCompleter):
+    """Completes a path name."""
+    baseclass()
+
+    @db.transact
+    def complete(self, token, parsed, parser):
+        # If there is still any positional option to complete:
+        if self.expected_action(parsed, parser):
+            base_path = os.path.dirname(token)
+            container = self.context.traverse(base_path)
+
+            if IContainer.providedBy(container):
+                def dir_suffix(obj):
+                    return '/' if IContainer.providedBy(obj) else ''
+
+                def name(obj):
+                    return os.path.join(base_path, obj.__name__)
+
+                return [name(obj) + dir_suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
+
+
+        return []
 
 
 class ArgSwitchCompleter(Completer):
@@ -139,13 +147,13 @@ class KeywordValueCompleter(ArgSwitchCompleter):
                     return action
 
 
-class ObjectTypeCompleter(Completer):
-    """Completes object type names."""
-
-    context(cmd.cmd_mk)
+class PositionalChoiceCompleter(PositionalCompleter):
+    baseclass()
 
     def complete(self, token, parsed, parser):
-        return [name for name in creatable_models.keys() if name.startswith(token)]
+        action = self.expected_action(parsed, parser)
+        if action and action.choices:
+            return [value for value in action.choices if value.startswith(token)]
 
 
 # TODO: move to handler
@@ -160,3 +168,6 @@ for command in [cmd.cmd_set, cmd.cmd_mk]:
 
 for command in [cmd.cmd_set, cmd.cmd_mk]:
     provideSubscriptionAdapter(KeywordValueCompleter, adapts=[command])
+
+for command in [cmd.cmd_mk]:
+    provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=[command])

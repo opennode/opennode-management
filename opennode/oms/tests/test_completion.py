@@ -166,3 +166,13 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('arch')
         eq_(self.terminal.method_calls, [])
+
+    @run_in_reactor
+    def test_complete_positional_choice(self):
+        self.oms_ssh.lineReceived('cd computes')
+
+        self._tab_after('mk comp')
+        eq_(self.terminal.method_calls, [('write', ('ute ',), {})])
+
+        self._tab_after('comp')
+        eq_(self.terminal.method_calls, [])
