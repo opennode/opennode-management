@@ -43,8 +43,8 @@ class SshTestCase(unittest.TestCase):
     def test_help(self):
         self._cmd('help')
         out = self.terminal.method_calls[0][1][0]
-        cmds = [cmd.rstrip(', ') for cmd in out.rstrip().split(':')[1].split()]
-        eq_(cmds, commands().keys())
+        for c in commands().keys():
+            assert c in out
 
     @run_in_reactor
     def test_cd(self):

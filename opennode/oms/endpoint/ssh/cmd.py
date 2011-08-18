@@ -30,6 +30,17 @@ class command(martian.Directive):
     default = None
 
 
+class alias(martian.Directive):
+    """Use this directive in a class in order to  set its' command name.
+    Only classes marked with this directive will be valid commands.
+
+    """
+
+    scope = martian.CLASS
+    store = martian.ONCE
+    default = None
+
+
 class Cmd(object):
 
     def __init__(self, protocol):
@@ -45,9 +56,16 @@ class Cmd(object):
     def execute(args):
         """Subclasses should override this if you they need parsed arguments."""
 
+    @classmethod
+    def _format_names(cls):
+        if cls.aliases:
+            return '{ %s }' % ' | '.join([cls.name] + cls.aliases)
+        else:
+            return cls.name
+
     def make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self.name, file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
+        return parser_class(prog=self._format_names(), file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
 
     @defer.inlineCallbacks
     def parent_parsers(self):
@@ -408,6 +426,7 @@ provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
 
 class cmd_mk(Cmd):
     command('mk')
+    alias('create')
 
     implements(ICmdArgumentsSyntax)
 
@@ -474,7 +493,7 @@ class cmd_help(Cmd):
     command('help')
 
     def execute(self, args):
-        self.write("valid commands: %s\n" % (', '.join([command for command in commands().keys() if command])))
+        self.write("valid commands: %s\n" % (', '.join(sorted([command._format_names() for command in set(commands().values()) if command.name]))))
 
 
 class cmd_quit(Cmd):
@@ -511,6 +530,21 @@ class CmdGrokker(martian.ClassGrokker):
          commands()[command] = class_
          class_.name = command
          return True
+
+
+class AliasGrokker(martian.ClassGrokker):
+     martian.component(Cmd)
+     martian.directive(alias)
+
+     def execute(self, class_, alias, **kw):
+         if not getattr(class_, 'aliases', None):
+             class_.aliases = []
+
+         if alias:
+             class_.aliases.append(alias)
+             commands()[alias] = class_
+
+         return False
 
 
 _commands = {}
