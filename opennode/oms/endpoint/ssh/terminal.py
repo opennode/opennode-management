@@ -18,6 +18,7 @@ CTRL_K = '\x0b'
 CTRL_Y = '\x19'
 CTRL_BACKSLASH = '\x1c'
 CTRL_L = '\x0c'
+CTRL_T = '\x14'
 
 
 class InteractiveTerminal(recvline.HistoricRecvLine):
@@ -40,7 +41,19 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.keyHandlers[CTRL_L] = self.handle_FF
         self.keyHandlers[CTRL_K] = self.handle_KILL_LINE
         self.keyHandlers[CTRL_Y] = self.handle_YANK
+        self.keyHandlers[CTRL_T] = self.handle_TRANSPOSE
         self.keyHandlers[CTRL_BACKSLASH] = self.handle_QUIT
+
+        self.altKeyHandlers = {self.terminal.BACKSPACE: self.handle_BACKWARD_KILL_WORD}
+
+    def keystrokeReceived(self, keyID, modifier):
+        if modifier == self.terminal.ALT:
+            m = self.altKeyHandlers.get(keyID)
+            if m is not None:
+                m()
+            return
+
+        return super(InteractiveTerminal, self).keystrokeReceived(keyID, modifier)
 
     def restore_history(self):
         try:
@@ -91,6 +104,47 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         if self.kill_ring:
             self.terminal.write("".join(self.kill_ring))
             self.insert_buffer(self.kill_ring)
+
+    def handle_BACKWARD_KILL_WORD(self):
+        """ALT-BACKSPACE like on emacs/bash."""
+
+        line = "".join(self.lineBuffer[:self.lineBufferIndex])
+
+        # remove trailing spaces
+        back_positions = len(line) - len(line.rstrip())
+        line = line.rstrip()
+
+        # remove everthing until the previous space (not included)
+        back_positions += len(line) - (' ' + line).rfind(' ')
+
+        self.terminal.cursorBackward(back_positions)
+        self.terminal.deleteCharacter(back_positions)
+
+        self.kill_ring = self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
+        del self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
+        self.lineBufferIndex -= back_positions
+
+    def handle_TRANSPOSE(self):
+        """CTRL-T like on emacs/bash."""
+
+        if self.lineBufferIndex == 0:
+            self.terminal.cursorForward()
+            self.lineBufferIndex += 1
+
+        if self.lineBufferIndex == len(self.lineBuffer):
+            self.terminal.cursorBackward()
+            self.lineBufferIndex -= 1
+
+        if self.lineBufferIndex > 0 and self.lineBufferIndex < len(self.lineBuffer) and len(self.lineBuffer) > 1:
+            l, r = self.lineBuffer[self.lineBufferIndex - 1], self.lineBuffer[self.lineBufferIndex]
+
+            self.lineBuffer[self.lineBufferIndex - 1] = r
+            self.lineBuffer[self.lineBufferIndex] = l
+            self.terminal.cursorBackward()
+            self.terminal.deleteCharacter(2)
+            self.terminal.write(r + l)
+
+            self.lineBufferIndex += 1
 
     def handle_QUIT(self):
         """Just copied from conch Manhole, no idea why it would be useful to differentiate it from CTRL-D,
