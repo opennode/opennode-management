@@ -234,6 +234,11 @@ class SshTestCase(unittest.TestCase):
         self._cmd('mk unknown')
         eq_(len(self.terminal.method_calls), 3)
 
+    @run_in_reactor
+    def test_suggestion(self):
+        self._cmd('make')
+        assert self.terminal.method_calls[1] == ('write', ("Do you mean 'mk'?\n",), {})
+
     def test_tokenizer(self):
         arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes"'
 

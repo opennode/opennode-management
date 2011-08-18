@@ -568,6 +568,12 @@ def get_command(name):
         def __call__(self, *args):
             self.terminal.write("No such command: %s\n" % name)
 
+            def dist(a, b):
+                return len(set(a) ^ set(b))
+            candidates = [v for v in commands().keys() if dist(name, v) < 4]
+            if candidates:
+                self.terminal.write("Do you mean '%s'?\n" % min(candidates, key=lambda v: dist(name, v)))
+
     UndefinedCommand.name = name
 
     return commands().get(name, UndefinedCommand)
