@@ -20,7 +20,7 @@ from opennode.oms.zodb import db
 
 
 class command(martian.Directive):
-    """Use this directive in a class in order to  set its' command name.
+    """Use this directive in a class in order to set it's command name.
     Only classes marked with this directive will be valid commands.
 
     """
@@ -31,8 +31,8 @@ class command(martian.Directive):
 
 
 class alias(martian.Directive):
-    """Use this directive in a class in order to  set its' command name.
-    Only classes marked with this directive will be valid commands.
+    """Use this directive in a class in order to add an alias.
+    TODO: make it work with multiple aliases.
 
     """
 
@@ -548,7 +548,8 @@ class AliasGrokker(martian.ClassGrokker):
      martian.component(Cmd)
      martian.directive(alias)
 
-     def execute(self, class_, alias, **kw):
+     def execute(self, class_, alias, **kwargs):
+
          if not getattr(class_, 'aliases', None):
              class_.aliases = []
 
