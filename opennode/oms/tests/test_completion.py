@@ -5,6 +5,9 @@ from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.endpoint.ssh import cmd
+from opennode.oms.model.model.compute import Compute
+from opennode.oms.tests.util import run_in_reactor
+from opennode.oms.zodb import db
 
 
 class CmdCompletionTestCase(unittest.TestCase):
@@ -128,3 +131,14 @@ class CmdCompletionTestCase(unittest.TestCase):
         finally:
             # cleanup the monkeypath
             cmd.Cmd.name = old_name
+
+    @run_in_reactor
+    def test_complete_keyword_switches(self):
+        computes = db.get_root()['oms_root']['computes']
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self._tab_after('set /computes/1 arch')
+        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+
+        self._tab_after('li')
+        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
