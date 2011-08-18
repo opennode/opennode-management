@@ -81,7 +81,6 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
             for action_group in self._action_groups:
                 for action in action_group._group_actions:
                     if action.required:
-                        log.msg("removing requirement for arg", action.dest)
                         action.required = False
 
             # yes, skip our direct parent

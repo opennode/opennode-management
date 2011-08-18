@@ -54,8 +54,22 @@ class SshTestCase(unittest.TestCase):
                 self._cmd('cd ..')
 
     @run_in_reactor
+    def test_cd_errors(self):
+        computes = db.get_root()['oms_root']['computes']
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self._cmd('cd /computes/1')
+        assert self.terminal.method_calls[0] == ('write', ('Cannot cd to a non-container\n',))
+
+        self.terminal.reset_mock()
+
+        self._cmd('cd /nonexisting')
+        assert self.terminal.method_calls[0] == ('write', ('No such object: /nonexisting\n',))
+
+
+    @run_in_reactor
     def test_cd_to_root(self):
-        for cmd in ['cd', 'cd /', 'cd //', 'cd ../..', 'cd /..']:
+        for cmd in ['cd', 'cd /', 'cd //', 'cd ../..', 'cd /..', 'cd']:
             self._cmd('cd computes')
             assert self.oms_ssh._cwd() == '/computes'
             self._cmd(cmd)
@@ -151,7 +165,6 @@ class SshTestCase(unittest.TestCase):
         self._cmd('set computes')
         eq_(self.terminal.method_calls[:-1], [('write', ('No schema found for object: computes\n',))])
 
-
     @run_in_reactor
     def test_modify_compute_verbose(self):
         computes = db.get_root()['oms_root']['computes']
@@ -178,7 +191,6 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('set computes/1 hostname=x')
         eq_(self.terminal.method_calls[:-1], [('write', ('hostname: Value is too short\n',), {})])
-
 
     @run_in_reactor
     def test_create_compute(self):

@@ -98,24 +98,22 @@ class Cmd(object):
     def path(self):
         return self.protocol.path
     @path.setter
-    def _set_path(self, path):
+    def path(self, path):
         self.protocol.path = path
 
     @property
     def obj_path(self):
         return self.protocol.obj_path
     @obj_path.setter
-    def _set_obj_path(self, path):
+    def obj_path(self, path):
         self.protocol.obj_path = path
 
     @property
     def current_obj(self):
         return db.deref(self.obj_path[-1])
 
-    def current_path(self):
-        return self.path[-1]
-
     def write(self, *args):
+        """Ensure that all writes are serialized regardless if the command is executing in a another thread."""
         if not isInIOThread():
             reactor.callFromThread(self.terminal.write, *args)
         else:
@@ -167,8 +165,8 @@ class cmd_cd(Cmd):
     @db.transact
     def execute(self, args):
         if not args.path:
-            self.protocol.path = [self.path[0]]
-            self.protocol.obj_path = [self.obj_path[0]]
+            self.path = [self.path[0]]
+            self.obj_path = [self.obj_path[0]]
             return
 
         self._do_traverse(args.path)
@@ -225,12 +223,9 @@ class cmd_ls(Cmd):
                 else:
                     self._do_ls(obj, path)
         else:
-            try:
-                self._do_ls(self.current_obj, self.current_path)
-            except:
-                print Failure().printDetailedTraceback(self.terminal)
+            self._do_ls(self.current_obj)
 
-    def _do_ls(self, obj, path):
+    def _do_ls(self, obj, path=None):
         if self.opts_long:
             if IContainer.providedBy(obj):
                 for item in obj.listcontent():
@@ -414,10 +409,7 @@ class MkCmdDynamicArguments(Adapter):
 
     def arguments(self, parser, args, rest):
         model_cls = creatable_models.get(args.type)
-
         schema = get_direct_interface(model_cls)
-        if not schema:
-            return parser
 
         for name, field in zope.schema.getFields(schema).items():
             choices = None
