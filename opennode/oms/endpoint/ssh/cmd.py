@@ -386,9 +386,21 @@ provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
 class cmd_mk(Cmd):
     implements(ICmdArgumentsSyntax)
 
+    @db.transact
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('type', choices=creatable_models.keys(), help="object type to be created")
+
+        obj = self.current_obj
+        choices = creatable_models.keys()
+
+        # TODO: Handle interface containment, if we'll ever have it.
+        if getattr(obj, '__contains__', None):
+            for name, cls in creatable_models.items():
+                if cls == obj.__contains__:
+                    choices = [name]
+                    break
+
+        parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
 
     @db.transact

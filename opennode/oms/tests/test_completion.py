@@ -173,6 +173,23 @@ class CmdCompletionTestCase(unittest.TestCase):
         eq_(self.terminal.method_calls, [])
 
     @run_in_reactor
+    def test_complete_mk_legal_types(self):
+        """Test that only legal types are shown."""
+        self.oms_ssh.lineReceived('cd computes')
+
+        self._tab_after('mk net')
+        eq_(self.terminal.method_calls, [])
+
+        self.oms_ssh.handle_RETURN()
+        self.terminal.reset_mock()
+
+        self._tab_after('mk comp')
+        eq_(self.terminal.method_calls, [('write', ('ute ',), {})])
+
+        self._tab_after('arch')
+        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+
+    @run_in_reactor
     def test_complete_positional_choice(self):
         self.oms_ssh.lineReceived('cd computes')
 
