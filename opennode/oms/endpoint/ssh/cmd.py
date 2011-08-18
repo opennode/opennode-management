@@ -448,4 +448,6 @@ def get_command(name):
         def __call__(self, *args):
             self.terminal.write("No such command: %s\n" % name)
 
+    UndefinedCommand.name = name
+
     return commands().get(name, UndefinedCommand)

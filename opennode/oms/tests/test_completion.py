@@ -95,3 +95,34 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('-')
         assert '-l' not in self.terminal.method_calls[2][1][0]
+
+    def test_complete_arg_for_unknown_command(self):
+        """Check for regression introduced in 3970820c."""
+
+        # NOTE: this monkeypatch is used to  catch an exception which would happen inside a deferred?
+        # is there a better way to check for an exception inside a deferred during tests?
+        # otherwise this unit test in 3970820c would raise an exception in deferred
+        # outputing to stderr, but the unit test would pass.
+
+        got_exception = [None]
+        old_name = cmd.Cmd.name
+        class Dummy(object):
+            @property
+            def catch_it(self):
+                print "RUNNING CATCHIT"
+                try:
+                    return old_name.__get__(self)
+                except Exception as e:
+                    got_exception[0] = e
+                    raise e
+        cmd.Cmd.name = Dummy.catch_it
+
+        # actual test
+        try:
+            self._tab_after('junk ')
+            eq_(self.terminal.method_calls, [])
+
+            assert not got_exception[0]
+        finally:
+            # cleanup the monkeypath
+            cmd.Cmd.name = old_name
