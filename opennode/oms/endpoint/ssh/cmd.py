@@ -36,12 +36,19 @@ class Cmd(object):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
         return parser_class(prog=self.name, file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
 
+    @defer.inlineCallbacks
     def parent_parsers(self):
         parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
         if ICmdArgumentsSyntax.providedBy(self):
             parser_confs.append(self)
-        return [conf.arguments() for conf in parser_confs]
 
+        parsers = []
+        for conf in parser_confs:
+            p = yield conf.arguments()
+            parsers.append(p)
+        defer.returnValue(parsers)
+
+    @defer.inlineCallbacks
     def arg_parser(self, partial=False):
         """Returns the argument parser for this command.
 
@@ -50,8 +57,10 @@ class Cmd(object):
 
         """
 
-        return self.make_arg_parser(self.parent_parsers(), partial=partial)
+        parents = yield  self.parent_parsers()
+        defer.returnValue(self.make_arg_parser(parents, partial=partial))
 
+    @defer.inlineCallbacks
     def contextual_arg_parser(self, args, partial=False):
         """If the command is offers a contextual parser use it, otherwise
         fallback to the normal parser.
@@ -59,7 +68,7 @@ class Cmd(object):
         Returns a deferred.
         """
 
-        parser = self.arg_parser(partial=partial)
+        parser = yield self.arg_parser(partial=partial)
 
         contextual = queryAdapter(self, IContextualCmdArgumentsSyntax)
         if contextual:
@@ -71,11 +80,12 @@ class Cmd(object):
                 # Fall back to uncontextualied parsed in case of parsing errors.
                 # This happens when the "context defining" argument is declared as mandatory
                 # but it's not yet present on the command line.
-                return parser
+                defer.returnValue(parser)
 
-            return defer.maybeDeferred(contextual.arguments, parser, parsed, rest)
+            contextual_parser = yield contextual.arguments(parser, parsed, rest)
+            defer.returnValue(contextual_parser)
 
-        return defer.succeed(parser)
+        defer.returnValue(parser)
 
     @defer.inlineCallbacks
     def parse_args(self, args):

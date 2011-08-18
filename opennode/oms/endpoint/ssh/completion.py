@@ -32,7 +32,7 @@ def complete(protocol, buf, pos):
     context, tokenized_args = protocol.parse_line(lead.rstrip(partial).lstrip())
 
     parser = yield context.contextual_arg_parser(tokenized_args, partial=True)
-    parsed_args = parser.parse_args(tokenized_args)
+    parsed_args = yield parser.parse_args(tokenized_args)
 
     # TODO: This isn't enough. We need a relaxed tokenizer.
     # Ignore leading quote when searching for completions.
