@@ -161,5 +161,5 @@ for command in [cmd.cmd_set, cmd.cmd_mk]:
 for command in [cmd.cmd_set, cmd.cmd_mk]:
     provideSubscriptionAdapter(KeywordValueCompleter, adapts=[command])
 
-for command in [cmd.cmd_mk]:
+for command in [cmd.cmd_help, cmd.cmd_mk]:
     provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=[command])

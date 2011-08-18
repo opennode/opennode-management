@@ -487,12 +487,24 @@ class MkCmdDynamicArguments(Adapter):
 
         return parser
 
+
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
 
     command('help')
 
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+
+        parser.add_argument('command', nargs='?', choices=[name for name in commands().keys() if name], help="command to get help for")
+        return parser
+
+    @defer.inlineCallbacks
     def execute(self, args):
+        if args.command:
+            yield get_command(args.command)(self.protocol).parse_args(['-h'])
         self.write("valid commands: %s\n" % (', '.join(sorted([command._format_names() for command in set(commands().values()) if command.name]))))
 
 
