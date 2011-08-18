@@ -133,6 +133,11 @@ class CmdCompletionTestCase(unittest.TestCase):
             cmd.Cmd.name = old_name
 
     @run_in_reactor
+    def test_complete_contextualized_no_context(self):
+        self._tab_after('set /comp')
+        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
+
+    @run_in_reactor
     def test_complete_keyword_switches(self):
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
