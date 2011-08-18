@@ -239,15 +239,23 @@ class cmd_ls(Cmd):
             self._do_ls(self.current_obj)
 
     def _do_ls(self, obj, path=None):
+        def pretty_name(item):
+            if IContainer.providedBy(item):
+                return item.__name__ + '/'
+            return item.__name__
+
         if self.opts_long:
+            def nick(item):
+                return getattr(item, 'nicknames', [])
+
             if IContainer.providedBy(obj):
                 for item in obj.listcontent():
-                    self.write(('%s\t%s\n' % (item.__name__, ':'.join(item.nicknames))).encode('utf8'))
+                    self.write(('%s\t%s\n' % (pretty_name(item), ':'.join(nick(item)))).encode('utf8'))
             else:
-                self.write(('%s\t%s\n' % (obj.__name__, ':'.join(obj.nicknames))).encode('utf8'))
+                self.write(('%s\t%s\n' % (pretty_name(obj), ':'.join(nick(obj)))).encode('utf8'))
         else:
             if IContainer.providedBy(obj):
-                items = list(obj.listnames())
+                items = [pretty_name(item) for item in obj.listcontent()]
                 if items:
                     output = columnize(items, displaywidth=self.protocol.width)
                     self.write(output)

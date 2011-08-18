@@ -79,10 +79,10 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_ls(self):
         self._cmd('ls')
-        assert self.terminal.method_calls[0] == ('write', ('templates  computes\n',))
+        assert self.terminal.method_calls[0] == ('write', ('templates/  computes/\n',))
 
         self._cmd('ls /')
-        assert self.terminal.method_calls[0] == ('write', ('templates  computes\n',))
+        assert self.terminal.method_calls[0] == ('write', ('templates/  computes/\n',))
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
