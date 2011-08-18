@@ -164,24 +164,15 @@ class cmd_cd(Cmd):
         parser.add_argument('path', nargs='?')
         return parser
 
+    @db.transact
     def execute(self, args):
         if not args.path:
             self.protocol.path = [self.path[0]]
             self.protocol.obj_path = [self.obj_path[0]]
             return
 
-        deferred = self._do_traverse(args.path)
+        self._do_traverse(args.path)
 
-        @deferred
-        def on_error(f):
-            f.printDetailedTraceback(self.terminal)
-            self.write('\n')
-
-        d = defer.Deferred()
-        deferred.addBoth(lambda *args: d.callback(None))
-        return d
-
-    @db.transact
     def _do_traverse(self, path):
         objs, unresolved_path = self.traverse_full(path)
 
