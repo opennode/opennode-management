@@ -44,6 +44,7 @@ def complete(protocol, buf, pos):
     completions = []
     for completer in completers:
         completion = yield completer.complete(partial, parsed_args, parser)
-        completions.extend(completion)
+        if completion:
+            completions.extend(completion)
 
     defer.returnValue((partial, rest, completions))
