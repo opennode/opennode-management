@@ -120,6 +120,15 @@ class SshTestCase(unittest.TestCase):
         ]
 
     @run_in_reactor
+    def test_create_compute_mandatory_args(self):
+        self._cmd("cd /computes")
+
+        self.terminal.reset_mock()
+        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
+
+        assert self.terminal.method_calls[:-1][0] == ('write', ('argument =speed is required',))
+
+    @run_in_reactor
     def test_contextualized_help(self):
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))

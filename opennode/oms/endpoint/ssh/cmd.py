@@ -436,7 +436,7 @@ class MkCmdDynamicArguments(Adapter):
             if isinstance(field, zope.schema.Int):
                 type = int
 
-            parser.add_argument('=' + name, required=False, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+            parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
 
