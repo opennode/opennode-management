@@ -4,7 +4,7 @@ import mock
 from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import commands
+from opennode.oms.endpoint.ssh.cmd import commands, Cmd
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor, clean_db
 from opennode.oms.zodb import db
@@ -233,6 +233,19 @@ class SshTestCase(unittest.TestCase):
     def test_parsing_error_message(self):
         self._cmd('mk unknown')
         eq_(len(self.terminal.method_calls), 3)
+
+    @run_in_reactor
+    def test_last_error(self):
+        class FailingCommand(Cmd):
+            name = 'failing'
+            def execute(self, args):
+                raise Exception('some mock error')
+        commands()['fail'] = FailingCommand
+
+        self._cmd('fail')
+        self.terminal.reset_mock()
+        self._cmd('last_error')
+        assert 'some mock error' in self.terminal.method_calls[0][1][0]
 
     @run_in_reactor
     def test_suggestion(self):
