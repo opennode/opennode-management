@@ -64,7 +64,9 @@ class Cmd(object):
         contextual = queryAdapter(self, IContextualCmdArgumentsSyntax)
         if contextual:
             try:
-                parsed, rest = parser.parse_known_args(args)
+                # Inhibit the help action from interrupting our partial parse
+                # since we want the contextualized parser to be built also for printing help/usage.
+                parsed, rest = parser.parse_known_args(args, argparse.Namespace(inhibit_help=True))
             except ArgumentParsingError:
                 # Fall back to uncontextualied parsed in case of parsing errors.
                 # This happens when the "context defining" argument is declared as mandatory

@@ -101,6 +101,16 @@ class SshTestCase(unittest.TestCase):
             ('write', ('State:          \tactive\n',)),
         ]
 
+    @run_in_reactor
+    def test_contextualized_help(self):
+        computes = db.get_root()['oms_root']['computes']
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self.terminal.reset_mock()
+        self._cmd('set computes/1 -h')
+
+        assert 'hostname = ' in self.terminal.method_calls[0][1][0]
+
     def test_tokenizer(self):
         arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes"'
 
