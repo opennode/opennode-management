@@ -137,16 +137,8 @@ class CmdCompletionTestCase(unittest.TestCase):
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
-        try:
-            self._tab_after('set /computes/1 arch')
-            eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+        self._tab_after('set /computes/1 arch')
+        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
 
-            self._tab_after('li')
-            eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
-
-        finally:
-            # workaround for #29
-            class Dummy(object):
-                __name__ = 1
-            computes.remove(Dummy())
-
+        self._tab_after('li')
+        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])

@@ -3,6 +3,7 @@ from Queue import Queue, Empty
 from functools import wraps
 
 from nose.twistedtools import threaded_reactor
+from opennode.oms.zodb import db
 
 
 def run_in_reactor(fun):
@@ -36,5 +37,24 @@ def run_in_reactor(fun):
         if error is not None:
             exc_type, exc_value, tb = error
             raise exc_type, exc_value, tb
+
+    return wrapper
+
+
+def clean_db(fun):
+    """Clean the test db before executing a given unit test.
+    It can be also used to decorate the setUp() so that every test
+    is ensured to run in a clean db, but you have to make sure setUp is also
+    decorated with @run_in_reactor.
+
+    """
+
+    @wraps(fun)
+    def wrapper(*args, **kwargs):
+        # clean the db
+        if hasattr(db._connection, 'x'):
+            delattr(db._connection, 'x')
+            db.init(True)
+        return fun(*args, **kwargs)
 
     return wrapper

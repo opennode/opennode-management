@@ -5,12 +5,14 @@ from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
 from opennode.oms.model.model.compute import Compute
-from opennode.oms.tests.util import run_in_reactor
+from opennode.oms.tests.util import run_in_reactor, clean_db
 from opennode.oms.zodb import db
 
 
 class SshTestCase(unittest.TestCase):
 
+    @run_in_reactor
+    @clean_db
     def setUp(self):
         self.oms_ssh = OmsSshProtocol()
         self.oms_ssh.history_save_enabled = False
