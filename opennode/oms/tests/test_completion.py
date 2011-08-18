@@ -152,3 +152,17 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('li')
         eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+
+    @run_in_reactor
+    def test_complete_consumed_keyword_switches_mk(self):
+        """Test consuming of already completed switches when there are mandatory arguments."""
+        self.oms_ssh.lineReceived('cd computes')
+
+        self._tab_after('mk compute arch')
+        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+
+        self._tab_after('li')
+        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+
+        self._tab_after('arch')
+        eq_(self.terminal.method_calls, [])
