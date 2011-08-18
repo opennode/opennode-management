@@ -76,6 +76,20 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
     def hist_file_name(self):
         raise Exception("subclass must override")
 
+    def print_prompt(self):
+        self.terminal.write(self.ps[self.pn])
+
+    def insert_buffer(self, buf):
+        """Inserts some chars in the buffer at the current cursor position."""
+        lead, rest = self.lineBuffer[0:self.lineBufferIndex], self.lineBuffer[self.lineBufferIndex:]
+        self.lineBuffer = lead + buf + rest
+        self.lineBufferIndex += len(buf)
+
+    def insert_text(self, text):
+        """Inserts some text at the current cursor position and renders it."""
+        self.terminal.write(text)
+        self.insert_buffer(list(text))
+
     def handle_EOF(self):
         """Exit the shell on CTRL-D"""
         if self.lineBuffer:
