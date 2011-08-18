@@ -64,12 +64,16 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
 class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
     """Use this if you want to avoid printing error messages and retry on partial arglists."""
 
-    def __init__(self, file=None, *args, **kwargs):
+    def __init__(self, file=None, add_help=None, *args, **kwargs):
+        """Explicitly puts to false the add_help and uses a 'dev/null' output."""
         class DevNull(object):
             def write(self, *_):
                 pass
 
         super(PartialVirtualConsoleArgumentParser, self).__init__(file=DevNull(), *args, **kwargs)
+
+        if add_help:
+            self.add_argument('-h', '--help', action='store_true', help="show this help message and exit")
 
     def parse_args(self, args=None, namespace=None):
         try:

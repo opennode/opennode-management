@@ -90,11 +90,13 @@ class CmdCompletionTestCase(unittest.TestCase):
         eq_(self.terminal.method_calls, [('write', ('help ',), {})])
 
     def test_complete_consumed_switches(self):
-        self._tab_after('ls -l')
+        self._tab_after('ls --help')
         eq_(self.terminal.method_calls, [('write', (' ',), {})])
 
         self._tab_after('-')
-        assert '-l' not in self.terminal.method_calls[2][1][0]
+        assert 'help' not in self.terminal.method_calls[2][1][0]
+        assert '-h' not in self.terminal.method_calls[2][1][0]
+
 
     def test_complete_arg_for_unknown_command(self):
         """Check for regression introduced in 3970820c."""
