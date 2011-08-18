@@ -1,14 +1,8 @@
 import re
 
 from twisted.conch import recvline
-from twisted.internet import defer
 from twisted.python import log
-from columnize import columnize
 import os
-
-from opennode.oms.endpoint.ssh import cmd, completion, cmdline
-from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
-from opennode.oms.zodb import db
 
 
 CTRL_A = '\x01'
