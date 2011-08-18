@@ -77,25 +77,17 @@ class PathCompleter(PositionalCompleter):
                 return [name(obj) + dir_suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
 
 
-        return []
-
-
 class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
     baseclass()
 
     def complete(self, token, parsed, parser):
         if token.startswith("-"):
-            parser = self.context.arg_parser(partial=True)
-
-            options = [option
-                       for action_group in parser._action_groups
-                       for action in action_group._group_actions
-                       for option in action.option_strings
-                       if option.startswith(token) and not self.option_consumed(action, parsed)]
-            return options
-        else:
-            return []
+            return [option
+                    for action_group in parser._action_groups
+                    for action in action_group._group_actions
+                    for option in action.option_strings
+                    if option.startswith(token) and not self.option_consumed(action, parsed)]
 
     def option_consumed(self, action, parsed):
         # "count" actions can be repeated
@@ -109,6 +101,7 @@ class ArgSwitchCompleter(Completer):
 
         return value != action.default
 
+
 class KeywordSwitchCompleter(ArgSwitchCompleter):
     """Completes key=value argument switches based on the argparse grammar exposed for a command.
     TODO: probably more can be shared with ArgSwitchCompleter."""
@@ -116,12 +109,11 @@ class KeywordSwitchCompleter(ArgSwitchCompleter):
     baseclass()
 
     def complete(self, token, parsed, parser):
-        options = [option[1:] + '='
-                   for action_group in parser._action_groups
-                   for action in action_group._group_actions
-                   for option in action.option_strings
-                   if option.startswith('=' + token) and not self.option_consumed(action, parsed)]
-        return options
+        return [option[1:] + '='
+                for action_group in parser._action_groups
+                for action in action_group._group_actions
+                for option in action.option_strings
+                if option.startswith('=' + token) and not self.option_consumed(action, parsed)]
 
 
 class KeywordValueCompleter(ArgSwitchCompleter):

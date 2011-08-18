@@ -305,8 +305,6 @@ class cmd_set(Cmd):
 
     @db.transact
     def execute(self, args):
-        parser = self.arg_parser()
-
         # Argparse doesn't currently return objects, but only paths
         # so we have to manually traverse it.
         obj = self.traverse(args.path)
