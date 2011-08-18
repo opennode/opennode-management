@@ -142,3 +142,13 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('li')
         eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+
+    @run_in_reactor
+    def test_complete_keyword_switches_mk(self):
+        self.oms_ssh.lineReceived('cd computes')
+
+        self._tab_after('mk compute arch')
+        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+
+        self._tab_after('li')
+        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])

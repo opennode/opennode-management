@@ -155,8 +155,8 @@ for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set]:
 for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.cmd_quit]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=[command])
 
-for command in [cmd.cmd_set]:
+for command in [cmd.cmd_set, cmd.cmd_mk]:
     provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=[command])
 
-for command in [cmd.cmd_set]:
+for command in [cmd.cmd_set, cmd.cmd_mk]:
     provideSubscriptionAdapter(KeywordValueCompleter, adapts=[command])

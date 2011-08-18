@@ -13,7 +13,7 @@ from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.traversal import traverse_path
-from opennode.oms.util import get_direct_interfaces
+from opennode.oms.util import get_direct_interfaces, get_direct_interface
 from opennode.oms.zodb import db
 
 
@@ -397,10 +397,48 @@ class cmd_mk(Cmd):
         parser.add_argument('type', choices=creatable_models.keys(), help="object type to be created")
         return parser
 
+    @db.transact
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
-        obj = model_cls()
 
+        # TODO: this hack was made to make the test run.
+        # Perhaps we should have a better factory for creatable object
+        # (e.g something that doesn't require reflection)
+        # like the apply_raw_data
+        # NOTE: arparser already convers int parameters according to the zope.schema.
+        # but we might want to create nodes also from other APIs, so something like apply_raw_data would fit.
+        import inspect
+        obj = model_cls(*[args.keywords.get(arg_name, None) for arg_name in inspect.getargspec(model_cls.__init__).args[1:]])
+
+        self.current_obj.add(obj)
+
+
+class MkCmdDynamicArguments(Adapter):
+    """Dynamically creates the key=value arguments for the `mk` command
+    based upon the type being created.
+    """
+
+    implements(IContextualCmdArgumentsSyntax)
+    context(cmd_mk)
+
+    def arguments(self, parser, args, rest):
+        model_cls = creatable_models.get(args.type)
+
+        schema = get_direct_interface(model_cls)
+        if not schema:
+            return parser
+
+        for name, field in zope.schema.getFields(schema).items():
+            choices = None
+            type = None
+            if isinstance(field, zope.schema.Choice):
+                choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
+            if isinstance(field, zope.schema.Int):
+                type = int
+
+            parser.add_argument('=' + name, required=False, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+
+        return parser
 
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
