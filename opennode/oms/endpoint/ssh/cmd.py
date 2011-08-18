@@ -401,12 +401,6 @@ class cmd_mk(Cmd):
         model_cls = creatable_models.get(args.type)
         obj = model_cls()
 
-    def _usage(self):
-        self.write("Usage: mk type key=value [key=value ..]\n\n"
-                   "Creates objects of given type.\n"
-                   "If setting or parsing of one of the attributes fails, "
-                   "the operation is cancelled and no object is created.\n")
-
 
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
