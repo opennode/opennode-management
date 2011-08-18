@@ -108,7 +108,7 @@ class OmsSshProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
-                self.terminal.write(columnize(completions))
+                self.terminal.write(columnize(completions, self.width))
                 self.drawInputLine()
                 if len(rest):
                     self.terminal.cursorBackward(len(rest))
