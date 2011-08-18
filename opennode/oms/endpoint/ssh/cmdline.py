@@ -58,7 +58,7 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         super(VirtualConsoleArgumentParser, self).__init__(add_help=False, formatter_class=VirtualConsoleHelpFormatter, *args, **kwargs)
 
         if add_help:
-            self.add_argument('-h', '--help', action=HelpAction, help="show this help message and exit")
+            self.add_argument('-h', '--help', action=argparse._HelpAction, help="show this help message and exit")
 
 
 class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
@@ -100,12 +100,6 @@ class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
     def format_help(self):
         help = super(VirtualConsoleHelpFormatter, self).format_help()
         return re.sub(r'=(\w*)', r'\1 =', help)
-
-
-class HelpAction(argparse._HelpAction):
-    def __call__(self, parser, namespace, values, option_string=None):
-        if not getattr(namespace, 'inhibit_help', None):
-            return super(HelpAction, self).__call__(parser, namespace, values, option_string)
 
 
 class GroupDictAction(argparse.Action):

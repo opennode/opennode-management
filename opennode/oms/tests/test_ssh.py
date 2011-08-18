@@ -227,6 +227,11 @@ class SshTestCase(unittest.TestCase):
 
         assert 'hostname = ' in self.terminal.method_calls[0][1][0]
 
+    @run_in_reactor
+    def test_parsing_error_message(self):
+        self._cmd('mk unknown')
+        eq_(len(self.terminal.method_calls), 3)
+
     def test_tokenizer(self):
         arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes"'
 
