@@ -17,3 +17,4 @@ Deferred.__call__ = deferred_call
 def setup_environ():
     from grokcore.component.testing import grok
     grok('opennode.oms')
+    grok('opennode.oms.endpoint.ssh.cmd')

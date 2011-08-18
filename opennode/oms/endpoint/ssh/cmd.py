@@ -6,6 +6,7 @@ from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
 from zope.component import provideSubscriptionAdapter, queryAdapter
+import martian
 import argparse
 
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser, ArgumentParsingError
@@ -16,6 +17,17 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.util import get_direct_interfaces, get_direct_interface
 from opennode.oms.zodb import db
+
+
+class command(martian.Directive):
+    """Use this directive in a class in order to  set its' command name.
+    Only classes marked with this directive will be valid commands.
+
+    """
+
+    scope = martian.CLASS
+    store = martian.ONCE
+    default = None
 
 
 class Cmd(object):
@@ -99,16 +111,6 @@ class Cmd(object):
         defer.returnValue(parser.parse_args(args))
 
     @property
-    def name(self):
-        """The name of the current command.
-
-        If the command name is not in the form of `cmd_[name]`, it should be defined explicitly.
-
-        """
-        assert self.__class__.__name__.startswith('cmd_')
-        return self.__class__.__name__[4:]
-
-    @property
     def path(self):
         return self.protocol.path
     @path.setter
@@ -150,7 +152,7 @@ class Cmd(object):
 class NoCommand(Cmd):
     """Represents the fact that there is no command yet."""
 
-    name = 'no-command'
+    command("")
 
     def __call__(self, *args):
         """Just do nothing."""
@@ -169,6 +171,8 @@ class CommonArgs(Subscription):
 
 
 class cmd_cd(Cmd):
+    command('cd')
+
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -216,6 +220,8 @@ class cmd_cd(Cmd):
 
 
 class cmd_ls(Cmd):
+    command('ls')
+
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -267,11 +273,15 @@ provideSubscriptionAdapter(CommonArgs, adapts=[cmd_ls])
 
 
 class cmd_pwd(Cmd):
+    command('pwd')
+
     def execute(self, args):
         self.write('%s\n' % self.protocol._cwd())
 
 
 class cmd_cat(Cmd):
+    command('cat')
+
     implements(ICmdArgumentsSyntax)
 
     def arguments(self):
@@ -310,6 +320,7 @@ class cmd_cat(Cmd):
 
 
 class cmd_set(Cmd):
+    command('set')
 
     implements(ICmdArgumentsSyntax)
 
@@ -396,6 +407,8 @@ provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
 
 
 class cmd_mk(Cmd):
+    command('mk')
+
     implements(ICmdArgumentsSyntax)
 
     @db.transact
@@ -458,12 +471,16 @@ class MkCmdDynamicArguments(Adapter):
 class cmd_help(Cmd):
     """Get the names of the commands from this modules and prints them out."""
 
+    command('help')
+
     def execute(self, args):
-        self.write("valid commands: %s\n" % (', '.join(commands().keys())))
+        self.write("valid commands: %s\n" % (', '.join([command for command in commands().keys() if command])))
 
 
 class cmd_quit(Cmd):
     """Quits the console."""
+
+    command('quit')
 
     def execute(self, args):
         self.protocol.close_connection()
@@ -475,20 +492,32 @@ class cmd_last_error(Cmd):
 
     """
 
+    command('last_error')
+
     def execute(self, args):
         if self.protocol.last_error:
             cmdline, failure = self.protocol.last_error
             self.write("Error executing '%s': %s" % (cmdline, failure))
 
 
+class CmdGrokker(martian.ClassGrokker):
+     martian.component(Cmd)
+     martian.directive(command)
+
+     def execute(self, class_, command, **kw):
+         if command is None:
+             return False
+
+         commands()[command] = class_
+         class_.name = command
+         return True
+
+
+_commands = {}
+
 def commands():
-    """Create a map of command names to command objects."""
-    # TODO: We should use martian to create a directive to register
-    # commands by name.  This would rid us of the need to follow a
-    # naming convention for Cmd subclasses, and the need to have a
-    # dynamic name property. It would also enable us to avoid the
-    # special casing with NoCommand in get_command.
-    return dict((name[4:], cmd) for name, cmd in globals().iteritems() if name.startswith('cmd_'))
+    """A map of command names to command objects."""
+    return _commands
 
 
 def get_command(name):
@@ -498,10 +527,6 @@ def get_command(name):
     Returns UnknownCommand if the command does not exist.
 
     """
-
-    # TODO: Remove this once we have the better command registration (described above).
-    if not name:
-        return NoCommand
 
     # TODO: Is this approach needed as opposed to handling it
     # upstream? Is this a result of over engineering?
