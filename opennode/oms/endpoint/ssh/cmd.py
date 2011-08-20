@@ -239,9 +239,8 @@ class cmd_cd(Cmd):
 
 
 class cmd_ls(Cmd):
-    command('ls')
-
     implements(ICmdArgumentsSyntax)
+    command('ls')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -268,27 +267,28 @@ class cmd_ls(Cmd):
         def pretty_name(item):
             if IContainer.providedBy(item):
                 return self.protocol.colorize(BLUE, item.__name__ + '/')
-            return item.__name__
+            else:
+                return item.__name__
 
         if self.opts_long:
             def nick(item):
                 return getattr(item, 'nicknames', [])
 
             if IContainer.providedBy(obj):
-                for item in obj.listcontent():
-                    self.write(('%s\t%s\n' % (pretty_name(item), ':'.join(nick(item)))).encode('utf8'))
+                for subobj in obj.listcontent():
+                    self.write(('%s\t%s\n' % (pretty_name(subobj), ':'.join(nick(subobj)))).encode('utf8'))
             else:
                 self.write(('%s\t%s\n' % (pretty_name(obj), ':'.join(nick(obj)))).encode('utf8'))
         else:
             if IContainer.providedBy(obj):
-                items = [pretty_name(item) for item in obj.listcontent()]
+                items = [pretty_name(subobj) for subobj in obj.listcontent()]
                 if items:
                     output = columnize(items, displaywidth=self.protocol.width)
                     self.write(output)
             else:
                 self.write('%s\n' % path)
 
-provideSubscriptionAdapter(CommonArgs, adapts=[cmd_ls])
+provideSubscriptionAdapter(CommonArgs, adapts=(cmd_ls, ))
 
 
 class cmd_pwd(Cmd):
@@ -299,9 +299,8 @@ class cmd_pwd(Cmd):
 
 
 class cmd_cat(Cmd):
-    command('cat')
-
     implements(ICmdArgumentsSyntax)
+    command('cat')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -364,9 +363,8 @@ class CmdRm(Cmd):
 
 
 class cmd_set(Cmd):
-    command('set')
-
     implements(ICmdArgumentsSyntax)
+    command('set')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
