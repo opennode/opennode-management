@@ -6,6 +6,7 @@ from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
 from zope.component import provideSubscriptionAdapter, queryAdapter
+from zope.interface.interface import InterfaceClass
 import martian
 import argparse
 
@@ -435,14 +436,19 @@ class cmd_mk(Cmd):
         parser = VirtualConsoleArgumentParser()
 
         obj = self.current_obj
-        choices = creatable_models.keys()
 
-        # TODO: Handle interface containment, if we'll ever have it.
+        choices = []
         if getattr(obj, '__contains__', None):
             for name, cls in creatable_models.items():
-                if cls == obj.__contains__:
-                    choices = [name]
-                    break
+                if issubclass(cls, obj.__contains__) or isinstance(obj.__contains__, InterfaceClass) and obj.__contains__.implementedBy(cls):
+                    choices.append(name)
+
+        # TODO: are we sure we want to show the whole list in case nothing matches?
+        # I think it can only happen due to incomplete declaration of our models (which should be a bug)
+        # but when we'll include security, there might be some models which the user simply cannot create
+        # so the list could legally be empty.
+        if not choices:
+            choices = creatable_models.keys()
 
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser

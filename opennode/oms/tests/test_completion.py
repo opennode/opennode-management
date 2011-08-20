@@ -2,10 +2,13 @@ import unittest
 
 import mock
 from nose.tools import eq_
+from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.endpoint.ssh import cmd
 from opennode.oms.model.model.compute import Compute
+from opennode.oms.model.model.base import Model, Container
+from opennode.oms.model.model import creatable_models
 from opennode.oms.tests.util import run_in_reactor
 from opennode.oms.zodb import db
 
@@ -156,6 +159,43 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('arch')
         eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+
+    @run_in_reactor
+    def test_complete_mk_legal_types_interface(self):
+        class ITest(Interface):
+            pass
+
+        class Test(Model):
+            implements(ITest)
+
+            def __init__(self):
+                pass
+
+        class TestInterfaceContainer(Container):
+            __contains__ = ITest
+
+        class TestClassContainer(Container):
+            __contains__ = Test
+
+        creatable_models['some-test'] = Test
+
+        orig_current_object = cmd.cmd_mk.current_obj
+
+        try:
+            cmd.cmd_mk.current_obj = TestInterfaceContainer()
+            self._tab_after('mk ')
+            eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
+
+            self.oms_ssh.handle_RETURN()
+            self.terminal.reset_mock()
+
+            cmd.cmd_mk.current_obj = TestClassContainer()
+
+            self._tab_after('mk ')
+            eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
+        finally:
+            cmd.cmd_mk.current_obj = orig_current_object
+            del creatable_models['some-test']
 
     @run_in_reactor
     def test_complete_positional_choice(self):
