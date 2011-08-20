@@ -63,12 +63,12 @@ class Cmd(object):
         else:
             return cls.name
 
-    def make_arg_parser(self, parents, partial=False):
+    def _make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
         return parser_class(prog=self._format_names(), file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
 
     @defer.inlineCallbacks
-    def parent_parsers(self):
+    def _parent_parsers(self):
         parser_confs = queryOrderedSubscriptions(self, ICmdArgumentsSyntax)
         if ICmdArgumentsSyntax.providedBy(self):
             parser_confs.append(self)
@@ -88,8 +88,8 @@ class Cmd(object):
 
         """
 
-        parents = yield  self.parent_parsers()
-        defer.returnValue(self.make_arg_parser(parents, partial=partial))
+        parents = yield self._parent_parsers()
+        defer.returnValue(self._make_arg_parser(parents, partial=partial))
 
     @defer.inlineCallbacks
     def contextual_arg_parser(self, args, partial=False):
