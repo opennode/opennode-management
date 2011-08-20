@@ -4,6 +4,7 @@ from functools import wraps
 
 from nose.twistedtools import threaded_reactor
 from opennode.oms.zodb import db
+import transaction
 
 
 def run_in_reactor(fun):
@@ -51,10 +52,24 @@ def clean_db(fun):
 
     @wraps(fun)
     def wrapper(*args, **kwargs):
-        # clean the db
-        if hasattr(db._connection, 'x'):
-            delattr(db._connection, 'x')
-            db.init(True)
-        return fun(*args, **kwargs)
+        """Avoid that changes are permanent."""
+        commit = transaction.commit
+        def sub_commit():
+            return commit(1)
+        transaction.commit = sub_commit
+
+        abort = transaction.abort
+        def sub_abort():
+            return abort(1)
+        transaction.abort = sub_abort
+
+        try:
+            return fun(*args, **kwargs)
+        finally:
+            try:
+                abort()
+            finally:
+                transaction.commit = abort
+                transaction.abort = abort
 
     return wrapper
