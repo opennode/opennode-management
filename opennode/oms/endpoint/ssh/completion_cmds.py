@@ -149,10 +149,10 @@ class PositionalChoiceCompleter(PositionalCompleter):
 
 
 # TODO: move to handler
-for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set]:
+for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.CmdRm]:
     provideSubscriptionAdapter(PathCompleter, adapts=[command])
 
-for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.cmd_quit]:
+for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.CmdRm, cmd.cmd_quit]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=[command])
 
 for command in [cmd.cmd_set, cmd.cmd_mk]:

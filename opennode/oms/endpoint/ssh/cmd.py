@@ -338,6 +338,31 @@ class cmd_cat(Cmd):
                                          str(value).encode('utf8')))
 
 
+class CmdRm(Cmd):
+    """Deletes and object."""
+
+    command("rm")
+
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('paths', nargs='+')
+        return parser
+
+    @db.transact
+    def execute(self, args):
+        for path in args.paths:
+            obj = self.traverse(path)
+            if not obj:
+                self.write("No such object: %s\n" % path)
+                continue
+
+            del obj.__parent__[obj.__name__]
+
+        transaction.commit()
+
+
 class cmd_set(Cmd):
     command('set')
 
