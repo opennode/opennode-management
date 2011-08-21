@@ -6,17 +6,16 @@ from zope.interface import implements, Interface
 from martian.testing import FakeModule
 from grokcore.component.testing import grok
 
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmd.registry import commands
-from opennode.oms.model.model.compute import Compute
-from opennode.oms.model.model.base import Model, Container
+from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
 from opennode.oms.model.model import creatable_models
-from opennode.oms.tests.util import run_in_reactor, clean_db
+from opennode.oms.model.model.base import Model, Container
+from opennode.oms.model.model.compute import Compute
+from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip
 from opennode.oms.zodb import db
-from opennode.oms.tests.util import assert_mock, no_more_calls, skip
 
 
 class SshTestCase(unittest.TestCase):
