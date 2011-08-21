@@ -1,16 +1,13 @@
+import martian
 import transaction
 import zope.schema
-from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
-from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
 from zope.component import provideSubscriptionAdapter, queryAdapter
-from zope.interface.interface import InterfaceClass
-import martian
-import argparse
 
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser, ArgumentParsingError
+from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
@@ -171,7 +168,7 @@ class Cmd(object):
 class NoCommand(Cmd):
     """Represents the fact that there is no command yet."""
 
-    command("")
+    command('')
 
     def __call__(self, *args):
         """Just do nothing."""
@@ -189,10 +186,10 @@ class CommonArgs(Subscription):
         return parser
 
 
-class cmd_cd(Cmd):
-    command('cd')
-
+class ChangeDirCmd(Cmd):
     implements(ICmdArgumentsSyntax)
+
+    command('cd')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -238,8 +235,9 @@ class cmd_cd(Cmd):
                 self.path[overlap+1:] = []
 
 
-class cmd_ls(Cmd):
+class ListDirContentsCmd(Cmd):
     implements(ICmdArgumentsSyntax)
+
     command('ls')
 
     def arguments(self):
@@ -288,18 +286,19 @@ class cmd_ls(Cmd):
             else:
                 self.write('%s\n' % path)
 
-provideSubscriptionAdapter(CommonArgs, adapts=(cmd_ls, ))
+provideSubscriptionAdapter(CommonArgs, adapts=(ListDirContentsCmd, ))
 
 
-class cmd_pwd(Cmd):
+class PrintWorkDirCmd(Cmd):
     command('pwd')
 
     def execute(self, args):
         self.write('%s\n' % self.protocol._cwd())
 
 
-class cmd_cat(Cmd):
+class CatObjectCmd(Cmd):
     implements(ICmdArgumentsSyntax)
+
     command('cat')
 
     def arguments(self):
@@ -337,12 +336,11 @@ class cmd_cat(Cmd):
                                          str(value).encode('utf8')))
 
 
-class CmdRm(Cmd):
-    """Deletes and object."""
-
-    command("rm")
-
+class RemoveCmd(Cmd):
+    """Deletes an object."""
     implements(ICmdArgumentsSyntax)
+
+    command('rm')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -362,8 +360,9 @@ class CmdRm(Cmd):
         transaction.commit()
 
 
-class cmd_set(Cmd):
+class SetAttrCmd(Cmd):
     implements(ICmdArgumentsSyntax)
+
     command('set')
 
     def arguments(self):
@@ -414,10 +413,11 @@ class cmd_set(Cmd):
 class SetCmdDynamicArguments(Adapter):
     """Dynamically creates the key=value arguments for the `set` command
     based upon the object being edited.
+
     """
 
     implements(IContextualCmdArgumentsSyntax)
-    context(cmd_set)
+    context(SetAttrCmd)
 
     @db.transact
     def arguments(self, parser, args, rest):
@@ -440,19 +440,20 @@ class SetCmdDynamicArguments(Adapter):
             if isinstance(field, zope.schema.Int):
                 type = int
 
-            parser.add_argument('=' + name, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+            parser.add_argument('=' + name, type=type, action=GroupDictAction,
+                                group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
 
 
-provideSubscriptionAdapter(CommonArgs, adapts=[cmd_set])
+provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
 
 
-class cmd_mk(Cmd):
+class CreateObjCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
     command('mk')
     alias('create')
-
-    implements(ICmdArgumentsSyntax)
 
     @db.transact
     def arguments(self):
@@ -499,7 +500,7 @@ class MkCmdDynamicArguments(Adapter):
     """
 
     implements(IContextualCmdArgumentsSyntax)
-    context(cmd_mk)
+    context(CreateObjCmd)
 
     def arguments(self, parser, args, rest):
         model_cls = creatable_models.get(args.type)
@@ -520,12 +521,11 @@ class MkCmdDynamicArguments(Adapter):
         return parser
 
 
-class cmd_help(Cmd):
-    """Get the names of the commands from this modules and prints them out."""
+class HelpCmd(Cmd):
+    """Outputs the names of all commands."""
+    implements(ICmdArgumentsSyntax)
 
     command('help')
-
-    implements(ICmdArgumentsSyntax)
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -540,7 +540,7 @@ class cmd_help(Cmd):
         self.write("valid commands: %s\n" % (', '.join(sorted([command._format_names() for command in set(commands().values()) if command.name]))))
 
 
-class cmd_quit(Cmd):
+class QuitCmd(Cmd):
     """Quits the console."""
 
     command('quit')
@@ -548,7 +548,8 @@ class cmd_quit(Cmd):
     def execute(self, args):
         self.protocol.close_connection()
 
-class cmd_last_error(Cmd):
+
+class LastErrorCmd(Cmd):
     """Prints out the last error.
     Useful for devs, and users reporting to issue tracker.
     (Inspired by xsbt)

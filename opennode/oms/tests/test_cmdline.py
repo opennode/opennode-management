@@ -3,7 +3,7 @@ import unittest
 import mock
 from nose.tools import eq_
 
-from opennode.oms.endpoint.ssh.cmd import cmd_ls
+from opennode.oms.endpoint.ssh.cmd import ListDirContentsCmd
 
 from opennode.oms.endpoint.ssh.cmdline import PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax, GroupDictAction
 from grokcore.component import Subscription, implements, queryOrderedSubscriptions, querySubscriptions, context
@@ -71,7 +71,7 @@ class CmdLineTestCase(unittest.TestCase):
     def setUp(self):
         self.protocol = mock.Mock()
         import opennode.oms.endpoint.ssh.cmd
-        self.cmd = cmd_ls(self.protocol)
+        self.cmd = ListDirContentsCmd(self.protocol)
 
     def test_simple(self):
         arg_parsers = queryOrderedSubscriptions(self.cmd, ICmdArgumentsSyntax)

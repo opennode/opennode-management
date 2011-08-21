@@ -5,7 +5,7 @@ from nose.tools import eq_
 from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import commands, Cmd, cmd_mk
+from opennode.oms.endpoint.ssh.cmd import commands, Cmd, CreateObjCmd
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model import creatable_models
@@ -265,7 +265,7 @@ class SshTestCase(unittest.TestCase):
 
             # The optional arg is important for this test.
             #
-            # cmd_mk will try to get the value of keyword switches for each
+            # CreateObjCmd will try to get the value of keyword switches for each
             # parameter of the model constructor, including default ones.
             # However if this optional is not defined in the schema,
             # the argument parser will not contain any argument definition for
@@ -283,14 +283,14 @@ class SshTestCase(unittest.TestCase):
                 self.added = True
 
         creatable_models['some-test'] = Test
-        orig_current_object = cmd_mk.current_obj
+        orig_current_object = CreateObjCmd.current_obj
 
         try:
-            cmd_mk.current_obj = TestContainer()
+            CreateObjCmd.current_obj = TestContainer()
             self._cmd('mk some-test')
-            assert cmd_mk.current_obj.added
+            assert CreateObjCmd.current_obj.added
         finally:
-            cmd_mk.current_obj = orig_current_object
+            CreateObjCmd.current_obj = orig_current_object
             del creatable_models['some-test']
 
     @run_in_reactor

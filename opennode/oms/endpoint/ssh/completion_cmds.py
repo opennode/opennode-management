@@ -149,17 +149,17 @@ class PositionalChoiceCompleter(PositionalCompleter):
 
 
 # TODO: move to handler
-for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.CmdRm]:
-    provideSubscriptionAdapter(PathCompleter, adapts=[command])
+for command in [cmd.ListDirContentsCmd, cmd.ChangeDirCmd, cmd.CatObjectCmd, cmd.SetAttrCmd, cmd.RemoveCmd]:
+    provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
-for command in [cmd.cmd_ls, cmd.cmd_cd, cmd.cmd_cat, cmd.cmd_set, cmd.CmdRm, cmd.cmd_quit]:
-    provideSubscriptionAdapter(ArgSwitchCompleter, adapts=[command])
+for command in [cmd.ListDirContentsCmd, cmd.ChangeDirCmd, cmd.CatObjectCmd, cmd.SetAttrCmd, cmd.RemoveCmd, cmd.QuitCmd]:
+    provideSubscriptionAdapter(ArgSwitchCompleter, adapts=(command, ))
 
-for command in [cmd.cmd_set, cmd.cmd_mk]:
-    provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=[command])
+for command in [cmd.SetAttrCmd, cmd.CreateObjCmd]:
+    provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=(command, ))
 
-for command in [cmd.cmd_set, cmd.cmd_mk]:
-    provideSubscriptionAdapter(KeywordValueCompleter, adapts=[command])
+for command in [cmd.SetAttrCmd, cmd.CreateObjCmd]:
+    provideSubscriptionAdapter(KeywordValueCompleter, adapts=(command, ))
 
-for command in [cmd.cmd_help, cmd.cmd_mk]:
-    provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=[command])
+for command in [cmd.HelpCmd, cmd.CreateObjCmd]:
+    provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=(command, ))

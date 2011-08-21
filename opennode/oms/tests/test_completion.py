@@ -179,22 +179,22 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         creatable_models['some-test'] = Test
 
-        orig_current_object = cmd.cmd_mk.current_obj
+        orig_current_object = cmd.CreateObjCmd.current_obj
 
         try:
-            cmd.cmd_mk.current_obj = TestInterfaceContainer()
+            cmd.CreateObjCmd.current_obj = TestInterfaceContainer()
             self._tab_after('mk ')
             eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
 
             self.oms_ssh.handle_RETURN()
             self.terminal.reset_mock()
 
-            cmd.cmd_mk.current_obj = TestClassContainer()
+            cmd.CreateObjCmd.current_obj = TestClassContainer()
 
             self._tab_after('mk ')
             eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
         finally:
-            cmd.cmd_mk.current_obj = orig_current_object
+            cmd.CreateObjCmd.current_obj = orig_current_object
             del creatable_models['some-test']
 
     @run_in_reactor
