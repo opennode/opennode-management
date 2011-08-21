@@ -105,8 +105,8 @@ class CmdCompletionTestCase(unittest.TestCase):
         assert '-h' not in self.terminal.method_calls[2][1][0]
 
     @run_in_reactor
-    def test_complete_contextualized_no_context(self):
-        """Test whether contextualized arguments are correctly built when the
+    def test_complete_context_dependent_no_context(self):
+        """Test whether context dependent arguments are correctly built when the
         context argument (i.e. the `set` cmd `path` argument) is not yet present.
 
         """

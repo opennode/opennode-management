@@ -296,7 +296,7 @@ class SshTestCase(unittest.TestCase):
             del creatable_models['some-test']
 
     @run_in_reactor
-    def test_contextualized_help(self):
+    def test_context_dependent_help(self):
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
