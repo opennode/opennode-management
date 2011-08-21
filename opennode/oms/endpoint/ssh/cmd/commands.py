@@ -5,6 +5,7 @@ import zope.schema
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter
+from zope.interface import directlyProvidedBy
 
 from opennode.oms.endpoint.ssh.cmd import registry
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
@@ -341,14 +342,6 @@ class CreateObjCmd(Cmd):
                 if obj.can_contain(cls):
                     choices.append(name)
 
-        # TODO: are we sure we want to show the whole list in case nothing matches?
-        # I think it can only happen due to incomplete declaration of our models (which should be a bug)
-        # but when we'll include security, there might be some models which the user simply cannot create
-        # so the list could legally be empty.
-        # -- ...so why have this check?
-        if not choices:
-            choices = creatable_models.keys()
-
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
 
@@ -429,7 +422,9 @@ class FileCmd(Cmd):
             self.write("%s %s" % (row[0].ljust(width), row[1]))
 
     def _do_file(self, path, obj):
-        return (path+":", "%s\n" % (type(obj).__name__))
+        cls = type(obj)
+        ifaces = get_direct_interfaces(cls) + list(directlyProvidedBy(obj).interfaces())
+        return (path+":", "%s %s\n" % (cls.__name__, ', '.join([i.__name__ for i in ifaces])))
 
 
 class EchoCmd(Cmd):

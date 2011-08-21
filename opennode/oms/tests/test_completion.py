@@ -271,3 +271,12 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         self._tab_after('comp')
         assert not self.terminal.method_calls
+
+    @run_in_reactor
+    def test_complete_container_symlink(self):
+        computes = db.get_root()['oms_root']['computes']
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self._tab_after('cd /computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            t.write('/')

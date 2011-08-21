@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 from .compute import Computes, Compute
+from .virtualizationcontainer import VirtualizationContainer
+from .hangar import Hangar
 from .network import Network, NetworkDevice
 from .root import OmsRoot
 from .storage import Storage
@@ -11,4 +13,4 @@ __all__ = [OmsRoot, Computes, Compute, Templates, Template, Network, NetworkDevi
 
 
 creatable_models = dict((cls.__name__.lower(), cls)
-                        for cls in [Compute, Template, Network, NetworkDevice, Storage])
+                        for cls in [Compute, Template, Network, NetworkDevice, Storage, VirtualizationContainer, Hangar])

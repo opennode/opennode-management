@@ -64,18 +64,12 @@ class ReadonlyContainer(Model):
         return items
 
 
-class Container(ReadonlyContainer):
-    """A base class for containers whose items are named by their __name__.
-    Adding unnamed objects will allocated according to the `id_allocation_policy`.
-
-    Does not support `__setitem__`; use `add(...)` instead.
+class AddingContainer(ReadonlyContainer):
+    """A container which can accept items to be added to it.
+    Doesn't actually store them, so it's up to subclasses to implement `_add`
+    and override `listcontent` and `listnames`.
 
     """
-
-    __contains__ = Interface
-
-    def __init__(self):
-        self._items = OOBTree()
 
     def can_contain(self, item):
         if isinstance(self.__contains__, InterfaceClass):
@@ -90,6 +84,23 @@ class Container(ReadonlyContainer):
         if not self.can_contain(item):
             raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
 
+        return self._add(item)
+
+
+class Container(AddingContainer):
+    """A base class for containers whose items are named by their __name__.
+    Adding unnamed objects will allocated using the overridable `_new_id` method.
+
+    Does not support `__setitem__`; use `add(...)` instead.
+
+    """
+
+    __contains__ = Interface
+
+    def __init__(self):
+        self._items = OOBTree()
+
+    def _add(self, item):
         if item.__parent__:
             if item.__parent__ is self:
                 return

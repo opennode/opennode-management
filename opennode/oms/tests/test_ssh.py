@@ -21,7 +21,7 @@ from opennode.oms.zodb import db
 
 class SshTestCase(unittest.TestCase):
 
-    tlds = ['computes', 'templates']
+    tlds = ['computes', 'machines', 'templates']
 
     @run_in_reactor
     @clean_db
@@ -86,11 +86,13 @@ class SshTestCase(unittest.TestCase):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
-        self._cmd('cd /computes/%s' % cid)
-        with assert_mock(self.terminal) as t:
-            t.write('Cannot cd to a non-container\n')
+        # TODO: reenable this when we'll have another leaf object.
 
-        self.terminal.reset_mock()
+        #self._cmd('cd /computes/%s' % cid)
+        #with assert_mock(self.terminal) as t:
+        #    t.write('Cannot cd to a non-container\n')
+
+        #self.terminal.reset_mock()
 
         self._cmd('cd /nonexisting')
         with assert_mock(self.terminal) as t:
@@ -118,10 +120,12 @@ class SshTestCase(unittest.TestCase):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
-        self.terminal.reset_mock()
-        self._cmd('ls /computes/%s' % cid)
-        with assert_mock(self.terminal) as t:
-            t.write('/computes/%s\n' % cid)
+        # TODO: put back this when we find another leaf object
+
+        #self.terminal.reset_mock()
+        #self._cmd('ls /computes/%s' % cid)
+        #with assert_mock(self.terminal) as t:
+        #    t.write('/computes/%s\n' % cid)
 
         self.terminal.reset_mock()
         self._cmd('ls /computes/x')
@@ -143,17 +147,19 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
-            t.write('%s\ttux-for-test\n' % cid)
+            t.write('%s@\t/machines/%s : tux-for-test\n' % (cid, cid))
             t.write('by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
-        self.terminal.reset_mock()
-        self._cmd('ls /computes/%s -l' % cid)
-        with assert_mock(self.terminal) as t:
-            t.write('%s\ttux-for-test\n' % cid)
-            skip(t, 1)
-            no_more_calls(t)
+        # TODO: put back this when we find another leaf object.
+
+        #self.terminal.reset_mock()
+        #self._cmd('ls /computes/%s -l' % cid)
+        #with assert_mock(self.terminal) as t:
+        #    t.write('%s/\ttux-for-test\n' % cid)
+        #    skip(t, 1)
+        #    no_more_calls(t)
 
     @run_in_reactor
     def test_cat_folders(self):
