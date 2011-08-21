@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from .base import ReadonlyContainer
 from .compute import Computes
+from .machines import Machines
 from .template import Templates
 
 
@@ -19,6 +20,7 @@ class OmsRoot(ReadonlyContainer):
     _items = property(lambda self: {
         'computes': self.computes,
         'templates': self.templates,
+        'machines': self.machines,
     })
 
     def __init__(self):
@@ -29,6 +31,11 @@ class OmsRoot(ReadonlyContainer):
         self.templates = Templates()
         self.templates.__parent__ = self
         self.templates.__name__ = 'templates'
+
+        self.machines = Machines()
+        self.machines.__parent__ = self
+        self.machines.__name__ = 'machines'
+
 
     def __str__(self):
         return 'OMS root'

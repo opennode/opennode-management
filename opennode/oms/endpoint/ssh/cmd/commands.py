@@ -304,8 +304,8 @@ class CreateObjCmd(Cmd):
         # but when we'll include security, there might be some models which the user simply cannot create
         # so the list could legally be empty.
         # -- ...so why have this check?
-        if not choices:
-            choices = creatable_models.keys()
+        #if not choices:
+        #    choices = creatable_models.keys()
 
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
