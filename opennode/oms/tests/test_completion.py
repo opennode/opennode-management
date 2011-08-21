@@ -5,7 +5,8 @@ from nose.tools import eq_
 from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
-from opennode.oms.endpoint.ssh import cmd
+from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.cmd import registry, commands
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model import creatable_models
@@ -26,11 +27,11 @@ class CmdCompletionTestCase(unittest.TestCase):
         # is a prefix of another (len > 1), I don't want to force changes
         # to the model just for testing completion, so we have monkey patch
         # the commands() function and add a command 'hello'.
-        self.orig_commands = cmd.commands
-        cmd.commands = lambda: dict(hello=cmd.Cmd, **self.orig_commands())
+        self.orig_commands = registry.commands
+        registry.commands = lambda: dict(hello=Cmd, **self.orig_commands())
 
     def tearDown(self):
-        cmd.commands = self.orig_commands
+        registry.commands = self.orig_commands
 
     def _input(self, string):
         for s in string:
@@ -179,22 +180,22 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         creatable_models['some-test'] = Test
 
-        orig_current_object = cmd.CreateObjCmd.current_obj
+        orig_current_object = commands.CreateObjCmd.current_obj
 
         try:
-            cmd.CreateObjCmd.current_obj = TestInterfaceContainer()
+            commands.CreateObjCmd.current_obj = TestInterfaceContainer()
             self._tab_after('mk ')
             eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
 
             self.oms_ssh.handle_RETURN()
             self.terminal.reset_mock()
 
-            cmd.CreateObjCmd.current_obj = TestClassContainer()
+            commands.CreateObjCmd.current_obj = TestClassContainer()
 
             self._tab_after('mk ')
             eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
         finally:
-            cmd.CreateObjCmd.current_obj = orig_current_object
+            commands.CreateObjCmd.current_obj = orig_current_object
             del creatable_models['some-test']
 
     @run_in_reactor
