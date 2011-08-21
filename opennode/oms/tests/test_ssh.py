@@ -1,7 +1,7 @@
 import unittest
 
 import mock
-from nose.tools import eq_
+from nose.tools import eq_, assert_raises
 from zope.interface import implements, Interface
 from martian.testing import FakeModule
 from grokcore.component.testing import grok
@@ -364,13 +364,8 @@ class SshTestCase(unittest.TestCase):
         eq_(self.oms_ssh.tokenizer.tokenize(arglist),
                 ['set', '/computes/some file  with spaces', '-v', '--help', '=key', 'value', '=other_key', 'quoted value', '=lastkey', 'escaped " quotes'])
 
-        got_exception = False
-        try:
+        with assert_raises(CommandLineSyntaxError):
             self.oms_ssh.tokenizer.tokenize('ls " -l')
-        except CommandLineSyntaxError:
-            got_exception = True
-
-        assert got_exception
 
         # TODO: handle "glued" quoted args
         # arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes" cornercase="glued""quoted"'
