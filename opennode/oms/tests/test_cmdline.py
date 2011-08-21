@@ -43,6 +43,12 @@ class CmdLineParserTestCase(unittest.TestCase):
         eq_(res.group, dict(one = 1, two = 2))
         eq_(res.other, dict(three = 3))
 
+    def test_declaration(self):
+        some_default = object()
+        self.parser.declare_argument('group', some_default)
+        res = self.parser.parse_args([])
+
+        eq_(res.group, some_default)
 
 class PartialCmdLineParserTestCase(unittest.TestCase):
 

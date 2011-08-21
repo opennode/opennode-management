@@ -60,6 +60,26 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         if add_help:
             self.add_argument('-h', '--help', action=argparse._HelpAction, help="show this help message and exit")
 
+        self.declarations = {}
+
+    def parse_args(self, args=None, namespace=None):
+        parsed = super(VirtualConsoleArgumentParser, self).parse_args(args, namespace)
+
+        for dest, default in self.declarations.items():
+            if not hasattr(parsed, dest):
+                setattr(parsed, dest, default)
+
+        return parsed
+
+    def declare_argument(self, dest, default=None):
+        """Declare the existence of an argument without adding a requirement and an option string for it.
+        It's useful for GroupDictAction argument or other actions where multiple arguments store in the same value.
+        The `dest` attribute for declared arguments will have it's default value even if no argument was defined
+        or matched.
+
+        """
+        self.declarations[dest] = default
+
 
 class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
     """Use this if you want to avoid printing error messages and retry on partial arglists."""

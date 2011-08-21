@@ -506,6 +506,8 @@ class MkCmdDynamicArguments(Adapter):
         model_cls = creatable_models.get(args.type)
         schema = get_direct_interface(model_cls)
 
+        parser.declare_argument('keywords', {})
+
         for name, field in zope.schema.getFields(schema).items():
             choices = None
             type = None

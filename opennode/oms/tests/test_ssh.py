@@ -2,10 +2,13 @@ import unittest
 
 import mock
 from nose.tools import eq_
+from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import commands, Cmd
+from opennode.oms.endpoint.ssh.cmd import commands, Cmd, cmd_mk
 from opennode.oms.model.model.compute import Compute
+from opennode.oms.model.model.base import Model, Container
+from opennode.oms.model.model import creatable_models
 from opennode.oms.tests.util import run_in_reactor, clean_db
 from opennode.oms.zodb import db
 
@@ -251,6 +254,44 @@ class SshTestCase(unittest.TestCase):
         self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
 
         assert self.terminal.method_calls[:-1][0] == ('write', ('argument =speed is required',))
+
+    @run_in_reactor
+    def test_mk_keyword_declaration(self):
+        class ITest(Interface):
+            pass
+
+        class Test(Model):
+            implements(ITest)
+
+            # The optional arg is important for this test.
+            #
+            # cmd_mk will try to get the value of keyword switches for each
+            # parameter of the model constructor, including default ones.
+            # However if this optional is not defined in the schema,
+            # the argument parser will not contain any argument definition for
+            # the 'keywords' option, so the 'keywords' arg object attribute
+            # will not be define unless explicitly declared with `arg_declare`.
+            def __init__(self, some_optional=None):
+                pass
+
+        class TestContainer(Container):
+            __contains__ = Test
+
+            added = False
+
+            def add(self, item):
+                self.added = True
+
+        creatable_models['some-test'] = Test
+        orig_current_object = cmd_mk.current_obj
+
+        try:
+            cmd_mk.current_obj = TestContainer()
+            self._cmd('mk some-test')
+            assert cmd_mk.current_obj.added
+        finally:
+            cmd_mk.current_obj = orig_current_object
+            del creatable_models['some-test']
 
     @run_in_reactor
     def test_contextualized_help(self):
