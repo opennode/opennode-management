@@ -58,9 +58,9 @@ class Container(ReadonlyContainer):
 
     def can_contain(self, item):
         if isinstance(self.__contains__, InterfaceClass):
-            return self.__contains__.providedBy(item)
+            return self.__contains__.providedBy(item) or self.__contains__.implementedBy(item)
         else:
-            return isinstance(item, self.__contains__)
+            return isinstance(item, self.__contains__) or issubclass(item, self.__contains__)
 
     def add(self, item):
         if not self.can_contain(item):
