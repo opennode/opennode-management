@@ -51,10 +51,6 @@ class OmsSshProtocol(InteractiveTerminal):
         deferred = defer.maybeDeferred(command, *cmd_args)
 
         @deferred
-        def on_success(ret):
-            self.print_prompt()
-
-        @deferred
         def on_error(f):
             if not f.check(cmdline.ArgumentParsingError):
                 self.terminal.write("Command returned an unhandled error: %s\n" % f.getErrorMessage())
@@ -62,7 +58,7 @@ class OmsSshProtocol(InteractiveTerminal):
                 log.msg("Got exception executing '%s': %s" % self.last_error)
                 self.terminal.write("type last_error for more details\n")
 
-            self.print_prompt()
+        deferred.addBoth(lambda *_: self.print_prompt())
 
         ret = defer.Deferred()
         deferred.addBoth(ret.callback)
