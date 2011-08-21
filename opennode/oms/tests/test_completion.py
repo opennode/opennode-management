@@ -106,6 +106,10 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_complete_contextualized_no_context(self):
+        """Test whether contextualized arguments are correctly built when the
+        context argument (i.e. the `set` cmd `path` argument) is not yet present.
+
+        """
         self._tab_after('set /comp')
         eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
 
