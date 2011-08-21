@@ -1,50 +1,54 @@
 # -*- coding: utf-8 -*-
-"""Return compact set of columns as a string with newlines for an
+"""Returns a compact set of columns as a string with newlines for an
 array of strings.
 
 Adapted from the routine of the same name inside cmd.py
 
-mmikulicic: taken from http://pypi.python.org/pypi/columnize and adapted for strings containing
-ansi escapes (should work mostly for colors).
+mmikulicic: taken from http://pypi.python.org/pypi/columnize and
+adapted for strings containing ANSI escapes (should work mostly for
+colors).
 
 """
-
-
 import re
-clean_color_re = re.compile('\x1b[^;]*;?..?m')
+
+
+CLEAN_COLOR_RE = re.compile('\x1b[^;]*;?..?m')
+
 
 def bw(text):
     """Plain black and white text."""
-    return clean_color_re.sub('', text)
+    return CLEAN_COLOR_RE.sub('', text)
+
 
 def color_ljust(text, size):
     return text.ljust(size + len(text) - len(bw(text)))
+
 
 def color_rjust(text, size):
     return text.rjust(size + len(text) - len(bw(text)))
 
 
-def columnize(array, displaywidth=80, colsep = '  ', 
+def columnize(array, displaywidth=80, colsep = '  ',
               arrange_vertical=True, ljust=True, lineprefix=''):
-    """Return a list of strings as a compact set of columns arranged 
+    """Return a list of strings as a compact set of columns arranged
     horizontally or vertically.
 
     For example, for a line width of 4 characters (arranged vertically):
         ['1', '2,', '3', '4'] => '1  3\n2  4\n'
-   
+
     or arranged horizontally:
         ['1', '2,', '3', '4'] => '1  2\n3  4\n'
-        
+
     Each column is only as wide as necessary.  By default, columns are
     separated by two spaces - one was not legible enough. Set "colsep"
     to adjust the string separate columns. Set `displaywidth' to set
-    the line width. 
+    the line width.
 
     Normally, consecutive items go down from the top to bottom from
     the left-most column to the right-most. If "arrange_vertical" is
     set false, consecutive items will go across, left to right, top to
     bottom."""
-    if not isinstance(array, list) and not isinstance(array, tuple): 
+    if not isinstance(array, list) and not isinstance(array, tuple):
         raise TypeError, (
             'array needs to be an instance of a list or a tuple')
 
@@ -52,7 +56,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
 
     # Some degenerate cases
     size = len(array)
-    if 0 == size: 
+    if 0 == size:
         return "<empty>\n"
     elif size == 1:
         return '%s\n' % str(array[0])
@@ -76,10 +80,10 @@ def columnize(array, displaywidth=80, colsep = '  ',
                     pass
                 colwidths.append(colwidth)
                 totwidth += colwidth + len(colsep)
-                if totwidth > displaywidth: 
+                if totwidth > displaywidth:
                     break
                 pass
-            if totwidth <= displaywidth: 
+            if totwidth <= displaywidth:
                 break
             pass
         # The smallest number of rows computed and the
@@ -132,7 +136,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
                         pass
                     colwidths.append(colwidth)
                     totwidth += colwidth + len(colsep)
-                    if totwidth >= displaywidth: 
+                    if totwidth >= displaywidth:
                         break
                     pass
                 if totwidth <= displaywidth and i >= rounded_size-1:
@@ -172,14 +176,15 @@ def columnize(array, displaywidth=80, colsep = '  ',
         return s
     pass
 
+
 # Demo it
-if __name__=='__main__':
-    for t in ((4, 4,), (4, 7), (100, 80)): 
+if __name__ == '__main__':
+    for t in ((4, 4,), (4, 7), (100, 80)):
         width = t[1]
         data = [str(i) for i in range(t[0])]
         for t2 in ((False, 'horizontal',), (True, 'vertical',)):
             print "Width: %d, direction: %s" % (width, t2[1])
-            print columnize(data, displaywidth=width, 
+            print columnize(data, displaywidth=width,
                             arrange_vertical=t2[0])
             pass
         pass
@@ -200,22 +205,22 @@ if __name__=='__main__':
     print columnize(data)
     print columnize(data, arrange_vertical=False)
     data = [str(i) for i in range(55)]
-    print columnize(data, displaywidth=39, ljust=False, 
+    print columnize(data, displaywidth=39, ljust=False,
                     colsep = ', ')
-    print columnize(data, displaywidth=39, ljust=False, 
+    print columnize(data, displaywidth=39, ljust=False,
                     colsep = ', ', lineprefix='    ')
-    print columnize(data, displaywidth=39, ljust=False, 
+    print columnize(data, displaywidth=39, ljust=False,
                     arrange_vertical=False,
                     colsep = ', ')
 
-    print columnize(data, displaywidth=39, ljust=False, 
+    print columnize(data, displaywidth=39, ljust=False,
                     arrange_vertical=False,
                     colsep = ', ', lineprefix='    ')
-    
+
     try:
         print columnize(5)
     except TypeError, e:
         print e
         pass
-    
+
     print columnize(range(4))
