@@ -41,10 +41,10 @@ def complete(protocol, buf, pos):
 
     completers = querySubscriptions(context, ICompleter)
 
-    completions = []
+    all_completions = []
     for completer in completers:
-        completion = yield completer.complete(partial, parsed_args, parser)
-        if completion:
-            completions.extend(completion)
+        completions = yield completer.complete(partial, parsed_args, parser)
+        if completions:
+            all_completions.extend(completions)
 
-    defer.returnValue((partial, rest, completions))
+    defer.returnValue((partial, rest, all_completions))
