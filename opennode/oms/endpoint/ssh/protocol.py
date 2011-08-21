@@ -4,7 +4,9 @@ from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from twisted.internet import defer
 from twisted.python import log
 
-from opennode.oms.endpoint.ssh import cmd, completion, cmdline
+from opennode.oms.endpoint.ssh import completion, cmdline
+from opennode.oms.endpoint.ssh.cmd import registry
+
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.zodb import db
@@ -72,7 +74,7 @@ class OmsSshProtocol(InteractiveTerminal):
         """
 
         cmd_name, cmd_args = line.partition(' ')[::2]
-        command_cls = cmd.get_command(cmd_name)
+        command_cls = registry.get_command(cmd_name)
 
         tokenized_cmd_args = self.tokenizer.tokenize(cmd_args.strip())
 

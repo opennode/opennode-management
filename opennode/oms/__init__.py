@@ -16,5 +16,5 @@ Deferred.__call__ = deferred_call
 
 def setup_environ():
     from grokcore.component.testing import grok
+    grok('opennode.oms.endpoint.ssh.cmd.grokkers')  # XXX: Not sure why this needs to be explicit--an ordering issue?
     grok('opennode.oms')
-    grok('opennode.oms.endpoint.ssh.cmd')

@@ -5,7 +5,9 @@ from nose.tools import eq_
 from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
-from opennode.oms.endpoint.ssh.cmd import commands, Cmd, CreateObjCmd
+from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd
+from opennode.oms.endpoint.ssh.cmd.registry import commands
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model import creatable_models

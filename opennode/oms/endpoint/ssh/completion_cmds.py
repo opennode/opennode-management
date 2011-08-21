@@ -3,21 +3,21 @@ from zope.component import provideSubscriptionAdapter
 import argparse
 import os
 
-from opennode.oms.endpoint.ssh import cmd
+from opennode.oms.endpoint.ssh.cmd import commands
 from opennode.oms.endpoint.ssh.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
-from opennode.oms.model.model import creatable_models
 from opennode.oms.zodb import db
+from opennode.oms.endpoint.ssh.cmd import registry
 
 
 class CommandCompleter(Completer):
     """Completes a command."""
 
-    context(cmd.NoCommand)
+    context(commands.NoCommand)
 
     def complete(self, token, parsed, parser):
-        return [name for name in cmd.commands().keys() if name.startswith(token)]
+        return [name for name in registry.commands().keys() if name.startswith(token)]
 
 
 class PositionalCompleter(Completer):
@@ -149,17 +149,17 @@ class PositionalChoiceCompleter(PositionalCompleter):
 
 
 # TODO: move to handler
-for command in [cmd.ListDirContentsCmd, cmd.ChangeDirCmd, cmd.CatObjectCmd, cmd.SetAttrCmd, cmd.RemoveCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
-for command in [cmd.ListDirContentsCmd, cmd.ChangeDirCmd, cmd.CatObjectCmd, cmd.SetAttrCmd, cmd.RemoveCmd, cmd.QuitCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=(command, ))
 
-for command in [cmd.SetAttrCmd, cmd.CreateObjCmd]:
+for command in [commands.SetAttrCmd, commands.CreateObjCmd]:
     provideSubscriptionAdapter(KeywordSwitchCompleter, adapts=(command, ))
 
-for command in [cmd.SetAttrCmd, cmd.CreateObjCmd]:
+for command in [commands.SetAttrCmd, commands.CreateObjCmd]:
     provideSubscriptionAdapter(KeywordValueCompleter, adapts=(command, ))
 
-for command in [cmd.HelpCmd, cmd.CreateObjCmd]:
+for command in [commands.HelpCmd, commands.CreateObjCmd]:
     provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=(command, ))
