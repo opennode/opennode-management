@@ -1,8 +1,8 @@
 import martian
 
+from opennode.oms.endpoint.ssh.cmd import registry
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
-from opennode.oms.endpoint.ssh.cmd import registry
 
 
 class CmdGrokker(martian.ClassGrokker):

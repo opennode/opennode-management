@@ -3,6 +3,7 @@ from Queue import Queue, Empty
 from functools import wraps
 
 from nose.twistedtools import threaded_reactor
+
 from opennode.oms.zodb import db
 
 

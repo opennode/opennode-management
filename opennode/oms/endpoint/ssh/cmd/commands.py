@@ -4,11 +4,11 @@ from grokcore.component import implements, context, Adapter, Subscription, basec
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter
 
+from opennode.oms.endpoint.ssh.cmd import registry
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.cmd.directives import command, alias
-from opennode.oms.endpoint.ssh.cmd import registry
 from opennode.oms.endpoint.ssh.terminal import BLUE
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
