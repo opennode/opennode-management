@@ -43,6 +43,7 @@ def run_in_reactor(fun):
 
 def clean_db(fun):
     """Clean the test db before executing a given unit test.
+
     It can be also used to decorate the setUp() so that every test
     is ensured to run in a clean db, but you have to make sure setUp is also
     decorated with @run_in_reactor.
@@ -54,7 +55,7 @@ def clean_db(fun):
         # clean the db
         if hasattr(db._connection, 'x'):
             delattr(db._connection, 'x')
-            db.init(True)
+            db.init(test=True)
         return fun(*args, **kwargs)
 
     return wrapper
