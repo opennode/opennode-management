@@ -16,11 +16,12 @@ CTRL_T = '\x14'
 BLUE = '\x1b[1;34m'
 RESET_COLOR = '\x1b[0m'
 
+
 class InteractiveTerminal(recvline.HistoricRecvLine):
-    """Advanced interactive terminal. Handles history, line editing,
-    killing/yanking, line movement.
+    """Advanced interactive terminal. Handles history, line editing, killing/yanking, line movement.
 
     Prompt handling is delegated to subclasses.
+
     """
 
     def connectionMade(self):
@@ -70,7 +71,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
     @property
     def hist_file_name(self):
-        raise Exception("subclass must override")
+        raise NotImplementedError
 
     def print_prompt(self):
         self.terminal.write(self.ps[self.pn])
@@ -87,38 +88,37 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.insert_buffer(list(text))
 
     def handle_EOF(self):
-        """Exit the shell on CTRL-D"""
+        """Exits the shell on CTRL-D"""
         if self.lineBuffer:
             self.terminal.write('\a')
         else:
             self.handle_QUIT()
 
     def handle_FF(self):
-        """Handle a 'form feed' byte - generally used to request a screen
-        refresh/redraw.
-        """
+        """Handles a 'form feed' byte - generally used to request a screen refresh/redraw."""
         self.terminal.eraseDisplay()
         self.terminal.cursorHome()
         self.drawInputLine()
 
     def handle_KILL_LINE(self):
-        """Deletes the rest of the line (from the cursor right), and keeps the content
-        in the kill ring for future pastes
+        """Deletes the rest of the line (from the cursor right), and
+        keeps the content in the kill ring for future pastes.
+
         """
         self.terminal.eraseToLineEnd()
         self.kill_ring = self.lineBuffer[self.lineBufferIndex:]
         self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
 
     def handle_YANK(self):
-        """Paste the content of the kill ring"""
+        """Pastes the content of the kill ring."""
         if self.kill_ring:
             self.terminal.write("".join(self.kill_ring))
             self.insert_buffer(self.kill_ring)
 
     def handle_BACKWARD_KILL_WORD(self):
-        """ALT-BACKSPACE like on emacs/bash."""
+        """Provides the ALT-BACKSPACE behaviour like in emacs/bash."""
 
-        line = "".join(self.lineBuffer[:self.lineBufferIndex])
+        line = ''.join(self.lineBuffer[:self.lineBufferIndex])
 
         # remove trailing spaces
         back_positions = len(line) - len(line.rstrip())
@@ -130,12 +130,13 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.terminal.cursorBackward(back_positions)
         self.terminal.deleteCharacter(back_positions)
 
+        # XXX: The index value should be extracted to a local variable for readability and DRY
         self.kill_ring = self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
         del self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
         self.lineBufferIndex -= back_positions
 
     def handle_TRANSPOSE(self):
-        """CTRL-T like on emacs/bash."""
+        """Provides the CTRL-T behaviour like on emacs/bash."""
 
         if self.lineBufferIndex == 0:
             self.terminal.cursorForward()
@@ -158,7 +159,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
     def handle_QUIT(self):
         """Just copied from conch Manhole, no idea why it would be useful to differentiate it from CTRL-D,
-        but I guess it's here for a reason"""
+        but I guess it's here for a reason.
+
+        """
         self.close_connection()
 
     def colorize(self, color, text):
