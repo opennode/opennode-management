@@ -5,7 +5,8 @@ from grokcore.component import queryOrderedSubscriptions
 from nose.tools import eq_
 
 from opennode.oms.endpoint.ssh.cmd import commands
-from opennode.oms.endpoint.ssh.cmdline import PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser, ArgumentParsingError, ICmdArgumentsSyntax, GroupDictAction
+from opennode.oms.endpoint.ssh.cmdline import (PartialVirtualConsoleArgumentParser, VirtualConsoleArgumentParser,
+                                               ArgumentParsingError, ICmdArgumentsSyntax, GroupDictAction)
 
 
 class CmdLineParserTestCase(unittest.TestCase):
@@ -26,7 +27,7 @@ class CmdLineParserTestCase(unittest.TestCase):
         got_exception = False
         try:
             self.parser.parse_args(['--invalid'])
-        except ArgumentParsingError as e:
+        except ArgumentParsingError:
             got_exception = True
 
         assert got_exception
