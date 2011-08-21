@@ -56,13 +56,15 @@ class Container(ReadonlyContainer):
     def __init__(self):
         self._items = IOBTree()
 
-    def add(self, item):
+    def can_contain(self, item):
         if isinstance(self.__contains__, InterfaceClass):
-            if not self.__contains__.providedBy(item):
-                raise Exception('Container can only contain items that provide %s' % self.__contains__.__name__)
+            return self.__contains__.providedBy(item)
         else:
-            if not isinstance(item, self.__contains__):
-                raise Exception('Container can only contain items that are instances of %s' % self.__contains__.__name__)
+            return isinstance(item, self.__contains__)
+
+    def add(self, item):
+        if not self.can_contain(item):
+            raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
 
         if item.__parent__:
             if item.__parent__ is self:
