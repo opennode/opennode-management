@@ -111,7 +111,7 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
             except ArgumentParsingError as e:
                 # give up, probably we have mandatory positional args
                 log.msg("Tried hard but cannot parse %s" % e)
-                return object()  # XXX: Why object()? mmikulicic: because the command could cope with a empty parse results.
+                return object()  # Empty parse results.
 
 
 class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
