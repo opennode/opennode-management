@@ -4,8 +4,8 @@ from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from twisted.internet import defer
 from twisted.python import log
 
-from opennode.oms.endpoint.ssh import completion, cmdline
-from opennode.oms.endpoint.ssh.cmd import registry
+from opennode.oms.endpoint.ssh import cmdline
+from opennode.oms.endpoint.ssh.cmd import registry, completion
 
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError

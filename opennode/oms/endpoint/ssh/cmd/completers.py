@@ -4,7 +4,7 @@ import argparse
 import os
 
 from opennode.oms.endpoint.ssh.cmd import commands
-from opennode.oms.endpoint.ssh.completion import Completer
+from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.zodb import db
