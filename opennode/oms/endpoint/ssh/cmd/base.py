@@ -3,7 +3,9 @@ from twisted.internet import defer, reactor
 from twisted.python.threadable import isInIOThread
 from zope.component import queryAdapter
 
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, VirtualConsoleArgumentParser, PartialVirtualConsoleArgumentParser, ArgumentParsingError
+from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
+                                               VirtualConsoleArgumentParser, ArgumentParsingError,
+                                               PartialVirtualConsoleArgumentParser)
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
