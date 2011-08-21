@@ -16,6 +16,7 @@ from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model import creatable_models
 from opennode.oms.tests.util import run_in_reactor, clean_db
 from opennode.oms.zodb import db
+from opennode.oms.tests.util import assert_mock, no_more_calls, skip
 
 
 class SshTestCase(unittest.TestCase):
@@ -36,16 +37,20 @@ class SshTestCase(unittest.TestCase):
 
     def test_quit(self):
         self._cmd('quit')
-        assert self.terminal.method_calls == [('loseConnection', ),('write', ('user@oms:/# ',), {})]
+        with assert_mock(self.terminal) as t:
+            t.loseConnection()
+            t.write('user@oms:/# ')
 
     def test_non_existent_cmd(self):
         self._cmd('non-existent-command')
-        assert self.terminal.method_calls[0] == ('write', ('No such command: non-existent-command\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('No such command: non-existent-command\n')
 
     @run_in_reactor
     def test_pwd(self):
         self._cmd('pwd')
-        assert self.terminal.method_calls[0] == ('write', ('/\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('/\n')
 
     @run_in_reactor
     def test_help(self):
@@ -69,13 +74,14 @@ class SshTestCase(unittest.TestCase):
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self._cmd('cd /computes/1')
-        assert self.terminal.method_calls[0] == ('write', ('Cannot cd to a non-container\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('Cannot cd to a non-container\n')
 
         self.terminal.reset_mock()
 
         self._cmd('cd /nonexisting')
-        assert self.terminal.method_calls[0] == ('write', ('No such object: /nonexisting\n',))
-
+        with assert_mock(self.terminal) as t:
+            t.write('No such object: /nonexisting\n')
 
     @run_in_reactor
     def test_cd_to_root(self):
@@ -89,39 +95,51 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_ls(self):
         self._cmd('ls')
-        assert self.terminal.method_calls[0] == ('write', ('templates/  computes/\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('templates/  computes/\n')
 
         self._cmd('ls /')
-        assert self.terminal.method_calls[0] == ('write', ('templates/  computes/\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('templates/  computes/\n')
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self.terminal.reset_mock()
         self._cmd('ls /computes/1')
-        assert self.terminal.method_calls[0] == ('write', ('/computes/1\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('/computes/1\n')
 
         self.terminal.reset_mock()
         self._cmd('ls /computes/x')
-        assert self.terminal.method_calls[0] == ('write', ('No such object: /computes/x\n',))
+        with assert_mock(self.terminal) as t:
+            t.write('No such object: /computes/x\n')
 
     @run_in_reactor
     def test_ls_l(self):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
-        assert self.terminal.method_calls[:-1] == []
+        #~ assert self.terminal.method_calls[:-1] == []
+        with assert_mock(self.terminal) as t:
+            skip(t, 1)
+            no_more_calls(t)
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
-        assert self.terminal.method_calls[:-1] == [('write', ('1\tc1:compute1:tux-for-test\n',), {})]
+        with assert_mock(self.terminal) as t:
+            t.write('1\tc1:compute1:tux-for-test\n')
+            skip(t, 1)
+            no_more_calls(t)
 
         self.terminal.reset_mock()
         self._cmd('ls /computes/1 -l')
-        assert self.terminal.method_calls[:-1] == [('write', ('1\tc1:compute1:tux-for-test\n',), {})]
-
+        with assert_mock(self.terminal) as t:
+            t.write('1\tc1:compute1:tux-for-test\n')
+            skip(t, 1)
+            no_more_calls(t)
 
     @run_in_reactor
     def test_cat_folders(self):
@@ -134,6 +152,8 @@ class SshTestCase(unittest.TestCase):
     def test_cat_compute(self):
         self._cmd('cat computes/1')
         assert self.terminal.method_calls[0] == ('write', ("No such object: computes/1\n", ))
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/1\n")
 
         self.terminal.reset_mock()
 
@@ -142,13 +162,12 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/1')
 
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',)),
-            ('write', ('CPU Speed in MHz:\t2000\n',)),
-            ('write', ('Host name:      \ttux-for-test\n',)),
-            ('write', ('RAM size in MB: \t2000\n',)),
-            ('write', ('State:          \tactive\n',)),
-        ]
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+            t.write('CPU Speed in MHz:\t2000\n')
+            t.write('Host name:      \ttux-for-test\n')
+            t.write('RAM size in MB: \t2000\n')
+            t.write('State:          \tactive\n')
 
     @run_in_reactor
     def test_rm_compute(self):
@@ -162,26 +181,26 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/1')
 
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',)),
-            ('write', ('CPU Speed in MHz:\t2000\n',)),
-            ('write', ('Host name:      \ttux-for-test\n',)),
-            ('write', ('RAM size in MB: \t2000\n',)),
-            ('write', ('State:          \tactive\n',)),
-        ]
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+            t.write('CPU Speed in MHz:\t2000\n')
+            t.write('Host name:      \ttux-for-test\n')
+            t.write('RAM size in MB: \t2000\n')
+            t.write('State:          \tactive\n')
 
         self._cmd('rm computes/1')
 
         self.terminal.reset_mock()
 
         self._cmd('cat computes/1')
-        assert self.terminal.method_calls[0] == ('write', ("No such object: computes/1\n", ))
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/1\n")
 
         self.terminal.reset_mock()
 
         self._cmd('rm computes/1')
-
-        assert self.terminal.method_calls[:-1] == [('write', ('No such object: computes/1\n',), {})]
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/1\n")
 
     @run_in_reactor
     def test_modify_compute(self):
@@ -192,21 +211,22 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         self._cmd('cat computes/1')
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',)),
-            ('write', ('CPU Speed in MHz:\t2000\n',)),
-            ('write', ('Host name:      \tTUX-FOR-TEST\n',)),
-            ('write', ('RAM size in MB: \t2000\n',)),
-            ('write', ('State:          \tactive\n',)),
-        ]
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+            t.write('CPU Speed in MHz:\t2000\n')
+            t.write('Host name:      \tTUX-FOR-TEST\n')
+            t.write('RAM size in MB: \t2000\n')
+            t.write('State:          \tactive\n')
 
         self.terminal.reset_mock()
         self._cmd('set computes/123')
-        eq_(self.terminal.method_calls[:-1], [('write', ('No such object: computes/123\n',))])
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/123\n")
 
         self.terminal.reset_mock()
         self._cmd('set computes')
-        eq_(self.terminal.method_calls[:-1], [('write', ('No schema found for object: computes\n',))])
+        with assert_mock(self.terminal) as t:
+            t.write("No schema found for object: computes\n")
 
     @run_in_reactor
     def test_modify_compute_verbose(self):
@@ -214,18 +234,18 @@ class SshTestCase(unittest.TestCase):
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self._cmd('set computes/1 hostname=TUX-FOR-TEST -v')
-        eq_(self.terminal.method_calls[:-1], [('write', ('Setting hostname=TUX-FOR-TEST\n',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write("Setting hostname=TUX-FOR-TEST\n")
 
         self.terminal.reset_mock()
 
         self._cmd('cat computes/1')
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',)),
-            ('write', ('CPU Speed in MHz:\t2000\n',)),
-            ('write', ('Host name:      \tTUX-FOR-TEST\n',)),
-            ('write', ('RAM size in MB: \t2000\n',)),
-            ('write', ('State:          \tactive\n',)),
-        ]
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+            t.write('CPU Speed in MHz:\t2000\n')
+            t.write('Host name:      \tTUX-FOR-TEST\n')
+            t.write('RAM size in MB: \t2000\n')
+            t.write('State:          \tactive\n')
 
     @run_in_reactor
     def test_modify_compute_errors(self):
@@ -233,7 +253,8 @@ class SshTestCase(unittest.TestCase):
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self._cmd('set computes/1 hostname=x')
-        eq_(self.terminal.method_calls[:-1], [('write', ('hostname: Value is too short\n',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write("hostname: Value is too short\n")
 
     @run_in_reactor
     def test_create_compute(self):
@@ -243,13 +264,12 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('cat 1')
 
-        assert self.terminal.method_calls[:-1] == [
-            ('write', ('Architecture:   \tlinux\n',)),
-            ('write', ('CPU Speed in MHz:\t2000\n',)),
-            ('write', ('Host name:      \tTUX-FOR-TEST\n',)),
-            ('write', ('RAM size in MB: \t2000\n',)),
-            ('write', ('State:          \tactive\n',)),
-        ]
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+            t.write('CPU Speed in MHz:\t2000\n')
+            t.write('Host name:      \tTUX-FOR-TEST\n')
+            t.write('RAM size in MB: \t2000\n')
+            t.write('State:          \tactive\n')
 
     @run_in_reactor
     def test_create_compute_mandatory_args(self):
@@ -258,7 +278,8 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
 
-        assert self.terminal.method_calls[:-1][0] == ('write', ('argument =speed is required',))
+        with assert_mock(self.terminal) as t:
+            t.write("argument =speed is required")
 
     @run_in_reactor
     def test_mk_keyword_declaration(self):
@@ -332,7 +353,10 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_suggestion(self):
         self._cmd('make')
-        assert self.terminal.method_calls[1] == ('write', ("Do you mean 'mk'?\n",), {})
+        with assert_mock(self.terminal) as t:
+            skip(t, 1)
+            t.write("Do you mean 'mk'?\n")
+
 
     def test_tokenizer(self):
         arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes"'
