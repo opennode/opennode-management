@@ -327,7 +327,7 @@ class SshTestCase(unittest.TestCase):
         assert self.terminal.method_calls[1] == ('write', ("Do you mean 'mk'?\n",), {})
 
     def test_tokenizer(self):
-        arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes"'
+        arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes"'
 
         eq_(self.oms_ssh.tokenizer.tokenize(arglist),
                 ['set', '/computes/some file  with spaces', '-v', '--help', '=key', 'value', '=other_key', 'quoted value', '=lastkey', 'escaped " quotes'])
@@ -341,4 +341,4 @@ class SshTestCase(unittest.TestCase):
         assert got_exception
 
         # TODO: handle "glued" quoted args
-        # arglist = 'set /computes/some\\ file\\ \\ with\\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \\" quotes" cornercase="glued""quoted"'
+        # arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes" cornercase="glued""quoted"'
