@@ -34,7 +34,7 @@ class InstrumentableArgumentParser(argparse.ArgumentParser):
         super(InstrumentableArgumentParser, self).__init__(*args, **kwargs)
 
     def _print_message(self, message, file=None):
-        """Ensure that the file passed to the parser constructor is the one actually used
+        """Ensures that the file passed to the parser constructor is the one actually used
         to output the message. Argparse's behavior is to default to stderr.
 
         """
@@ -72,7 +72,8 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
         return parsed
 
     def declare_argument(self, dest, default=None):
-        """Declare the existence of an argument without adding a requirement and an option string for it.
+        """Declares the existence of an argument without adding a requirement and an option string for it.
+
         It's useful for GroupDictAction argument or other actions where multiple arguments store in the same value.
         The `dest` attribute for declared arguments will have it's default value even if no argument was defined
         or matched.
@@ -114,7 +115,7 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
 
 
 class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
-    """Takes care of presenting our special keyworded options in their canonic key = value form"""
+    """Takes care of presenting our special keyworded options in their canonical key = value form."""
 
     def format_help(self):
         help = super(VirtualConsoleHelpFormatter, self).format_help()
@@ -130,32 +131,13 @@ class GroupDictAction(argparse.Action):
     which would otherwise end up in cluttering the resulting arg object without
     a clear way to enumerate them all.
 
-    You can override this grouping with the `group` parameter."""
+    You can override this grouping with the `group` parameter.
 
-    def __init__(self,
-                 option_strings,
-                 dest,
-                 nargs=None,
-                 const=None,
-                 default=argparse.SUPPRESS,
-                 type=None,
-                 choices=None,
-                 required=False,
-                 help=None,
-                 metavar=None,
-                 group='group'):
-        super(GroupDictAction, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            nargs=nargs,
-            const=const,
-            default=default,
-            type=type,
-            choices=choices,
-            required=required,
-            help=help,
-            metavar=metavar)
-        self.group=group
+    """
+
+    def __init__(self, group='group', **kwargs):
+        super(GroupDictAction, self).__init__(**kwargs)
+        self.group = group
 
     def __call__(self, parser, namespace, values, option_string=None):
         group = getattr(namespace, self.group, {})
@@ -166,6 +148,7 @@ class GroupDictAction(argparse.Action):
 class ICmdArgumentsSyntax(Interface):
     def arguments():
         """Defines the command line arguments syntax."""
+
 
 class IContextualCmdArgumentsSyntax(Interface):
     def arguments(parser, args, rest):
