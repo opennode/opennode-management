@@ -1,8 +1,7 @@
-import re
+import os
 
 from twisted.conch import recvline
 from twisted.python import log
-import os
 
 
 CTRL_A = '\x01'
