@@ -3,10 +3,13 @@ import unittest
 import mock
 from nose.tools import eq_
 from zope.interface import implements, Interface
+from martian.testing import FakeModule
+from grokcore.component.testing import grok
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd
+from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmd.registry import commands
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.base import Model, Container
@@ -312,11 +315,14 @@ class SshTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_last_error(self):
-        class FailingCommand(Cmd):
-            name = 'failing'
-            def execute(self, args):
-                raise Exception('some mock error')
-        commands()['fail'] = FailingCommand
+        class meta(FakeModule):
+            class FailingCommand(Cmd):
+                command('fail')
+
+                def execute(self, args):
+                    raise Exception('some mock error')
+
+        grok('martiantest.fake.meta')
 
         self._cmd('fail')
         self.terminal.reset_mock()
