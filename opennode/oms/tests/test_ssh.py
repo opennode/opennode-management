@@ -4,6 +4,7 @@ import mock
 from grokcore.component.testing import grok
 from martian.testing import FakeModule
 from nose.tools import eq_, assert_raises
+from zope import schema
 from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
@@ -334,6 +335,39 @@ class SshTestCase(unittest.TestCase):
         try:
             CreateObjCmd.current_obj = TestContainer()
             self._cmd('mk some-test')
+            assert CreateObjCmd.current_obj.added
+        finally:
+            CreateObjCmd.current_obj = orig_current_object
+            del creatable_models['some-test']
+
+    @run_in_reactor
+    def test_create_multiple_interfaces(self):
+        class ITestA(Interface):
+            architecture = schema.Choice(title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
+
+        class ITestB(Interface):
+            state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
+
+        class Test(Model):
+            implements(ITestA, ITestB)
+
+            def __init__(self, *args):
+                pass
+
+        class TestContainer(Container):
+            __contains__ = Test
+
+            added = False
+
+            def add(self, item):
+                self.added = True
+
+        creatable_models['some-test'] = Test
+        orig_current_object = CreateObjCmd.current_obj
+
+        try:
+            CreateObjCmd.current_obj = TestContainer()
+            self._cmd('mk some-test architecture=linux state=active')
             assert CreateObjCmd.current_obj.added
         finally:
             CreateObjCmd.current_obj = orig_current_object

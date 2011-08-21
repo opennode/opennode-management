@@ -386,19 +386,20 @@ class MkCmdDynamicArguments(Adapter):
 
     def arguments(self, parser, args, rest):
         model_cls = creatable_models.get(args.type)
-        schema = get_direct_interface(model_cls)
+        schemas = get_direct_interfaces(model_cls)
 
         parser.declare_argument('keywords', {})
 
-        for name, field in zope.schema.getFields(schema).items():
-            choices = None
-            type = None
-            if isinstance(field, zope.schema.Choice):
-                choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
-            if isinstance(field, zope.schema.Int):
-                type = int
+        for schema in schemas:
+            for name, field in zope.schema.getFields(schema).items():
+                choices = None
+                type = None
+                if isinstance(field, zope.schema.Choice):
+                    choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
+                if isinstance(field, zope.schema.Int):
+                    type = int
 
-            parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+                parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
 
