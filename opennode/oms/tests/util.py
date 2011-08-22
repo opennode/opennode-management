@@ -2,6 +2,7 @@ import sys
 from Queue import Queue, Empty
 from functools import wraps
 from contextlib import contextmanager
+from collections import namedtuple
 
 from nose.twistedtools import threaded_reactor
 
@@ -137,3 +138,31 @@ def skip(assert_mock_cm, num):
     if calls_left < num:
         raise AssertionError("There should be at least %s more method calls but there are only %s" % (num, calls_left))
     assert_mock_cm.__dict__['next_method_index'] += num
+
+
+class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'cm'))):
+    """Describes a method call.
+
+    Also behaves as a context manager for use with the Python `with`
+    statement.  When used as a context manager, automatically `skip`s
+    to the next method call after the `with` block.
+
+    """
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        skip(self.cm, 1)
+
+
+def current_call(assert_mock_cm):
+    """Returns the descriptor about the next method call that would be asserted against.
+
+    When not called inside a `with` statement, care needs to be take
+    to manually `skip` to the next method call as needed.
+
+    """
+    next_method_ix = assert_mock_cm.__dict__['next_method_index']
+    call = assert_mock_cm.__dict__['mock'].method_calls[next_method_ix]
+    return CallDescr(*call, cm=assert_mock_cm)
