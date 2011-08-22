@@ -151,7 +151,9 @@ class CmdCompletionTestCase(unittest.TestCase):
 
         """
         self._tab_after('set /comp')
-        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('utes/')
+            no_more_calls(t)
 
     @run_in_reactor
     def test_complete_keyword_switches(self):
@@ -159,20 +161,28 @@ class CmdCompletionTestCase(unittest.TestCase):
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
         self._tab_after('set /computes/1 arch')
-        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('itecture=')
+            no_more_calls(t)
 
         self._tab_after('li')
-        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('nux ')
+            no_more_calls(t)
 
     @run_in_reactor
     def test_complete_keyword_switches_mk(self):
         self.oms_ssh.lineReceived('cd computes')
 
         self._tab_after('mk compute arch')
-        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('itecture=')
+            no_more_calls(t)
 
         self._tab_after('li')
-        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('nux ')
+            no_more_calls(t)
 
     @run_in_reactor
     def test_complete_consumed_keyword_switches_mk(self):
@@ -180,13 +190,18 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.oms_ssh.lineReceived('cd computes')
 
         self._tab_after('mk compute arch')
-        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('itecture=')
+            no_more_calls(t)
 
         self._tab_after('li')
-        eq_(self.terminal.method_calls, [('write', ('nux ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('nux ')
+            no_more_calls(t)
 
         self._tab_after('arch')
-        eq_(self.terminal.method_calls, [])
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
 
     @run_in_reactor
     def test_complete_mk_legal_types(self):
@@ -194,16 +209,23 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.oms_ssh.lineReceived('cd computes')
 
         self._tab_after('mk net')
-        eq_(self.terminal.method_calls, [])
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
 
         self.oms_ssh.handle_RETURN()
         self.terminal.reset_mock()
 
         self._tab_after('mk comp')
-        eq_(self.terminal.method_calls, [('write', ('ute ',), {})])
+        #~ eq_(self.terminal.method_calls, [('write', ('ute ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('ute ')
+            no_more_calls(t)
 
         self._tab_after('arch')
-        eq_(self.terminal.method_calls, [('write', ('itecture=',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('itecture=')
+            no_more_calls(t)
+
 
     @run_in_reactor
     def test_complete_mk_legal_types_interface(self):
@@ -229,7 +251,9 @@ class CmdCompletionTestCase(unittest.TestCase):
         try:
             commands.CreateObjCmd.current_obj = TestInterfaceContainer()
             self._tab_after('mk ')
-            eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
+            with assert_mock(self.terminal) as t:
+                t.write('some-test ')
+                no_more_calls(t)
 
             self.oms_ssh.handle_RETURN()
             self.terminal.reset_mock()
@@ -237,7 +261,9 @@ class CmdCompletionTestCase(unittest.TestCase):
             commands.CreateObjCmd.current_obj = TestClassContainer()
 
             self._tab_after('mk ')
-            eq_(self.terminal.method_calls, [('write', ('some-test ',), {})])
+            with assert_mock(self.terminal) as t:
+                t.write('some-test ')
+                no_more_calls(t)
         finally:
             commands.CreateObjCmd.current_obj = orig_current_object
             del creatable_models['some-test']
@@ -247,7 +273,10 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.oms_ssh.lineReceived('cd computes')
 
         self._tab_after('mk comp')
-        eq_(self.terminal.method_calls, [('write', ('ute ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('ute ')
+            no_more_calls(t)
 
         self._tab_after('comp')
-        eq_(self.terminal.method_calls, [])
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
