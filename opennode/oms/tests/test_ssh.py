@@ -16,6 +16,7 @@ from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdP
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip
 from opennode.oms.zodb import db
+from opennode.oms.tests.util import current_call
 
 
 class SshTestCase(unittest.TestCase):
@@ -60,9 +61,9 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_help(self):
         self._cmd('help')
-        out = self.terminal.method_calls[0][1][0]
-        for c in commands().keys():
-            assert c in out
+        with assert_mock(self.terminal) as t:
+            for cmd in commands().keys():
+                assert cmd in current_call(t).arg
 
     @run_in_reactor
     def test_cd(self):
@@ -124,10 +125,7 @@ class SshTestCase(unittest.TestCase):
     def test_ls_l(self):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
-        #~ assert self.terminal.method_calls[:-1] == []
-        with assert_mock(self.terminal) as t:
-            skip(t, 1)
-            no_more_calls(t)
+        eq_((self.terminal.method_calls), 1)
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
@@ -150,13 +148,15 @@ class SshTestCase(unittest.TestCase):
     def test_cat_folders(self):
         for folder in ['computes', 'templates']:
             self._cmd('cat %s' % folder)
-            assert self.terminal.method_calls[0] == ('write', ('Unable to create a printable representation.\n', ))
+            with assert_mock(self.terminal) as t:
+                t.write("Unable to create a printable representation.\n")
             self.terminal.reset_mock()
 
     @run_in_reactor
     def test_cat_compute(self):
         self._cmd('cat computes/1')
-        assert self.terminal.method_calls[0] == ('write', ("No such object: computes/1\n", ))
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/1\n")
         with assert_mock(self.terminal) as t:
             t.write("No such object: computes/1\n")
 
@@ -177,7 +177,8 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_rm_compute(self):
         self._cmd('cat computes/1')
-        assert self.terminal.method_calls[0] == ('write', ("No such object: computes/1\n", ))
+        with assert_mock(self.terminal) as t:
+            t.write("No such object: computes/1\n")
 
         self.terminal.reset_mock()
 
@@ -352,7 +353,8 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('set computes/1 -h')
 
-        assert 'hostname = ' in self.terminal.method_calls[0][1][0]
+        with assert_mock(self.terminal) as t:
+            assert 'hostname = ' in current_call(t).arg
 
     @run_in_reactor
     def test_parsing_error_message(self):
@@ -373,7 +375,8 @@ class SshTestCase(unittest.TestCase):
         self._cmd('fail')
         self.terminal.reset_mock()
         self._cmd('last_error')
-        assert 'some mock error' in self.terminal.method_calls[0][1][0]
+        with assert_mock(self.terminal) as t:
+            assert 'some mock error' in current_call(t).arg
 
     @run_in_reactor
     def test_suggestion(self):

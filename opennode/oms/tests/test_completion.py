@@ -1,7 +1,6 @@
 import unittest
 
 import mock
-from nose.tools import eq_
 from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
@@ -141,8 +140,8 @@ class CmdCompletionTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             skip(t, 2)
             with current_call(t) as c:
-                assert 'help' not in c.args[0]
-                assert '-h' not in c.args[0]
+                assert 'help' not in c.arg
+                assert '-h' not in c.arg
 
     @run_in_reactor
     def test_complete_context_dependent_no_context(self):
@@ -200,8 +199,7 @@ class CmdCompletionTestCase(unittest.TestCase):
             no_more_calls(t)
 
         self._tab_after('arch')
-        with assert_mock(self.terminal) as t:
-            no_more_calls(t)
+        assert not self.terminal.method_calls
 
     @run_in_reactor
     def test_complete_mk_legal_types(self):
@@ -209,8 +207,7 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.oms_ssh.lineReceived('cd computes')
 
         self._tab_after('mk net')
-        with assert_mock(self.terminal) as t:
-            no_more_calls(t)
+        assert not self.terminal.method_calls
 
         self.oms_ssh.handle_RETURN()
         self.terminal.reset_mock()
@@ -278,5 +275,4 @@ class CmdCompletionTestCase(unittest.TestCase):
             no_more_calls(t)
 
         self._tab_after('comp')
-        with assert_mock(self.terminal) as t:
-            no_more_calls(t)
+        assert not self.terminal.method_calls
