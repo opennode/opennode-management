@@ -14,6 +14,8 @@ CTRL_L = '\x0c'
 CTRL_T = '\x14'
 
 BLUE = '\x1b[1;34m'
+CYAN = '\x1b[1;36m'
+
 RESET_COLOR = '\x1b[0m'
 
 
@@ -165,7 +167,10 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.close_connection()
 
     def colorize(self, color, text):
-        return color + text + RESET_COLOR if self.enable_colors else text
+        if color and self.enable_colors:
+            return color + text + RESET_COLOR
+        else:
+            return text
 
     def close_connection(self):
         """Closes the connection and saves history."""

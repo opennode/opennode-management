@@ -6,7 +6,7 @@ from twisted.python import log
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
+from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.zodb import db
 
@@ -96,6 +96,11 @@ class OmsSshProtocol(InteractiveTerminal):
                     space = ''
 
             patch = completions[0][len(partial):] + space
+
+            # Drop @, half hack
+            if patch.endswith('@ '):
+                patch = patch.rstrip('@ ') + ' '
+
             self.insert_text(patch)
         elif len(completions) > 1:
             common_prefix = os.path.commonprefix(completions)
@@ -105,12 +110,19 @@ class OmsSshProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
-                completions = [self.colorize(BLUE, item) if item.endswith('/') else item for item in completions]
+                completions = [self.colorize(self._completion_color(item), item) for item in completions]
                 self.terminal.write(columnize(completions, self.width))
                 self.drawInputLine()
                 if len(rest):
                     self.terminal.cursorBackward(len(rest))
 
+    def _completion_color(self, completion):
+        if completion.endswith('/'):
+            return BLUE
+        elif completion.endswith('@'):
+            return CYAN
+        else:
+            return None
 
     @property
     def hist_file_name(self):

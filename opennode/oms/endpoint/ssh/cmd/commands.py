@@ -9,10 +9,11 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import BLUE
+from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.symlink import ISymlink
 from opennode.oms.util import get_direct_interfaces, get_direct_interface
 from opennode.oms.zodb import db
 
@@ -117,6 +118,8 @@ class ListDirContentsCmd(Cmd):
         def pretty_name(item):
             if IContainer.providedBy(item):
                 return self.protocol.colorize(BLUE, item.__name__ + '/')
+            elif ISymlink.providedBy(item):
+                return self.protocol.colorize(CYAN, item.__name__ + '@')
             else:
                 return item.__name__
 

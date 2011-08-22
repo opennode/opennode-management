@@ -126,6 +126,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('ls /computes -l')
         #~ assert self.terminal.method_calls[:-1] == []
         with assert_mock(self.terminal) as t:
+            t.write('by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
@@ -136,6 +137,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
             t.write('1\tc1:compute1:tux-for-test\n')
+            t.write('by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 

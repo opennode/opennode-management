@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 from zope import schema
+from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
 from .base import Model, Container
+from .byname import ByNameContainerExtension
 
 
 class ICompute(Interface):
@@ -24,6 +26,9 @@ class Compute(Model):
         self.memory = memory
         self.state = state
         self.template = template
+
+    def display_name(self):
+        return self.hostname
 
     @property
     def nicknames(self):
@@ -49,3 +54,6 @@ class Computes(Container):
 
     def __str__(self):
         return 'Compute list'
+
+
+provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
