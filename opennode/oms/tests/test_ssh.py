@@ -12,7 +12,7 @@ from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmd.registry import commands
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
 from opennode.oms.model.model import creatable_models
-from opennode.oms.model.model.base import Model, Container
+from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip
 from opennode.oms.zodb import db
@@ -23,6 +23,9 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     @clean_db
     def setUp(self):
+        self.old_id_allocation_policy = Container.id_allocation_policy
+        Container.id_allocation_policy = SequentialIntegerIdPolicy()
+
         self.oms_ssh = OmsSshProtocol()
         self.oms_ssh.history_save_enabled = False
 
@@ -30,6 +33,9 @@ class SshTestCase(unittest.TestCase):
         self.oms_ssh.terminal = self.terminal
 
         self.oms_ssh.enable_colors = False
+
+    def tearDown(self):
+        Container.id_allocation_policy = self.old_id_allocation_policy
 
     def _cmd(self, cmd):
         self.oms_ssh.lineReceived(cmd)
