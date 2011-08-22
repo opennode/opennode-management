@@ -12,6 +12,7 @@ from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdP
 from opennode.oms.model.model import creatable_models
 from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip
 from opennode.oms.zodb import db
+from opennode.oms.tests.util import current_call
 
 
 class CmdCompletionTestCase(unittest.TestCase):
@@ -137,8 +138,11 @@ class CmdCompletionTestCase(unittest.TestCase):
             no_more_calls(t)
 
         self._tab_after('-')
-        assert 'help' not in self.terminal.method_calls[2][1][0]
-        assert '-h' not in self.terminal.method_calls[2][1][0]
+        with assert_mock(self.terminal) as t:
+            skip(t, 2)
+            with current_call(t) as c:
+                assert 'help' not in c.args[0]
+                assert '-h' not in c.args[0]
 
     @run_in_reactor
     def test_complete_context_dependent_no_context(self):
