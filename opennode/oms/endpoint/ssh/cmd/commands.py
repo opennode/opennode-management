@@ -225,17 +225,17 @@ class MoveCmd(Cmd):
 
     @db.transact
     def execute(self, args):
-        originPath, destPath = args.paths
+        src_path, dest_path = args.paths
 
-        origin = self.traverse(originPath)
-        dest = self.traverse(destPath)
+        src = self.traverse(src_path)
+        dest = self.traverse(dest_path)
 
         if not IContainer.providedBy(dest):
             self.write("Destination %s has to be a container.\n" % dest)
             return
 
         # `add` will take care of removing the old parent.
-        dest.add(origin)
+        dest.add(src)
 
         transaction.commit()
 
