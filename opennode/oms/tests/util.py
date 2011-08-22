@@ -155,6 +155,11 @@ class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'cm'))):
     def __exit__(self, *exc_info):
         skip(self.cm, 1)
 
+    @property
+    def arg(self):
+        assert len(self.args) == 1, "Call should only have a single argument"
+        return self.args[0]
+
 
 def current_call(assert_mock_cm):
     """Returns the descriptor about the next method call that would be asserted against.
