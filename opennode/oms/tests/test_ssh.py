@@ -1,10 +1,10 @@
 import unittest
 
 import mock
+from grokcore.component.testing import grok
+from martian.testing import FakeModule
 from nose.tools import eq_, assert_raises
 from zope.interface import implements, Interface
-from martian.testing import FakeModule
-from grokcore.component.testing import grok
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd, MoveCmd
@@ -14,9 +14,8 @@ from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntax
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
 from opennode.oms.model.model.compute import Compute
-from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip
+from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
-from opennode.oms.tests.util import current_call
 
 
 class SshTestCase(unittest.TestCase):

@@ -1,8 +1,8 @@
 import sys
 from Queue import Queue, Empty
-from functools import wraps
-from contextlib import contextmanager
 from collections import namedtuple
+from contextlib import contextmanager
+from functools import wraps
 
 from nose.twistedtools import threaded_reactor
 

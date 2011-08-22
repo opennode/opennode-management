@@ -1,12 +1,9 @@
 import unittest
-from mock import Mock
 
+from mock import Mock
 from nose.tools import assert_raises
 
-from opennode.oms.tests.util import assert_mock, assert_not_raises
-from opennode.oms.tests.util import skip
-from opennode.oms.tests.util import no_more_calls
-from opennode.oms.tests.util import current_call
+from opennode.oms.tests.util import assert_mock, assert_not_raises, skip, no_more_calls, current_call
 
 
 class AssertMockTestCase(unittest.TestCase):

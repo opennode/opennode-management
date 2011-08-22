@@ -3,15 +3,14 @@ import unittest
 import mock
 from zope.interface import implements, Interface
 
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
-from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd import registry, commands
-from opennode.oms.model.model.compute import Compute
-from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
+from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.model.model import creatable_models
-from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip
+from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
+from opennode.oms.model.model.compute import Compute
+from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
-from opennode.oms.tests.util import current_call
 
 
 class CmdCompletionTestCase(unittest.TestCase):
