@@ -45,16 +45,6 @@ class ReadonlyContainer(Model):
         return self._items.values()
 
 
-class SequentialIntegerIdPolicy(object):
-    def new_id(self, container):
-        return str(max(map(int, container._items)) + 1 if container._items else 1)
-
-
-class UUIDIdPolicy(object):
-    def new_id(self, container):
-        return str(uuid4())
-
-
 class Container(ReadonlyContainer):
     """A base class for containers whose items are named by their __name__.
     Adding unnamed objects will allocated according to the `id_allocation_policy`.
@@ -64,8 +54,6 @@ class Container(ReadonlyContainer):
     """
 
     __contains__ = Interface
-
-    id_allocation_policy = UUIDIdPolicy()
 
     def __init__(self):
         self._items = OOBTree()
@@ -88,10 +76,12 @@ class Container(ReadonlyContainer):
 
         id = getattr(item, '__name__' , None)
         if not id:
-            id = self.id_allocation_policy.new_id(self)
+            id = str(uuid4())
 
         self._items[id] = item
         item.__name__ = id
+
+        return id
 
     def remove(self, item):
         del self._items[item.__name__]

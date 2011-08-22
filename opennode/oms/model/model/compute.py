@@ -34,11 +34,7 @@ class Compute(Model):
         names.
 
         """
-        return [
-            'c%s' % self.__name__,
-            'compute%s' % self.__name__,
-            self.hostname,
-        ]
+        return [self.hostname, ]
 
     def __str__(self):
         return 'compute%s' % self.__name__

@@ -7,7 +7,7 @@ from opennode.oms.endpoint.ssh.cmd import registry, commands
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.model.model import creatable_models
-from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
+from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
@@ -16,9 +16,6 @@ from opennode.oms.zodb import db
 class CmdCompletionTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.old_id_allocation_policy = Container.id_allocation_policy
-        Container.id_allocation_policy = SequentialIntegerIdPolicy()
-
         self.oms_ssh = OmsSshProtocol()
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
@@ -33,7 +30,6 @@ class CmdCompletionTestCase(unittest.TestCase):
         registry.commands = lambda: dict(hello=Cmd, **self.orig_commands())
 
     def tearDown(self):
-        Container.id_allocation_policy = self.old_id_allocation_policy
         registry.commands = self.orig_commands
 
     def _input(self, string):
@@ -156,9 +152,9 @@ class CmdCompletionTestCase(unittest.TestCase):
     @run_in_reactor
     def test_complete_keyword_switches(self):
         computes = db.get_root()['oms_root']['computes']
-        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
 
-        self._tab_after('set /computes/1 arch')
+        self._tab_after('set /computes/%s arch' % cid)
         with assert_mock(self.terminal) as t:
             t.write('itecture=')
             no_more_calls(t)
