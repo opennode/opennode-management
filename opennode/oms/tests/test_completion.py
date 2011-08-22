@@ -10,7 +10,7 @@ from opennode.oms.endpoint.ssh.cmd import registry, commands
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.base import Model, Container, SequentialIntegerIdPolicy
 from opennode.oms.model.model import creatable_models
-from opennode.oms.tests.util import run_in_reactor
+from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip
 from opennode.oms.zodb import db
 
 
@@ -49,60 +49,92 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def test_command_completion(self):
         self._tab_after('s')
-        eq_(self.terminal.method_calls, [('write', ('et ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('et ')
+            no_more_calls(t)
 
     def test_command_completion_spaces(self):
         self._tab_after('    s')
-        eq_(self.terminal.method_calls, [('write', ('et ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('et ')
+            no_more_calls(t)
 
     def test_complete_not_found(self):
         self._tab_after('t')
-        eq_(len(self.terminal.method_calls), 0)
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
 
     def test_complete_quotes(self):
         self._tab_after('ls "comp')
-        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('utes/')
+            no_more_calls(t)
 
     def test_complete_prefix(self):
         self._tab_after('h')
-        eq_(self.terminal.method_calls, [('write', ('el',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('el')
+            no_more_calls(t)
 
         # hit tab twice
         self.terminal.reset_mock()
         self.oms_ssh.handle_TAB()
 
-        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('help  hello\n',), {}), ('write', (self.oms_ssh.ps[0] + 'hel',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('')
+            t.nextLine()
+            t.write('help  hello\n')
+            t.write(self.oms_ssh.ps[0] + 'hel')
+            no_more_calls(t)
 
     def test_spaces_between_arg(self):
         self._tab_after('ls comp')
-        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
+
+        with assert_mock(self.terminal) as t:
+            t.write('utes/')
+            no_more_calls(t)
 
     def test_command_arg_spaces_before_command(self):
         self._tab_after(' ls comp')
-        eq_(self.terminal.method_calls, [('write', ('utes/',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('utes/')
+            no_more_calls(t)
 
     def test_mandatory_positional(self):
         self._tab_after('cat ')
-        eq_(len(self.terminal.method_calls), 4)
+        with assert_mock(self.terminal) as t:
+            skip(t, 4)
+            no_more_calls(t)
 
     def test_complete_switches(self):
         self._tab_after('quit ')
-        eq_(len(self.terminal.method_calls), 0)
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
 
         # hit tab twice
         self.oms_ssh.handle_TAB()
-        eq_(len(self.terminal.method_calls), 0)
+        with assert_mock(self.terminal) as t:
+            no_more_calls(t)
 
         # now try with a dash
         self._tab_after('-')
-        eq_(self.terminal.method_calls, [('write', ('',), {}), ('nextLine', (), {}), ('write', ('-h  --help\n',), {}), ('write', (self.oms_ssh.ps[0] + 'quit -',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('')
+            t.nextLine()
+            t.write('-h  --help\n')
+            t.write(self.oms_ssh.ps[0] + 'quit -')
+            no_more_calls(t)
         # disambiguate
         self._tab_after('-')
-        eq_(self.terminal.method_calls, [('write', ('help ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write('help ')
+            no_more_calls(t)
 
     def test_complete_consumed_switches(self):
         self._tab_after('ls --help')
-        eq_(self.terminal.method_calls, [('write', (' ',), {})])
+        with assert_mock(self.terminal) as t:
+            t.write(' ')
+            no_more_calls(t)
 
         self._tab_after('-')
         assert 'help' not in self.terminal.method_calls[2][1][0]
