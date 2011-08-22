@@ -7,7 +7,7 @@ from martian.testing import FakeModule
 from grokcore.component.testing import grok
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
-from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd
+from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd, MoveCmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmd.registry import commands
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
@@ -200,6 +200,26 @@ class SshTestCase(unittest.TestCase):
         self._cmd('rm computes/1')
         with assert_mock(self.terminal) as t:
             t.write("No such object: computes/1\n")
+
+    @run_in_reactor
+    def test_move_compute(self):
+        class ITest(Interface):
+            pass
+
+        class TestContainer(Container):
+            __contains__ = Compute
+
+        computes = db.get_root()['oms_root']['computes']
+        computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        orig_current_object = MoveCmd.current_obj
+
+        try:
+            MoveCmd.current_obj = TestContainer()
+            self._cmd('mv /computes/1 .')
+            eq_(len(MoveCmd.current_obj._items), 1)
+        finally:
+            MoveCmd.current_obj = orig_current_object
 
     @run_in_reactor
     def test_modify_compute(self):

@@ -212,6 +212,34 @@ class RemoveCmd(Cmd):
         transaction.commit()
 
 
+class MoveCmd(Cmd):
+    """Moves an object."""
+    implements(ICmdArgumentsSyntax)
+
+    command('mv')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('paths', nargs=2)
+        return parser
+
+    @db.transact
+    def execute(self, args):
+        originPath, destPath = args.paths
+
+        origin = self.traverse(originPath)
+        dest = self.traverse(destPath)
+
+        if not IContainer.providedBy(dest):
+            self.write("Destination %s has to be a container.\n" % dest)
+            return
+
+        # `add` will take care of removing the old parent.
+        dest.add(origin)
+
+        transaction.commit()
+
+
 class SetAttrCmd(Cmd):
     implements(ICmdArgumentsSyntax)
 
