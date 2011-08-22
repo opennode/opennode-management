@@ -126,21 +126,21 @@ class assert_mock(object):
         pass
 
 
-def no_more_calls(assert_mock_cm):
-    next_index = assert_mock_cm.__dict__['next_method_index']
-    method_calls = assert_mock_cm.__dict__['mock'].method_calls
+def no_more_calls(mock_proxy):
+    next_index = mock_proxy.__dict__['next_method_index']
+    method_calls = mock_proxy.__dict__['mock'].method_calls
     assert next_index == len(method_calls), \
            "There should be no more method calls but there are: %s" % '; '.join(_pretty_print(*call) for call in method_calls)
 
 
-def skip(assert_mock_cm, num):
-    calls_left = len(assert_mock_cm.__dict__['mock'].method_calls) - assert_mock_cm.__dict__['next_method_index']
+def skip(mock_proxy, num):
+    calls_left = len(mock_proxy.__dict__['mock'].method_calls) - mock_proxy.__dict__['next_method_index']
     if calls_left < num:
         raise AssertionError("There should be at least %s more method calls but there are only %s" % (num, calls_left))
-    assert_mock_cm.__dict__['next_method_index'] += num
+    mock_proxy.__dict__['next_method_index'] += num
 
 
-class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'cm'))):
+class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'mock_proxy'))):
     """Describes a method call.
 
     Also behaves as a context manager for use with the Python `with`
@@ -153,7 +153,7 @@ class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'cm'))):
         return self
 
     def __exit__(self, *exc_info):
-        skip(self.cm, 1)
+        skip(self.mock_proxy, 1)
 
     @property
     def arg(self):
@@ -161,13 +161,13 @@ class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'cm'))):
         return self.args[0]
 
 
-def current_call(assert_mock_cm):
+def current_call(mock_proxy):
     """Returns the descriptor about the next method call that would be asserted against.
 
     When not called inside a `with` statement, care needs to be take
     to manually `skip` to the next method call as needed.
 
     """
-    next_method_ix = assert_mock_cm.__dict__['next_method_index']
-    call = assert_mock_cm.__dict__['mock'].method_calls[next_method_ix]
-    return CallDescr(*call, cm=assert_mock_cm)
+    next_method_ix = mock_proxy.__dict__['next_method_index']
+    call = mock_proxy.__dict__['mock'].method_calls[next_method_ix]
+    return CallDescr(*call, mock_proxy=mock_proxy)
