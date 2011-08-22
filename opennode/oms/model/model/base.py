@@ -1,5 +1,5 @@
 import persistent
-from BTrees.IOBTree import IOBTree
+from BTrees.OOBTree import OOBTree
 from zope.interface import implements, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
@@ -43,9 +43,14 @@ class ReadonlyContainer(Model):
         return self._items.values()
 
 
+class SequentialIntegerIdPolicy(object):
+    def new_id(self, container):
+        return str(max(map(int, container._items)) + 1 if container._items else 1)
+
+
 class Container(ReadonlyContainer):
-    """A base class for containers whose items are identified by
-    sequential integer IDs.
+    """A base class for containers whose items are named by their __name__.
+    Adding unnamed objects will allocated according to the `id_allocation_policy`.
 
     Does not support `__setitem__`; use `add(...)` instead.
 
@@ -53,8 +58,10 @@ class Container(ReadonlyContainer):
 
     __contains__ = Interface
 
+    id_allocation_policy = SequentialIntegerIdPolicy()
+
     def __init__(self):
-        self._items = IOBTree()
+        self._items = OOBTree()
 
     def can_contain(self, item):
         if isinstance(self.__contains__, InterfaceClass):
@@ -72,24 +79,19 @@ class Container(ReadonlyContainer):
             item.__parent__.remove(item)
         item.__parent__ = self
 
-        newid = self._items.maxKey() + 1 if self._items else 1
-        self._items[newid] = item
-        item.__name__ = str(newid)
+        id = getattr(item, '__name__' , None)
+        if not id:
+            id = self.id_allocation_policy.new_id(self)
+
+        self._items[id] = item
+        item.__name__ = id
 
     def remove(self, item):
         del self._items[item.__name__]
 
     def __delitem__(self, key):
-        try:
-            intkey = int(key)
-        except ValueError:
-            raise KeyError(key)
-        else:
-            del self._items[intkey]
+        del self._items[key]
 
     def __getitem__(self, key):
         """Returns the Template instance with the ID specified by the given key."""
-        try:
-            return self._items.get(int(key))
-        except ValueError:
-            return None
+        return self._items.get(key)
