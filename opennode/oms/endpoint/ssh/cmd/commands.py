@@ -1,3 +1,4 @@
+import inspect
 import transaction
 import zope.schema
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
@@ -368,10 +369,11 @@ class CreateObjCmd(Cmd):
         # like the apply_raw_data
         # NOTE: arparser already convers int parameters according to the zope.schema.
         # but we might want to create nodes also from other APIs, so something like apply_raw_data would fit.
-        import inspect
         obj = model_cls(*[args.keywords.get(arg_name, None) for arg_name in inspect.getargspec(model_cls.__init__).args[1:]])
 
-        self.current_obj.add(obj)
+        obj_id = self.current_obj.add(obj)
+
+        self.write(str(obj_id))
 
 
 class MkCmdDynamicArguments(Adapter):
