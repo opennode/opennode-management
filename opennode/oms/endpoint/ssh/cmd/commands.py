@@ -373,7 +373,7 @@ class CreateObjCmd(Cmd):
 
         obj_id = self.current_obj.add(obj)
 
-        self.write(str(obj_id))
+        self.write("%s\n" % obj_id)
 
 
 class MkCmdDynamicArguments(Adapter):
