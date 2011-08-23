@@ -9,5 +9,4 @@ ZODB3
 pycrypto
 pyOpenSSL
 pyasn1
-lepl
 https://bitbucket.org/miracle2k/pyutils/get/pyutils.tar.gz

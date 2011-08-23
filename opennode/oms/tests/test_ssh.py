@@ -423,5 +423,10 @@ class SshTestCase(unittest.TestCase):
         with assert_raises(CommandLineSyntaxError):
             self.oms_ssh.tokenizer.tokenize('ls " -l')
 
-        # TODO: handle "glued" quoted args
-        # arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes" cornercase="glued""quoted"'
+        arglist = r'set test cornercase="glued""quoted"'
+        eq_(self.oms_ssh.tokenizer.tokenize(arglist),
+                ['set', 'test', '=cornercase', 'gluedquoted'])
+
+        arglist = r'set test # comment'
+        eq_(self.oms_ssh.tokenizer.tokenize(arglist),
+                ['set', 'test'])
