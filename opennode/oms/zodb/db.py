@@ -1,4 +1,5 @@
 import functools
+import subprocess
 import threading
 
 import transaction
@@ -34,7 +35,14 @@ def init(test=False):
 
     if not test:
         from ZODB import DB
-        storage = ClientStorage('db/socket')
+
+        db_dir = 'db'
+        try:
+            db_dir = subprocess.check_output('./current_db_dir.sh').strip()
+        except:
+            pass
+
+        storage = ClientStorage('%s/socket' % db_dir)
         _db = DB(storage)
     else:
         from ZODB.tests.util import DB
