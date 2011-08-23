@@ -9,28 +9,27 @@ class IDirect2(IDirect): pass
 
 
 def test_basic():
-    assert_direct_interfaces(type(None), [], instance=None)
-    assert_direct_interfaces(object, [])
+    assert_direct_interfaces(type(None), (), instance=None)
+    assert_direct_interfaces(object, ())
 
     class Foo(object): pass
-    assert_direct_interfaces(Foo, [])
+    assert_direct_interfaces(Foo, ())
 
     classImplements(Foo, IDirect)
-    assert_direct_interfaces(Foo, [IDirect])
+    assert_direct_interfaces(Foo, (IDirect,))
 
     class Bar(Foo): pass
-    assert_direct_interfaces(Bar, [])
+    assert_direct_interfaces(Bar, ())
 
     classImplements(Foo, IDirect2)
-    assert_direct_interfaces(Foo, [IDirect, IDirect2])
+    assert_direct_interfaces(Foo, (IDirect, IDirect2))
 
-    assert_direct_interfaces(Bar, [])
+    assert_direct_interfaces(Bar, ())
 
     # If a parent class already implements an interface, but it's also
-    # a direct interface, it still won't be returned.  This case is
-    # not handled as it's simply not needed and unlikely.
+    # a direct interface, it will be returned.
     classImplements(Bar, IDirect)
-    assert_direct_interfaces(Bar, [])
+    assert_direct_interfaces(Bar, (IDirect,))
 
 
 NONE = object()

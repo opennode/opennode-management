@@ -20,15 +20,7 @@ def get_direct_interfaces(obj):
     """
     cls = obj if isinstance(obj, type) else type(obj)
 
-    interfaces = list(zope.interface.implementedBy(cls).interfaces())
-
-    for base_cls in cls.__bases__:
-        for interface in list(zope.interface.implementedBy(base_cls).interfaces()):
-            # in multiple inheritance this it could be already removed
-            if interface in interfaces:
-                interfaces.remove(interface)
-
-    return interfaces
+    return zope.interface.implementedBy(cls).declared
 
 
 def get_direct_interface(obj):
