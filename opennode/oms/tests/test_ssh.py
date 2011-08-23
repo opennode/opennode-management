@@ -32,6 +32,17 @@ class SshTestCase(unittest.TestCase):
 
         self.oms_ssh.enable_colors = False
 
+        # Since uuids are random, static files/subdirectories like 'by-name'
+        # subdir could be arbitrarily placed among them.
+        # Let's monkeypatch the Container._new_id method to reasonably ensure
+        # that created objects will always come first.
+        # Order wasn't guaranted by OOBTree, now we sort in `ls` so this will work.
+        self.old_new_id = Container._new_id
+        Container._new_id = lambda self_: '0000_' + self.old_new_id(self_)
+
+    def tearDown(self):
+        Container._new_id = self.old_new_id
+
     def _cmd(self, cmd):
         self.oms_ssh.lineReceived(cmd)
 
@@ -96,11 +107,11 @@ class SshTestCase(unittest.TestCase):
     def test_ls(self):
         self._cmd('ls')
         with assert_mock(self.terminal) as t:
-            t.write('templates/  computes/\n')
+            t.write('computes/  templates/\n')
 
         self._cmd('ls /')
         with assert_mock(self.terminal) as t:
-            t.write('templates/  computes/\n')
+            t.write('computes/  templates/\n')
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))

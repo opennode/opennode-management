@@ -121,18 +121,21 @@ class ListDirContentsCmd(Cmd):
             else:
                 return item.__name__
 
+        def sorted_obj_list():
+            return sorted(obj.listcontent(), key=lambda o: o.__name__)
+
         if self.opts_long:
             def nick(item):
                 return getattr(item, 'nicknames', [])
 
             if IContainer.providedBy(obj):
-                for subobj in obj.listcontent():
+                for subobj in sorted_obj_list():
                     self.write(('%s\t%s\n' % (pretty_name(subobj), ':'.join(nick(subobj)))).encode('utf8'))
             else:
                 self.write(('%s\t%s\n' % (pretty_name(obj), ':'.join(nick(obj)))).encode('utf8'))
         else:
             if IContainer.providedBy(obj):
-                items = [pretty_name(subobj) for subobj in obj.listcontent()]
+                items = [pretty_name(subobj) for subobj in sorted_obj_list()]
                 if items:
                     output = columnize(items, displaywidth=self.protocol.width)
                     self.write(output)

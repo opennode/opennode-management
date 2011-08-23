@@ -64,6 +64,9 @@ class Container(ReadonlyContainer):
         else:
             return isinstance(item, self.__contains__) or issubclass(item, self.__contains__)
 
+    def _new_id(self):
+        return str(uuid4())
+
     def add(self, item):
         if not self.can_contain(item):
             raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
@@ -76,7 +79,7 @@ class Container(ReadonlyContainer):
 
         id = getattr(item, '__name__' , None)
         if not id:
-            id = str(uuid4())
+            id = self._new_id()
 
         self._items[id] = item
         item.__name__ = id
