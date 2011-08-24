@@ -3,3 +3,4 @@ twistd.pid
 oms.db
 *~
 /db/
+.DS_Store
