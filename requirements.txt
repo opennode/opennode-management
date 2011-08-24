@@ -5,6 +5,8 @@ zope.component
 zope.app.catalog
 zope.app.intid
 grokcore.component
+grokcore.security
+zope.securitypolicy
 columnize
 ipython>=0.11
 ZODB3

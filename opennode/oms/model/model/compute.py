@@ -4,6 +4,7 @@ from grokcore.component import context
 from zope import schema
 from zope.component import provideSubscriptionAdapter, provideAdapter
 from zope.interface import Interface, implements, alsoProvides
+from opennode.oms.security.directives import permissions
 
 from .actions import ActionsContainerExtension
 from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
@@ -118,6 +119,7 @@ class Compute(Container):
     """A compute node."""
 
     implements(ICompute, IDisplayName)
+    permissions(dict(architecture='read'))
 
     __contains__ = IInCompute
 
