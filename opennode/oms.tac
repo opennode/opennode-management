@@ -3,12 +3,14 @@ from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
 from twisted.cred import checkers, portal
+from twisted.python.log import ILogObserver
 from twisted.web import server
 
 from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
+from opennode.oms.logging import setup_logging
 
 
 def create_httprest_server():
@@ -53,3 +55,4 @@ def create_application():
 
 application = create_application()
 
+application.setComponent(ILogObserver, setup_logging())
