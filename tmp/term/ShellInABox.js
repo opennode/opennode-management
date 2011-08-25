@@ -263,7 +263,7 @@ VT100.prototype.getUserSettings = function() {
   // If the menu is unchanged from last time, default values can be
   // looked up in a cookie associated with this page.
   this.signature            = 1;
-  this.utfPreferred         = true;
+  this.utfPreferred         = false;
   this.visualBell           = typeof suppressAllAudio != 'undefined' &&
                               suppressAllAudio;
   this.autoprint            = true;

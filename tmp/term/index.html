@@ -65,6 +65,9 @@
                          '}' +
                          '</style>');
         }
+
+        //connection_url = 'http://localhost:8080/terminal/management';
+        connection_url = 'http://localhost:8080/terminal/test_ssh';
       })();
     --></script>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
@@ -74,7 +77,7 @@
        correctly deal with the enclosing frameset (if any), if we do not
        do this
    -->
-  <body onload="setTimeout('new ShellInABox(\'http://localhost:8080/terminal/management\')', 100)"
+  <body onload="setTimeout('new ShellInABox(connection_url)', 100)"
         scroll="no"><noscript>JavaScript
     must be enabled for ShellInABox</noscript>
 
