@@ -10,14 +10,17 @@ from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
+from opennode.oms.endpoint.webterm.root import WebTerminalServer
 from opennode.oms.logging import setup_logging
 
 
-def create_httprest_server():
-    occi_server = HttpRestServer(avatar=None)
-    occi_site = server.Site(resource=occi_server)
+def create_http_server():
+    # TODO: put a root resources and mount rest and terminal (and others) below.
+    rest_server = HttpRestServer(avatar=None)
+    rest_server.putChild('terminal', WebTerminalServer(avatar=None))
+    site = server.Site(resource=rest_server)
 
-    tcp_server = internet.TCPServer(8080, occi_site)
+    tcp_server = internet.TCPServer(8080, site)
 
     return tcp_server
 
@@ -46,7 +49,7 @@ def create_application():
 
     application = service.Application("OpenNode Management Service")
 
-    create_httprest_server().setServiceParent(application)
+    create_http_server().setServiceParent(application)
     create_ssh_server().setServiceParent(application)
     # TODO: create_websocket_server().setServiceParent(application)
 
