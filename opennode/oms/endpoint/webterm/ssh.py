@@ -25,7 +25,7 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
         # Super is old-style class
         userauth.SSHUserAuthClient.__init__(self, *args, **kwargs)
 
-        names = ["id_fake_dsa", "id_dsa", "id_rsa"]
+        names = ["id_fake_dsa", "id_fake_rsa", "id_dsa", "id_rsa"]
 
         def read(ext):
             home = os.environ["HOME"]
