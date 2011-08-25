@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import uuid
 
@@ -8,6 +9,7 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 
 
 class WebTransport(object):
@@ -18,6 +20,7 @@ class WebTransport(object):
 
     def write(self, text):
         # Group together writes so that we reduce the number of http roundtrips.
+        # Kind of Nagle's algorithm.
         self.session.buffer += text
         reactor.callLater(0.05, self.session.processQueue)
 
@@ -43,16 +46,19 @@ class OmsShellTerminalProtocol(object):
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
 
+
 class SSHClientTerminalProtocol(object):
     """Connect a ssh client session to a web terminal session."""
+
+    def __init__(self, user, host, port=22):
+        self.user = user
+        self.host = host
+        self.port = port
 
     def connection_made(self, terminal, size):
         self.transport = terminal.transport
 
-        from twisted.internet import defer, reactor, protocol
-        from opennode.oms.endpoint.webterm.ssh import ClientTransport
-
-        protocol.ClientCreator(reactor, ClientTransport, self.transport, self.set_channel, size).connectTCP('localhost', 22)
+        ssh_connect_interactive_shell(self.user, self.host, self.port, self.transport, self.set_channel, size)
 
     def set_channel(self, channel):
         self.channel = channel
@@ -187,7 +193,14 @@ class WebTerminalServer(resource.Resource):
         self.avatar = avatar
 
         self.management = TerminalServer(OmsShellTerminalProtocol())
-        self.ssh_test = TerminalServer(SSHClientTerminalProtocol())
+
+        # TODO: takes the user name from whatever the user chooses
+        # commonly it will be root.
+        user = os.environ["USER"]
+
+        # TODO: take the hostname from the model, localhost is for testing
+        host = 'localhost'
+        self.ssh_test = TerminalServer(SSHClientTerminalProtocol(user, host))
 
     def render(self, request):
         return ""
