@@ -2,13 +2,13 @@ import json
 import time
 import uuid
 
+from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer, reactor
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
-from twisted.conch.insults.insults import ServerProtocol
-
 
 from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+
 
 class WebTransport(object):
     """Used by WebTerminal to actually send the data through the http transport."""
@@ -30,6 +30,7 @@ class WebTerminal(ServerProtocol):
         self.session = session
         self.transport = WebTransport(session)
 
+
 class OmsShellTerminalProtocol(object):
     """Connect a OmsSshProtocol to a web terminal session."""
 
@@ -41,6 +42,7 @@ class OmsShellTerminalProtocol(object):
 
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
+
 
 class SSHClientTerminalProtocol(object):
     """Connect a ssh client session to a web terminal session."""
@@ -58,6 +60,7 @@ class SSHClientTerminalProtocol(object):
 
     def handle_key(self, key):
         self.channel.write(key)
+
 
 class TerminalSession(object):
     """A session for our ajax terminal emulator."""

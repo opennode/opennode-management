@@ -1,7 +1,8 @@
 import os
 
-from twisted.conch.ssh import transport, keys, userauth, connection, channel, common, session
+from twisted.conch.ssh import transport, keys, userauth, connection, channel, session
 from twisted.internet import defer
+
 
 class ClientTransport(transport.SSHClientTransport):
 
@@ -57,13 +58,8 @@ class ClientConnection(connection.SSHConnection):
         self.set_channel = set_channel
 
     def serviceStarted(self):
-        print "TERMINAL TRANSPORT", self.terminal_transport
         self.openChannel(ShellChannel(terminal_transport=self.terminal_transport, conn = self))
-        #self.openChannel(ShellChannel(conn = self))
 
-    #def ssh_CHANNEL_DATA(self, packet):
-    #   print "GOT CHANNEL DATA", packet
-    #   connection.SSHConnection.ssh_CHANNEL_DATA(self, packet)
 
 class ShellChannel(channel.SSHChannel):
 
