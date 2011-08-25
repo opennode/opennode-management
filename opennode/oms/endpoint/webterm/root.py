@@ -23,19 +23,46 @@ class WebTransport(object):
 
 
 class WebTerminal(ServerProtocol):
-    """Used by OmsSshProtocol to actually manipulate the terminal."""
+    """Used by TerminalProtocols (like OmsSshProtocol) to actually manipulate the terminal."""
 
     def __init__(self, session):
         ServerProtocol.__init__(self)
         self.session = session
         self.transport = WebTransport(session)
-        self.terminalProtocol = session.shell
 
+class OmsShellTerminalProtocol(object):
+    """Connect a OmsSshProtocol to a web terminal session."""
+
+    def connection_made(self, terminal):
+        self.shell = OmsSshProtocol()
+        self.shell.terminal = terminal
+        self.shell.terminal.terminalProtocol = self.shell
+        self.shell.connectionMade()
+
+    def handle_key(self, key):
+        self.shell.terminal.dataReceived(key)
+
+class SSHClientTerminalProtocol(object):
+    """Connect a ssh client session to a web terminal session."""
+
+    def connection_made(self, terminal):
+        self.transport = terminal.transport
+
+        from twisted.internet import defer, reactor, protocol
+        from opennode.oms.endpoint.webterm.ssh import ClientTransport
+
+        protocol.ClientCreator(reactor, ClientTransport, self.transport, self.set_channel).connectTCP('localhost', 22)
+
+    def set_channel(self, channel):
+        self.channel = channel
+
+    def handle_key(self, key):
+        self.channel.write(key)
 
 class TerminalSession(object):
     """A session for our ajax terminal emulator."""
 
-    def __init__(self):
+    def __init__(self, terminal_protocol):
         self.id = str(uuid.uuid4())
         self.queue = []
         self.buffer = ""
@@ -43,10 +70,9 @@ class TerminalSession(object):
         # TODO: handle session timeouts
         self.timestamp = time.time()
 
-        # We can reuse the OmsSshProtocol without any change
-        self.shell = OmsSshProtocol()
-        self.shell.terminal = WebTerminal(self)
-        self.shell.connectionMade()
+        self.terminal_protocol = terminal_protocol
+        self.terminal_protocol.connection_made(WebTerminal(self))
+
 
     def parse_keys(self, key_stream):
         """The ajax protocol encodes keystrokes as a string of hex bytes,
@@ -58,7 +84,7 @@ class TerminalSession(object):
     def handle_keys(self, key_stream):
         """Send each input key the terminal."""
         for key in self.parse_keys(key_stream):
-            self.shell.terminal.dataReceived(key)
+            self.terminal_protocol.handle_key(key)
 
     def processQueue(self):
         # Teoretically only one ongoing polling request should be live.
@@ -72,19 +98,22 @@ class TerminalSession(object):
         # chunk writes because the javascript renderer is very slow
         # this avoids long pauses to the user.
         chunk_size = 100
-        chunk = self.buffer[0:chunk_size]
+
+        unicode_buffer = self.buffer.decode('utf-8')
+
+        chunk = unicode_buffer[0:chunk_size]
 
         request.write(json.dumps(dict(session=self.id, data=chunk)))
         request.finish()
 
-        self.buffer = self.buffer[chunk_size:]
+        self.buffer = unicode_buffer[chunk_size:].encode('utf-8')
 
     def __repr__(self):
         return 'TerminalSession(%s, %s, %s, %s)' % (self.id, self.queue, self.buffer, self.timestamp)
 
 
-class ManagementTerminalServer(resource.Resource):
-    """Creates new OMS management console web sessions."""
+class TerminalServer(resource.Resource):
+    """Web resource whic creates web terminal sessions."""
 
     def render_OPTIONS(self, request):
         """Return headers which allow cross domain xhr for this."""
@@ -98,11 +127,12 @@ class ManagementTerminalServer(resource.Resource):
 
         return ""
 
-    def __init__(self, avatar=None):
+    def __init__(self, terminal_protocol, avatar=None):
         # Twisted Resource is a not a new style class, so emulating a super-call.
         resource.Resource.__init__(self)
 
         self.sessions = {}
+        self.terminal_protocol = terminal_protocol
 
     def render_POST(self, request):
         # Allow for cross-domain, at least for testing.
@@ -112,7 +142,7 @@ class ManagementTerminalServer(resource.Resource):
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
-            session = TerminalSession()
+            session = TerminalSession(self.terminal_protocol)
             self.sessions[session.id] = session
             return json.dumps(dict(session=session.id, data=session.buffer))
 
@@ -143,6 +173,8 @@ class WebTerminalServer(resource.Resource):
         We'll mount here the ssh consoles to machines."""
         if name == 'management':
             return self.management
+        if name == 'test_ssh':
+            return self.ssh_test
         return self
 
     def __init__(self, avatar=None):
@@ -150,7 +182,8 @@ class WebTerminalServer(resource.Resource):
         resource.Resource.__init__(self)
         self.avatar = avatar
 
-        self.management = ManagementTerminalServer()
+        self.management = TerminalServer(OmsShellTerminalProtocol())
+        self.ssh_test = TerminalServer(SSHClientTerminalProtocol())
 
     def render(self, request):
         return ""
