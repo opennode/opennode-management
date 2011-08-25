@@ -1,4 +1,5 @@
 import inspect
+
 import transaction
 import zope.schema
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
@@ -14,7 +15,7 @@ from opennode.oms.endpoint.ssh.terminal import BLUE
 from opennode.oms.model.form import apply_raw_data
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
-from opennode.oms.util import get_direct_interfaces, get_direct_interface
+from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
 
 
@@ -372,7 +373,9 @@ class CreateObjCmd(Cmd):
         # like the apply_raw_data
         # NOTE: arparser already convers int parameters according to the zope.schema.
         # but we might want to create nodes also from other APIs, so something like apply_raw_data would fit.
-        obj = model_cls(*[args.keywords.get(arg_name, None) for arg_name in inspect.getargspec(model_cls.__init__).args[1:]])
+        argspec = inspect.getargspec(model_cls.__init__)
+        model_args = [args.keywords.get(arg_name) for arg_name in argspec.args[1:]]
+        obj = model_cls(*model_args)
 
         obj_id = self.current_obj.add(obj)
 
@@ -383,8 +386,8 @@ class MkCmdDynamicArguments(Adapter):
     """Dynamically creates the key=value arguments for the `mk` command
     based upon the type being created.
     """
-
     implements(IContextualCmdArgumentsSyntax)
+
     context(CreateObjCmd)
 
     def arguments(self, parser, args, rest):
@@ -395,14 +398,16 @@ class MkCmdDynamicArguments(Adapter):
 
         for schema in schemas:
             for name, field in zope.schema.getFields(schema).items():
-                choices = None
-                type = None
-                if isinstance(field, zope.schema.Choice):
-                    choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
-                if isinstance(field, zope.schema.Int):
-                    type = int
 
-                parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction, group='keywords', help=field.title.encode('utf8'), choices=choices)
+                choices = ([i.value.encode('utf-8') for i in field.vocabulary]
+                           if isinstance(field, zope.schema.Choice) else
+                           None)
+
+                type = (int if isinstance(field, zope.schema.Int)
+                        else None)
+
+                parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction,
+                                    group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
 
@@ -415,15 +420,16 @@ class HelpCmd(Cmd):
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-
-        parser.add_argument('command', nargs='?', choices=[name for name in registry.commands().keys() if name], help="command to get help for")
+        choices = [name for name in registry.commands().keys() if name]
+        parser.add_argument('command', nargs='?', choices=choices, help="command to get help for")
         return parser
 
     @defer.inlineCallbacks
     def execute(self, args):
         if args.command:
             yield registry.get_command(args.command)(self.protocol).parse_args(['-h'])
-        self.write("valid commands: %s\n" % (', '.join(sorted([command._format_names() for command in set(registry.commands().values()) if command.name]))))
+        commands = [command._format_names() for command in set(registry.commands().values()) if command.name]
+        self.write("valid commands: %s\n" % (', '.join(sorted(commands))))
 
 
 class QuitCmd(Cmd):
@@ -437,6 +443,7 @@ class QuitCmd(Cmd):
 
 class LastErrorCmd(Cmd):
     """Prints out the last error.
+
     Useful for devs, and users reporting to issue tracker.
     (Inspired by xsbt)
 
