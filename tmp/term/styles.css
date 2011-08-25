@@ -1,3 +1,15 @@
+body {
+  overflow-y: hidden;
+}
+
+#vt100  {
+position: absolute;
+top:0;
+left:0;
+width: 100%;
+height: 100%;
+}
+
 #vt100 a { 
   text-decoration:  none;
   color:            inherit;
