@@ -32,7 +32,7 @@ class HttpRestServer(resource.Resource):
 
     """
 
-    isLeaf = True
+    isLeaf = False
 
     def __init__(self, avatar=None):
         ## Twisted Resource is a not a new style class, so emulating a super-call
