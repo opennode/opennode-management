@@ -34,7 +34,7 @@ class WebTerminal(ServerProtocol):
 class OmsShellTerminalProtocol(object):
     """Connect a OmsSshProtocol to a web terminal session."""
 
-    def connection_made(self, terminal):
+    def connection_made(self, terminal, size):
         self.shell = OmsSshProtocol()
         self.shell.terminal = terminal
         self.shell.terminal.terminalProtocol = self.shell
@@ -43,17 +43,16 @@ class OmsShellTerminalProtocol(object):
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
 
-
 class SSHClientTerminalProtocol(object):
     """Connect a ssh client session to a web terminal session."""
 
-    def connection_made(self, terminal):
+    def connection_made(self, terminal, size):
         self.transport = terminal.transport
 
         from twisted.internet import defer, reactor, protocol
         from opennode.oms.endpoint.webterm.ssh import ClientTransport
 
-        protocol.ClientCreator(reactor, ClientTransport, self.transport, self.set_channel).connectTCP('localhost', 22)
+        protocol.ClientCreator(reactor, ClientTransport, self.transport, self.set_channel, size).connectTCP('localhost', 22)
 
     def set_channel(self, channel):
         self.channel = channel
@@ -65,7 +64,7 @@ class SSHClientTerminalProtocol(object):
 class TerminalSession(object):
     """A session for our ajax terminal emulator."""
 
-    def __init__(self, terminal_protocol):
+    def __init__(self, terminal_protocol, terminal_size):
         self.id = str(uuid.uuid4())
         self.queue = []
         self.buffer = ""
@@ -73,9 +72,10 @@ class TerminalSession(object):
         # TODO: handle session timeouts
         self.timestamp = time.time()
 
-        self.terminal_protocol = terminal_protocol
-        self.terminal_protocol.connection_made(WebTerminal(self))
+        self.terminal_size = terminal_size
 
+        self.terminal_protocol = terminal_protocol
+        self.terminal_protocol.connection_made(WebTerminal(self), terminal_size)
 
     def parse_keys(self, key_stream):
         """The ajax protocol encodes keystrokes as a string of hex bytes,
@@ -145,7 +145,8 @@ class TerminalServer(resource.Resource):
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
-            session = TerminalSession(self.terminal_protocol)
+            size = (int(request.args['width'][0]), int(request.args['height'][0]))
+            session = TerminalSession(self.terminal_protocol, size)
             self.sessions[session.id] = session
             return json.dumps(dict(session=session.id, data=session.buffer))
 

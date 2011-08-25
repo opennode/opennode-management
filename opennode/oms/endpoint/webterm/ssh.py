@@ -6,16 +6,17 @@ from twisted.internet import defer
 
 class ClientTransport(transport.SSHClientTransport):
 
-    def __init__(self, terminal_transport, set_channel):
+    def __init__(self, terminal_transport, set_channel, terminal_size):
         self.terminal_transport = terminal_transport
         self.set_channel = set_channel
+        self.terminal_size = terminal_size
 
     def verifyHostKey(self, pubKey, fingerprint):
         # TODO: check fingerprints?
         return defer.succeed(1)
 
     def connectionSecure(self):
-        self.requestService(ClientUserAuth(os.environ["USER"], ClientConnection(self.terminal_transport, self.set_channel)))
+        self.requestService(ClientUserAuth(os.environ["USER"], ClientConnection(self.terminal_transport, self.set_channel, self.terminal_size)))
 
 
 class ClientUserAuth(userauth.SSHUserAuthClient):
@@ -51,11 +52,12 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
 
 class ClientConnection(connection.SSHConnection):
 
-    def __init__(self, terminal_transport, set_channel):
+    def __init__(self, terminal_transport, set_channel, terminal_size):
         connection.SSHConnection.__init__(self)
 
         self.terminal_transport = terminal_transport
         self.set_channel = set_channel
+        self.terminal_size = terminal_size
 
     def serviceStarted(self):
         self.openChannel(ShellChannel(terminal_transport=self.terminal_transport, conn = self))
@@ -76,7 +78,7 @@ class ShellChannel(channel.SSHChannel):
     def channelOpen(self, data):
         self.conn.set_channel(self)
 
-        data = session.packRequest_pty_req('xterm-color', (24, 80, 0, 0), '')
+        data = session.packRequest_pty_req('xterm-color', (self.conn.terminal_size[1], self.conn.terminal_size[0], 0, 0), '')
         deferred = self.conn.sendRequest(self, 'pty-req', data, wantReply = 1)
 
         @deferred
