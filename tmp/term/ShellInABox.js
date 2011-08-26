@@ -3973,6 +3973,7 @@ function ShellInABox(url, container) {
   this.keysInFlight = false;
   this.connected    = false;
   this.superClass.constructor.call(this, container);
+  this.timeoutRetries = 0;
 
   // We have to initiate the first XMLHttpRequest from a timer. Otherwise,
   // Chrome never realizes that the page has loaded.
@@ -4050,10 +4051,10 @@ ShellInABox.prototype.sendRequest = function(request) {
 };
 
 ShellInABox.prototype.onReadyStateChange = function(request) {
-
   if (request.readyState == 4 /* XHR_LOADED */) {
     if (request.status == 200) {
       this.connected = true;
+      this.timeoutRetries = 0;
         var response   = JSON.parse(request.responseText);
 
       if (response.data) {
@@ -4069,7 +4070,16 @@ ShellInABox.prototype.onReadyStateChange = function(request) {
       }
     } else if (request.status == 0) {
       // Time Out
-      this.sendRequest(request);
+
+      var self = this;
+
+      setTimeout(function(){
+        self.timeoutRetries++;
+        if (self.timeoutRetries < 10)
+          self.sendRequest();
+        else
+          self.sessionClosed();
+      }, 500);
     } else {
       this.sessionClosed();
     }
