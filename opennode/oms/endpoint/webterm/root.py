@@ -131,6 +131,8 @@ class TerminalServer(resource.Resource):
 
     """
 
+    sessions = {}
+
     def render_OPTIONS(self, request):
         """Return headers which allow cross domain xhr for this."""
         headers = request.responseHeaders
@@ -147,7 +149,6 @@ class TerminalServer(resource.Resource):
         # Twisted Resource is a not a new style class, so emulating a super-call.
         resource.Resource.__init__(self)
 
-        self.sessions = {}
         self.terminal_protocol = terminal_protocol
 
     def render_POST(self, request):
@@ -194,6 +195,10 @@ class WebTerminalServer(resource.Resource):
             return self.management
         if name == 'test_ssh':
             return self.ssh_test
+        if name == 'test_arbitrary':
+            user = request.args['user'][0]
+            host = request.args['host'][0]
+            return TerminalServer(SSHClientTerminalProtocol(user, host))
         return self
 
     def __init__(self, avatar=None):
