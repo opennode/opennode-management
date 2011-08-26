@@ -20,11 +20,16 @@ class OmsShellTerminalProtocol(object):
         self.shell.terminal = terminal
         self.shell.terminal.terminalProtocol = self.shell
         self.shell.connectionMade()
+        self.shell.terminalSize(size[0], size[1])
 
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
 
     def terminalSize(self, width, height):
+        # Insults terminal doesn't work well after resizes
+        # also disabled in the ssh CMI version.
+        #
+        #self.shell.terminalSize(width, height)
         pass
 
 
@@ -110,6 +115,10 @@ class TerminalSession(object):
     def handle_resize(self, size):
         if self.terminal_size != size:
             self.terminal_protocol.terminalSize(size[0], size[1])
+
+    def windowChanged(self, *args):
+        """Called back by insults on terminalSize."""
+        pass
 
     def enqueue(self, request):
         self.queue.append(request)
