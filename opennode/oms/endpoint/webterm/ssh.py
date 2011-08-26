@@ -24,6 +24,10 @@ class SSHClientTransport(transport.SSHClientTransport):
     def connectionSecure(self):
         self.requestService(ClientUserAuth(self.user, SSHShellConnection(self.terminal_transport, self.set_channel, self.terminal_size)))
 
+    def connectionLost(self, reason):
+        transport.SSHClientTransport.connectionLost(self, reason)
+        self.terminal_transport.loseConnection()
+
 
 class ClientUserAuth(userauth.SSHUserAuthClient):
     """Performs ssh connection authentication on behalf of a SSHClientTransport.
@@ -86,8 +90,9 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
                 if ch == '\x7f':
                     self.password = self.password[:-1]
                 elif ch == '\r':
-                    deferred_password.callback(self.password)
-                    terminal.write('\r\n')
+                    if not deferred_password.called:
+                        deferred_password.callback(self.password)
+                        terminal.write('\r\n')
                 else:
                     self.password += ch
 
@@ -120,9 +125,6 @@ class ShellChannel(channel.SSHChannel):
         channel.SSHChannel.__init__(self, *args, **kwargs)
         self.terminal_transport = self.conn.terminal_transport
 
-    def openFailed(self, reason):
-        print 'Channel failed', reason
-
     def channelOpen(self, data):
         self.conn.set_channel(self)
 
@@ -138,4 +140,5 @@ class ShellChannel(channel.SSHChannel):
             self.terminal_transport.write(data)
 
     def closed(self):
+        self.terminal_transport.loseConnection()
         self.loseConnection()
