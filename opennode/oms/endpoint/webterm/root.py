@@ -190,8 +190,10 @@ class TerminalServer(resource.Resource):
             self.sessions[session.id] = session
 
         if not self.sessions.has_key(session_id):
-            request.setResponseCode(500)
-            return "no such session " + session_id
+            # Session interruption is defined using a success status
+            # but with empty session (that's the protocol, I didn't design it).
+            request.setResponseCode(200)
+            return json.dumps(dict(session='', data=''))
 
         session = self.sessions[session_id]
 
