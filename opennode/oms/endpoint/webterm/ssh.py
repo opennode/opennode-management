@@ -142,3 +142,7 @@ class ShellChannel(channel.SSHChannel):
     def closed(self):
         self.terminal_transport.loseConnection()
         self.loseConnection()
+
+    def terminalSize(self, width, height):
+        data = session.packRequest_window_change((height, width, 0, 0))
+        self.conn.sendRequest(self, 'window-change', data, wantReply = 0)

@@ -24,6 +24,9 @@ class OmsShellTerminalProtocol(object):
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
 
+    def terminalSize(self, width, height):
+        pass
+
 
 class SSHClientTerminalProtocol(object):
     """Connect a ssh client session to a web terminal session."""
@@ -43,6 +46,9 @@ class SSHClientTerminalProtocol(object):
 
     def handle_key(self, key):
         self.channel.write(key)
+
+    def terminalSize(self, width, height):
+        self.channel.terminalSize(width, height)
 
 
 class WebTransport(object):
@@ -100,6 +106,10 @@ class TerminalSession(object):
         """Send each input key the terminal."""
         for key in self.parse_keys(key_stream):
             self.terminal_protocol.handle_key(key)
+
+    def handle_resize(self, size):
+        if self.terminal_size != size:
+            self.terminal_protocol.terminalSize(size[0], size[1])
 
     def enqueue(self, request):
         self.queue.append(request)
@@ -163,9 +173,10 @@ class TerminalServer(resource.Resource):
 
         session_id = request.args.get('session', [None])[0]
 
+        size = (int(request.args['width'][0]), int(request.args['height'][0]))
+
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
-            size = (int(request.args['width'][0]), int(request.args['height'][0]))
             session = TerminalSession(self.terminal_protocol, size)
             session_id = session.id
             self.sessions[session.id] = session
@@ -177,6 +188,8 @@ class TerminalServer(resource.Resource):
             return json.dumps(dict(session='', data=''))
 
         session = self.sessions[session_id]
+
+        session.handle_resize(size)
 
         # There are two types of requests:
         # 1) user type keystrokes, return synchronously
