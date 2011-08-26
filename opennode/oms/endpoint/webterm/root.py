@@ -57,6 +57,12 @@ class WebTransport(object):
         self.session.buffer += text
         reactor.callLater(0.05, self.session.processQueue)
 
+    def loseConnection(self):
+        """Close the connection ensuring the the web client will properly detect this close.
+        The name of the method was chosen to implement the twisted convention."""
+        del TerminalServer.sessions[self.session.id]
+        self.write('\r\n')
+
 
 class WebTerminal(ServerProtocol):
     """Used by TerminalProtocols (like OmsSshProtocol) to actually manipulate the terminal."""
