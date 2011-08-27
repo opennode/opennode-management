@@ -23,16 +23,16 @@
     <div id="box">
       <h3>
         <span data-bind="visible: !selectedConsole().parameters, text: selectedConsole().host">localhost</span>
-        <div data-bind="visible: selectedConsole().parameters">
+        <span data-bind="visible: selectedConsole().parameters">
           User name:
-          <input class="parameters" name="user" data-bind="value: user" />
+          <input class="parameters" name="user" data-bind="value: selectedConsole().user" />
           Host name:
-          <input class="parameters" name="host" data-bind="value: host"/>
-        </div>
+          <input class="parameters" name="host" data-bind="value: selectedConsole().host"/>
+        </span>
       </h3>
 
-      <div class="filler" data-bind="visible: selectedConsole().user">
-        <div id="vt100" data-bind="shell: {console: connectionUrl()}"></div>
+      <div class="filler">
+        <div id="vt100" data-bind="shell: {console: selectedConsole().connectionUrl()}"></div>
       </div>
     </div>
   </body>

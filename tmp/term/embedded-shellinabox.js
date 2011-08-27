@@ -4,12 +4,22 @@ var Console = function(name, host, url) {
     this.name = name;
     this.host = host;
     this.url = url;
-    this.user = 'default';
+
+    this.connectionUrl = function() {
+        return baseUrl + this.url;
+    };
 };
 
 function ArbitraryConsole(name, url) {
     Console.call(this, name, '', url);
     this.parameters = true;
+
+    this.user = ko.observable('pippo')
+    this.host = ko.observable('localhost')
+
+    this.connectionUrl = function() {
+        return this.__proto__.connectionUrl.call(this, name, '', url) + "?user=" + this.user() + "&host=" + this.host();
+    };
 }
 
 
@@ -20,19 +30,10 @@ consoles = [new Console('Commandline management interface', 'OMS Commandline man
             new ArbitraryConsole('Connection to arbitrary machine', '/test_arbitrary')]
 
 var viewModel = {
-    user: ko.observable('root'),
-    host: ko.observable('localhost'),
     selectedConsole: ko.observable(consoles[0]),
     consoles: ko.observableArray(consoles),
     reconnect: function() { createShell(this.connectionUrl()); }
 };
-
-
-viewModel.connectionUrl = ko.dependentObservable(function() {
-    return baseUrl + this.selectedConsole().url +  "?user=" + this.user() + "&host=" + this.host();
-}, viewModel);
-
-
 
 ko.bindingHandlers.shell = {
     init: function(element) {
