@@ -314,6 +314,16 @@ class SshTestCase(unittest.TestCase):
             t.write("argument =speed is required")
 
     @run_in_reactor
+    def test_create_compute_invalid_args(self):
+        self._cmd("cd /computes")
+
+        self.terminal.reset_mock()
+        self._cmd("mk compute architecture=linux hostname=x memory=2 state=active speed=2000")
+
+        with assert_mock(self.terminal) as t:
+            t.write("hostname: Value is too short\n")
+
+    @run_in_reactor
     def test_mk_keyword_declaration(self):
         class ITest(Interface):
             pass
