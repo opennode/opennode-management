@@ -257,7 +257,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('set computes')
         with assert_mock(self.terminal) as t:
-            t.write("No schema found for object: computes\n")
+            t.write("No schema found for object\n")
 
     @run_in_reactor
     def test_modify_compute_verbose(self):

@@ -13,6 +13,10 @@ class UnknownAttribute(zope.schema.ValidationError):
     """Unknown attribute"""
 
 
+class NoSchemaFound(zope.schema.ValidationError):
+    """No schema found for object"""
+
+
 class ApplyRawData(object):
 
     def __init__(self, data, obj=None, model=None):
@@ -35,36 +39,40 @@ class ApplyRawData(object):
         raw_data = dict(self.data)
 
         errors = []
-        for name, field in zope.schema.getFields(schema).items():
-            if name not in raw_data:
-                continue
 
-            raw_value = raw_data.pop(name)
+        if not schema:
+            errors.append((None, NoSchemaFound()))
+        else:
+            for name, field in zope.schema.getFields(schema).items():
+                if name not in raw_data:
+                    continue
 
-            if isinstance(raw_value, str):
-                raw_value = raw_value.decode('utf8')
+                raw_value = raw_data.pop(name)
 
-            # We don't want to accidentally swallow any adaption TypeErrors from here:
-            from_unicode = IFromUnicode(field)
+                if isinstance(raw_value, str):
+                    raw_value = raw_value.decode('utf8')
 
-            try:
-                if not raw_value and field.required:
-                    raise RequiredMissing(name)
+                # We don't want to accidentally swallow any adaption TypeErrors from here:
+                from_unicode = IFromUnicode(field)
+
                 try:
-                    value = from_unicode.fromUnicode(raw_value)
-                except (ValueError, TypeError):
-                    raise WrongType(name)
-            except zope.schema.ValidationError as exc:
-                errors.append((name, exc))
-            else:
-                setattr(tmp_obj, name, value)
+                    if not raw_value and field.required:
+                        raise RequiredMissing(name)
+                    try:
+                        value = from_unicode.fromUnicode(raw_value)
+                    except (ValueError, TypeError):
+                        raise WrongType(name)
+                except zope.schema.ValidationError as exc:
+                    errors.append((name, exc))
+                else:
+                    setattr(tmp_obj, name, value)
 
-        if raw_data:
-            for key in raw_data:
-                errors.append((key, UnknownAttribute()))
+            if raw_data:
+                for key in raw_data:
+                    errors.append((key, UnknownAttribute()))
 
-        if not errors:
-            errors = zope.schema.getValidationErrors(schema, tmp_obj)
+            if not errors:
+                errors = zope.schema.getValidationErrors(schema, tmp_obj)
 
 
         self._errors = errors

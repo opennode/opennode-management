@@ -12,7 +12,7 @@ from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE
-from opennode.oms.model.form import apply_raw_data
+from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.util import get_direct_interfaces
@@ -276,19 +276,16 @@ class SetAttrCmd(Cmd):
         # at least one argument exists.
         raw_data = getattr(args, 'keywords', {})
 
-        schema = self._schema(obj)
-        if not schema:
-            self.write("No schema found for object: %s\n" % args.path)
-            return
-
         if args.verbose:
             for key, value in raw_data.items():
                 self.write("Setting %s=%s\n" % (key, value))
 
-        errors = apply_raw_data(raw_data, schema, obj)
+        form = ApplyRawData(raw_data, obj)
 
-        if errors:
-            for key, error in errors:
+        if not form.errors:
+            form.apply()
+        else:
+            for key, error in form.errors:
                 msg = error.doc().encode('utf8')
                 self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
 
