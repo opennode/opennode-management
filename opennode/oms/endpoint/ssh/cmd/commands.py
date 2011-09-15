@@ -273,9 +273,7 @@ class SetAttrCmd(Cmd):
         if not form.errors:
             form.apply()
         else:
-            for key, error in form.errors:
-                msg = error.doc().encode('utf8')
-                self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
+            form.write_errors(to=self)
 
         transaction.commit()
 
@@ -322,9 +320,7 @@ class CreateObjCmd(Cmd):
             obj_id = self.current_obj.add(obj)
             self.write("%s\n" % obj_id)
         else:
-            for key, error in form.errors:
-                msg = error.doc().encode('utf8')
-                self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
+            form.write_errors(to=self)
 
 
 class SetOrMkCmdDynamicArguments(Adapter):

@@ -102,6 +102,11 @@ class ApplyRawData(object):
         assert not self.errors, "There should be no validation errors"
         self.tmp_obj.apply()
 
+    def write_errors(self, to):
+        for key, error in self.errors:
+            msg = error.doc().encode('utf8')
+            to.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
+
 
 def apply_raw_data(raw_data, schema, obj):
     """Takes a dict containing raw data as key-value pairs, converts
