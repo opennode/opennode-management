@@ -3,7 +3,7 @@ import inspect
 import zope.schema
 from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
 
-from opennode.oms.util import get_direct_interface
+from opennode.oms.util import get_direct_interfaces
 
 
 __all__ = ['apply_raw_data']
@@ -23,7 +23,7 @@ class ApplyRawData(object):
         assert isinstance(data, dict)
         assert (obj or model) and not (obj and model), "One of either obj or model needs to be provided, but not both"
 
-        self.schema = get_direct_interface(obj or model)
+        self.schemas = get_direct_interfaces(obj or model)
 
         self.data = data
         self.obj = obj
@@ -35,37 +35,38 @@ class ApplyRawData(object):
             return self._errors
 
         self.tmp_obj = tmp_obj = TmpObj(self.obj)
-        schema = self.schema
+        schemas = self.schemas
         raw_data = dict(self.data)
 
         errors = []
 
-        if not schema:
+        if not schemas:
             errors.append((None, NoSchemaFound()))
         else:
-            for name, field in zope.schema.getFields(schema).items():
-                if name not in raw_data:
-                    continue
+            for schema in schemas:
+                for name, field in zope.schema.getFields(schema).items():
+                    if name not in raw_data:
+                        continue
 
-                raw_value = raw_data.pop(name)
+                    raw_value = raw_data.pop(name)
 
-                if isinstance(raw_value, str):
-                    raw_value = raw_value.decode('utf8')
+                    if isinstance(raw_value, str):
+                        raw_value = raw_value.decode('utf8')
 
-                # We don't want to accidentally swallow any adaption TypeErrors from here:
-                from_unicode = IFromUnicode(field)
+                    # We don't want to accidentally swallow any adaption TypeErrors from here:
+                    from_unicode = IFromUnicode(field)
 
-                try:
-                    if not raw_value and field.required:
-                        raise RequiredMissing(name)
                     try:
-                        value = from_unicode.fromUnicode(raw_value)
-                    except (ValueError, TypeError):
-                        raise WrongType(name)
-                except zope.schema.ValidationError as exc:
-                    errors.append((name, exc))
-                else:
-                    setattr(tmp_obj, name, value)
+                        if not raw_value and field.required:
+                            raise RequiredMissing(name)
+                        try:
+                            value = from_unicode.fromUnicode(raw_value)
+                        except (ValueError, TypeError):
+                            raise WrongType(name)
+                    except zope.schema.ValidationError as exc:
+                        errors.append((name, exc))
+                    else:
+                        setattr(tmp_obj, name, value)
 
             if raw_data:
                 for key in raw_data:

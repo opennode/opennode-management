@@ -364,19 +364,15 @@ class CreateObjCmd(Cmd):
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
 
-        # TODO: this hack was made to make the test run.
-        # Perhaps we should have a better factory for creatable object
-        # (e.g something that doesn't require reflection)
-        # like the apply_raw_data
-        # NOTE: arparser already convers int parameters according to the zope.schema.
-        # but we might want to create nodes also from other APIs, so something like apply_raw_data would fit.
-        argspec = inspect.getargspec(model_cls.__init__)
-        model_args = [args.keywords.get(arg_name) for arg_name in argspec.args[1:]]
-        obj = model_cls(*model_args)
-
-        obj_id = self.current_obj.add(obj)
-
-        self.write("%s\n" % obj_id)
+        form = ApplyRawData(args.keywords, model=model_cls)
+        if not form.errors:
+            obj = form.create()
+            obj_id = self.current_obj.add(obj)
+            self.write("%s\n" % obj_id)
+        else:
+            for key, error in form.errors:
+                msg = error.doc().encode('utf8')
+                self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
 
 
 class MkCmdDynamicArguments(Adapter):
