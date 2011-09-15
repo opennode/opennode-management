@@ -4,7 +4,7 @@ import transaction
 import zope.schema
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
 from twisted.internet import defer
-from zope.component import provideSubscriptionAdapter
+from zope.component import provideSubscriptionAdapter, provideAdapter
 
 from opennode.oms.endpoint.ssh.cmd import registry
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
@@ -255,13 +255,6 @@ class SetAttrCmd(Cmd):
         parser.add_argument('path')
         return parser
 
-    def _schema(self, obj):
-        schemas = get_direct_interfaces(obj)
-
-        if len(schemas) != 1:
-            return
-        return schemas[0]
-
     @db.transact
     def execute(self, args):
         # Argparse doesn't currently return objects, but only paths
@@ -271,10 +264,7 @@ class SetAttrCmd(Cmd):
             self.write("No such object: %s\n" % args.path)
             return
 
-        # Dynamic arguments will end up in the `keywords` arg
-        # thanks to GroupDictAction, but it's not guaranteed that
-        # at least one argument exists.
-        raw_data = getattr(args, 'keywords', {})
+        raw_data = args.keywords
 
         if args.verbose:
             for key, value in raw_data.items():
@@ -290,42 +280,6 @@ class SetAttrCmd(Cmd):
                 self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
 
         transaction.commit()
-
-
-class SetCmdDynamicArguments(Adapter):
-    """Dynamically creates the key=value arguments for the `set` command
-    based upon the object being edited.
-
-    """
-
-    implements(IContextualCmdArgumentsSyntax)
-    context(SetAttrCmd)
-
-    @db.transact
-    def arguments(self, parser, args, rest):
-        # sanity checks
-        obj = self.context.traverse(args.path)
-        if not obj:
-            return parser
-
-        schema = self.context._schema(obj)
-        if not schema:
-            return parser
-
-        # Adds dynamically generated keywords to the parser taking them from the object's schema.
-        # Handles choices and the int type.
-        for name, field in zope.schema.getFields(schema).items():
-            choices = None
-            type = None
-            if isinstance(field, zope.schema.Choice):
-                choices = [voc.value.encode('utf-8') for voc in field.vocabulary]
-            if isinstance(field, zope.schema.Int):
-                type = int
-
-            parser.add_argument('=' + name, type=type, action=GroupDictAction,
-                                group='keywords', help=field.title.encode('utf8'), choices=choices)
-
-        return parser
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -375,19 +329,23 @@ class CreateObjCmd(Cmd):
                 self.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
 
 
-class MkCmdDynamicArguments(Adapter):
-    """Dynamically creates the key=value arguments for the `mk` command
-    based upon the type being created.
+class SetOrMkCmdDynamicArguments(Adapter):
+    """Dynamically creates the key=value arguments for the `set` and `mk` commands
+    depending on the object or type being edited or created.
+
     """
     implements(IContextualCmdArgumentsSyntax)
+    baseclass()
 
-    context(CreateObjCmd)
-
+    @db.transact
     def arguments(self, parser, args, rest):
-        model_cls = creatable_models.get(args.type)
-        schemas = get_direct_interfaces(model_cls)
-
         parser.declare_argument('keywords', {})
+
+        model_or_obj, args_required = ((creatable_models.get(args.type), True)
+                                       if self.context.name == 'mk' else
+                                       (self.context.traverse(args.path), False))
+
+        schemas = get_direct_interfaces(model_or_obj)
 
         for schema in schemas:
             for name, field in zope.schema.getFields(schema).items():
@@ -399,10 +357,14 @@ class MkCmdDynamicArguments(Adapter):
                 type = (int if isinstance(field, zope.schema.Int)
                         else None)
 
-                parser.add_argument('=' + name, required=True, type=type, action=GroupDictAction,
+                parser.add_argument('=' + name, required=args_required, type=type, action=GroupDictAction,
                                     group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
+
+
+provideAdapter(SetOrMkCmdDynamicArguments, adapts=(SetAttrCmd, ))
+provideAdapter(SetOrMkCmdDynamicArguments, adapts=(CreateObjCmd, ))
 
 
 class HelpCmd(Cmd):
