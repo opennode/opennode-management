@@ -82,7 +82,7 @@ class Computes(AddingContainer):
         collect(machines)
         return computes
 
-    def add(self, item):
+    def _add(self, item):
         # break an import cycle
         from opennode.oms.zodb import db
         machines = db.get_root()['oms_root'].machines

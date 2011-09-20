@@ -70,7 +70,7 @@ class AddingContainer(ReadonlyContainer):
 
 class Container(AddingContainer):
     """A base class for containers whose items are named by their __name__.
-    Adding unnamed objects will allocated according to the `id_allocation_policy`.
+    Adding unnamed objects will allocated using the overridable `_new_id` method.
 
     Does not support `__setitem__`; use `add(...)` instead.
 

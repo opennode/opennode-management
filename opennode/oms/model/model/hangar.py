@@ -22,4 +22,4 @@ class Hangar(Container):
         self.__name__ = 'hangar'
 
     def __str__(self):
-        return 'hangar%s' % self.__name__
+        return self.__name__

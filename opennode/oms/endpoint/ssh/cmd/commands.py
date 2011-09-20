@@ -299,14 +299,6 @@ class CreateObjCmd(Cmd):
                 if obj.can_contain(cls):
                     choices.append(name)
 
-        # TODO: are we sure we want to show the whole list in case nothing matches?
-        # I think it can only happen due to incomplete declaration of our models (which should be a bug)
-        # but when we'll include security, there might be some models which the user simply cannot create
-        # so the list could legally be empty.
-        # -- ...so why have this check?
-        #if not choices:
-        #    choices = creatable_models.keys()
-
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
 
