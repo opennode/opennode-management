@@ -88,6 +88,6 @@ class Computes(AddingContainer):
         machines = db.get_root()['oms_root'].machines
 
         if isinstance(item, PhysicalCompute):
-            machines.add(item)
+            return machines.add(item)
         elif isinstance(item, VirtualCompute):
-            machines.hangar.add(item)
+            return machines.hangar.add(item)
