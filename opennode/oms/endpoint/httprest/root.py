@@ -59,7 +59,7 @@ class HttpRestServer(resource.Resource):
             request.setResponseCode(301, 'Moved Permanently')
             request.setHeader('Location', exc.url)
         except Exception:
-            Failure().printDetailedTraceback(request)
+            Failure().printTraceback(request)
         else:
             request.write(json.dumps(ret, indent=2) + '\n')
         finally:
