@@ -46,6 +46,9 @@ class HttpRestServer(resource.Resource):
     @defer.inlineCallbacks
     def _render(self, request):
         request.setHeader('Content-type', 'application/json')
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
+
         try:
             ret = yield self.handle_request(request)
             if ret is EmptyResponse:
