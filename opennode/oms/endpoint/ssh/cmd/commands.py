@@ -17,7 +17,7 @@ from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.traversal import canonical_path
 from opennode.oms.model.model import creatable_models
-from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
@@ -234,6 +234,10 @@ class CatObjectCmd(Cmd):
             for key, value in sorted(data.items()):
                 self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
                                          str(value).encode('utf8')))
+
+        if IIncomplete.providedBy(obj):
+            self.write("-----------------\n")
+            self.write("This %s is incomplete.\n" % (type(obj).__name__))
 
 
 class RemoveCmd(Cmd):

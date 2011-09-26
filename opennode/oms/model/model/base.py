@@ -27,6 +27,14 @@ class IContainer(IModel):
         """Lists all the items contained in this container."""
 
 
+class IIncomplete(Interface):
+    def missing_parts():
+        """Lists all the missing items which this object lacks before it can the
+        incomplete marker can be removed.
+
+        """
+
+
 class Model(persistent.Persistent):
     implements(IModel)
 

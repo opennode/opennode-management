@@ -2,10 +2,9 @@ from __future__ import absolute_import
 
 from zope import schema
 from zope.component import provideSubscriptionAdapter
-from zope.interface import Interface, implements
+from zope.interface import Interface, implements, alsoProvides
 
-from .base import Model, Container
-from .base import Model, IContainer, Container, AddingContainer
+from .base import Model, IContainer, Container, AddingContainer, IIncomplete
 from .symlink import Symlink
 from .byname import ByNameContainerExtension
 
@@ -61,6 +60,8 @@ class Compute(Container):
 
         if self.template:
             alsoProvides(self, IVirtualCompute)
+
+        alsoProvides(self, IIncomplete)
 
     def display_name(self):
         return self.hostname.encode('utf-8')
