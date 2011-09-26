@@ -24,7 +24,26 @@ class ComputeView(HttpRestView):
     context(Compute)
 
     def render(self, request):
-        return {'hostname': self.context.hostname, 'url': ILocation(self.context).get_url()}
+        return {'id': self.context.__name__,
+                'hostname': self.context.hostname,
+                'ip_address': self.context.ip_address,
+                'url': ILocation(self.context).get_url(),
+                'type': self.context.type,
+                'state': self.context.state,
+
+                'cpu': self.context.cpu,
+                'memory': self.context.memory,
+                'os_release': self.context.os_release,
+                'kernel': self.context.kernel,
+                'network': self.context.network,
+                'diskspace': self.context.diskspace,
+                'swap_size': self.context.swap_size,
+                'diskspace_rootpartition': self.context.diskspace_rootpartition,
+                'diskspace_storagepartition': self.context.diskspace_storagepartition,
+                'diskspace_vzpartition': self.context.diskspace_vzpartition,
+                'diskspace_backuppartition': self.context.diskspace_backuppartition,
+                'startup_timestamp': self.context.startup_timestamp,
+                }
 
 
 class TemplatesView(HttpRestView):
