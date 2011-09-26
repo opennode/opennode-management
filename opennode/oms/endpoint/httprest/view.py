@@ -17,7 +17,24 @@ class ComputesView(HttpRestView):
     context(Computes)
 
     def render(self, request):
-        return [IHttpRestView(compute).render(request) for compute in self.context.listcontent()]
+        all_computes = self.context.listcontent()
+        q = request.args.get('q', [''])[0]
+
+        if q:
+            computes = []
+            keywords = [i.lower() for i in q.split(' ') if i]
+            for compute in all_computes:
+                for keyword in keywords:
+                    if (keyword in compute.type.lower()
+                        or keyword in compute.hostname.lower()
+                        or compute.ip_address.startswith(keyword)
+                        or keyword in compute.architecture.lower()
+                        or keyword == compute.state.lower()):
+                        computes.append(compute)
+        else:
+            computes = all_computes
+
+        return [IHttpRestView(compute).render(request) for compute in computes]
 
 
 class ComputeView(HttpRestView):
