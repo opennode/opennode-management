@@ -351,7 +351,7 @@ class SetOrMkCmdDynamicArguments(Adapter):
                 type = (int if isinstance(field, zope.schema.Int)
                         else None)
 
-                parser.add_argument('=' + name, required=args_required, type=type, action=GroupDictAction,
+                parser.add_argument('=' + name, required=args_required and field.required, type=type, action=GroupDictAction,
                                     group='keywords', help=field.title.encode('utf8'), choices=choices)
 
         return parser
