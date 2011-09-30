@@ -19,6 +19,7 @@ class ComputesView(HttpRestView):
     def render(self, request):
         all_computes = self.context.listcontent()
         q = request.args.get('q', [''])[0]
+        q = q.decode('utf-8')
 
         if q:
             computes = []
