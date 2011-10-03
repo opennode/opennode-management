@@ -42,7 +42,7 @@ class ComputeView(HttpRestView):
     context(Compute)
 
     def render(self, request):
-        return {'id': self.context.__name__,
+        ret = {'id': self.context.__name__,
                 'hostname': self.context.hostname,
                 'ip_address': self.context.ip_address,
                 'url': ILocation(self.context).get_url(),
@@ -62,6 +62,20 @@ class ComputeView(HttpRestView):
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
                 }
+
+        # XXX: generate random VM data:
+        import random
+
+        x = dict(ret)
+        ret['vms'] = []
+        for i in range(10):
+            vm = dict(x)
+            vm['id'] = str(i + 10000)
+            vm['hostname'] += '_vm%s' % str(i)
+            vm['state'] = 'inactive' if random.random() < 0.3 else 'active'
+            ret['vms'].append(vm)
+
+        return ret
 
 
 class TemplatesView(HttpRestView):
