@@ -66,7 +66,7 @@ class WebTransport(object):
         # Group together writes so that we reduce the number of http roundtrips.
         # Kind of Nagle's algorithm.
         self.session.buffer += text
-        reactor.callLater(0.05, self.session.processQueue)
+        reactor.callLater(0.05, self.session.process_queue)
 
     def loseConnection(self):
         """Close the connection ensuring the the web client will properly detect this close.
@@ -123,9 +123,9 @@ class TerminalSession(object):
     def enqueue(self, request):
         self.queue.append(request)
         if self.buffer:
-            self.processQueue()
+            self.process_queue()
 
-    def processQueue(self):
+    def process_queue(self):
         # Only one ongoing polling request should be live.
         # But I'm not sure if this can be guaranteed so let's keep temporarily keep them all.
         if self.queue:
