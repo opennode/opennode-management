@@ -43,6 +43,10 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
         self.altKeyHandlers = {self.terminal.BACKSPACE: self.handle_BACKWARD_KILL_WORD}
 
+    def set_terminal(self, terminal):
+        self.terminal = terminal
+        terminal.terminalProtocol = self
+
     def keystrokeReceived(self, keyID, modifier):
         if modifier == self.terminal.ALT:
             m = self.altKeyHandlers.get(keyID)

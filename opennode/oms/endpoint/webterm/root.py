@@ -17,8 +17,7 @@ class OmsShellTerminalProtocol(object):
 
     def connection_made(self, terminal, size):
         self.shell = OmsSshProtocol()
-        self.shell.terminal = terminal
-        self.shell.terminal.terminalProtocol = self.shell
+        self.shell.set_terminal(terminal)
         self.shell.connectionMade()
         self.shell.terminalSize(size[0], size[1])
 
