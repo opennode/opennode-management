@@ -1,4 +1,4 @@
-import inspect
+import os, inspect
 
 import transaction
 import zope.schema
@@ -74,6 +74,11 @@ class ChangeDirCmd(Cmd):
         # down-the-tree and mixed traversals. So all of the following
         # arguments to the 'cd' command work out as expected:
         #     foo/bar # foo/./../foo ../foo/../.  ../.././foo
+
+        # Fixes #41.
+        if os.path.isabs(path):
+            objs.insert(0, db.deref(self.obj_path[0]))
+
         for obj in objs:
             ref = db.ref(obj)
             try:
