@@ -21,6 +21,8 @@ from opennode.oms.zodb import db
 
 class SshTestCase(unittest.TestCase):
 
+    tlds = ['computes', 'templates']
+
     @run_in_reactor
     @clean_db
     def setUp(self):
@@ -72,7 +74,7 @@ class SshTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_cd(self):
-        for folder in ['computes', 'templates']:
+        for folder in self.tlds:
             for cmd in ['%s', '/%s', '//%s', '/./%s', '%s/.', '/%s/.']:
                 self._cmd('cd %s' % (cmd % folder))
                 assert self.oms_ssh._cwd() == '/%s' % folder
@@ -107,11 +109,11 @@ class SshTestCase(unittest.TestCase):
     def test_ls(self):
         self._cmd('ls')
         with assert_mock(self.terminal) as t:
-            t.write('computes/  templates/\n')
+            t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
 
         self._cmd('ls /')
         with assert_mock(self.terminal) as t:
-            t.write('computes/  templates/\n')
+            t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
@@ -155,7 +157,7 @@ class SshTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_cat_folders(self):
-        for folder in ['computes', 'templates']:
+        for folder in self.tlds:
             self._cmd('cat %s' % folder)
             with assert_mock(self.terminal) as t:
                 t.write("Unable to create a printable representation.\n")
