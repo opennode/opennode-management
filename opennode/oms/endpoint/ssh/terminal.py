@@ -84,6 +84,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
     def insert_text(self, text):
         """Inserts some text at the current cursor position and renders it."""
+        if isinstance(text, unicode):
+            text = text.encode('utf-8')
         self.terminal.write(text)
         self.insert_buffer(list(text))
 
