@@ -76,26 +76,23 @@ class OmsSshProtocol(InteractiveTerminal):
 
         cmd_name, cmd_args = line.partition(' ')[::2]
         command_cls = registry.get_command(cmd_name)
+        command = command_cls(self)
 
-        tokenized_cmd_args = self.expand(self.tokenizer.tokenize(cmd_args.strip()))
+        tokenized_cmd_args = self.expand(command, self.tokenizer.tokenize(cmd_args.strip()))
 
-        return command_cls(self), tokenized_cmd_args
+        return command, tokenized_cmd_args
 
-    def expand(self, tokens):
-        return list(itertools.chain.from_iterable(map(self.expand_token, tokens)))
+    def expand(self, command, tokens):
+        return list(itertools.chain.from_iterable([self.expand_token(command, i) for i in tokens]))
 
-    def expand_token(self, token):
+    def expand_token(self, command, token):
         if re.match('.*[*[\]].*', os.path.basename(token)):
             base = os.path.dirname(token)
 
-            if os.path.isabs(base):
-                objs, unres = traverse_path(db.get_root()['oms_root'], base[1:])
-            else:
-                objs, unres = traverse_path(db.deref(self.obj_path[-1]), base)
+            current_obj = command.traverse(base)
 
             # Only if intermediate path resolves.
-            if objs:
-                current_obj = objs[-1]
+            if current_obj:
                 if IContainer.providedBy(current_obj):
                     filtered = [os.path.join(base, i) for i in fnmatch.filter(current_obj.listnames(), os.path.basename(token))]
                     # Bash behavior: if expansion doesn't provide results then pass the glob pattern to the command.
