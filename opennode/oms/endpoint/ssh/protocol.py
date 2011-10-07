@@ -1,4 +1,4 @@
-import os
+import os, re, fnmatch, itertools
 
 from twisted.internet import defer
 from twisted.python import log
@@ -8,6 +8,8 @@ from opennode.oms.endpoint.ssh.cmd import registry, completion
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
+from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
 
@@ -39,11 +41,12 @@ class OmsSshProtocol(InteractiveTerminal):
 
         self.tokenizer = CommandLineTokenizer()
 
+    @defer.inlineCallbacks
     def lineReceived(self, line):
         line = line.strip()
 
         try:
-            command, cmd_args = self.parse_line(line)
+            command, cmd_args = yield self.parse_line(line)
         except CommandLineSyntaxError as e:
             self.terminal.write("Syntax error: %s\n" % (e.message))
             self.print_prompt()
@@ -63,8 +66,8 @@ class OmsSshProtocol(InteractiveTerminal):
 
         ret = defer.Deferred()
         deferred.addBoth(ret.callback)
-        return ret
 
+    @db.transact
     def parse_line(self, line):
         """Returns a command instance and parsed cmdline argument list.
 
@@ -75,9 +78,31 @@ class OmsSshProtocol(InteractiveTerminal):
         cmd_name, cmd_args = line.partition(' ')[::2]
         command_cls = registry.get_command(cmd_name)
 
-        tokenized_cmd_args = self.tokenizer.tokenize(cmd_args.strip())
+        tokenized_cmd_args = self.expand(self.tokenizer.tokenize(cmd_args.strip()))
 
         return command_cls(self), tokenized_cmd_args
+
+    def expand(self, tokens):
+        return list(itertools.chain.from_iterable(map(self.expand_token, tokens)))
+
+    def expand_token(self, token):
+        if re.match('.*[*[\]].*', os.path.basename(token)):
+            base = os.path.dirname(token)
+
+            if os.path.isabs(base):
+                objs, unres = traverse_path(db.get_root()['oms_root'], base[1:])
+            else:
+                objs, unres = traverse_path(db.deref(self.obj_path[-1]), base)
+
+            # Only if intermediate path resolves.
+            if objs:
+                current_obj = objs[-1]
+                if IContainer.providedBy(current_obj):
+                    filtered = [os.path.join(base, i) for i in fnmatch.filter(current_obj.listnames(), os.path.basename(token))]
+                    # Bash behavior: if expansion doesn't provide results then pass the glob pattern to the command.
+                    if filtered:
+                        return filtered
+        return [token]
 
     @defer.inlineCallbacks
     def handle_TAB(self):

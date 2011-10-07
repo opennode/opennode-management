@@ -29,7 +29,7 @@ def complete(protocol, buf, pos):
 
     partial = tokens[-1]  # word to be completed
 
-    context, tokenized_args = protocol.parse_line(lead.rstrip(partial).lstrip())
+    context, tokenized_args = yield protocol.parse_line(lead.rstrip(partial).lstrip())
 
     parser = yield context.contextual_arg_parser(tokenized_args, partial=True)
     parsed_args = yield parser.parse_args(tokenized_args)

@@ -439,6 +439,25 @@ class SshTestCase(unittest.TestCase):
             skip(t, 1)
             t.write("Do you mean 'mk'?\n")
 
+    @run_in_reactor
+    def test_wildcard(self):
+        self._cmd('echo /c*')
+        with assert_mock(self.terminal) as t:
+            t.write('/computes\n')
+
+        self.terminal.reset_mock()
+
+        self._cmd('echo /[cx]omputes')
+        with assert_mock(self.terminal) as t:
+            t.write('/computes\n')
+
+        self.terminal.reset_mock()
+        computes = db.get_root()['oms_root']['computes']
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+
+        self._cmd('echo /computes/*-[a-z0-9]*-*')
+        with assert_mock(self.terminal) as t:
+            t.write('/computes/%s\n' % (cid))
 
     def test_tokenizer(self):
         arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes"'
