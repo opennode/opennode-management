@@ -389,6 +389,21 @@ class FileCmd(Cmd):
         self.write("%s: %s\n" % (path, type(obj).__name__))
 
 
+class EchoCmd(Cmd):
+    """Outputs the command line arguments."""
+    implements(ICmdArgumentsSyntax)
+
+    command('echo')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('strings', nargs='*')
+        return parser
+
+    def execute(self, args):
+        self.write("%s\n" % (" ".join(args.strings)))
+
+
 class HelpCmd(Cmd):
     """Outputs the names of all commands."""
     implements(ICmdArgumentsSyntax)
