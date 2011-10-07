@@ -149,10 +149,10 @@ class PositionalChoiceCompleter(PositionalCompleter):
 
 
 # TODO: move to handler
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=(command, ))
 
 for command in [commands.SetAttrCmd, commands.CreateObjCmd]:

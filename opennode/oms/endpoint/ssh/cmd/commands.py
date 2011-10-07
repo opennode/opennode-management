@@ -366,6 +366,29 @@ provideAdapter(SetOrMkCmdDynamicArguments, adapts=(SetAttrCmd, ))
 provideAdapter(SetOrMkCmdDynamicArguments, adapts=(CreateObjCmd, ))
 
 
+class FileCmd(Cmd):
+    """Outputs the type of an object."""
+    implements(ICmdArgumentsSyntax)
+
+    command('file')
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('paths', nargs='+')
+        return parser
+
+    @db.transact
+    def execute(self, args):
+        for path in args.paths:
+            obj = self.traverse(path)
+            if not obj:
+                self.write("No such object: %s\n" % path)
+            else:
+                self._do_file(path, obj)
+
+    def _do_file(self, path, obj):
+        self.write("%s: %s\n" % (path, type(obj).__name__))
+
+
 class HelpCmd(Cmd):
     """Outputs the names of all commands."""
     implements(ICmdArgumentsSyntax)
