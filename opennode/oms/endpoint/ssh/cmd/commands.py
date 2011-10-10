@@ -378,15 +378,21 @@ class FileCmd(Cmd):
 
     @db.transact
     def execute(self, args):
+        rows = []
+
         for path in args.paths:
             obj = self.traverse(path)
             if not obj:
                 self.write("No such object: %s\n" % path)
             else:
-                self._do_file(path, obj)
+                rows.append(self._do_file(path, obj))
+
+        width = max([len(i[0]) for i in rows])
+        for row in rows:
+            self.write("%s %s" % (row[0].ljust(width), row[1]))
 
     def _do_file(self, path, obj):
-        self.write("%s: %s\n" % (path, type(obj).__name__))
+        return (path+":", "%s\n" % (type(obj).__name__))
 
 
 class EchoCmd(Cmd):
