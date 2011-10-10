@@ -16,7 +16,7 @@ class CommandCompleter(Completer):
 
     context(commands.NoCommand)
 
-    def complete(self, token, parsed, parser):
+    def complete(self, token, parsed, parser, display=False):
         return [name for name in registry.commands().keys() if name.startswith(token)]
 
 
@@ -61,7 +61,7 @@ class PathCompleter(PositionalCompleter):
     baseclass()
 
     @db.transact
-    def complete(self, token, parsed, parser):
+    def complete(self, token, parsed, parser, display=False):
         # If there is still any positional option to complete:
         if self.expected_action(parsed, parser):
             base_path = os.path.dirname(token)
@@ -81,7 +81,7 @@ class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
     baseclass()
 
-    def complete(self, token, parsed, parser):
+    def complete(self, token, parsed, parser, display=False):
         if token.startswith("-"):
             return [option
                     for action_group in parser._action_groups
@@ -108,8 +108,8 @@ class KeywordSwitchCompleter(ArgSwitchCompleter):
 
     baseclass()
 
-    def complete(self, token, parsed, parser):
-        return [option[1:] + '='
+    def complete(self, token, parsed, parser, display=False):
+        return [('[%s=]' if display and not action.was_required else '%s=') % (option[1:])
                 for action_group in parser._action_groups
                 for action in action_group._group_actions
                 for option in action.option_strings
@@ -122,7 +122,7 @@ class KeywordValueCompleter(ArgSwitchCompleter):
 
     baseclass()
 
-    def complete(self, token, parsed, parser):
+    def complete(self, token, parsed, parser, display=False):
         if '=' in token:
             keyword, value_prefix = token.split('=')
 
@@ -142,7 +142,7 @@ class KeywordValueCompleter(ArgSwitchCompleter):
 class PositionalChoiceCompleter(PositionalCompleter):
     baseclass()
 
-    def complete(self, token, parsed, parser):
+    def complete(self, token, parsed, parser, display=False):
         action = self.expected_action(parsed, parser)
         if action and action.choices:
             return [value for value in action.choices if value.startswith(token)]

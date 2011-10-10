@@ -126,6 +126,16 @@ class OmsSshProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
+                _, _, completions = yield completion.complete(self, self.lineBuffer, self.lineBufferIndex, display=True)
+
+                # reorder optional values at end for readability
+                required = []
+                optional = []
+                for comp in completions:
+                    (optional if comp.startswith('[') else required).append(comp)
+
+                completions = required + optional
+
                 completions = [self.colorize(self._completion_color(item), item) for item in completions]
                 self.terminal.write(columnize(completions, self.width))
                 self.drawInputLine()
