@@ -11,10 +11,13 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import BLUE
+
+from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN
 from opennode.oms.model.form import ApplyRawData
+from opennode.oms.model.traversal import canonical_path
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
 
@@ -124,6 +127,8 @@ class ListDirContentsCmd(Cmd):
         def pretty_name(item):
             if IContainer.providedBy(item):
                 return self.protocol.colorize(BLUE, item.__name__ + '/')
+            elif isinstance(item, Symlink):
+                return self.protocol.colorize(CYAN, item.__name__ + '@')
             else:
                 return item.__name__
 
@@ -132,13 +137,15 @@ class ListDirContentsCmd(Cmd):
 
         if self.opts_long:
             def nick(item):
+                if isinstance(item, Symlink):
+                    return [canonical_path(item)] + getattr(follow_symlinks(item), 'nicknames', [])
                 return getattr(item, 'nicknames', [])
 
             if IContainer.providedBy(obj):
                 for subobj in sorted_obj_list():
-                    self.write(('%s\t%s\n' % (pretty_name(subobj), ':'.join(nick(subobj)))).encode('utf8'))
+                    self.write(('%s\t%s\n' % (pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
             else:
-                self.write(('%s\t%s\n' % (pretty_name(obj), ':'.join(nick(obj)))).encode('utf8'))
+                self.write(('%s\t%s\n' % (pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
         else:
             if IContainer.providedBy(obj):
                 items = [pretty_name(subobj) for subobj in sorted_obj_list()]

@@ -14,6 +14,8 @@ CTRL_L = '\x0c'
 CTRL_T = '\x14'
 
 BLUE = '\x1b[1;34m'
+CYAN = '\x1b[1;36m'
+
 RESET_COLOR = '\x1b[0m'
 
 

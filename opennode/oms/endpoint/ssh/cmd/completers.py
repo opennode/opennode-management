@@ -1,14 +1,15 @@
-from grokcore.component import baseclass, context
-from zope.component import provideSubscriptionAdapter
 import argparse
 import os
 
-from opennode.oms.endpoint.ssh.cmd import commands
+from grokcore.component import baseclass, context
+from zope.component import provideSubscriptionAdapter
+
+from opennode.oms.endpoint.ssh.cmd import commands, registry
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.zodb import db
-from opennode.oms.endpoint.ssh.cmd import registry
 
 
 class CommandCompleter(Completer):
@@ -68,13 +69,18 @@ class PathCompleter(PositionalCompleter):
             container = self.context.traverse(base_path)
 
             if IContainer.providedBy(container):
-                def dir_suffix(obj):
-                    return '/' if IContainer.providedBy(obj) else ''
+                def suffix(obj):
+                    if IContainer.providedBy(follow_symlinks(obj)):
+                        return '/'
+                    elif isinstance(obj, Symlink):
+                        return '@'
+                    else:
+                        return ''
 
                 def name(obj):
                     return os.path.join(base_path, obj.__name__)
 
-                return [name(obj) + dir_suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
+                return [name(obj) + suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
 
 
 class ArgSwitchCompleter(Completer):

@@ -2,6 +2,7 @@ import re
 
 from grokcore.component import Adapter, implements, baseclass
 from zope.interface import Interface
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 
 
 __all__ = ['traverse_path', 'traverse1']
@@ -49,7 +50,7 @@ def traverse_path(obj, path):
         except TypeError:
             break
 
-        next_obj = traverser.traverse(name)
+        next_obj = follow_symlinks(traverser.traverse(name))
 
         if not next_obj: break
 
@@ -74,3 +75,11 @@ def traverse1(path):
         return objs[-1]
     else:
         return None
+
+def canonical_path(item):
+    path = []
+    while item:
+        item = follow_symlinks(item)
+        path.insert(0, item.__name__)
+        item = item.__parent__
+    return '/'.join(path)

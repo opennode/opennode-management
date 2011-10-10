@@ -130,7 +130,10 @@ class SshTestCase(unittest.TestCase):
     def test_ls_l(self):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
-        eq_(len(self.terminal.method_calls), 1)
+        with assert_mock(self.terminal) as t:
+            t.write('by-name/\t\n')
+            skip(t, 1)
+            no_more_calls(t)
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
@@ -139,6 +142,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
             t.write('%s\ttux-for-test\n' % cid)
+            t.write('by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 

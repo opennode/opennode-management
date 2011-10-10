@@ -2,6 +2,7 @@ from uuid import uuid4
 
 import persistent
 from BTrees.OOBTree import OOBTree
+from grokcore.component import querySubscriptions
 from zope.interface import implements, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
@@ -9,6 +10,9 @@ from zope.interface.interface import InterfaceClass
 class IModel(Interface):
     __name__ = Attribute("Name")
     __parent__ = Attribute("Parent")
+
+    def display_name():
+        """Optionally returns a better display name instead of the __name__ when __name__ is more like an ID."""
 
 
 class IContainer(IModel):
@@ -29,20 +33,35 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+    def display_name(self):
+        return None
+
+class IContainerExtender(Interface):
+    def extend(self):
+        """Extend the container contents with new elements."""
+
 
 class ReadonlyContainer(Model):
     """A container whose items cannot be modified, i.e. are predefined."""
     implements(IContainer)
 
     def __getitem__(self, key):
-        return self._items.get(key)
+        return self.content().get(key)
 
     def listnames(self):
-        # Ensure the names are strings as _items might have integer keys.
-        return (str(key) for key in self._items.keys())
+        return self.content().keys()
 
     def listcontent(self):
-        return self._items.values()
+        return self.content().values()
+
+    def content(self):
+        items = dict(**self._items)
+
+        extenders = querySubscriptions(self, IContainerExtender)
+        for extender in extenders:
+            items.update(extender.extend())
+
+        return items
 
 
 class Container(ReadonlyContainer):
@@ -91,7 +110,3 @@ class Container(ReadonlyContainer):
 
     def __delitem__(self, key):
         del self._items[key]
-
-    def __getitem__(self, key):
-        """Returns the Template instance with the ID specified by the given key."""
-        return self._items.get(key)

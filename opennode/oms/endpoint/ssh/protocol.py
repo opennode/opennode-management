@@ -9,7 +9,7 @@ from twisted.python import log
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
+from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.zodb import db
@@ -117,6 +117,11 @@ class OmsSshProtocol(InteractiveTerminal):
                     space = ''
 
             patch = completions[0][len(partial):] + space
+
+            # Drop @, half hack
+            if patch.endswith('@ '):
+                patch = patch.rstrip('@ ') + ' '
+
             self.insert_text(patch)
         elif len(completions) > 1:
             common_prefix = os.path.commonprefix(completions)
@@ -145,6 +150,8 @@ class OmsSshProtocol(InteractiveTerminal):
     def _completion_color(self, completion):
         if completion.endswith('/'):
             return BLUE
+        elif completion.endswith('@'):
+            return CYAN
         else:
             return None
 

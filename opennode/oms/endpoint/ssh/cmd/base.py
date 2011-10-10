@@ -113,7 +113,11 @@ class Cmd(object):
 
     @property
     def current_obj(self):
-        return db.deref(self.obj_path[-1])
+        # handle virtual paths which cannot be dereferenced via the db handle
+        if not self.obj_path[-1]:
+            return self.traverse('/'.join(self.protocol.path))
+        else:
+            return db.deref(self.obj_path[-1])
 
     def write(self, *args):
         """Ensure that all writes are serialized regardless if the command is executing in a another thread."""
