@@ -25,7 +25,7 @@ class Compute(Model):
     memory = 2048,
     os_release = "build 35"
     kernel = "2.6.18-238.9.1.el5.028stab089.1"
-    network = 1000
+    network_usage = 1000
     diskspace = 750
     swap_size = 7777
     diskspace_rootpartition = 77.7

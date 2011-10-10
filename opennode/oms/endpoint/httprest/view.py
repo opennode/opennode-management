@@ -53,7 +53,7 @@ class ComputeView(HttpRestView):
                 'memory': self.context.memory,
                 'os_release': self.context.os_release,
                 'kernel': self.context.kernel,
-                'network': self.context.network,
+                'network_usage': self.context.network_usage,
                 'diskspace': self.context.diskspace,
                 'swap_size': self.context.swap_size,
                 'diskspace_rootpartition': self.context.diskspace_rootpartition,
@@ -61,6 +61,7 @@ class ComputeView(HttpRestView):
                 'diskspace_vzpartition': self.context.diskspace_vzpartition,
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
+                'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
                 }
 
         # XXX: generate random VM data:
@@ -76,6 +77,57 @@ class ComputeView(HttpRestView):
             ret['vms'].append(vm)
 
         return ret
+
+    def _dummy_network_data(self):
+        return {
+            'bridge_interfaces': [{
+                'id': 'vmbr1',
+                'ipv4_address': '192.168.1.40',
+                'ipv6_address': 'fe80::64ac:39ff:fe4a:e596/64',
+                'subnet_mask': '255.255.255.0',
+                'bcast': '192.168.1.255',
+                'hw_address': '00:00:00:00:00:00',
+                'metric': 1,
+                'stp': False,
+                'rx': '102.5MiB',
+                'tx': '64.0MiB',
+                'members': ['eth0', 'vnet0', 'vnet1', 'vnet5', 'vnet6',],
+            }, {
+                'id': 'vmbr2',
+                'ipv4_address': '192.168.2.40',
+                'ipv6_address': 'fe80::539b:28dd:db3b:c407/64',
+                'subnet_mask': '255.255.255.0',
+                'bcast': '192.168.2.255',
+                'hw_address': '00:00:00:00:00:00',
+                'metric': 1,
+                'stp': False,
+                'rx': '92.1MiB',
+                'tx': '89.9MiB',
+                'members': ['eth1', 'vnet1', 'vnet2', 'vnet3', 'vnet4',],
+            }],
+            'ip-routes': [{
+                'dest': '192.168.1.125',
+                'gateway': '0.0.0.0',
+                'genmask': '255.255.255.255',
+                'flags': 'UH',
+                'metric': 0,
+                'interface': 'venet0',
+            }, {
+                'dest': '192.168.2.125',
+                'gateway': '0.0.0.0',
+                'genmask': '255.255.255.255',
+                'flags': 'UH',
+                'metric': 0,
+                'interface': 'venet1',
+            }, {
+                'dest': '192.168.3.125',
+                'gateway': '0.0.0.0',
+                'genmask': '255.255.255.255',
+                'flags': 'UH',
+                'metric': 0,
+                'interface': 'venet2',
+            }],
+        }
 
 
 class TemplatesView(HttpRestView):
