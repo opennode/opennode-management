@@ -107,7 +107,12 @@ class ChangeDirCmd(Cmd):
         if os.path.isabs(path):
             objs.insert(0, db.deref(self.obj_path[0]))
 
-        for obj in objs:
+
+        # Handle '//foo/bar//fee'
+        path_components = path.split('/')
+        path_components[1:] = [i for i in path_components[1:] if i != '']
+
+        for obj, name in zip(objs, path_components):
             ref = db.ref(obj)
             try:
                 # Try to find the object in the current path:
@@ -115,7 +120,7 @@ class ChangeDirCmd(Cmd):
             except ValueError:
                 # ... if not found, add it:
                 self.obj_path.append(ref)
-                self.path.append(obj.__name__)
+                self.path.append(name)
             else:
                 # ... otherwise remove everything that follows it:
                 self.obj_path[overlap+1:] = []
