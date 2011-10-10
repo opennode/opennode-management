@@ -1,4 +1,7 @@
-import os, re, fnmatch, itertools
+import os
+import re
+import fnmatch
+import itertools
 
 from twisted.internet import defer
 from twisted.python import log
@@ -9,7 +12,6 @@ from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.model.model.base import IContainer
-from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
 
@@ -63,9 +65,6 @@ class OmsSshProtocol(InteractiveTerminal):
                 self.terminal.write("type last_error for more details\n")
 
         deferred.addBoth(lambda *_: self.print_prompt())
-
-        ret = defer.Deferred()
-        deferred.addBoth(ret.callback)
 
     @db.transact
     def parse_line(self, line):
