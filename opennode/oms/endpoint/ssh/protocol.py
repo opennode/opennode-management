@@ -126,12 +126,17 @@ class OmsSshProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
-                completions = [self.colorize(BLUE, item) if item.endswith('/') else item for item in completions]
+                completions = [self.colorize(self._completion_color(item), item) for item in completions]
                 self.terminal.write(columnize(completions, self.width))
                 self.drawInputLine()
                 if len(rest):
                     self.terminal.cursorBackward(len(rest))
 
+    def _completion_color(self, completion):
+        if completion.endswith('/'):
+            return BLUE
+        else:
+            return None
 
     @property
     def hist_file_name(self):
