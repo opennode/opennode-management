@@ -51,6 +51,7 @@ class ChangeDirCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('path', nargs='?')
+        parser.add_argument('-P', action='store_true', help="use physical directory structure instead of following symbolic links")
         return parser
 
     @db.transact
@@ -60,7 +61,31 @@ class ChangeDirCmd(Cmd):
             self.obj_path = [self.obj_path[0]]
             return
 
-        self._do_traverse(args.path)
+        # Cleanup '..'s from path using the logical path.
+        # Only handles trailing '..'s for now.
+        if not args.P:
+            import itertools
+            ups = len(list(itertools.takewhile(lambda i: i=='..', args.path.split('/'))))
+            ups = min(ups, len(self.path) - 1)
+            if ups:
+                self.path = self.path[0:-ups]
+                self.obj_path = self.obj_path[0:-ups]
+                args.path = args.path[ups*len('../'):]
+
+        # Delegate path traversal to physical traversal.
+        # It's possible that we emptied the path by removing all '..'s.
+        if args.path:
+            self._do_traverse(args.path)
+
+        # Recompute new absolute path if physical path was requested.
+        if args.P:
+            current = self.current_obj
+            self.path = []
+            self.obj_path = []
+            while current:
+                self.path.insert(0, current.__name__)
+                self.obj_path.insert(0, db.ref(current))
+                current = current.__parent__
 
     def _do_traverse(self, path):
         objs, unresolved_path = self.traverse_full(path)
