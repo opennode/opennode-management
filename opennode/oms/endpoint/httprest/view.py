@@ -1,8 +1,14 @@
 from grokcore.component import context
+from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.model.location import ILocation
-from opennode.oms.model.model import Computes, Compute, OmsRoot, Templates
+from opennode.oms.model.model import Machines, Computes, Compute, OmsRoot, Templates
+from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.hangar import Hangar
+from opennode.oms.model.model.byname import ByNameContainer
+from opennode.oms.model.model.symlink import follow_symlinks
+from opennode.oms.model.model.filtrable import IFiltrable
 
 
 class RootView(HttpRestView):
@@ -12,30 +18,29 @@ class RootView(HttpRestView):
         return dict((name, ILocation(self.context[name]).get_url()) for name in self.context.listnames())
 
 
-
-class ComputesView(HttpRestView):
-    context(Computes)
+class ContainerView(HttpRestView):
+    context(IContainer)
 
     def render(self, request):
-        all_computes = self.context.listcontent()
+        items = map(follow_symlinks, self.context.listcontent())
+
         q = request.args.get('q', [''])[0]
         q = q.decode('utf-8')
 
         if q:
-            computes = []
-            keywords = [i.lower() for i in q.split(' ') if i]
-            for compute in all_computes:
-                for keyword in keywords:
-                    if (keyword in compute.type.lower()
-                        or keyword in compute.hostname.lower()
-                        or compute.ip_address.startswith(keyword)
-                        or keyword in compute.architecture.lower()
-                        or keyword == compute.state.lower()):
-                        computes.append(compute)
-        else:
-            computes = all_computes
+            items = [item for item in items if IFiltrable(item).match(q)]
 
-        return [IHttpRestView(compute).render(request) for compute in computes]
+        return [IHttpRestView(item).render(request) for item in items if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
+
+    def blacklisted(self, item):
+        return isinstance(item, ByNameContainer)
+
+
+class MachinesView(ContainerView):
+    context(Machines)
+
+    def blacklisted(self, item):
+        return super(MachinesView, self).blacklisted(item) or isinstance(item, Hangar)
 
 
 class ComputeView(HttpRestView):
