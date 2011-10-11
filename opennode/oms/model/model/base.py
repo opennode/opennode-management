@@ -3,8 +3,9 @@ from uuid import uuid4
 import persistent
 from BTrees.OOBTree import OOBTree
 from grokcore.component import querySubscriptions
-from zope.interface import implements, Interface, Attribute
+from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
+from opennode.oms.util import get_direct_interfaces
 
 
 class IModel(Interface):
@@ -13,6 +14,9 @@ class IModel(Interface):
 
     def display_name():
         """Optionally returns a better display name instead of the __name__ when __name__ is more like an ID."""
+
+    def implemented_interfaces():
+        """Returns the interfaces implemented by this model."""
 
 
 class IContainer(IModel):
@@ -43,6 +47,10 @@ class Model(persistent.Persistent):
 
     def display_name(self):
         return None
+
+    def implemented_interfaces(self):
+        return get_direct_interfaces(type(self)) + list(directlyProvidedBy(self).interfaces())
+
 
 class IContainerExtender(Interface):
     def extend(self):

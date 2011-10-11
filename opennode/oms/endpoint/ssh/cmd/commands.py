@@ -426,9 +426,8 @@ class FileCmd(Cmd):
             self.write("%s %s" % (row[0].ljust(width), row[1]))
 
     def _do_file(self, path, obj):
-        cls = type(obj)
-        ifaces = get_direct_interfaces(cls) + list(directlyProvidedBy(obj).interfaces())
-        return (path+":", "%s %s\n" % (cls.__name__, ', '.join([i.__name__ for i in ifaces])))
+        ifaces = ', '.join([i.__name__ for i in obj.implemented_interfaces()])
+        return (path+":", "%s%s %s\n" % (type(obj).__name__, ':' if ifaces else '', ifaces))
 
 
 class EchoCmd(Cmd):
