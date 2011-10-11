@@ -73,14 +73,12 @@ class ComputeView(HttpRestView):
         # XXX: generate random VM data:
         import random
 
-        x = dict(ret)
         ret['vms'] = []
-        for i in range(10):
-            vm = dict(x)
-            vm['id'] = str(i + 10000)
-            vm['hostname'] += '_vm%s' % str(i)
-            vm['state'] = 'inactive' if random.random() < 0.3 else 'active'
-            ret['vms'].append(vm)
+
+        vms = self.context['vms']
+        if vms:
+            for vm in vms.listcontent():
+                ret['vms'].append(IHttpRestView(vm).render(request))
 
         return ret
 
