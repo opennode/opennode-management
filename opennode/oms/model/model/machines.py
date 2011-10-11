@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 
+from zope.component import provideSubscriptionAdapter
+
 from .base import Container
 from .compute import Compute
 from .hangar import Hangar
+from .byname import ByNameContainerExtension
 
 
 class Machines(Container):
@@ -15,3 +18,6 @@ class Machines(Container):
 
     def __str__(self):
         return 'Machines list'
+
+
+provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Machines, ))
