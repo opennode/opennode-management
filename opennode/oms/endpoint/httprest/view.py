@@ -3,12 +3,12 @@ from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.model.location import ILocation
-from opennode.oms.model.model import Machines, Computes, Compute, OmsRoot, Templates
+from opennode.oms.model.model import Machines, Compute, OmsRoot, Templates
 from opennode.oms.model.model.base import IContainer
-from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.byname import ByNameContainer
-from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.filtrable import IFiltrable
+from opennode.oms.model.model.hangar import Hangar
+from opennode.oms.model.model.symlink import follow_symlinks
 
 
 class RootView(HttpRestView):
