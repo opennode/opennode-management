@@ -421,7 +421,7 @@ class FileCmd(Cmd):
             else:
                 rows.append(self._do_file(path, obj))
 
-        width = max([len(i[0]) for i in rows])
+        width = max(len(i[0]) for i in rows)
         for row in rows:
             self.write("%s %s" % (row[0].ljust(width), row[1]))
 
