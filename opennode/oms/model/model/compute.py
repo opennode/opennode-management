@@ -12,7 +12,8 @@ from .byname import ByNameContainerExtension
 class ICompute(Interface):
     architecture = schema.Choice(title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
     hostname = schema.TextLine(title=u"Host name", min_length=3)
-    ip_address = schema.TextLine(title=u"IP address", min_length=7, required=False)
+    ip_address = schema.TextLine(title=u"IPv4 address", min_length=7, required=False)
+    ipv6_address = schema.TextLine(title=u"IPv6 address", min_length=6, required=False)
     speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz")
     memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
     state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
@@ -31,6 +32,7 @@ class Compute(Container):
     __contains__ = IInCompute
 
     ip_address = u'0.0.0.0'
+    ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
     cpu = "Intel Xeon 12.2GHz"

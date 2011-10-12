@@ -51,6 +51,7 @@ class ComputeView(HttpRestView):
         return {'id': self.context.__name__,
                 'hostname': self.context.hostname,
                 'ip_address': self.context.ip_address,
+                'ipv6_address': self.context.ipv6_address,
                 'url': ILocation(self.context).get_url(),
                 'type': self.context.type,
                 'features': [i.__name__ for i in self.context.implemented_interfaces()],
