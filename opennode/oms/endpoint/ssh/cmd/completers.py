@@ -2,14 +2,14 @@ import argparse
 import os
 
 from grokcore.component import baseclass, context
-from zope.component import provideSubscriptionAdapter
-
 from opennode.oms.endpoint.ssh.cmd import commands, registry
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.zodb import db
+from twisted.internet import defer
+from zope.component import provideSubscriptionAdapter
 
 
 class CommandCompleter(Completer):
@@ -83,6 +83,34 @@ class PathCompleter(PositionalCompleter):
                 return [name(obj) + suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
 
 
+class KeywordPathSubCompleter(PathCompleter):
+    """
+    Implement a FS path completer which works as subcompleter for the keyworded arguments.
+
+    """
+    baseclass()
+
+    def __init__(self, context, base_path=''):
+        super(KeywordPathSubCompleter, self).__init__(context)
+        self.base_path = base_path
+
+    @defer.inlineCallbacks
+    def complete(self, token, parsed, parser, display=False):
+        self.original_context = self.context
+        self.context = self
+        keyword, value_prefix = token.split('=')
+        res = yield super(KeywordPathSubCompleter, self).complete(value_prefix, parsed, parser, display)
+        defer.returnValue([keyword+'='+i for i in res])
+
+    def traverse(self, path):
+        if not os.path.isabs(path):
+            path = self.base_path + path
+        return self.original_context.traverse(path)
+
+    def expected_action(self, parsed, parser):
+        return True
+
+
 class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
     baseclass()
@@ -133,6 +161,10 @@ class KeywordValueCompleter(ArgSwitchCompleter):
             keyword, value_prefix = token.split('=')
 
             action = self.find_action(keyword, parsed, parser)
+            if isinstance(action, GroupDictAction) and action.is_path:
+                subcompleter = KeywordPathSubCompleter(self.context, action.base_path)
+                return subcompleter.complete(token, parsed, parser, display)
+
             if action.choices:
                 return [keyword + '=' + value for value in action.choices if value.startswith(value_prefix)]
 

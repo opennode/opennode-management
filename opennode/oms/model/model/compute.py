@@ -7,6 +7,7 @@ from zope.interface import Interface, implements, alsoProvides
 from .base import Model, IContainer, Container, AddingContainer, IIncomplete
 from .symlink import Symlink
 from .byname import ByNameContainerExtension
+from opennode.oms.model.schema import Path
 
 
 class ICompute(Interface):
@@ -18,7 +19,7 @@ class ICompute(Interface):
     memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
     state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
     effective_state = schema.TextLine(title=u"Effective state", readonly=True, required=False)
-    template = schema.TextLine(title=u"Template", required=False)
+    template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
 
 
 class IInCompute(Interface):

@@ -136,9 +136,11 @@ class GroupDictAction(argparse.Action):
 
     """
 
-    def __init__(self, group='group', **kwargs):
+    def __init__(self, group='group', is_path=False, base_path='', **kwargs):
         super(GroupDictAction, self).__init__(**kwargs)
         self.group = group
+        self.is_path = is_path
+        self.base_path = base_path
 
     def __call__(self, parser, namespace, values, option_string=None):
         group = getattr(namespace, self.group, {})

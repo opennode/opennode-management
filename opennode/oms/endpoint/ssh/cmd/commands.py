@@ -14,6 +14,7 @@ from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 
+import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.traversal import canonical_path
@@ -402,8 +403,13 @@ class SetOrMkCmdDynamicArguments(Adapter):
                 type = (int if isinstance(field, zope.schema.Int)
                         else None)
 
+                kwargs = {}
+                if isinstance(field, opennode.oms.model.schema.Path):
+                    kwargs['is_path'] = True
+                    kwargs['base_path'] = field.base_path
+
                 parser.add_argument('=' + name, required=args_required and field.required, type=type, action=GroupDictAction,
-                                    group='keywords', help=field.title.encode('utf8'), choices=choices)
+                                    group='keywords', help=field.title.encode('utf8'), choices=choices, **kwargs)
 
         return parser
 
