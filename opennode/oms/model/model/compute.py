@@ -31,7 +31,7 @@ class Compute(Container):
 
     __contains__ = IInCompute
 
-    ip_address = u'0.0.0.0'
+    ip_address = u'0.0.0.0/32'
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?

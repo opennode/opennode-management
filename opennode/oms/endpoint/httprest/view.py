@@ -78,9 +78,8 @@ class ComputeView(HttpRestView):
         return {
             'bridge_interfaces': [{
                 'id': 'vmbr1',
-                'ipv4_address': '192.168.1.40',
+                'ipv4_address': '192.168.1.40/24',
                 'ipv6_address': 'fe80::64ac:39ff:fe4a:e596/64',
-                'subnet_mask': '255.255.255.0',
                 'bcast': '192.168.1.255',
                 'hw_address': '00:00:00:00:00:00',
                 'metric': 1,
@@ -90,9 +89,8 @@ class ComputeView(HttpRestView):
                 'members': ['eth0', 'vnet0', 'vnet1', 'vnet5', 'vnet6',],
             }, {
                 'id': 'vmbr2',
-                'ipv4_address': '192.168.2.40',
+                'ipv4_address': '192.168.2.40/24',
                 'ipv6_address': 'fe80::539b:28dd:db3b:c407/64',
-                'subnet_mask': '255.255.255.0',
                 'bcast': '192.168.2.255',
                 'hw_address': '00:00:00:00:00:00',
                 'metric': 1,
