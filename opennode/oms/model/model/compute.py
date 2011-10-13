@@ -26,6 +26,10 @@ class IInCompute(Interface):
     """Implementors of this interface can be contained in a `Compute` container."""
 
 
+class IDeployed(Interface):
+    """Marker interface implemented when the compute has been deployed."""
+
+
 class Compute(Container):
     """A compute node."""
 
