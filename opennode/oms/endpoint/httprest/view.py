@@ -70,7 +70,7 @@ class ComputeView(HttpRestView):
                 'startup_timestamp': self.context.startup_timestamp,
                 'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
                 'vms': [IHttpRestView(vm).render(request)
-                        for vm in (vms.listcontent() if vms else [])]
+                        for vm in vms] if vms else []
                 }
 
     def _dummy_network_data(self):

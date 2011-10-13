@@ -30,6 +30,9 @@ class IContainer(IModel):
     def listcontent():
         """Lists all the items contained in this container."""
 
+    def __iter__():
+        """Returns an iterator over the items in this container."""
+
 
 class IIncomplete(Interface):
     def missing_parts():
@@ -69,6 +72,9 @@ class ReadonlyContainer(Model):
 
     def listcontent(self):
         return self.content().values()
+
+    def __iter__(self):
+        return iter(self.listcontent())
 
     def content(self):
         items = dict(**self._items)
