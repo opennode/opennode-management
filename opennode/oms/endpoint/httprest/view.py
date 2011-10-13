@@ -47,7 +47,8 @@ class ComputeView(HttpRestView):
     context(Compute)
 
     def render(self, request):
-        ret = {'id': self.context.__name__,
+        vms = self.context['vms']
+        return {'id': self.context.__name__,
                 'hostname': self.context.hostname,
                 'ip_address': self.context.ip_address,
                 'url': ILocation(self.context).get_url(),
@@ -68,19 +69,9 @@ class ComputeView(HttpRestView):
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
                 'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
+                'vms': [IHttpRestView(vm).render(request)
+                        for vm in (vms.listcontent() if vms else [])]
                 }
-
-        # XXX: generate random VM data:
-        import random
-
-        ret['vms'] = []
-
-        vms = self.context['vms']
-        if vms:
-            for vm in vms.listcontent():
-                ret['vms'].append(IHttpRestView(vm).render(request))
-
-        return ret
 
     def _dummy_network_data(self):
         return {
