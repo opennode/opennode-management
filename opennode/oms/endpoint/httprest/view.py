@@ -50,7 +50,7 @@ class ComputeView(HttpRestView):
         vms = self.context['vms']
         return {'id': self.context.__name__,
                 'hostname': self.context.hostname,
-                'ip_address': self.context.ip_address,
+                'ipv4_address': self.context.ipv4_address,
                 'ipv6_address': self.context.ipv6_address,
                 'url': ILocation(self.context).get_url(),
                 'type': self.context.type,

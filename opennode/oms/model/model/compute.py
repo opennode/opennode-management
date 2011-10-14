@@ -12,7 +12,7 @@ from .byname import ByNameContainerExtension
 class ICompute(Interface):
     architecture = schema.Choice(title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
     hostname = schema.TextLine(title=u"Host name", min_length=3)
-    ip_address = schema.TextLine(title=u"IPv4 address", min_length=7, required=False)
+    ipv4_address = schema.TextLine(title=u"IPv4 address", min_length=7, required=False)
     ipv6_address = schema.TextLine(title=u"IPv6 address", min_length=6, required=False)
     speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz")
     memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
@@ -31,7 +31,7 @@ class Compute(Container):
 
     __contains__ = IInCompute
 
-    ip_address = u'0.0.0.0/32'
+    ipv4_address = u'0.0.0.0/32'
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
@@ -48,7 +48,7 @@ class Compute(Container):
     diskspace_backuppartition = 77.7
     startup_timestamp = "2011-07-06 01:23:45"
 
-    def __init__(self, architecture, hostname, speed, memory, state, template=None, ip_address=None):
+    def __init__(self, architecture, hostname, speed, memory, state, template=None, ipv4_address=None):
         super(Compute, self).__init__()
 
         self.architecture = architecture
@@ -57,8 +57,8 @@ class Compute(Container):
         self.memory = memory
         self.state = state
         self.template = template
-        if ip_address:
-            self.ip_address = ip_address
+        if ipv4_address:
+            self.ipv4_address = ipv4_address
 
         if self.template:
             alsoProvides(self, IVirtualCompute)
