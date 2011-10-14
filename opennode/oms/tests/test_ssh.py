@@ -188,7 +188,8 @@ class SshTestCase(unittest.TestCase):
             t.write('Architecture:   \tlinux\n')
             t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \ttux-for-test\n')
-            t.write('IP address:     \t0.0.0.0\n')
+            t.write('IPv4 address:   \t0.0.0.0/32\n')
+            t.write('IPv6 address:   \t::/128\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -209,7 +210,8 @@ class SshTestCase(unittest.TestCase):
             t.write('Architecture:   \tlinux\n')
             t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \ttux-for-test\n')
-            t.write('IP address:     \t0.0.0.0\n')
+            t.write('IPv4 address:   \t0.0.0.0/32\n')
+            t.write('IPv6 address:   \t::/128\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -260,7 +262,8 @@ class SshTestCase(unittest.TestCase):
             t.write('Architecture:   \tlinux\n')
             t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
-            t.write('IP address:     \t0.0.0.0\n')
+            t.write('IPv4 address:   \t0.0.0.0/32\n')
+            t.write('IPv6 address:   \t::/128\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -290,7 +293,8 @@ class SshTestCase(unittest.TestCase):
             t.write('Architecture:   \tlinux\n')
             t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
-            t.write('IP address:     \t0.0.0.0\n')
+            t.write('IPv4 address:   \t0.0.0.0/32\n')
+            t.write('IPv6 address:   \t::/128\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -316,7 +320,8 @@ class SshTestCase(unittest.TestCase):
             t.write('Architecture:   \tlinux\n')
             t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
-            t.write('IP address:     \t0.0.0.0\n')
+            t.write('IPv4 address:   \t0.0.0.0/32\n')
+            t.write('IPv6 address:   \t::/128\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
