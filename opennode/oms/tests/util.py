@@ -6,7 +6,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from functools import wraps
 
-from nose.twistedtools import threaded_reactor
+from nose.twistedtools import threaded_reactor, stop_reactor
 
 from opennode.oms.zodb import db
 import time
@@ -58,10 +58,7 @@ def run_in_reactor(fun):
 
 
 def teardown_reactor():
-    global _mayDelay
-    if _mayDelay:
-        time.sleep(_mayDelay)
-
+    stop_reactor()
 
 def clean_db(fun):
     """Clean the test db before executing a given unit test.
