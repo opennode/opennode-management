@@ -1,3 +1,5 @@
+import inspect
+import os
 import sys
 from Queue import Queue, Empty
 from collections import namedtuple
@@ -7,6 +9,12 @@ from functools import wraps
 from nose.twistedtools import threaded_reactor
 
 from opennode.oms.zodb import db
+import time
+
+
+_mayDelay = None
+
+funcd_running = os.system("ps xa|grep [f]uncd >/dev/null") == 0
 
 
 def run_in_reactor(fun):
@@ -17,6 +25,11 @@ def run_in_reactor(fun):
     testing is blocking/non-threaded).
 
     """
+
+    if not inspect.isfunction(fun):
+        global _mayDelay
+        _mayDelay = max(_mayDelay, fun)
+        return run_in_reactor
 
     @wraps(fun)
     def wrapper(*args, **kwargs):
@@ -42,6 +55,12 @@ def run_in_reactor(fun):
             raise exc_type, exc_value, tb
 
     return wrapper
+
+
+def teardown_reactor():
+    global _mayDelay
+    if _mayDelay:
+        time.sleep(_mayDelay)
 
 
 def clean_db(fun):
