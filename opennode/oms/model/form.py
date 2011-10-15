@@ -126,7 +126,8 @@ class TmpObj(object):
             return getattr(obj, name) if obj else None
 
     def __setattr__(self, name, value):
-        self.__dict__['modified_attrs'][name] = value
+        if getattr(self, name) != value:
+            self.__dict__['modified_attrs'][name] = value
 
     def apply(self):
         for name, value in self.__dict__['modified_attrs'].items():
