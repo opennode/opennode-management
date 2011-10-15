@@ -6,7 +6,7 @@ from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
 from opennode.oms.util import get_direct_interfaces
 
 
-__all__ = ['apply_raw_data']
+__all__ = ['ApplyRawData']
 
 
 class UnknownAttribute(zope.schema.ValidationError):
@@ -106,48 +106,6 @@ class ApplyRawData(object):
         for key, error in self.errors:
             msg = error.doc().encode('utf8')
             to.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
-
-
-def apply_raw_data(raw_data, schema, obj):
-    """Takes a dict containing raw data as key-value pairs, converts
-    the data to appropriate Python data types according to the schema,
-    and validates the result.
-
-    The passed in object `obj` is only modified if there are no
-    datatype conversion nor validation errors.
-
-    """
-
-    tmp_obj = TmpObj(obj)
-
-    errors = []
-    for name, field in zope.schema.getFields(schema).items():
-        if name not in raw_data:
-            continue
-
-        raw_value = raw_data.pop(name)
-
-        if isinstance(raw_value, str):
-            raw_value = raw_value.decode('utf8')
-
-        try:
-            value = IFromUnicode(field).fromUnicode(raw_value)
-        except zope.schema.ValidationError as exc:
-            errors.append((name, exc))
-        else:
-            setattr(tmp_obj, name, value)
-
-    if raw_data:
-        for key in raw_data:
-            errors.append((key, UnknownAttribute()))
-
-    if not errors:
-        errors = zope.schema.getValidationErrors(schema, tmp_obj)
-
-    if not errors:
-        tmp_obj.apply()
-
-    return errors
 
 
 class TmpObj(object):
