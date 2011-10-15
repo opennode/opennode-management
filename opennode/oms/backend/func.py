@@ -3,10 +3,10 @@ from __future__ import absolute_import
 from func import jobthing
 from func.overlord.client import Overlord
 from grokcore.component import Adapter, context, baseclass
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo
+from opennode.oms.backend.operation import *
 
 
 class FuncBase(Adapter):
@@ -16,15 +16,19 @@ class FuncBase(Adapter):
 
     func_action = None
 
-    def run(self):
+    def run(self, *args, **kwargs):
         client = self._get_client()
         # we assume that all of the func actions are in the form of 'module.action'
-        module_action, action_name = self.func_action.split('.')
+        module_action, action_name = self.func_action.rsplit('.', 1)
         module = getattr(client, module_action)
         action = getattr(module, action_name)
-        self.job_id = action()
+        self.job_id = action(*args, **kwargs)
+
+        self.deferred = defer.Deferred()
 
         self.start_polling()
+
+        return self.deferred
 
     def start_polling(self):
         return_code, results = self._get_client().job_status(self.job_id)
@@ -34,15 +38,22 @@ class FuncBase(Adapter):
         reactor.callLater(1, self.start_polling)
 
     def _fire_events(self, data):
-        # XXX: Sending signal to self.context
-        pass
+        hostkey = self.context.hostname
+        if len(data.keys()) == 1:
+            hostkey = data.keys()[0]
+        res = data[hostkey]
+
+        if res and isinstance(res, list) and res[0] == 'REMOTE_ERROR':
+            self.deferred.errback(Exception(*res[1:]))
+        else:
+            self.deferred.callback(res)
 
     def _get_client(self):
         """Returns an instance of the Overlord."""
         return Overlord(self.context.hostname, async=True)
 
 
-FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info'}
+FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm', IShutdownVM: 'onode.vm.shutdown_vm', IListVMS: 'onode.vm.list_vms'}
 
 
 # Avoid polluting the global namespace with temporary variables:
