@@ -12,7 +12,7 @@ from opennode.oms.zodb import db
 import time
 
 
-_mayDelay = None
+_delay_segments = []
 
 funcd_running = os.system("ps xa|grep [f]uncd >/dev/null") == 0
 
@@ -27,9 +27,24 @@ def run_in_reactor(fun):
     """
 
     if not inspect.isfunction(fun):
-        global _mayDelay
-        _mayDelay = max(_mayDelay, fun)
-        return run_in_reactor
+        delay = fun
+        def recorded_execution(f):
+            """Marks the execution of a delay triggering test case
+            so that later we can decide whether to sleep or not.
+            Useful to avoid useless waits in case we just run simple tests
+            from the cmdline.
+
+            """
+
+            reactor_wrapped_fun = run_in_reactor(f)
+            @wraps(reactor_wrapped_fun)
+            def mark(*args, **kwargs):
+                _delay_segments.append((time.time(), delay))
+
+                return reactor_wrapped_fun(*args, **kwargs)
+            return mark
+
+        return recorded_execution
 
     @wraps(fun)
     def wrapper(*args, **kwargs):
@@ -58,9 +73,9 @@ def run_in_reactor(fun):
 
 
 def teardown_reactor():
-    global _mayDelay
-    if _mayDelay:
-        time.sleep(_mayDelay)
+    now = time.time()
+    max_time = max([start + delta for start, delta in _delay_segments] + [0])
+    time.sleep(max(max_time, now) - now)
 
 
 def clean_db(fun):
