@@ -250,6 +250,22 @@ class SshTestCase(unittest.TestCase):
             MoveCmd.current_obj = orig_current_object
 
     @run_in_reactor
+    def test_rename_compute(self):
+        computes = db.get_root()['oms_root']['computes']
+        compute = Compute('linux', 'tux-for-test', 2000, 2000, 'active')
+        cid = computes.add(compute)
+
+        self._cmd('mv /machines/%s /machines/123' % cid)
+        eq_(compute.__name__, '123')
+
+        self.terminal.reset_mock()
+
+        self._cmd('cat /machines/123')
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:   \tlinux\n')
+
+
+    @run_in_reactor
     def test_modify_compute(self):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))

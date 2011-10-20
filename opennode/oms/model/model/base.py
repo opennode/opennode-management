@@ -108,6 +108,11 @@ class AddingContainer(ReadonlyContainer):
 
         return self._add(item)
 
+    def rename(self, old_name, new_name):
+        self._items[new_name] = self._items[old_name]
+        del self._items[old_name]
+        self._items[new_name].__name__ = new_name
+
 
 class Container(AddingContainer):
     """A base class for containers whose items are named by their __name__.

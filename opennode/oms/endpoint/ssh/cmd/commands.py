@@ -282,12 +282,21 @@ class MoveCmd(Cmd):
         src = self.traverse(src_path)
         dest = self.traverse(dest_path)
 
+        rename = None
+
+        # move and rename
+        if not dest:
+            dest = self.traverse(os.path.dirname(dest_path))
+            rename = os.path.basename(dest_path)
+
         if not IContainer.providedBy(dest):
             self.write("Destination %s has to be a container.\n" % dest)
             return
 
         # `add` will take care of removing the old parent.
         dest.add(src)
+        if rename:
+            dest.rename(src.__name__, rename)
 
         transaction.commit()
 
