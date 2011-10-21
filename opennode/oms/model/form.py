@@ -1,6 +1,8 @@
 import inspect
 
 import zope.schema
+from zope.component import handle
+from zope.interface import Interface, implements
 from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
 
 from opennode.oms.util import get_direct_interfaces
@@ -15,6 +17,18 @@ class UnknownAttribute(zope.schema.ValidationError):
 
 class NoSchemaFound(zope.schema.ValidationError):
     """No schema found for object"""
+
+
+class IModelModifiedEvent(Interface):
+    """Model was modified"""
+
+
+class ModelModifiedEvent(object):
+    implements(IModelModifiedEvent)
+
+    def __init__(self, original, modified):
+        self.original = original
+        self.modified = modified
 
 
 class ApplyRawData(object):
@@ -130,5 +144,10 @@ class TmpObj(object):
             self.__dict__['modified_attrs'][name] = value
 
     def apply(self):
+        original_attrs = {}
         for name, value in self.__dict__['modified_attrs'].items():
+            original_attrs[name] = getattr(self.__dict__['obj'], name, None)
             setattr(self.__dict__['obj'], name, value)
+
+        if self.__dict__['modified_attrs']:
+            handle(self.__dict__['obj'], ModelModifiedEvent(original_attrs, self.__dict__['modified_attrs']))

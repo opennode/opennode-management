@@ -1,8 +1,9 @@
 from nose.tools import assert_raises
 from zope import schema
+from zope.component import adapter, provideHandler
 from zope.interface import Interface, implements
 
-from opennode.oms.model.form import ApplyRawData
+from opennode.oms.model.form import ApplyRawData, IModelModifiedEvent
 
 
 class IFoo(Interface):
@@ -79,3 +80,18 @@ def test_apply_with_valid_new_value():
     a = ApplyRawData({'bar': '2'}, obj=foo)
     a.apply()
     assert foo.bar == 2
+
+def test_handler():
+    modified = []
+
+    @adapter(IFoo, IModelModifiedEvent)
+    def fooModified(foo, event):
+        modified.append(event.modified)
+
+    provideHandler(fooModified)
+
+    foo = Foo()
+    a = ApplyRawData({'bar': '2'}, obj=foo)
+    a.apply()
+
+    assert modified[0] == {'bar': 2}
