@@ -14,9 +14,10 @@ class ICompute(Interface):
     hostname = schema.TextLine(title=u"Host name", min_length=3)
     ipv4_address = schema.TextLine(title=u"IPv4 address", min_length=7, required=False)
     ipv6_address = schema.TextLine(title=u"IPv6 address", min_length=6, required=False)
-    speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz")
+    speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz", readonly=True, required=False)
     memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
     state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
+    effective_state = schema.TextLine(title=u"Effective state", readonly=True, required=False)
     template = schema.TextLine(title=u"Template", required=False)
 
 
@@ -40,6 +41,7 @@ class Compute(Container):
     os_release = "build 35"
     kernel = "2.6.18-238.9.1.el5.028stab089.1"
     network_usage = 1000
+    speed = 2000
     diskspace = 750
     swap_size = 7777
     diskspace_rootpartition = 77.7
@@ -48,12 +50,11 @@ class Compute(Container):
     diskspace_backuppartition = 77.7
     startup_timestamp = "2011-07-06 01:23:45"
 
-    def __init__(self, architecture, hostname, speed, memory, state, template=None, ipv4_address=None):
+    def __init__(self, architecture, hostname, memory, state, template=None, ipv4_address=None):
         super(Compute, self).__init__()
 
         self.architecture = architecture
         self.hostname = hostname
-        self.speed = speed
         self.memory = memory
         self.state = state
         self.template = template
@@ -78,6 +79,19 @@ class Compute(Container):
 
         """
         return [self.hostname, ]
+
+    def get_effective_state(self):
+        """Since we lack schema/data upgrade scripts I have to
+        resort on this tricks to cope with the fact that I have
+        existing objects around in the several test dbs, and branches.
+
+        """
+        return getattr(self, '_effective_state', unicode(self.state))
+
+    def set_effective_state(self, value):
+        self._effective_state = value
+
+    effective_state = property(get_effective_state, set_effective_state)
 
     def __str__(self):
         return 'compute%s' % self.__name__

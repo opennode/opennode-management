@@ -9,7 +9,7 @@ from opennode.oms.tests.util import run_in_reactor, funcd_running
 
 
 def test_adaption():
-    compute = Compute(architecture='linux', hostname='tuxtest', speed=2000, memory=2048, state='online')
+    compute = Compute(architecture='linux', hostname='tuxtest', memory=2048, state='online')
     alsoProvides(compute, IFuncInstalled)
     assert isinstance(IGetComputeInfo(compute, None), FuncGetComputeInfo)
 
@@ -17,7 +17,7 @@ def test_adaption():
 @unittest.skipUnless(funcd_running, "func not running")
 @run_in_reactor(funcd_running and 2)
 def test_get_info():
-    compute = Compute(architecture='linux', hostname='localhost', speed=2000, memory=2048, state='online')
+    compute = Compute(architecture='linux', hostname='localhost', memory=2048, state='online')
     alsoProvides(compute, IFuncInstalled)
     job = IGetComputeInfo(compute, None)
     job.run()

@@ -84,7 +84,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_cd_errors(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         # TODO: reenable this when we'll have another leaf object.
 
@@ -118,7 +118,7 @@ class SshTestCase(unittest.TestCase):
             t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         # TODO: put back this when we find another leaf object
 
@@ -142,7 +142,7 @@ class SshTestCase(unittest.TestCase):
             no_more_calls(t)
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
@@ -180,16 +180,16 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
             t.write('Architecture:   \tlinux\n')
-            t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \ttux-for-test\n')
             t.write('IPv4 address:   \t0.0.0.0/32\n')
             t.write('IPv6 address:   \t::/128\n')
+            t.write('CPU Speed in MHz:\t2000\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -202,16 +202,16 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
             t.write('Architecture:   \tlinux\n')
-            t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \ttux-for-test\n')
             t.write('IPv4 address:   \t0.0.0.0/32\n')
             t.write('IPv6 address:   \t::/128\n')
+            t.write('CPU Speed in MHz:\t2000\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -238,7 +238,7 @@ class SshTestCase(unittest.TestCase):
             __contains__ = Compute
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         orig_current_object = MoveCmd.current_obj
 
@@ -252,7 +252,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_rename_compute(self):
         computes = db.get_root()['oms_root']['computes']
-        compute = Compute('linux', 'tux-for-test', 2000, 2000, 'active')
+        compute = Compute('linux', 'tux-for-test', 2000, 'active')
         cid = computes.add(compute)
 
         self._cmd('mv /machines/%s /machines/123' % cid)
@@ -268,18 +268,20 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST' % cid)
+        import time
+        time.sleep(1)
         self.terminal.reset_mock()
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
             t.write('Architecture:   \tlinux\n')
-            t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
             t.write('IPv4 address:   \t0.0.0.0/32\n')
             t.write('IPv6 address:   \t::/128\n')
+            t.write('CPU Speed in MHz:\t2000\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -296,7 +298,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute_verbose(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST -v' % cid)
         with assert_mock(self.terminal) as t:
@@ -307,17 +309,17 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
             t.write('Architecture:   \tlinux\n')
-            t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
             t.write('IPv4 address:   \t0.0.0.0/32\n')
             t.write('IPv6 address:   \t::/128\n')
+            t.write('CPU Speed in MHz:\t2000\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
     @run_in_reactor
     def test_modify_compute_errors(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('set computes/%s hostname=x' % cid)
         with assert_mock(self.terminal) as t:
@@ -326,7 +328,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_create_compute(self):
         self._cmd("cd /computes")
-        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active speed=2000")
+        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
         cid = self.terminal.method_calls[-2][1][0]
 
         self.terminal.reset_mock()
@@ -334,10 +336,10 @@ class SshTestCase(unittest.TestCase):
 
         with assert_mock(self.terminal) as t:
             t.write('Architecture:   \tlinux\n')
-            t.write('CPU Speed in MHz:\t2000\n')
             t.write('Host name:      \tTUX-FOR-TEST\n')
             t.write('IPv4 address:   \t0.0.0.0/32\n')
             t.write('IPv6 address:   \t::/128\n')
+            t.write('CPU Speed in MHz:\t2000\n')
             t.write('RAM size in MB: \t2000\n')
             t.write('State:          \tactive\n')
 
@@ -346,17 +348,17 @@ class SshTestCase(unittest.TestCase):
         self._cmd("cd /computes")
 
         self.terminal.reset_mock()
-        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
+        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000")
 
         with assert_mock(self.terminal) as t:
-            t.write("argument =speed is required")
+            t.write("argument =state is required")
 
     @run_in_reactor
     def test_create_compute_invalid_args(self):
         self._cmd("cd /computes")
 
         self.terminal.reset_mock()
-        self._cmd("mk compute architecture=linux hostname=x memory=2 state=active speed=2000")
+        self._cmd("mk compute architecture=linux hostname=x memory=2 state=active")
 
         with assert_mock(self.terminal) as t:
             t.write("hostname: Value is too short\n")
@@ -435,7 +437,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_context_dependent_help(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self.terminal.reset_mock()
         self._cmd('set computes/%s -h' % cid)
@@ -486,7 +488,7 @@ class SshTestCase(unittest.TestCase):
 
         self.terminal.reset_mock()
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 2000, 'active'))
+        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('echo /computes/*-[a-z0-9]*-*')
         with assert_mock(self.terminal) as t:

@@ -2,6 +2,7 @@ import os, inspect
 
 import transaction
 import zope.schema
+from collections import OrderedDict
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter
@@ -223,7 +224,7 @@ class CatObjectCmd(Cmd):
         schema = schemas[0]
 
         fields = zope.schema.getFieldsInOrder(schema)
-        data = {}
+        data = OrderedDict()
         for name, field in fields:
             key = field.description or field.title
             key = key.encode('utf8')
@@ -231,7 +232,7 @@ class CatObjectCmd(Cmd):
 
         if data:
             max_key_len = max(len(key) for key in data)
-            for key, value in sorted(data.items()):
+            for key, value in data.items():
                 self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
                                          str(value).encode('utf8')))
 
@@ -391,6 +392,8 @@ class SetOrMkCmdDynamicArguments(Adapter):
 
         for schema in schemas:
             for name, field in zope.schema.getFields(schema).items():
+                if field.readonly:
+                    continue
 
                 choices = ([i.value.encode('utf-8') for i in field.vocabulary]
                            if isinstance(field, zope.schema.Choice) else
