@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 from zope import schema
+from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
-from .base import Model, Container
+from .base import Container
+from .byname import ByNameContainerExtension
 from .compute import Compute, IInCompute
 
 
@@ -25,3 +27,5 @@ class VirtualizationContainer(Container):
 
     def __str__(self):
         return 'virtualizationcontainer%s' % self.__name__
+
+provideSubscriptionAdapter(ByNameContainerExtension, adapts=(VirtualizationContainer, ))
