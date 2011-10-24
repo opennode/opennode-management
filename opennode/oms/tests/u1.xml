@@ -8,7 +8,7 @@
       virsh -connect test:////path/to/this/dir/testnode.xml nodeinfo
 
      -->
-  <domain type="test">
+  <domain type="test" state="inactive">
     <name>vm1</name>
     <uuid>4dea22b31d52d8f32516782e98ab3fa0</uuid> 
     <os>

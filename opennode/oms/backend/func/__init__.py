@@ -23,6 +23,7 @@ class FuncBase(Adapter):
         module_action, action_name = self.func_action.rsplit('.', 1)
         module = getattr(client, module_action)
         action = getattr(module, action_name)
+
         self.job_id = action(*args, **kwargs)
 
         self.deferred = defer.Deferred()
@@ -34,12 +35,20 @@ class FuncBase(Adapter):
 
     def start_polling(self):
         return_code, results = self._get_client().job_status(self.job_id)
+
         if return_code in (jobthing.JOB_ID_FINISHED, jobthing.JOB_ID_REMOTE_ERROR):
             self._fire_events(results)
+            return
+        if return_code == jobthing.JOB_ID_LOST_IN_SPACE:
+            self.deferred.errback(Exception('Command lost in space'))
             return
         reactor.callLater(1, self.start_polling)
 
     def _fire_events(self, data):
+        # noglobs=True and async=True cannot live together
+        # see http://goo.gl/UgrZu
+        # thus we need a robust way to get the result for this host,
+        # even when the host names don't match (e.g. localhost vs real host name).
         hostkey = self.context.hostname
         if len(data.keys()) == 1:
             hostkey = data.keys()[0]
