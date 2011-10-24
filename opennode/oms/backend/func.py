@@ -6,7 +6,7 @@ from grokcore.component import Adapter, context, baseclass
 from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import *
+from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS
 
 
 class FuncBase(Adapter):
@@ -53,7 +53,10 @@ class FuncBase(Adapter):
         return Overlord(self.context.hostname, async=True)
 
 
-FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm', IShutdownVM: 'onode.vm.shutdown_vm', IListVMS: 'onode.vm.list_vms'}
+FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
+                IShutdownVM: 'onode.vm.shutdown_vm', IDestroyVM: 'onode.vm.destroy_vm',
+                ISuspendVM: 'onode.vm.suspend_vm', IResumeVM: 'onode.vm.resume_vm',
+                IRebootVM: 'onode.vm.reboot_vm', IListVMS: 'onode.vm.list_vms'}
 
 
 # Avoid polluting the global namespace with temporary variables:

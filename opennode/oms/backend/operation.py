@@ -1,7 +1,7 @@
 from zope.interface import Interface
 
 
-__all__ = ['IJob', 'IFuncInstalled', 'IGetComputeInfo', 'IListVMS', 'IStartVM', 'IShutdownVM', 'IDestroyVM']
+__all__ = ['IJob', 'IFuncInstalled', 'IGetComputeInfo', 'IListVMS', 'IStartVM', 'IShutdownVM', 'IDestroyVM', 'ISuspendVM', 'IResumeVM', 'IRebootVM']
 
 
 class IJob(Interface):
@@ -35,3 +35,12 @@ class IShutdownVM(IJob):
 
 class IDestroyVM(IJob):
     """Destroys a vm."""
+
+class ISuspendVM(IJob):
+    """Suspends a vm."""
+
+class IResumeVM(IJob):
+    """Resumes a vm."""
+
+class IRebootVM(IJob):
+    """Reboots a vm."""
