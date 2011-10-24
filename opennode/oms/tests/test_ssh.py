@@ -271,8 +271,6 @@ class SshTestCase(unittest.TestCase):
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST' % cid)
-        import time
-        time.sleep(1)
         self.terminal.reset_mock()
 
         self._cmd('cat computes/%s' % cid)
