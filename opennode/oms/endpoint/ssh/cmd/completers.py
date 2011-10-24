@@ -6,19 +6,11 @@ from opennode.oms.endpoint.ssh.cmd import commands, registry
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.zodb import db
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter
-
-
-class CommandCompleter(Completer):
-    """Completes a command."""
-
-    context(commands.NoCommand)
-
-    def complete(self, token, parsed, parser, display=False):
-        return [name for name in registry.commands().keys() if name.startswith(token)]
 
 
 class PositionalCompleter(Completer):
@@ -72,6 +64,8 @@ class PathCompleter(PositionalCompleter):
                 def suffix(obj):
                     if IContainer.providedBy(follow_symlinks(obj)):
                         return '/'
+                    elif ICommand.providedBy(follow_symlinks(obj)):
+                        return '*'
                     elif isinstance(obj, Symlink):
                         return '@'
                     else:
@@ -81,6 +75,21 @@ class PathCompleter(PositionalCompleter):
                     return os.path.join(base_path, obj.__name__)
 
                 return [name(obj) + suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
+
+
+class CommandCompleter(PathCompleter):
+    """Completes a command."""
+
+    context(commands.NoCommand)
+
+    def complete(self, token, parsed, parser, display=False):
+        # HACK: doesn't actually honour the search path held in the protocol's env vars.
+        if not os.path.isabs(token):
+            return [name for name in registry.commands().keys() if name.startswith(token)]
+        return super(CommandCompleter, self).complete(token, parsed, parser, display=False)
+
+    def expected_action(self, parsed, parser):
+        return True
 
 
 class KeywordPathSubCompleter(PathCompleter):

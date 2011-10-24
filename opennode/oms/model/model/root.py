@@ -4,6 +4,7 @@ from .base import ReadonlyContainer
 from .compute import Computes
 from .machines import Machines
 from .template import Templates
+from .bin import Bin
 
 
 class OmsRoot(ReadonlyContainer):
@@ -21,6 +22,7 @@ class OmsRoot(ReadonlyContainer):
         'computes': self.computes,
         'templates': self.templates,
         'machines': self.machines,
+        'bin': self.bin
     })
 
     def __init__(self):
@@ -36,6 +38,11 @@ class OmsRoot(ReadonlyContainer):
         self.machines.__parent__ = self
         self.machines.__name__ = 'machines'
 
+    @property
+    def bin(self):
+        bin = Bin()
+        bin.__parent__ = self
+        return bin
 
     def __str__(self):
         return 'OMS root'

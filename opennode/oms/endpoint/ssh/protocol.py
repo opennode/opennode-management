@@ -7,11 +7,12 @@ from twisted.internet import defer
 from twisted.python import log
 
 from opennode.oms.endpoint.ssh import cmdline
-from opennode.oms.endpoint.ssh.cmd import registry, completion
+from opennode.oms.endpoint.ssh.cmd import registry, completion, commands
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN
+from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN, GREEN
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.bin import ICommand
 from opennode.oms.zodb import db
 
 
@@ -28,6 +29,7 @@ class OmsShellProtocol(InteractiveTerminal):
         super(OmsShellProtocol, self).__init__()
         self.path = ['']
         self.last_error = None
+        self.environment={'PATH': '.:/bin'}
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -75,12 +77,27 @@ class OmsShellProtocol(InteractiveTerminal):
         """
 
         cmd_name, cmd_args = line.partition(' ')[::2]
-        command_cls = registry.get_command(cmd_name)
+        command_cls = self.get_command_class(cmd_name)
         command = command_cls(self)
 
         tokenized_cmd_args = self.expand(command, self.tokenizer.tokenize(cmd_args.strip()))
 
         return command, tokenized_cmd_args
+
+    def get_command_class(self, name):
+        # NOTE: used to leverage the 'traverse()' method which take into consideration
+        # path handling quirks for relative paths
+        dummy = commands.NoCommand(self)
+        for d in self.environment['PATH'].split(':'):
+            effective_dir = name
+            if not os.path.isabs(name):
+                effective_dir = os.path.join(d, name)
+            command = dummy.traverse(effective_dir)
+            if ICommand.providedBy(command):
+                return command.cmd
+
+        # NOTE: retained temporarily because it contains inner class
+        return registry.get_command(name)
 
     def expand(self, command, tokens):
         return list(itertools.chain.from_iterable([self.expand_token(command, i) for i in tokens]))
@@ -118,9 +135,10 @@ class OmsShellProtocol(InteractiveTerminal):
 
             patch = completions[0][len(partial):] + space
 
-            # Drop @, half hack
-            if patch.endswith('@ '):
-                patch = patch.rstrip('@ ') + ' '
+            # Drop @, *, half hack
+            for i in ('@', '*'):
+                if patch.endswith(i + ' '):
+                    patch = patch.rstrip(i + ' ') + ' '
 
             self.insert_text(patch)
         elif len(completions) > 1:
@@ -152,6 +170,8 @@ class OmsShellProtocol(InteractiveTerminal):
             return BLUE
         elif completion.endswith('@'):
             return CYAN
+        elif completion.endswith('*'):
+            return GREEN
         else:
             return None
 

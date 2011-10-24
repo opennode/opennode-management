@@ -15,11 +15,12 @@ from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCm
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 
 import opennode.oms.model.schema
-from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN
+from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.traversal import canonical_path
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
+from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
@@ -160,6 +161,8 @@ class ListDirContentsCmd(Cmd):
         def pretty_name(item):
             if IContainer.providedBy(item):
                 return self.protocol.colorize(BLUE, item.__name__ + '/')
+            elif ICommand.providedBy(item):
+                return self.protocol.colorize(GREEN, item.__name__ + '*')
             elif isinstance(item, Symlink):
                 return self.protocol.colorize(CYAN, item.__name__ + '@')
             else:
@@ -469,19 +472,39 @@ class HelpCmd(Cmd):
 
     command('help')
 
+    @defer.inlineCallbacks
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        choices = [name for name in registry.commands().keys() if name]
+        choices = [i.name for i in (yield self._commands())]
         parser.add_argument('command', nargs='?', choices=choices, help="command to get help for")
-        return parser
+        defer.returnValue(parser)
 
     @defer.inlineCallbacks
     def execute(self, args):
         if args.command:
-            yield registry.get_command(args.command)(self.protocol).parse_args(['-h'])
-        commands = [command._format_names() for command in set(registry.commands().values()) if command.name]
-        self.write("valid commands: %s\n" % (', '.join(sorted(commands))))
+            yield self._cmd_help(args.command)
+        else:
+            self.write("valid commands: %s\n" % (', '.join(sorted(i._format_names() for i in (yield self._commands())))))
 
+    @db.transact
+    def _cmd_help(self, name):
+        # for some reason I wasn't able to use inlineCallbacks here
+        # the ArgumentParsing exception is normal and expected
+        deferred = self.protocol.get_command_class(name)(self.protocol).parse_args(['-h'])
+        @deferred
+        def on_error(*args):
+            pass
+
+    @db.transact
+    def _commands(self):
+        dummy = NoCommand(self.protocol)
+
+        cmds = []
+        for d in self.protocol.environment['PATH'].split(':'):
+            for i in dummy.traverse(d) or []:
+                if ICommand.providedBy(i):
+                    cmds.append(i.cmd)
+        return cmds
 
 class QuitCmd(Cmd):
     """Quits the console."""
@@ -506,3 +529,12 @@ class LastErrorCmd(Cmd):
         if self.protocol.last_error:
             cmdline, failure = self.protocol.last_error
             self.write("Error executing '%s': %s" % (cmdline, failure))
+
+class PrintEnvCmd(Cmd):
+    """Prints the environment variables."""
+
+    command('printenv')
+
+    def execute(self, args):
+        for name, value in self.protocol.environment.items():
+            self.write("%s=%s\n" % (name, value))
