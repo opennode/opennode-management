@@ -7,6 +7,7 @@ from zope.interface import Interface, implements, alsoProvides
 from .base import Model, IContainer, Container, AddingContainer, IIncomplete
 from .symlink import Symlink
 from .byname import ByNameContainerExtension
+from .actions import ActionsContainerExtension
 from opennode.oms.model.schema import Path
 
 
@@ -137,4 +138,5 @@ class Computes(AddingContainer):
         return (machines.hangar if IVirtualCompute.providedBy(item) else machines).add(item)
 
 
+provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
