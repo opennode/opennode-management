@@ -16,6 +16,7 @@ class FuncBase(Adapter):
     baseclass()
 
     func_action = None
+    interval = 0.1
 
     def run(self, *args, **kwargs):
         client = self._get_client()
@@ -42,7 +43,7 @@ class FuncBase(Adapter):
         if return_code == jobthing.JOB_ID_LOST_IN_SPACE:
             self.deferred.errback(Exception('Command lost in space'))
             return
-        reactor.callLater(1, self.start_polling)
+        reactor.callLater(self.interval, self.start_polling)
 
     def _fire_events(self, data):
         # noglobs=True and async=True cannot live together
