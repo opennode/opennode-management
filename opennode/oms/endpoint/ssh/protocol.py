@@ -29,7 +29,7 @@ class OmsShellProtocol(InteractiveTerminal):
         super(OmsShellProtocol, self).__init__()
         self.path = ['']
         self.last_error = None
-        self.environment={'PATH': '.:/bin'}
+        self.environment={'PATH': '.:./actions:/bin'}
 
         @defer.inlineCallbacks
         def _get_obj_path():
