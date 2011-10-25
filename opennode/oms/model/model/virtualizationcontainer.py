@@ -8,7 +8,7 @@ from .compute import Compute, IInCompute
 
 
 class IVirtualizationContainer(Interface):
-    backend = schema.Choice(title=u"Backend", values=(u'xen', u'kvm'))
+    backend = schema.Choice(title=u"Backend", values=(u'xen', u'kvm', u'openvz', u'lxc'))
 
 
 class VirtualizationContainer(Container):
