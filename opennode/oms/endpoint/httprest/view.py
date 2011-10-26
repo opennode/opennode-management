@@ -71,7 +71,7 @@ class ComputeView(HttpRestView):
                 'startup_timestamp': self.context.startup_timestamp,
                 'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
                 'vms': [IHttpRestView(vm).render(request)
-                        for vm in vms if vm.__name__ != 'by-name'] if vms else []
+                        for vm in vms if vm.__name__ not in ('by-name', 'actions')] if vms else []
                 }
 
     def _dummy_network_data(self):
