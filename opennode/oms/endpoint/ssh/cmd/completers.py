@@ -210,6 +210,13 @@ class PositionalChoiceCompleter(PositionalCompleter):
             return [value for value in action.choices if value.startswith(token)]
 
 
+class EnvironmentCompleter(Completer):
+    baseclass()
+
+    def complete(self, token, parsed, parser, protocol=None, **kwargs):
+        return [value for value in protocol.environment.keys() if value.startswith(token)]
+
+
 # TODO: move to handler
 for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
@@ -225,3 +232,6 @@ for command in [commands.SetAttrCmd, commands.CreateObjCmd]:
 
 for command in [commands.HelpCmd, commands.CreateObjCmd]:
     provideSubscriptionAdapter(PositionalChoiceCompleter, adapts=(command, ))
+
+for command in [commands.SetEnvCmd]:
+    provideSubscriptionAdapter(EnvironmentCompleter, adapts=(command, ))

@@ -45,15 +45,15 @@ class CmdCompletionTestCase(unittest.TestCase):
         self.oms_ssh.handle_TAB()
 
     def test_command_completion(self):
-        self._tab_after('s')
+        self._tab_after('q')
         with assert_mock(self.terminal) as t:
-            t.write('et ')
+            t.write('uit ')
             no_more_calls(t)
 
     def test_command_completion_spaces(self):
-        self._tab_after('    s')
+        self._tab_after('    q')
         with assert_mock(self.terminal) as t:
-            t.write('et ')
+            t.write('uit ')
             no_more_calls(t)
 
     def test_complete_not_found(self):

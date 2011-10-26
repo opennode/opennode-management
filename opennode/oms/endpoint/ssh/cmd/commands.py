@@ -538,3 +538,19 @@ class PrintEnvCmd(Cmd):
     def execute(self, args):
         for name, value in self.protocol.environment.items():
             self.write("%s=%s\n" % (name, value))
+
+
+class SetEnvCmd(Cmd):
+    """Modifies the environment variables."""
+    implements(ICmdArgumentsSyntax)
+
+    command('setenv')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('name')
+        parser.add_argument('value')
+        return parser
+
+    def execute(self, args):
+        self.protocol.environment[args.name] = args.value
