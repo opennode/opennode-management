@@ -5,7 +5,7 @@ from zope.interface import implements, Interface
 
 from opennode.oms.endpoint.ssh.cmd import registry, commands
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model.compute import Compute
@@ -16,7 +16,7 @@ from opennode.oms.zodb import db
 class CmdCompletionTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.oms_ssh = OmsSshProtocol()
+        self.oms_ssh = OmsShellProtocol()
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 

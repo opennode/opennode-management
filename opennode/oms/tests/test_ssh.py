@@ -11,7 +11,7 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd, MoveCmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmd.registry import commands
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol, CommandLineSyntaxError
+from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol, CommandLineSyntaxError
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model.compute import Compute
@@ -26,7 +26,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     @clean_db
     def setUp(self):
-        self.oms_ssh = OmsSshProtocol()
+        self.oms_ssh = OmsShellProtocol()
         self.oms_ssh.history_save_enabled = False
 
         self.terminal = mock.Mock()

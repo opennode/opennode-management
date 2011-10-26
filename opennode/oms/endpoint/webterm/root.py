@@ -8,15 +8,15 @@ from twisted.internet import reactor
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 
 
 class OmsShellTerminalProtocol(object):
-    """Connect a OmsSshProtocol to a web terminal session."""
+    """Connect a OmsShellProtocol to a web terminal session."""
 
     def connection_made(self, terminal, size):
-        self.shell = OmsSshProtocol()
+        self.shell = OmsShellProtocol()
         self.shell.set_terminal(terminal)
         self.shell.connectionMade()
         self.shell.terminalSize(size[0], size[1])
@@ -75,7 +75,7 @@ class WebTransport(object):
 
 
 class WebTerminal(ServerProtocol):
-    """Used by TerminalProtocols (like OmsSshProtocol) to actually manipulate the terminal."""
+    """Used by TerminalProtocols (like OmsShellProtocol) to actually manipulate the terminal."""
 
     def __init__(self, session):
         ServerProtocol.__init__(self)

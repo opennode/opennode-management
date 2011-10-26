@@ -15,7 +15,7 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.zodb import db
 
 
-class OmsSshProtocol(InteractiveTerminal):
+class OmsShellProtocol(InteractiveTerminal):
     """The OMS virtual console over SSH.
 
     Accepts lines of input and writes them back to its connection.  If
@@ -25,7 +25,7 @@ class OmsSshProtocol(InteractiveTerminal):
     """
 
     def __init__(self):
-        super(OmsSshProtocol, self).__init__()
+        super(OmsShellProtocol, self).__init__()
         self.path = ['']
         self.last_error = None
 
