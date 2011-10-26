@@ -9,6 +9,7 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+from opennode.oms.endpoint.ssh.killer import Ak47ShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 
 
@@ -54,6 +55,17 @@ class SSHClientTerminalProtocol(object):
     def terminalSize(self, width, height):
         self.channel.terminalSize(width, height)
 
+
+class Ak47ShellTerminalProtocol(object):
+    def connection_made(self, terminal, size):
+        self.shell = Ak47ShellProtocol()
+        self.shell.set_terminal(terminal)
+        self.shell.connectionMade()
+        self.shell.terminalSize(size[0], size[1])
+        self.shell.do_it()
+
+    def handle_key(self, key):
+        pass
 
 class WebTransport(object):
     """Used by WebTerminal to actually send the data through the http transport."""
@@ -224,6 +236,8 @@ class WebTerminalServer(resource.Resource):
             return self.management
         if name == 'test_ssh':
             return self.ssh_test
+        if name == 'test_killer':
+            return TerminalServer(Ak47ShellTerminalProtocol())
         if name == 'test_arbitrary':
             user = request.args['user'][0]
             host = request.args['host'][0]

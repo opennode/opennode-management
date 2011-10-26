@@ -27,7 +27,9 @@ ArbitraryConsole.prototype = new Console;
 
 consoles = [new Console('Commandline management interface', 'OMS Commandline management interface', '/management'),
             new Console('Connection to virtual machine', 'localhost', '/test_ssh'),
-            new ArbitraryConsole('Connection to arbitrary machine', '/test_arbitrary')]
+            new ArbitraryConsole('Connection to arbitrary machine', '/test_arbitrary'),
+            new Console('Killer feature', 'localhost', '/test_killer'),
+]
 
 var viewModel = {
     selectedConsole: ko.observable(consoles[0]),
