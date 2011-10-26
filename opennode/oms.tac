@@ -8,7 +8,7 @@ from twisted.web import server
 
 from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
-from opennode.oms.endpoint.ssh.protocol import OmsSshProtocol
+from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 from opennode.oms.endpoint.webterm.root import WebTerminalServer
 from opennode.oms.logging import setup_logging
@@ -27,7 +27,7 @@ def create_http_server():
 
 def create_ssh_server():
     def chainProtocolFactory():
-        return insults.ServerProtocol(OmsSshProtocol)
+        return insults.ServerProtocol(OmsShellProtocol)
 
     checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(erik="1")
     pubkey_checker = InMemoryPublicKeyCheckerDontUse()
