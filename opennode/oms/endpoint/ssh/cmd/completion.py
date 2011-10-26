@@ -4,7 +4,7 @@ from zope.interface import Interface
 
 
 class ICompleter(Interface):
-    def complete(token, parsed_args, parser, display=False):
+    def complete(token, parsed_args, parser, **kwargs):
         """Takes a token and returns a list of possible completions
         according to the context given by the parsed (partial) command arguments object
         and possibly other state contained in the adapted object (usually a Cmd).
@@ -17,7 +17,7 @@ class Completer(Subscription):
 
 
 @defer.inlineCallbacks
-def complete(protocol, buf, pos, display=False):
+def complete(protocol, buf, pos, **kwargs):
     """Bash like dummy completion, not great like zsh completion.
     Problems: completion in the middle of a word will screw it (like bash)
     """
@@ -43,7 +43,7 @@ def complete(protocol, buf, pos, display=False):
 
     all_completions = []
     for completer in completers:
-        completions = yield completer.complete(partial, parsed_args, parser, display)
+        completions = yield completer.complete(partial, parsed_args, parser, protocol=protocol, **kwargs)
         if completions:
             all_completions.extend(completions)
 

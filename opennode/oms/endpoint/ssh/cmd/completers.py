@@ -54,7 +54,7 @@ class PathCompleter(PositionalCompleter):
     baseclass()
 
     @db.transact
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         # If there is still any positional option to complete:
         if self.expected_action(parsed, parser):
             base_path = os.path.dirname(token)
@@ -82,11 +82,11 @@ class CommandCompleter(PathCompleter):
 
     context(commands.NoCommand)
 
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         # HACK: doesn't actually honour the search path held in the protocol's env vars.
         if not os.path.isabs(token):
             return [name for name in registry.commands().keys() if name.startswith(token)]
-        return super(CommandCompleter, self).complete(token, parsed, parser, display=False)
+        return super(CommandCompleter, self).complete(token, parsed, parser, **kwargs)
 
     def expected_action(self, parsed, parser):
         return True
@@ -104,11 +104,11 @@ class KeywordPathSubCompleter(PathCompleter):
         self.base_path = base_path
 
     @defer.inlineCallbacks
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         self.original_context = self.context
         self.context = self
         keyword, value_prefix = token.split('=')
-        res = yield super(KeywordPathSubCompleter, self).complete(value_prefix, parsed, parser, display)
+        res = yield super(KeywordPathSubCompleter, self).complete(value_prefix, parsed, parser, **kwargs)
         defer.returnValue([keyword+'='+i for i in res])
 
     def traverse(self, path):
@@ -124,7 +124,7 @@ class ArgSwitchCompleter(Completer):
     """Completes argument switches based on the argparse grammar exposed for a command"""
     baseclass()
 
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         if token.startswith("-"):
             return [option
                     for action_group in parser._action_groups
@@ -151,7 +151,7 @@ class KeywordSwitchCompleter(ArgSwitchCompleter):
 
     baseclass()
 
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, display=False, **kwargs):
         return [('[%s=]' if display and not action.was_required else '%s=') % (option[1:])
                 for action_group in parser._action_groups
                 for action in action_group._group_actions
@@ -165,14 +165,14 @@ class KeywordValueCompleter(ArgSwitchCompleter):
 
     baseclass()
 
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         if '=' in token:
             keyword, value_prefix = token.split('=')
 
             action = self.find_action(keyword, parsed, parser)
             if isinstance(action, GroupDictAction) and action.is_path:
                 subcompleter = KeywordPathSubCompleter(self.context, action.base_path)
-                return subcompleter.complete(token, parsed, parser, display)
+                return subcompleter.complete(token, parsed, parser, **kwargs)
 
             if action.choices:
                 return [keyword + '=' + value for value in action.choices if value.startswith(value_prefix)]
@@ -189,7 +189,7 @@ class KeywordValueCompleter(ArgSwitchCompleter):
 class PositionalChoiceCompleter(PositionalCompleter):
     baseclass()
 
-    def complete(self, token, parsed, parser, display=False):
+    def complete(self, token, parsed, parser, **kwargs):
         action = self.expected_action(parsed, parser)
         if action and action.choices:
             return [value for value in action.choices if value.startswith(token)]
