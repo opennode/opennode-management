@@ -82,11 +82,26 @@ class CommandCompleter(PathCompleter):
 
     context(commands.NoCommand)
 
-    def complete(self, token, parsed, parser, **kwargs):
-        # HACK: doesn't actually honour the search path held in the protocol's env vars.
-        if not os.path.isabs(token):
-            return [name for name in registry.commands().keys() if name.startswith(token)]
-        return super(CommandCompleter, self).complete(token, parsed, parser, **kwargs)
+    @defer.inlineCallbacks
+    def complete(self, token, parsed, parser, protocol=None, **kwargs):
+        cmds = yield self._scan_search_path(protocol)
+
+        # TODO: check that only 'executables' and 'directories' are returned.
+        paths = yield super(CommandCompleter, self).complete(token, parsed, parser, **kwargs)
+
+        defer.returnValue([value for value in cmds + paths if value.startswith(token)])
+
+    @db.transact
+    def _scan_search_path(self, protocol):
+        dummy = commands.NoCommand(protocol)
+
+        cmds = []
+        for d in protocol.environment['PATH'].split(':'):
+            for i in dummy.traverse(d) or []:
+                if ICommand.providedBy(i):
+                    cmds.append(i.cmd.name)
+
+        return cmds
 
     def expected_action(self, parsed, parser):
         return True

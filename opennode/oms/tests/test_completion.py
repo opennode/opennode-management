@@ -27,7 +27,9 @@ class CmdCompletionTestCase(unittest.TestCase):
         # to the model just for testing completion, so we have monkey patch
         # the commands() function and add a command 'hello'.
         self.orig_commands = registry.commands
-        registry.commands = lambda: dict(hello=Cmd, **self.orig_commands())
+        class HelloCmd(Cmd):
+            name = 'hello'
+        registry.commands = lambda: dict(hello=HelloCmd, **self.orig_commands())
 
     def tearDown(self):
         registry.commands = self.orig_commands
@@ -55,7 +57,7 @@ class CmdCompletionTestCase(unittest.TestCase):
             no_more_calls(t)
 
     def test_complete_not_found(self):
-        self._tab_after('t')
+        self._tab_after('asdasd')
         with assert_mock(self.terminal) as t:
             no_more_calls(t)
 
