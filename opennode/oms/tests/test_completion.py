@@ -68,9 +68,9 @@ class CmdCompletionTestCase(unittest.TestCase):
             no_more_calls(t)
 
     def test_complete_prefix(self):
-        self._tab_after('h')
+        self._tab_after('he')
         with assert_mock(self.terminal) as t:
-            t.write('el')
+            t.write('l')
             no_more_calls(t)
 
         # hit tab twice

@@ -530,6 +530,17 @@ class LastErrorCmd(Cmd):
             cmdline, failure = self.protocol.last_error
             self.write("Error executing '%s': %s" % (cmdline, failure))
 
+
+class HistoryCmd(Cmd):
+    """Prints the shell history."""
+
+    command('history')
+
+    def execute(self, args):
+        for i in self.protocol.historyLines:
+            self.write("%s\n" % i)
+
+
 class PrintEnvCmd(Cmd):
     """Prints the environment variables."""
 
