@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from .base import ReadonlyContainer
 from .compute import Computes
 from .machines import Machines
+from .proc import Proc
 from .template import Templates
 from .bin import Bin
 
@@ -22,7 +23,8 @@ class OmsRoot(ReadonlyContainer):
         'computes': self.computes,
         'templates': self.templates,
         'machines': self.machines,
-        'bin': self.bin
+        'bin': self.bin,
+        'proc': self.proc
     })
 
     def __init__(self):
@@ -43,6 +45,12 @@ class OmsRoot(ReadonlyContainer):
         bin = Bin()
         bin.__parent__ = self
         return bin
+
+    @property
+    def proc(self):
+        proc = Proc()
+        proc.__parent__ = self
+        return proc
 
     def __str__(self):
         return 'OMS root'
