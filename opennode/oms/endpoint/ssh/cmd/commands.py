@@ -2,6 +2,7 @@ import os, inspect
 
 import transaction
 import zope.schema
+import time
 from collections import OrderedDict
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
 from twisted.internet import defer
@@ -565,3 +566,19 @@ class SetEnvCmd(Cmd):
 
     def execute(self, args):
         self.protocol.environment[args.name] = args.value
+
+class SleepCmd(Cmd):
+    """Do nothing for some time."""
+    implements(ICmdArgumentsSyntax)
+
+    command('sleep')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('seconds')
+        return parser
+
+    # actually not db, but requires a thread
+    @db.transact
+    def execute(self, args):
+        time.sleep(float(args.seconds))
