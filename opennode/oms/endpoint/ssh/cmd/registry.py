@@ -24,8 +24,8 @@ def get_command(name):
 
             def dist(a, b):
                 return len(set(a) ^ set(b))
-            candidates = [v for v in _commands.keys() if dist(name, v) < 4]
-            if candidates:
+            candidates = [v for v in _commands.keys() if dist(name, v) < 4 and v]
+            if len(name) > 2 and candidates:
                 self.terminal.write("Do you mean '%s'?\n" % min(candidates, key=lambda v: dist(name, v)))
 
     UndefinedCommand.name = name
