@@ -6,6 +6,7 @@ from twisted.python import log
 
 
 CTRL_A = '\x01'
+CTRL_C = '\x03'
 CTRL_E = '\x05'
 CTRL_D = '\x04'
 CTRL_K = '\x0b'

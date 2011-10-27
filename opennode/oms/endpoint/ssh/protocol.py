@@ -9,7 +9,7 @@ from twisted.python import log
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion, commands
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN, GREEN
+from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN, GREEN, CTRL_C
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
@@ -30,6 +30,7 @@ class OmsShellProtocol(InteractiveTerminal):
         self.path = ['']
         self.last_error = None
         self.environment={'PATH': '.:./actions:/bin'}
+        self.running = False
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -45,8 +46,19 @@ class OmsShellProtocol(InteractiveTerminal):
 
         self.tokenizer = CommandLineTokenizer()
 
+    def keystrokeReceived(self, keyID, modifier):
+        # HACK: poor man's interrupt
+        if keyID == CTRL_C:
+            self.running = False
+            self.print_prompt()
+
+        if self.running:
+            return
+        return super(OmsShellProtocol, self).keystrokeReceived(keyID, modifier)
+
     @defer.inlineCallbacks
     def lineReceived(self, line):
+
         line = line.strip()
 
         try:
@@ -56,6 +68,7 @@ class OmsShellProtocol(InteractiveTerminal):
             self.print_prompt()
             return
 
+        self.running = True
         deferred = defer.maybeDeferred(command, *cmd_args)
 
         @deferred
@@ -66,7 +79,12 @@ class OmsShellProtocol(InteractiveTerminal):
                 log.msg("Got exception executing '%s': %s" % self.last_error)
                 self.terminal.write("type last_error for more details\n")
 
-        deferred.addBoth(lambda *_: self.print_prompt())
+        #deferred.addBoth(lambda *_: self.print_prompt())
+        deferred.addBoth(self._command_completed)
+
+    def _command_completed(self, *args):
+        self.running = False
+        self.print_prompt()
 
     @db.transact
     def parse_line(self, line):
