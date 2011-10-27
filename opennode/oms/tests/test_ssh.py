@@ -492,6 +492,23 @@ class SshTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             t.write('/computes/%s\n' % (cid))
 
+    @run_in_reactor
+    def test_cmd_path(self):
+        self._cmd('/bin/echo test')
+        with assert_mock(self.terminal) as t:
+            t.write('test\n')
+
+        self.terminal.reset_mock()
+        self._cmd('bin/echo test')
+        with assert_mock(self.terminal) as t:
+            t.write('test\n')
+
+        self._cmd('cd computes')
+        self.terminal.reset_mock()
+        self._cmd('../bin/echo test')
+        with assert_mock(self.terminal) as t:
+            t.write('test\n')
+
     def test_tokenizer(self):
         arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes"'
 
