@@ -32,7 +32,9 @@ class HttpRestServer(resource.Resource):
 
     """
 
-    isLeaf = False
+    def getChild(self, name, request):
+        """We are the handler for anything below this base url, except what explicitly added in oms.tac."""
+        return self
 
     def __init__(self, avatar=None):
         ## Twisted Resource is a not a new style class, so emulating a super-call
