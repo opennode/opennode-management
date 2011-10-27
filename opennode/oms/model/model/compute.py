@@ -17,7 +17,7 @@ class ICompute(Interface):
     ipv6_address = schema.TextLine(title=u"IPv6 address", min_length=6, required=False)
     speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz", readonly=True, required=False)
     memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
-    state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'standby'))
+    state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'suspended'))
     effective_state = schema.TextLine(title=u"Effective state", readonly=True, required=False)
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
 
