@@ -221,9 +221,16 @@ class WebTerminalServer(resource.Resource):
         """For now the only mounted terminal service is the commadnline oms management.
         We'll mount here the ssh consoles to machines."""
         if name == 'management':
-            return self.management
+            return TerminalServer(OmsShellTerminalProtocol())
         if name == 'test_ssh':
-            return self.ssh_test
+            #return self.ssh_test
+            # TODO: takes the user name from whatever the user chooses
+            # commonly it will be root.
+            user = os.environ["USER"]
+
+            # TODO: take the hostname from the model, localhost is for testing
+            host = 'localhost'
+            return TerminalServer(SSHClientTerminalProtocol(user, host))
         if name == 'test_arbitrary':
             user = request.args['user'][0]
             host = request.args['host'][0]
@@ -234,16 +241,6 @@ class WebTerminalServer(resource.Resource):
         # Twisted Resource is a not a new style class, so emulating a super-call.
         resource.Resource.__init__(self)
         self.avatar = avatar
-
-        self.management = TerminalServer(OmsShellTerminalProtocol())
-
-        # TODO: takes the user name from whatever the user chooses
-        # commonly it will be root.
-        user = os.environ["USER"]
-
-        # TODO: take the hostname from the model, localhost is for testing
-        host = 'localhost'
-        self.ssh_test = TerminalServer(SSHClientTerminalProtocol(user, host))
 
     def render(self, request):
         return ""
