@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+import zope.schema
 from grokcore.component import context
 from zope.component import queryAdapter
 
@@ -9,6 +12,7 @@ from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.symlink import follow_symlinks
+from opennode.oms.util import get_direct_interfaces
 
 
 class RootView(HttpRestView):
@@ -166,6 +170,28 @@ class TemplatesView(HttpRestView):
     def render(self, request):
         return [{'name': name} for name in self.context.listnames()]
 
+
+class DefaultView(HttpRestView):
+    context(object)
+
+    def render(self, request):
+        obj = self.context
+
+        # NODE: code copied from commands.py:CatCmd
+        schemas = get_direct_interfaces(obj)
+        if len(schemas) != 1:
+            raise Exception("Unable to create a printable representation.\n")
+            return
+        schema = schemas[0]
+
+        fields = zope.schema.getFieldsInOrder(schema)
+        data = OrderedDict()
+        for key, field in fields:
+            key = key.encode('utf8')
+            data[key] = field.get(obj)
+
+        data['id'] = obj.__name__
+        return data
 
 
 #~ # TODO: Move to a future config file/module.
