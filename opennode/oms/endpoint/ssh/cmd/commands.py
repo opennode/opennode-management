@@ -3,6 +3,7 @@ import os, inspect
 import transaction
 import zope.schema
 import time
+import datetime
 from collections import OrderedDict
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
 from twisted.internet import defer
@@ -22,6 +23,7 @@ from opennode.oms.model.traversal import canonical_path
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
+from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
@@ -567,6 +569,7 @@ class SetEnvCmd(Cmd):
     def execute(self, args):
         self.protocol.environment[args.name] = args.value
 
+
 class SleepCmd(Cmd):
     """Do nothing for some time."""
     implements(ICmdArgumentsSyntax)
@@ -582,3 +585,30 @@ class SleepCmd(Cmd):
     @db.transact
     def execute(self, args):
         time.sleep(float(args.seconds))
+
+
+class TaskListCmd(Cmd):
+    """Emulates 'ps' command, including bsd args."""
+
+    command('ps')
+
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('bsd', nargs='*', help="Ignored bsd args, for those who have unix type habits (e.g. 'ps xa')")
+        parser.add_argument('-d', action='store_true', help="Show recently finished (dead) tasks.")
+        return parser
+
+    @db.transact
+    def execute(self, args):
+        # ignore arguments
+        tasks = Proc().tasks
+        if args.d:
+            tasks = Proc().dead_tasks
+
+        max_key_len = max(3, *[len(i) for i in Proc().content().keys()])
+
+        self.write("%s    TIME CMD\n" % "TID".rjust(max_key_len))
+        for tid, task in tasks.items():
+            self.write("%s %s %s\n" % (tid.rjust(max_key_len), datetime.timedelta(0, int(task.uptime)), task.cmdline))
