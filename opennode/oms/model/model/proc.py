@@ -42,7 +42,6 @@ class Proc(ReadonlyContainer):
     __name__ = 'proc'
 
     def __init__(self):
-        # singleton decorator conflicts with super()
         super(Proc, self).__init__()
 
         # represents the init process, just for fun.
