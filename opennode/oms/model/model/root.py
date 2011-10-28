@@ -6,6 +6,7 @@ from .machines import Machines
 from .proc import Proc
 from .template import Templates
 from .bin import Bin
+from .log import Log
 
 
 class OmsRoot(ReadonlyContainer):
@@ -24,7 +25,8 @@ class OmsRoot(ReadonlyContainer):
         'templates': self.templates,
         'machines': self.machines,
         'bin': self.bin,
-        'proc': self.proc
+        'proc': self.proc,
+        'log': self.log
     })
 
     def __init__(self):
@@ -51,6 +53,13 @@ class OmsRoot(ReadonlyContainer):
         proc = Proc()
         proc.__parent__ = self
         return proc
+
+    @property
+    def log(self):
+        if not getattr(self, '_log', None):
+            self._log = Log()
+            self._log.__parent__ = self
+        return self._log
 
     def __str__(self):
         return 'OMS root'

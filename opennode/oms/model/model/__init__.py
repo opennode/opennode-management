@@ -5,13 +5,14 @@ from .machines import Machines
 from .virtualizationcontainer import VirtualizationContainer
 from .hangar import Hangar
 from .network import Network, NetworkDevice
+from .news import NewsItem
 from .root import OmsRoot
 from .storage import Storage
 from .template import Templates, Template
 
 
-__all__ = [OmsRoot, Machines, Computes, Compute, Templates, Template, Network, NetworkDevice, Storage, 'creatable_models']
+__all__ = [OmsRoot, Machines, Computes, Compute, Templates, Template, Network, NetworkDevice, Storage, NewsItem,  'creatable_models']
 
 
 creatable_models = dict((cls.__name__.lower(), cls)
-                        for cls in [Compute, Template, Network, NetworkDevice, Storage, VirtualizationContainer, Hangar])
+                        for cls in [Compute, Template, Network, NetworkDevice, Storage, VirtualizationContainer, Hangar, NewsItem])
