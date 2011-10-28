@@ -2,7 +2,7 @@ import argparse
 import os
 
 from grokcore.component import baseclass, context
-from opennode.oms.endpoint.ssh.cmd import commands, registry
+from opennode.oms.endpoint.ssh.cmd import commands
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
@@ -89,7 +89,7 @@ class CommandCompleter(PathCompleter):
         # TODO: check that only 'executables' and 'directories' are returned.
         paths = yield super(CommandCompleter, self).complete(token, parsed, parser, **kwargs)
 
-        defer.returnValue([value for value in cmds + paths if value.startswith(token)])
+        defer.returnValue([value for value in list(cmds) + list(set(paths).difference(i+'*' for i in cmds)) if value.startswith(token)])
 
     @db.transact
     def _scan_search_path(self, protocol):
@@ -101,7 +101,7 @@ class CommandCompleter(PathCompleter):
                 if ICommand.providedBy(i):
                     cmds.append(i.cmd.name)
 
-        return cmds
+        return set(cmds)
 
     def expected_action(self, parsed, parser):
         return True
