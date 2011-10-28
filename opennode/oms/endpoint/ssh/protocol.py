@@ -13,6 +13,7 @@ from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, BLUE, CYAN, 
 from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLineSyntaxError
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
+from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
 
 
@@ -70,6 +71,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
         self.running = True
         deferred = defer.maybeDeferred(command, *cmd_args)
+        Proc.register(deferred, line)
 
         @deferred
         def on_error(f):

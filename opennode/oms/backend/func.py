@@ -7,6 +7,7 @@ from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
 from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS
+from opennode.oms.model.model.proc import Proc
 
 
 class FuncBase(Adapter):
@@ -25,6 +26,7 @@ class FuncBase(Adapter):
         self.job_id = action(*args, **kwargs)
 
         self.deferred = defer.Deferred()
+        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(args)))
 
         self.start_polling()
 
