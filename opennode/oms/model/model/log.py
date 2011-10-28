@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
-from .base import Container, IContainer
+from .base import ReadonlyContainer, IContainer
 
 class ILogContainer(IContainer):
     """A logging container"""
 
 
-class Log(Container):
+class Log(ReadonlyContainer):
     __contains__ = ILogContainer
     __name__ = 'log'
 
