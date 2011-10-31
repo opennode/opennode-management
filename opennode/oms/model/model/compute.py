@@ -8,6 +8,7 @@ from .base import Model, IContainer, Container, AddingContainer, IIncomplete
 from .symlink import Symlink
 from .byname import ByNameContainerExtension
 from .actions import ActionsContainerExtension
+from .console import Consoles
 from opennode.oms.model.schema import Path
 
 
@@ -101,6 +102,18 @@ class Compute(Container):
 
     def __str__(self):
         return 'compute%s' % self.__name__
+
+    def get_consoles(self):
+        if not self._items.has_key('consoles'):
+            self._add(Consoles())
+        return self._items['consoles']
+
+    def set_consoles(self, value):
+        if self._items.has_key('consoles'):
+            del self._items['consoles']
+        self._add(value)
+
+    consoles = property(get_consoles, set_consoles)
 
 
 class IVirtualCompute(Interface):

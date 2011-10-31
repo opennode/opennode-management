@@ -8,6 +8,8 @@ from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, IS
 from opennode.oms.model.form import IModelModifiedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute
+from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, VncConsole
+from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.zodb import db
 
 
@@ -33,7 +35,17 @@ class SyncAction(Action):
         cmd.write("syncing %s\n" % self.context)
         self.context.state = unicode(vm['state'])
         self.context.effective_state = self.context.state
+        self.context.consoles = Consoles()
 
+        for idx, console in enumerate(vm['consoles']):
+            if console['type'] == 'pty':
+                self.context.consoles.add(TtyConsole('tty%s'% idx, console['pty']))
+            if console['type'] == 'vnc':
+                self.context.consoles.add(VncConsole(self.context.hostname, int(console['port'])))
+
+        ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
+        self.context.consoles.add(ssh_console)
+        self.context.consoles.add(Symlink('default', ssh_console))
 
 class InfoAction(Action):
     """This is a temporary command used to fetch realtime info"""
