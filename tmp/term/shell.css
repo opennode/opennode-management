@@ -80,6 +80,7 @@ font-size: 10pt;
 #vt100 #lineheight { 
   position:         absolute;
   visibility:       hidden;
+  height: 18px;
 }
 
 #vt100 #cursor {
