@@ -4,10 +4,12 @@ from twisted.internet import defer, reactor
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.python.failure import Failure
+from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.traversal import traverse_path
+
 from opennode.oms.zodb import db
 
 
@@ -79,14 +81,12 @@ class HttpRestServer(resource.Resource):
         """
         oms_root = db.get_root()['oms_root']
         objs, unresolved_path = traverse_path(oms_root, request.path[1:])
-        if not objs or unresolved_path:
+        if not objs:
             raise NotFound
         else:
             obj = objs[-1]
-            loc = ILocation(obj)
 
-            if loc.get_url() != request.path:
-                raise SeeCanonical(loc.get_url())
-
-            view = IHttpRestView(obj)
+            view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+            if not view:
+                raise NotFound
             return view.render(request)

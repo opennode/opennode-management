@@ -3,13 +3,17 @@ import os
 import time
 import uuid
 
+from grokcore.component import Adapter, context, implements, name
+
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import reactor
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
+from opennode.oms.model.model.console import ISshConsole
 
 
 class OmsShellTerminalProtocol(object):
@@ -244,3 +248,12 @@ class WebTerminalServer(resource.Resource):
 
     def render(self, request):
         return ""
+
+
+class SshConsoleView(Adapter):
+    implements(IHttpRestView)
+    context(ISshConsole)
+    name('webterm')
+
+    def render(self, request):
+        return "TODO"
