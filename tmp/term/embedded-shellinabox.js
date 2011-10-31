@@ -1,4 +1,4 @@
-baseUrl = 'http://localhost:8080/terminal';
+baseUrl = 'http://localhost:8080';
 
 var Console = function(name, host, url) {
     this.name = name;
@@ -25,9 +25,9 @@ function ArbitraryConsole(name, url) {
 
 ArbitraryConsole.prototype = new Console;
 
-consoles = [new Console('Commandline management interface', 'OMS Commandline management interface', '/management'),
-            new Console('Connection to virtual machine', 'localhost', '/test_ssh'),
-            new ArbitraryConsole('Connection to arbitrary machine', '/test_arbitrary')]
+consoles = [new Console('Commandline management interface', 'OMS Commandline management interface', '/bin/omsh/webterm'),
+            new Console('Connection to virtual machine', 'localhost', '/computes/by-name/on6test/consoles/default/webterm'),
+            new ArbitraryConsole('Connection to arbitrary machine', '/computes/webterm')]
 
 var viewModel = {
     selectedConsole: ko.observable(consoles[0]),

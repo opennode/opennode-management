@@ -1,19 +1,19 @@
 import json
-import os
 import time
 import uuid
 
-from grokcore.component import Adapter, context, implements, name
+from grokcore.component import Adapter, baseclass, context, implements, name
 
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import reactor
-from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
+from opennode.oms.model.model.compute import Computes
 from opennode.oms.model.model.console import ISshConsole
+from opennode.oms.model.model.bin import Command
 
 
 class OmsShellTerminalProtocol(object):
@@ -74,7 +74,7 @@ class WebTransport(object):
     def loseConnection(self):
         """Close the connection ensuring the the web client will properly detect this close.
         The name of the method was chosen to implement the twisted convention."""
-        del TerminalServer.sessions[self.session.id]
+        del TerminalServerMixin.sessions[self.session.id]
         self.write('\r\n')
 
 
@@ -154,42 +154,20 @@ class TerminalSession(object):
         return 'TerminalSession(%s, %s, %s, %s)' % (self.id, self.queue, self.buffer, self.timestamp)
 
 
-class TerminalServer(resource.Resource):
-    """Web resource which handles web terminal sessions adhering to ShellInABox.js protocol.
 
-    """
+class TerminalServerMixin(object):
+    """Common code for view-based and twisted-resource based rendering of ShellInABox protocol."""
 
     sessions = {}
 
-    def render_OPTIONS(self, request):
-        """Return headers which allow cross domain xhr for this."""
-        headers = request.responseHeaders
-        headers.addRawHeader('Access-Control-Allow-Origin', '*')
-        headers.addRawHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        # this is necessary for firefox
-        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control')
-        # this is to adhere to the OPTIONS method, not necessary for cross-domain
-        headers.addRawHeader('Allow', 'GET, POST, OPTIONS')
-
-        return ""
-
-    def __init__(self, terminal_protocol, avatar=None):
-        # Twisted Resource is a not a new style class, so emulating a super-call.
-        resource.Resource.__init__(self)
-
-        self.terminal_protocol = terminal_protocol
-
     def render_POST(self, request):
-        # Allow for cross-domain, at least for testing.
-        request.responseHeaders.addRawHeader('Access-Control-Allow-Origin', '*')
-
         session_id = request.args.get('session', [None])[0]
 
         size = (int(request.args['width'][0]), int(request.args['height'][0]))
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
-            session = TerminalSession(self.terminal_protocol, size)
+            session = TerminalSession(self.get_terminal_protocol(request), size)
             session_id = session.id
             self.sessions[session.id] = session
 
@@ -215,45 +193,43 @@ class TerminalServer(resource.Resource):
 
         return NOT_DONE_YET
 
-
-class WebTerminalServer(resource.Resource):
-    """ShellInABox web terminal protocol handler."""
-
-    isLeaf = False
-
-    def getChild(self, name, request):
-        """For now the only mounted terminal service is the commadnline oms management.
-        We'll mount here the ssh consoles to machines."""
-        if name == 'management':
-            return TerminalServer(OmsShellTerminalProtocol())
-        if name == 'test_ssh':
-            #return self.ssh_test
-            # TODO: takes the user name from whatever the user chooses
-            # commonly it will be root.
-            user = os.environ["USER"]
-
-            # TODO: take the hostname from the model, localhost is for testing
-            host = 'localhost'
-            return TerminalServer(SSHClientTerminalProtocol(user, host))
-        if name == 'test_arbitrary':
-            user = request.args['user'][0]
-            host = request.args['host'][0]
-            return TerminalServer(SSHClientTerminalProtocol(user, host))
-        return self
-
-    def __init__(self, avatar=None):
-        # Twisted Resource is a not a new style class, so emulating a super-call.
-        resource.Resource.__init__(self)
-        self.avatar = avatar
-
-    def render(self, request):
-        return ""
+    def get_terminal_protocol(self, request):
+        return self.terminal_protocol
 
 
-class SshConsoleView(Adapter):
+class ConsoleView(Adapter, TerminalServerMixin):
     implements(IHttpRestView)
+    baseclass()
+
+    mixin = TerminalServerMixin()
+
+
+class SshConsoleView(ConsoleView):
     context(ISshConsole)
     name('webterm')
 
-    def render(self, request):
-        return "TODO"
+    @property
+    def terminal_protocol(self):
+        return SSHClientTerminalProtocol(self.context.user, self.context.hostname)
+
+
+class OmsShellConsoleView(ConsoleView):
+    context(Command)
+    name('webterm')
+
+    @property
+    def terminal_protocol(self):
+        # TODO: pass the self.context.cmd so that we can execute this particular command
+        # instead of hardcoding the oms shell.
+        return OmsShellTerminalProtocol()
+
+
+class ArbitraryHostConsoleView(ConsoleView):
+    context(Computes)
+    name('webterm')
+
+    def get_terminal_protocol(self, request):
+        user = request.args['user'][0]
+        host = request.args['host'][0]
+
+        return SSHClientTerminalProtocol(user, host)

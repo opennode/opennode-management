@@ -10,7 +10,7 @@ from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
-from opennode.oms.endpoint.webterm.root import WebTerminalServer
+from opennode.oms.endpoint.webterm.compat import WebTerminalServer
 from opennode.oms.logging import setup_logging
 
 

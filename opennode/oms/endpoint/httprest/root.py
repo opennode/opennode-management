@@ -21,6 +21,10 @@ class NotFound(Exception):
     pass
 
 
+class NotImplemented(Exception):
+    pass
+
+
 class SeeCanonical(Exception):
     def __init__(self, url, *args, **kwargs):
         super(SeeCanonical, self).__init__(*args, **kwargs)
@@ -44,8 +48,23 @@ class HttpRestServer(resource.Resource):
         self.avatar = avatar
 
     def render(self, request):
+        if request.method == 'OPTIONS':
+            return self.render_OPTIONS(request)
+
         self._render(request)
         return NOT_DONE_YET
+
+    def render_OPTIONS(self, request):
+        """Return headers which allow cross domain xhr for this."""
+        headers = request.responseHeaders
+        headers.addRawHeader('Access-Control-Allow-Origin', '*')
+        headers.addRawHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        # this is necessary for firefox
+        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control')
+        # this is to adhere to the OPTIONS method, not necessary for cross-domain
+        headers.addRawHeader('Allow', 'GET, POST, OPTIONS')
+
+        return ""
 
     @defer.inlineCallbacks
     def _render(self, request):
@@ -53,6 +72,7 @@ class HttpRestServer(resource.Resource):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
 
+        ret = None
         try:
             ret = yield self.handle_request(request)
             if ret is EmptyResponse:
@@ -65,12 +85,18 @@ class HttpRestServer(resource.Resource):
         except SeeCanonical as exc:
             request.setResponseCode(301, 'Moved Permanently')
             request.setHeader('Location', exc.url)
+            request.setResponseCode(501, "Not implemented")
+        except NotImplemented as exc:
+            request.write("Not implemented: %s" % exc.message)
         except Exception:
             Failure().printTraceback(request)
         else:
-            request.write(json.dumps(ret, indent=2) + '\n')
+            # allow views to take full control of output streaming
+            if ret != NOT_DONE_YET:
+                request.write(json.dumps(ret, indent=2) + '\n')
         finally:
-            request.finish()
+            if ret != NOT_DONE_YET:
+                request.finish()
 
     @db.transact
     def handle_request(self, request):
@@ -89,4 +115,9 @@ class HttpRestServer(resource.Resource):
             view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
             if not view:
                 raise NotFound
-            return view.render(request)
+
+            for method in ('render_' + request.method, 'render'):
+                if hasattr(view, method):
+                    return getattr(view, method)(request)
+
+            raise NotImplemented("method %s not implemented\n" % request.method)
