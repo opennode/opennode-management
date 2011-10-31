@@ -31,7 +31,7 @@ class OmsShellProtocol(InteractiveTerminal):
         self.path = ['']
         self.last_error = None
         self.environment={'PATH': '.:./actions:/bin'}
-        self.running = False
+        self.sub_protocol = None
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -48,14 +48,11 @@ class OmsShellProtocol(InteractiveTerminal):
         self.tokenizer = CommandLineTokenizer()
 
     def keystrokeReceived(self, keyID, modifier):
-        # HACK: poor man's interrupt
-        if keyID == CTRL_C:
-            self.running = False
-            self.print_prompt()
+        (self.sub_protocol or super(OmsShellProtocol, self)).keystrokeReceived(keyID, modifier)
 
-        if self.running:
-            return
-        return super(OmsShellProtocol, self).keystrokeReceived(keyID, modifier)
+    def exit_sub_protocol(self):
+        self.sub_protocol = None
+        self.print_prompt()
 
     @defer.inlineCallbacks
     def lineReceived(self, line):
@@ -69,7 +66,7 @@ class OmsShellProtocol(InteractiveTerminal):
             self.print_prompt()
             return
 
-        self.running = True
+        self.sub_protocol = CommandExecutionSubProtocol(self)
         deferred = defer.maybeDeferred(command, *cmd_args)
         Proc.register(deferred, line)
 
@@ -85,8 +82,14 @@ class OmsShellProtocol(InteractiveTerminal):
         deferred.addBoth(self._command_completed)
 
     def _command_completed(self, *args):
-        self.running = False
         self.print_prompt()
+        if self.sub_protocol:
+            buffer = self.sub_protocol.buffer
+            self.sub_protocol = None
+
+            for (key, mod) in buffer or ():
+                if key not in self.keyHandlers.keys():
+                    self.keystrokeReceived(key, mod)
 
     @db.transact
     def parse_line(self, line):
@@ -210,3 +213,36 @@ class OmsShellProtocol(InteractiveTerminal):
     @staticmethod
     def make_path(path):
         return '/'.join(path) or '/'
+
+    def handle_EOF(self):
+        (self.sub_protocol or super(OmsShellProtocol, self)).handle_EOF()
+
+
+class CommandExecutionSubProtocol(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.buffer = []
+
+    def handle_EOF(self):
+        pass
+
+    def _echo(self, keyID, mod):
+        """Echoes characters on terminal like on unix (special chars etc)"""
+        ch = keyID
+        if isinstance(keyID, str):
+            if ord(keyID) == 127:
+                ch = '^H'
+            if ord(keyID) < 32 and keyID != '\r':
+                ch = '^' + chr(ord('A') + ord(keyID) - 1)
+            self.parent.terminal.write(ch)
+            if keyID in ('\r', CTRL_C):
+                self.parent.terminal.write('\n')
+
+    def keystrokeReceived(self, keyID, mod):
+        self._echo(keyID, mod)
+
+        # HACK: poor man's interrupt
+        if keyID == CTRL_C:
+            return self.parent.exit_sub_protocol()
+
+        self.buffer.append((keyID, mod))
