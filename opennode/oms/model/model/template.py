@@ -10,7 +10,7 @@ from .byname import ByNameContainerExtension
 
 class ITemplate(Interface):
     name = schema.TextLine(title=u"Template name", min_length=2)
-    base_type = schema.Choice(title=u"Template type", values=(u'xen', u'kvm'))
+    base_type = schema.Choice(title=u"Template type", values=(u'xen', u'kvm', u'openvz'))
     min_cores = schema.Int(title=u"Min cores", description=u"Minimum number of cores", required=False)
     max_cores = schema.Int(title=u"Max cores", description=u"Maximum number of cores", required=False)
     min_memory = schema.Int(title=u"Min memory", description=u"Minimum amount of memory", required=False)
