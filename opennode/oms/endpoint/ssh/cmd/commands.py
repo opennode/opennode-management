@@ -612,3 +612,12 @@ class TaskListCmd(Cmd):
         self.write("%s    TIME CMD\n" % "TID".rjust(max_key_len))
         for tid, task in tasks.items():
             self.write("%s %s %s\n" % (tid.rjust(max_key_len), datetime.timedelta(0, int(task.uptime)), task.cmdline))
+
+
+class OmsShellCmd(Cmd):
+    """This command represents the oms shell. Currently it cannot run a nested shell."""
+
+    command('omsh')
+
+    def execute(self, args):
+        self.write("nested shell not implemented yet.\n")
