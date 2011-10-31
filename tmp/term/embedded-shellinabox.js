@@ -27,7 +27,8 @@ ArbitraryConsole.prototype = new Console;
 
 consoles = [new Console('Commandline management interface', 'OMS Commandline management interface', '/bin/omsh/webterm'),
             new Console('Connection to virtual machine', 'localhost', '/computes/by-name/on6test/consoles/default/webterm'),
-            new ArbitraryConsole('Connection to arbitrary machine', '/computes/webterm')]
+            new ArbitraryConsole('Connection to arbitrary machine', '/computes/webterm'),
+            new Console('Connection to tty', 'localhost', '/computes/by-name/on6test/consoles/tty0/webterm')]
 
 var viewModel = {
     selectedConsole: ko.observable(consoles[0]),

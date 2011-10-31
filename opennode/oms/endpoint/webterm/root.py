@@ -12,7 +12,7 @@ from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 from opennode.oms.model.model.compute import Computes
-from opennode.oms.model.model.console import ISshConsole
+from opennode.oms.model.model.console import ISshConsole,  ITtyConsole
 from opennode.oms.model.model.bin import Command
 
 
@@ -57,6 +57,20 @@ class SSHClientTerminalProtocol(object):
 
     def terminalSize(self, width, height):
         self.channel.terminalSize(width, height)
+
+
+class TtyTerminalProtocol(SSHClientTerminalProtocol):
+    """Connect to a tty via ssh on phy + screen."""
+
+    def __init__(self, console):
+        phy = console.__parent__.__parent__.__parent__.__parent__
+        super(TtyTerminalProtocol, self).__init__('root', phy.hostname, port=22)
+        self.console = console
+
+    def connection_made(self, terminal, size):
+        self.transport = terminal.transport
+        command = 'screen -d -R %s %s' % (self.console.pty.replace('/',''), self.console.pty)
+        ssh_connect_interactive_shell(self.user, self.host, self.port, self.transport, self.set_channel, size, command)
 
 
 class WebTransport(object):
@@ -233,3 +247,12 @@ class ArbitraryHostConsoleView(ConsoleView):
         host = request.args['host'][0]
 
         return SSHClientTerminalProtocol(user, host)
+
+
+class TtyConsoleView(ConsoleView):
+    context(ITtyConsole)
+    name('webterm')
+
+    @property
+    def terminal_protocol(self):
+        return TtyTerminalProtocol(self.context)

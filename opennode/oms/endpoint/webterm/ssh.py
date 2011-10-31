@@ -1,28 +1,30 @@
 import os
 
-from twisted.conch.ssh import transport, keys, userauth, connection, channel, session
+from twisted.conch.ssh import transport, keys, userauth, connection, channel, session, common
 from twisted.internet import defer, reactor, protocol
 
 
-def ssh_connect_interactive_shell(user, host, port, transport, set_channel, size):
-    protocol.ClientCreator(reactor, SSHClientTransport, transport, set_channel, size, user, host).connectTCP(host, port)
+def ssh_connect_interactive_shell(user, host, port, transport, set_channel, size, command=None):
+    protocol.ClientCreator(reactor, SSHClientTransport, transport, set_channel, size, user, host, command).connectTCP(host, port)
+
 
 class SSHClientTransport(transport.SSHClientTransport):
     """Performs a SSH connection to a server."""
 
-    def __init__(self, terminal_transport, set_channel, terminal_size, user, host):
+    def __init__(self, terminal_transport, set_channel, terminal_size, user, host, command):
         self.terminal_transport = terminal_transport
         self.set_channel = set_channel
         self.terminal_size = terminal_size
         self.user = user
         self.host = host
+        self.command = command
 
     def verifyHostKey(self, pubKey, fingerprint):
         # TODO: check fingerprints?
         return defer.succeed(1)
 
     def connectionSecure(self):
-        self.requestService(ClientUserAuth(self.user, SSHShellConnection(self.terminal_transport, self.set_channel, self.terminal_size)))
+        self.requestService(ClientUserAuth(self.user, SSHShellConnection(self.terminal_transport, self.set_channel, self.terminal_size, self.command)))
 
     def connectionLost(self, reason):
         transport.SSHClientTransport.connectionLost(self, reason)
@@ -103,12 +105,13 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
 class SSHShellConnection(connection.SSHConnection):
     """Represents a SSH client connection opening a interactive remote shell."""
 
-    def __init__(self, terminal_transport, set_channel, terminal_size):
+    def __init__(self, terminal_transport, set_channel, terminal_size, command):
         connection.SSHConnection.__init__(self)
 
         self.terminal_transport = terminal_transport
         self.set_channel = set_channel
         self.terminal_size = terminal_size
+        self.command = command
 
     def serviceStarted(self):
         self.openChannel(ShellChannel(conn = self))
@@ -133,7 +136,10 @@ class ShellChannel(channel.SSHChannel):
 
         @deferred
         def on_success(ignored):
-            self.conn.sendRequest(self, 'shell', '', wantReply = 1)
+            if self.conn.command:
+                self.conn.sendRequest(self, 'exec', common.NS(self.conn.command), wantReply = 1)
+            else:
+                self.conn.sendRequest(self, 'shell', '', wantReply = 1)
 
     def dataReceived(self, data):
         if self.terminal_transport:
