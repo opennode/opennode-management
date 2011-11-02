@@ -13,7 +13,7 @@ from .log import ILogContainer
 class INewsItem(Interface):
     """A news item in the activity stream"""
     message = schema.TextLine(title=u"message", description=u"message")
-    timestamp = schema.Int(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
+    timestamp = schema.Float(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
 
 
 class NewsItem(Model):
