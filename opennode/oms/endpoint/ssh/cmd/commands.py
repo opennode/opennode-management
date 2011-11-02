@@ -6,6 +6,7 @@ import time
 import datetime
 from collections import OrderedDict
 from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
+from twisted.conch.insults.insults import modes
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter
 from zope.interface import directlyProvidedBy
@@ -623,3 +624,22 @@ class OmsShellCmd(Cmd):
 
     def execute(self, args):
         self.write("nested shell not implemented yet.\n")
+
+
+class TerminalResetCmd(Cmd):
+    """Resets terminal. Useful after interrupting an attach."""
+    implements(ICmdArgumentsSyntax)
+
+    command("reset")
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-p', action='store_true', help="Reset private modes")
+        return parser
+
+    def execute(self, args):
+        if args.p:
+            self.protocol.terminal.resetPrivateModes('1')
+            return
+        self.protocol.terminal.reset()
+        self.terminal.setModes((modes.IRM, ))
