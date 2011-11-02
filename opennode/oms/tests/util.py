@@ -1,6 +1,7 @@
 import inspect
 import os
 import sys
+import time
 from Queue import Queue, Empty
 from collections import namedtuple
 from contextlib import contextmanager
@@ -9,7 +10,6 @@ from functools import wraps
 from nose.twistedtools import threaded_reactor
 
 from opennode.oms.zodb import db
-import time
 
 
 _delay_segments = []

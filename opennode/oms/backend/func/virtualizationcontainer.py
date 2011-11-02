@@ -2,9 +2,9 @@ from grokcore.component import Adapter, context, implements
 from twisted.internet import defer
 from zope.interface import Interface
 
-from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
-from opennode.oms.model.model.actions import Action, action
 from opennode.oms.backend.operation import IListVMS
+from opennode.oms.model.model.actions import Action, action
+from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 
 
 backends = {'test': 'test:///tmp/func_vm_test_state.xml',

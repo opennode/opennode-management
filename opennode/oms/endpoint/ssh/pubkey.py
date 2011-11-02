@@ -1,7 +1,8 @@
+import os
+
 from twisted.conch.checkers import SSHPublicKeyDatabase
 from twisted.conch.ssh import keys
 
-import os
 
 class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
     """Loads the public key from ~/.ssh/id_[rd]sa.pub at startup, and accepts logins for those keys

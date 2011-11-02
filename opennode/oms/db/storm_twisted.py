@@ -1,17 +1,13 @@
 # Code copy-pasted from http://bazaar.launchpad.net/~storm/storm/trunk/view/head:/storm/twisted/transact.py
-
-import time
 import random
-import transaction
-
+import time
 from functools import wraps
 
-from zope.component import getUtility
-
-from storm.zope.interfaces import IZStorm
+import transaction
 from storm.exceptions import IntegrityError, DisconnectionError
-
+from storm.zope.interfaces import IZStorm
 from twisted.internet.threads import deferToThreadPool
+from zope.component import getUtility
 
 
 class Transactor(object):

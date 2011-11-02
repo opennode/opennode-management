@@ -4,11 +4,11 @@ from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
 
-from .base import Model, IContainer, Container, AddingContainer, IIncomplete
-from .symlink import Symlink
-from .byname import ByNameContainerExtension
 from .actions import ActionsContainerExtension
+from .base import IContainer, Container, AddingContainer, IIncomplete
+from .byname import ByNameContainerExtension
 from .console import Consoles
+from .symlink import Symlink
 from opennode.oms.model.schema import Path
 
 

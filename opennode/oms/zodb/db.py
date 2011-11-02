@@ -6,8 +6,8 @@ import transaction
 from ZEO.ClientStorage import ClientStorage
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
-from twisted.python.threadpool import ThreadPool
 from twisted.python.threadable import isInIOThread
+from twisted.python.threadpool import ThreadPool
 
 from opennode.oms.model.model import OmsRoot
 

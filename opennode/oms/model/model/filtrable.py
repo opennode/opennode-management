@@ -1,6 +1,7 @@
 import zope.schema
 from grokcore.component import Adapter, context
-from zope.interface import Interface, implements, alsoProvides
+from zope.interface import Interface, implements
+
 from opennode.oms.model.model.base import IModel
 from opennode.oms.util import get_direct_interfaces
 

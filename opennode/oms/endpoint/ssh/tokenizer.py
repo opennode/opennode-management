@@ -1,5 +1,6 @@
 import shlex
 
+
 class CommandLineSyntaxError(Exception):
     """The commandline has a syntax error and cannot be even tokenized correctly"""
     def __init__(self, message):

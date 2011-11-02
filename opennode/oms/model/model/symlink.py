@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 
-from zope import schema
-from zope.interface import Interface, implements
-
-from .base import Model, Container
+from .base import Model
 
 
 class Symlink(Model):

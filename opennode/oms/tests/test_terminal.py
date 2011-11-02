@@ -2,9 +2,10 @@ import unittest
 
 import mock
 from nose.tools import eq_
+from twisted.conch.insults.insults import ServerProtocol
 
 from opennode.oms.endpoint.ssh.terminal import InteractiveTerminal, CTRL_T, CTRL_D, CTRL_L, CTRL_K, CTRL_A, CTRL_Y
-from twisted.conch.insults.insults import ServerProtocol
+
 
 class TerminalTestCase(unittest.TestCase):
 

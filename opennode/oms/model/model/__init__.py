@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 
 from .compute import Computes, Compute
-from .machines import Machines
-from .virtualizationcontainer import VirtualizationContainer
 from .hangar import Hangar
+from .machines import Machines
 from .network import Network, NetworkDevice
 from .news import NewsItem
 from .root import OmsRoot
 from .storage import Storage
 from .template import Templates, Template
+from .virtualizationcontainer import VirtualizationContainer
 
 
 __all__ = [OmsRoot, Machines, Computes, Compute, Templates, Template, Network, NetworkDevice, Storage, NewsItem,  'creatable_models']

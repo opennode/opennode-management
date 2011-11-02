@@ -1,31 +1,28 @@
-import os, inspect
+import datetime
+import os
+import time
+from collections import OrderedDict
 
 import transaction
 import zope.schema
-import time
-import datetime
-from collections import OrderedDict
-from grokcore.component import implements, context, Adapter, Subscription, baseclass, order
+from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter
-from zope.interface import directlyProvidedBy
 
-from opennode.oms.endpoint.ssh.cmd import registry
+import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
-
-import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
 from opennode.oms.model.form import ApplyRawData
-from opennode.oms.model.traversal import canonical_path
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
+from opennode.oms.model.traversal import canonical_path
 from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
 
@@ -509,6 +506,7 @@ class HelpCmd(Cmd):
                 if ICommand.providedBy(i):
                     cmds.append(i.cmd)
         return cmds
+
 
 class QuitCmd(Cmd):
     """Quits the console."""

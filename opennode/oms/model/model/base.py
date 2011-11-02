@@ -5,6 +5,7 @@ from BTrees.OOBTree import OOBTree
 from grokcore.component import querySubscriptions
 from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
+
 from opennode.oms.util import get_direct_interfaces
 
 

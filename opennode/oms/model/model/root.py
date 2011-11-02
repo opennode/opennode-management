@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
 from .base import ReadonlyContainer
+from .bin import Bin
 from .compute import Computes
+from .log import Log
 from .machines import Machines
 from .proc import Proc
 from .template import Templates
-from .bin import Bin
-from .log import Log
 
 
 class OmsRoot(ReadonlyContainer):

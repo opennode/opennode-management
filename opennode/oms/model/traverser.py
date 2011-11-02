@@ -1,7 +1,8 @@
 from grokcore.component import context
+
+import opennode.oms.model.model.root
 from opennode.oms.model.model.base import IContainer, IModel
 from opennode.oms.model.traversal import Traverser
-import opennode.oms.model.model.root
 
 
 class ModelTraverser(Traverser):

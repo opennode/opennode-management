@@ -1,5 +1,5 @@
-from twisted.internet import defer
 from grokcore.component import Subscription, implements, baseclass, querySubscriptions
+from twisted.internet import defer
 from zope.interface import Interface
 
 

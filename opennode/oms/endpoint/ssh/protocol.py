@@ -1,11 +1,11 @@
-import os
-import re
 import fnmatch
 import itertools
+import os
+import re
 
+from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
 from twisted.python import log
-from twisted.conch.insults.insults import ServerProtocol
 
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion, commands

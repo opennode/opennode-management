@@ -4,8 +4,9 @@ from __future__ import absolute_import
 from grokcore.component import Adapter, context, implements
 from zope.interface import Interface
 
-from .model.base import IModel
 import opennode.oms.model.model.root
+from .model.base import IModel
+
 
 __all__ = ['ILocation']
 

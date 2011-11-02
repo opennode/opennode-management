@@ -2,7 +2,8 @@ import re
 
 from grokcore.component import Adapter, implements, baseclass
 from zope.interface import Interface
-from opennode.oms.model.model.symlink import Symlink, follow_symlinks
+
+from opennode.oms.model.model.symlink import follow_symlinks
 
 
 __all__ = ['traverse_path', 'traverse1']

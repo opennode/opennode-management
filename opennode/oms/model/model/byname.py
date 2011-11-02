@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from grokcore.component import Subscription, baseclass
 from zope.interface import implements
 
-from .base import IContainerExtender, IModel, ReadonlyContainer
+from .base import IContainerExtender, ReadonlyContainer
 from .symlink import Symlink, follow_symlinks
 
 

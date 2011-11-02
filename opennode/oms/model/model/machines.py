@@ -3,9 +3,9 @@ from __future__ import absolute_import
 from zope.component import provideSubscriptionAdapter
 
 from .base import Container
+from .byname import ByNameContainerExtension
 from .compute import Compute
 from .hangar import Hangar
-from .byname import ByNameContainerExtension
 
 
 class Machines(Container):

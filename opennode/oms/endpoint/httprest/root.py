@@ -1,15 +1,13 @@
 import json
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.python.failure import Failure
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
-from twisted.python.failure import Failure
 from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import IHttpRestView
-from opennode.oms.model.location import ILocation
 from opennode.oms.model.traversal import traverse_path
-
 from opennode.oms.zodb import db
 
 

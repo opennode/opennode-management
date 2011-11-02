@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from .base import ReadonlyContainer, IContainer
 
+
 class ILogContainer(IContainer):
     """A logging container"""
 

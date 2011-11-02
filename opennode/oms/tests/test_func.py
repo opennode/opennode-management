@@ -1,17 +1,17 @@
 import os
-import unittest
 import shutil
 import time
-
+import unittest
 from xml.etree import ElementTree
+
 from twisted.internet import defer
 from zope.interface import alsoProvides
 
+from opennode.oms.backend.func import FuncGetComputeInfo
 from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IListVMS
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
-from opennode.oms.backend.func import FuncGetComputeInfo
 from opennode.oms.tests.util import run_in_reactor, funcd_running
 
 

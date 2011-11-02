@@ -3,17 +3,16 @@ import time
 import uuid
 
 from grokcore.component import Adapter, baseclass, context, implements, name
-
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import reactor
 from twisted.web.server import NOT_DONE_YET
 
-from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.httprest.base import IHttpRestView
+from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
+from opennode.oms.model.model.bin import Command
 from opennode.oms.model.model.compute import Computes
 from opennode.oms.model.model.console import ISshConsole,  ITtyConsole
-from opennode.oms.model.model.bin import Command
 
 
 class OmsShellTerminalProtocol(object):

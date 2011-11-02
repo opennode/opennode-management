@@ -1,7 +1,7 @@
 import argparse, re
 
-from zope.interface import Interface
 from twisted.python import log
+from zope.interface import Interface
 
 
 class ArgumentParsingError(Exception):

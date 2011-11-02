@@ -2,6 +2,9 @@ import argparse
 import os
 
 from grokcore.component import baseclass, context
+from twisted.internet import defer
+from zope.component import provideSubscriptionAdapter
+
 from opennode.oms.endpoint.ssh.cmd import commands
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
@@ -9,8 +12,6 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.zodb import db
-from twisted.internet import defer
-from zope.component import provideSubscriptionAdapter
 
 
 class PositionalCompleter(Completer):

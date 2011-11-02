@@ -1,6 +1,7 @@
 import sys
 
-from twisted.python.log import ILogObserver, FileLogObserver
+from twisted.python.log import FileLogObserver
+
 
 class FilteredLogFileObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""

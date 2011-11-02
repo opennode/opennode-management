@@ -3,7 +3,6 @@ import sqlite3
 from collections import namedtuple
 from functools import wraps
 
-#~ from storm.twisted.transact import Transactor
 from storm.zope.interfaces import IZStorm
 from storm.zope.zstorm import ZStorm
 from twisted.internet import reactor
