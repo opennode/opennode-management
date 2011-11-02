@@ -99,7 +99,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
             return
 
         try:
-            open(self.hist_file_name, 'w').writelines([line + '\n' for line in self.historyLines])
+            concat = [line + '\n' for line in self.historyLines]
+            with open(self.hist_file_name, 'w') as f:
+                f.writelines(concat)
         except Exception as e:
             log.msg("cannot save history: %s" % e)
 
