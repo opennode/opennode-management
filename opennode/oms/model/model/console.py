@@ -1,15 +1,15 @@
 from __future__ import absolute_import
 
 from grokcore.component import context, baseclass
-from twisted.internet import defer, reactor
+from twisted.internet import defer
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
 from .actions import ActionsContainerExtension, Action, action
 from .base import Container, ReadonlyContainer
-
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
+from opennode.oms.endpoint.ssh.terminal import RESET_COLOR
 
 
 class IConsole(Interface):
@@ -81,6 +81,7 @@ class AttachAction(Action):
     action('attach')
 
     def execute(self, cmd, args):
+        self.closed = False
         self.protocol = cmd.protocol
         self.transport = self
         size = (cmd.protocol.width, cmd.protocol.height)
@@ -91,13 +92,17 @@ class AttachAction(Action):
         return self.deferred
 
     def write(self, data):
-        self.protocol.terminal.write(data)
+        if not self.closed:
+            self.protocol.terminal.write(data)
 
     def loseConnection(self):
+        self.closed = True
+        self.protocol.terminal.resetPrivateModes('1')
+        self.protocol.terminal.write(RESET_COLOR)
         self.deferred.callback(None)
 
     def _set_channel(self, channel):
-        deferred = self.deferred
+        loseConnection = self.loseConnection
 
         class SshSubProtocol(object):
             def __init__(self, parent):
@@ -108,7 +113,7 @@ class AttachAction(Action):
                 for ch in data:
                     if ch == '\x1d':
                         # TODO: really close the ssh connection
-                        return deferred.callback(None)
+                        loseConnection()
                 channel.write(data)
 
         self.protocol.sub_protocol = SshSubProtocol(self.protocol)
