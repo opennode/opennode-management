@@ -2,6 +2,7 @@ import os
 import string
 
 from twisted.conch import recvline
+from twisted.conch.insults.insults import modes
 from twisted.python import log
 
 
@@ -57,6 +58,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.search_skip = 0
 
         self.terminal.reset()
+        self.terminal.setModes((modes.IRM, ))
 
     def set_terminal(self, terminal):
         self.terminal = terminal
