@@ -14,7 +14,9 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
+from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.model.symlink import follow_symlinks
+from opennode.oms.model.model.actions import ActionsContainer
 from opennode.oms.util import get_direct_interfaces
 
 
@@ -62,14 +64,16 @@ class ContainerView(DefaultView):
         return self.render_recursive(request, depth, top_level=True)
 
     def render_recursive(self, request, depth, top_level=False):
-        if depth == 0:
-            return {'id': self.context.__name__, 'partial': True}
-
         container_properties = {'id': self.context.__name__}
+
         try:
             container_properties = super(ContainerView, self).render(request)
-        except:
+        except Exception as e:
+            print "GOT E", e
             pass
+
+        if depth < 1:
+            return container_properties
 
         items = map(follow_symlinks, self.context.listcontent())
 
@@ -86,7 +90,9 @@ class ContainerView(DefaultView):
         if top_level and (not container_properties or len(container_properties.keys()) == 1):
             return children
 
-        if depth > 1:
+        #if not top_level or depth > 1:
+        #if depth > 1:
+        if not top_level or depth > 1:
             container_properties['children'] = children
         return  container_properties
 
@@ -101,11 +107,18 @@ class MachinesView(ContainerView):
         return super(MachinesView, self).blacklisted(item) or isinstance(item, Hangar)
 
 
+class VirtualizationContainerView(ContainerView):
+    context(VirtualizationContainer)
+
+    def blacklisted(self, item):
+        return super(VirtualizationContainerView, self).blacklisted(item) or isinstance(item, ActionsContainer)
+
+
 class ComputeView(HttpRestView):
     context(Compute)
 
     def render(self, request):
-        vms = self.context['vms']
+
         return {'id': self.context.__name__,
                 'hostname': self.context.hostname,
                 'ipv4_address': self.context.ipv4_address,
@@ -128,9 +141,13 @@ class ComputeView(HttpRestView):
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
                 'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
-                'vms': [IHttpRestView(vm).render(request)
-                        for vm in vms if vm.__name__ not in ('by-name', 'actions')] if vms else []
+                'vms': self._vms(request)
                 }
+
+    def _vms(self, request):
+        if not self.context['vms']:
+            return {}
+        return IHttpRestView(self.context['vms']).render_recursive(request, 2)
 
     def _dummy_network_data(self):
         return {
