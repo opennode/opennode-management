@@ -1,3 +1,5 @@
+import StringIO
+import json
 from collections import OrderedDict
 
 import zope.schema
@@ -5,6 +7,7 @@ from grokcore.component import context
 from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
+from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import Machines, Compute, OmsRoot, Templates
 from opennode.oms.model.model.base import IContainer
@@ -43,6 +46,19 @@ class DefaultView(HttpRestView):
         data['id'] = obj.__name__
 
         return data
+
+    def render_PUT(self, request):
+        data = json.load(request.content)
+
+        form = ApplyRawData(data, self.context)
+        if not form.errors:
+            form.apply()
+        else:
+            sio = StringIO.StringIO()
+            form.write_errors(to=sio)
+            raise Exception(sio.getvalue())
+
+        return json.dumps('ok')
 
 
 class ContainerView(DefaultView):
