@@ -14,17 +14,19 @@ class ITask(Interface):
     """Executable command object."""
     cmdline = schema.TextLine(title=u"command line", description=u"Command line", readonly=True, required=False)
     uptime = schema.Int(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
+    ptid = schema.TextLine(title=u"parent task", description=u"Parent task", readonly=True, required=False)
 
 
 class Task(Model):
     implements(ITask)
 
-    def __init__(self, name, parent, deferred, cmdline):
+    def __init__(self, name, parent, deferred, cmdline, ptid):
         self.__name__ = name
         self.__parent__ = parent
         self.deferred = deferred
         self.cmdline = cmdline
         self.timestamp = time.time()
+        self.ptid = ptid
 
     @property
     def uptime(self):
@@ -45,7 +47,7 @@ class Proc(ReadonlyContainer):
         super(Proc, self).__init__()
 
         # represents the init process, just for fun.
-        self.tasks = OrderedDict({'1': Task('1', self, None, '/bin/init')})
+        self.tasks = OrderedDict({'1': Task('1', self, None, '/bin/init', '0')})
         self.dead_tasks = OrderedDict()
         self.next_id = 1
 
@@ -58,21 +60,28 @@ class Proc(ReadonlyContainer):
         return res
 
     @classmethod
-    def register(cls, deferred, cmdline=None):
+    def register(cls, deferred, cmdline=None, ptid='1'):
         self = Proc()
 
         self.next_id += 1
         new_id = str(self.next_id)
 
-        self.tasks[new_id] = Task(new_id, self, deferred, cmdline)
+        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid)
 
-        deferred.addBoth(self.unregister, new_id)
+        if deferred:
+            deferred.addBoth(self._unregister, new_id)
+
+        return new_id
 
     @classmethod
-    def unregister(cls, res, id):
+    def unregister(cls, id):
         self = Proc()
         self.dead_tasks[id] = self.tasks[id]
         del self.tasks[id]
+
+    @classmethod
+    def _unregister(cls, res, id):
+        cls.unregister(id)
         return res
 
 

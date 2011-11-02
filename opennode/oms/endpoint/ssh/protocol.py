@@ -32,6 +32,7 @@ class OmsShellProtocol(InteractiveTerminal):
         self.last_error = None
         self.environment={'PATH': '.:./actions:/bin'}
         self.sub_protocol = None
+        self.tid = Proc.register(None, '/bin/omsh')
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -46,6 +47,10 @@ class OmsShellProtocol(InteractiveTerminal):
         _get_obj_path()
 
         self.tokenizer = CommandLineTokenizer()
+
+    def close_connection(self):
+        Proc.unregister(self.tid)
+        super(OmsShellProtocol, self).close_connection()
 
     def keystrokeReceived(self, keyID, modifier):
         (self.sub_protocol or super(OmsShellProtocol, self)).keystrokeReceived(keyID, modifier)
@@ -68,7 +73,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
         self.sub_protocol = CommandExecutionSubProtocol(self)
         deferred = defer.maybeDeferred(command, *cmd_args)
-        Proc.register(deferred, line)
+        Proc.register(deferred, line, self.tid)
 
         @deferred
         def on_error(f):

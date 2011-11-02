@@ -598,6 +598,7 @@ class TaskListCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('bsd', nargs='*', help="Ignored bsd args, for those who have unix type habits (e.g. 'ps xa')")
         parser.add_argument('-d', action='store_true', help="Show recently finished (dead) tasks.")
+        parser.add_argument('-l', action='store_true', help="Show parent task id")
         return parser
 
     @db.transact
@@ -609,9 +610,10 @@ class TaskListCmd(Cmd):
 
         max_key_len = max(3, *[len(i) for i in Proc().content().keys()])
 
-        self.write("%s    TIME CMD\n" % "TID".rjust(max_key_len))
+        self.write("%s    %sTIME CMD\n" % ("TID".rjust(max_key_len), "PTID    ".rjust(max_key_len) if args.l else ''))
         for tid, task in tasks.items():
-            self.write("%s %s %s\n" % (tid.rjust(max_key_len), datetime.timedelta(0, int(task.uptime)), task.cmdline))
+            ptid = task.ptid
+            self.write("%s %s%s %s\n" % (tid.rjust(max_key_len), (ptid + ' ').rjust(max_key_len) if args.l else '', datetime.timedelta(0, int(task.uptime)), task.cmdline))
 
 
 class OmsShellCmd(Cmd):
