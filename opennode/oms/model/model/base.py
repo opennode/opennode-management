@@ -85,6 +85,8 @@ class ReadonlyContainer(Model):
 
         return items
 
+    _items = {}
+
 
 class AddingContainer(ReadonlyContainer):
     """A container which can accept items to be added to it.

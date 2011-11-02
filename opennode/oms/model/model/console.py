@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 
+from grokcore.component import context, baseclass
 from zope import schema
+from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
-from .base import Model, Container
+from .actions import ActionsContainerExtension, Action, action
+from .base import Container, ReadonlyContainer
 
 
 class IConsole(Interface):
@@ -33,11 +36,11 @@ class IVncConsole(IConsole):
     port = schema.Int(title=u"port")
 
 
-class TtyConsole(Model):
+class TtyConsole(ReadonlyContainer):
     implements(ITtyConsole, ITextualConsole)
 
 
-class TtyConsole(Model):
+class TtyConsole(ReadonlyContainer):
     implements(ITtyConsole, ITextualConsole)
 
     def __init__(self, name, pty):
@@ -45,7 +48,7 @@ class TtyConsole(Model):
         self.pty = pty
 
 
-class SshConsole(Model):
+class SshConsole(ReadonlyContainer):
     implements(ISshConsole, ITextualConsole)
 
     def __init__(self, name, user, hostname, port):
@@ -55,7 +58,7 @@ class SshConsole(Model):
         self.port = port
 
 
-class VncConsole(Model):
+class VncConsole(ReadonlyContainer):
     implements(IVncConsole, IGraphicalConsole)
 
     def __init__(self, hostname, port):
@@ -66,3 +69,24 @@ class VncConsole(Model):
 
 class Consoles(Container):
     __name__ = 'consoles'
+
+
+class AttachAction(Action):
+    """Attach to textual console"""
+    baseclass()
+
+    action('attach')
+
+    def execute(self, cmd, args):
+        cmd.write("not implemented yet\n")
+
+
+class SshAttachAction(AttachAction):
+    context(ISshConsole)
+
+
+class TtyAttachAction(AttachAction):
+    context(ISshConsole)
+
+
+provideSubscriptionAdapter(ActionsContainerExtension, adapts=(IConsole, ))
