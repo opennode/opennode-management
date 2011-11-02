@@ -5,6 +5,7 @@ import itertools
 
 from twisted.internet import defer
 from twisted.python import log
+from twisted.conch.insults.insults import ServerProtocol
 
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion, commands
@@ -51,6 +52,14 @@ class OmsShellProtocol(InteractiveTerminal):
     def close_connection(self):
         Proc.unregister(self.tid)
         super(OmsShellProtocol, self).close_connection()
+
+    def dataReceived(self, data):
+        # some sub protocols need raw data, because `keystrokeReceived`
+        # reinterprets all special chars (like arrows etc) and there is no way
+        # to get back to the original escape sequences.
+        if self.sub_protocol and hasattr(self.sub_protocol, 'dataReceived'):
+            return self.sub_protocol.dataReceived(data)
+        self.terminal._orig_dataReceived(data)
 
     def keystrokeReceived(self, keyID, modifier):
         (self.sub_protocol or super(OmsShellProtocol, self)).keystrokeReceived(keyID, modifier)
@@ -251,3 +260,13 @@ class CommandExecutionSubProtocol(object):
             return self.parent.exit_sub_protocol()
 
         self.buffer.append((keyID, mod))
+
+
+# HACK: Monkey patch
+# TODO: handle this with custom ServerProtocol
+def dataReceived(self, data):
+    return self.terminalProtocol.dataReceived(data)
+
+ServerProtocol._orig_dataReceived = ServerProtocol.dataReceived
+
+ServerProtocol.dataReceived = dataReceived

@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
 from grokcore.component import context, baseclass
+from twisted.internet import defer, reactor
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
 from .actions import ActionsContainerExtension, Action, action
 from .base import Container, ReadonlyContainer
+
+from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 
 
 class IConsole(Interface):
@@ -78,15 +81,58 @@ class AttachAction(Action):
     action('attach')
 
     def execute(self, cmd, args):
-        cmd.write("not implemented yet\n")
+        self.protocol = cmd.protocol
+        self.transport = self
+        size = (cmd.protocol.width, cmd.protocol.height)
+
+        self._do_connection(size)
+
+        self.deferred = defer.Deferred()
+        return self.deferred
+
+    def write(self, data):
+        self.protocol.terminal.write(data)
+
+    def loseConnection(self):
+        self.deferred.callback(None)
+
+    def _set_channel(self, channel):
+        deferred = self.deferred
+
+        class SshSubProtocol(object):
+            def __init__(self, parent):
+                self.parent = parent
+                self.buffer = []
+
+            def dataReceived(self, data):
+                for ch in data:
+                    if ch == '\x1d':
+                        # TODO: really close the ssh connection
+                        return deferred.callback(None)
+                channel.write(data)
+
+        self.protocol.sub_protocol = SshSubProtocol(self.protocol)
 
 
 class SshAttachAction(AttachAction):
     context(ISshConsole)
 
+    def _do_connection(self, size):
+        self.write("Attaching to %s@%s. Use ^] to force exit.\n" % (self.context.user.encode('utf-8'), self.context.hostname.encode('utf-8')))
+
+        ssh_connect_interactive_shell(self.context.user, self.context.hostname, self.context.port, self.transport, self._set_channel, size)
+
 
 class TtyAttachAction(AttachAction):
-    context(ISshConsole)
+    context(ITtyConsole)
+
+    def _do_connection(self, size):
+        self.write("Attaching to %s. Use ^] to force exit.\n" % (self.context.pty.encode('utf-8')))
+
+        command = 'screen -d -R %s %s' % (self.context.pty.replace('/',''), self.context.pty)
+        phy = self.context.__parent__.__parent__.__parent__.__parent__
+
+        ssh_connect_interactive_shell('root', phy.hostname, 22, self.transport, self._set_channel, size, command)
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(IConsole, ))
