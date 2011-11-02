@@ -9,20 +9,13 @@ from zope.component import queryAdapter
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
-from opennode.oms.model.model import Machines, Compute, OmsRoot, Templates
+from opennode.oms.model.model import Machines, Compute
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.util import get_direct_interfaces
-
-
-class RootView(HttpRestView):
-    context(OmsRoot)
-
-    def render(self, request):
-        return dict((name, ILocation(self.context[name]).get_url()) for name in self.context.listnames())
 
 
 class DefaultView(HttpRestView):
@@ -65,15 +58,18 @@ class ContainerView(DefaultView):
     context(IContainer)
 
     def render(self, request):
-        container_properties = None
+        depth = int(request.args.get('depth', ['1'])[0])
+        return self.render_recursive(request, depth, top_level=True)
+
+    def render_recursive(self, request, depth, top_level=False):
+        if depth == 0:
+            return {'id': self.context.__name__, 'partial': True}
+
+        container_properties = {'id': self.context.__name__}
         try:
             container_properties = super(ContainerView, self).render(request)
         except:
             pass
-
-        # Ignore children when it's not a pure container
-        if container_properties and len(container_properties.keys()) > 1:
-            return container_properties
 
         items = map(follow_symlinks, self.context.listcontent())
 
@@ -83,7 +79,16 @@ class ContainerView(DefaultView):
         if q:
             items = [item for item in items if IFiltrable(item).match(q)]
 
-        return [IHttpRestView(item).render(request) for item in items if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
+        children = [IHttpRestView(item).render_recursive(request, depth - 1) for item in items if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
+
+        # backward compatibility:
+        # top level results for pure containers are plain lists
+        if top_level and (not container_properties or len(container_properties.keys()) == 1):
+            return children
+
+        if depth > 1:
+            container_properties['children'] = children
+        return  container_properties
 
     def blacklisted(self, item):
         return isinstance(item, ByNameContainer)
@@ -211,10 +216,3 @@ class ComputeView(HttpRestView):
                 'interface': 'venet2',
             }],
         }
-
-
-class TemplatesView(HttpRestView):
-    context(Templates)
-
-    def render(self, request):
-        return [{'name': name} for name in self.context.listnames()]
