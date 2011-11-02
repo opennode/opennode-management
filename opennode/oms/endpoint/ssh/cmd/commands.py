@@ -225,23 +225,23 @@ class CatObjectCmd(Cmd):
 
     def _do_cat(self, obj):
         schemas = get_direct_interfaces(obj)
-        if len(schemas) != 1:
+        if len(schemas) == 0:
             self.write("Unable to create a printable representation.\n")
             return
-        schema = schemas[0]
 
-        fields = zope.schema.getFieldsInOrder(schema)
-        data = OrderedDict()
-        for name, field in fields:
-            key = field.description or field.title
-            key = key.encode('utf8')
-            data[key] = field.get(obj)
+        for schema in schemas:
+            fields = zope.schema.getFieldsInOrder(schema)
+            data = OrderedDict()
+            for name, field in fields:
+                key = field.description or field.title
+                key = key.encode('utf8')
+                data[key] = field.get(obj)
 
-        if data:
-            max_key_len = max(len(key) for key in data)
-            for key, value in data.items():
-                self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
-                                         str(value).encode('utf8')))
+            if data:
+                max_key_len = max(len(key) for key in data)
+                for key, value in data.items():
+                    self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
+                                             str(value).encode('utf8')))
 
         if IIncomplete.providedBy(obj):
             self.write("-----------------\n")
