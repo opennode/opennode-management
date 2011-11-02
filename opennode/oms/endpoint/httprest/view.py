@@ -22,10 +22,43 @@ class RootView(HttpRestView):
         return dict((name, ILocation(self.context[name]).get_url()) for name in self.context.listnames())
 
 
-class ContainerView(HttpRestView):
+class DefaultView(HttpRestView):
+    context(object)
+
+    def render(self, request):
+        obj = self.context
+        # NODE: code copied from commands.py:CatCmd
+        schemas = get_direct_interfaces(obj)
+        if len(schemas) == 0:
+            raise Exception("Unable to create a printable representation.\n")
+            return
+
+        data = OrderedDict()
+        for schema in schemas:
+            fields = zope.schema.getFieldsInOrder(schema)
+            for key, field in fields:
+                key = key.encode('utf8')
+                data[key] = field.get(obj)
+
+        data['id'] = obj.__name__
+
+        return data
+
+
+class ContainerView(DefaultView):
     context(IContainer)
 
     def render(self, request):
+        container_properties = None
+        try:
+            container_properties = super(ContainerView, self).render(request)
+        except:
+            pass
+
+        # Ignore children when it's not a pure container
+        if container_properties and len(container_properties.keys()) > 1:
+            return container_properties
+
         items = map(follow_symlinks, self.context.listcontent())
 
         q = request.args.get('q', [''])[0]
@@ -169,26 +202,3 @@ class TemplatesView(HttpRestView):
 
     def render(self, request):
         return [{'name': name} for name in self.context.listnames()]
-
-
-class DefaultView(HttpRestView):
-    context(object)
-
-    def render(self, request):
-        obj = self.context
-
-        # NODE: code copied from commands.py:CatCmd
-        schemas = get_direct_interfaces(obj)
-        if len(schemas) != 1:
-            raise Exception("Unable to create a printable representation.\n")
-            return
-        schema = schemas[0]
-
-        fields = zope.schema.getFieldsInOrder(schema)
-        data = OrderedDict()
-        for key, field in fields:
-            key = key.encode('utf8')
-            data[key] = field.get(obj)
-
-        data['id'] = obj.__name__
-        return data
