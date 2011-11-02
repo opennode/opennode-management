@@ -134,7 +134,7 @@ class TtyAttachAction(AttachAction):
     def _do_connection(self, size):
         self.write("Attaching to %s. Use ^] to force exit.\n" % (self.context.pty.encode('utf-8')))
 
-        command = 'screen -d -R %s %s' % (self.context.pty.replace('/',''), self.context.pty)
+        command = 'screen -xRR %s %s' % (self.context.pty.replace('/',''), self.context.pty)
         phy = self.context.__parent__.__parent__.__parent__.__parent__
 
         ssh_connect_interactive_shell('root', phy.hostname, 22, self.transport, self._set_channel, size, command)

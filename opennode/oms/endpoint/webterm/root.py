@@ -69,7 +69,7 @@ class TtyTerminalProtocol(SSHClientTerminalProtocol):
 
     def connection_made(self, terminal, size):
         self.transport = terminal.transport
-        command = 'screen -d -R %s %s' % (self.console.pty.replace('/',''), self.console.pty)
+        command = 'screen -xRR %s %s' % (self.console.pty.replace('/',''), self.console.pty)
         ssh_connect_interactive_shell(self.user, self.host, self.port, self.transport, self.set_channel, size, command)
 
 
