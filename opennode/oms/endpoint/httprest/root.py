@@ -60,7 +60,7 @@ class HttpRestServer(resource.Resource):
         headers.addRawHeader('Access-Control-Allow-Origin', '*')
         headers.addRawHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
         # this is necessary for firefox
-        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control')
+        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
         # this is to adhere to the OPTIONS method, not necessary for cross-domain
         headers.addRawHeader('Allow', 'GET, POST, OPTIONS')
 
