@@ -80,6 +80,13 @@ class ChangeDirCmd(Cmd):
         # Delegate path traversal to physical traversal.
         # It's possible that we emptied the path by removing all '..'s.
         if args.path:
+            if args.path == '-':
+                if not self.protocol.path_stack:
+                    self.write("dir stack is empty\n")
+                    return
+                args.path = self.protocol.path_stack.pop()
+
+            self.protocol.path_stack.insert(0, self.protocol._cwd())
             self._do_traverse(args.path)
 
         # Recompute new absolute path if physical path was requested.
