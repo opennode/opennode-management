@@ -9,6 +9,7 @@ from opennode.oms.model.form import IModelModifiedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, VncConsole
+from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.zodb import db
 
@@ -46,6 +47,12 @@ class SyncAction(Action):
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
         self.context.consoles.add(ssh_console)
         self.context.consoles.add(Symlink('default', ssh_console))
+
+        # networks
+
+        self.context.interfaces = NetworkInterfaces()
+        for interface in vm['interfaces']:
+            self.context.interfaces.add(NetworkInterface(interface['name'], None, interface['mac'], 'active'))
 
 
 class FakeConsoles(Action):

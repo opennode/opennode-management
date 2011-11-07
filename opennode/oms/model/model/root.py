@@ -5,6 +5,7 @@ from .bin import Bin
 from .compute import Computes
 from .log import Log
 from .machines import Machines
+from .network import Networks
 from .proc import Proc
 from .template import Templates
 
@@ -24,6 +25,7 @@ class OmsRoot(ReadonlyContainer):
         'computes': self.computes,
         'templates': self.templates,
         'machines': self.machines,
+        'networks': self.networks,
         'bin': self.bin,
         'proc': self.proc,
         'log': self.log
@@ -60,6 +62,14 @@ class OmsRoot(ReadonlyContainer):
             self._log = Log()
             self._log.__parent__ = self
         return self._log
+
+    @property
+    def networks(self):
+        if not getattr(self, '_networks', None):
+            self._networks = Networks()
+            self._networks.__parent__ = self
+        return self._networks
+
 
     def __str__(self):
         return 'OMS root'

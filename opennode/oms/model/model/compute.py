@@ -8,6 +8,7 @@ from .actions import ActionsContainerExtension
 from .base import IContainer, Container, AddingContainer, IIncomplete
 from .byname import ByNameContainerExtension
 from .console import Consoles
+from .network import NetworkInterfaces
 from .symlink import Symlink
 from opennode.oms.model.schema import Path
 
@@ -114,6 +115,19 @@ class Compute(Container):
         self._add(value)
 
     consoles = property(get_consoles, set_consoles)
+
+
+    def get_interfaces(self):
+        if not self._items.has_key('interfaces'):
+            self._add(NetworkInterfaces())
+        return self._items['interfaces']
+
+    def set_interfaces(self, value):
+        if self._items.has_key('interfaces'):
+            del self._items['interfaces']
+        self._add(value)
+
+    interfaces = property(get_interfaces, set_interfaces)
 
 
 class IVirtualCompute(Interface):
