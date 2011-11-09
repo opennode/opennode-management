@@ -68,8 +68,7 @@ class ContainerView(DefaultView):
 
         try:
             container_properties = super(ContainerView, self).render(request)
-        except Exception as e:
-            print "GOT E", e
+        except Exception:
             pass
 
         if depth < 1:
