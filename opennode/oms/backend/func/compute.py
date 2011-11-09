@@ -42,7 +42,7 @@ class SyncAction(Action):
             if console['type'] == 'pty':
                 self.context.consoles.add(TtyConsole('tty%s'% idx, console['pty']))
             if console['type'] == 'vnc':
-                self.context.consoles.add(VncConsole(self.context.hostname, int(console['port'])))
+                self.context.consoles.add(VncConsole(self.context.__parent__.__parent__.hostname, int(console['port'])))
 
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
         self.context.consoles.add(ssh_console)

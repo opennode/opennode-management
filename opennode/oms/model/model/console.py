@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 
+import subprocess
+import time
+
 from grokcore.component import context, baseclass
 from twisted.internet import defer
 from zope import schema
@@ -8,8 +11,8 @@ from zope.interface import Interface, implements
 
 from .actions import ActionsContainerExtension, Action, action
 from .base import Container, ReadonlyContainer
-from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 from opennode.oms.endpoint.ssh.terminal import RESET_COLOR
+from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 
 
 class IConsole(Interface):
@@ -37,6 +40,7 @@ class ISshConsole(IConsole):
 class IVncConsole(IConsole):
     hostname = schema.TextLine(title=u"hostname")
     port = schema.Int(title=u"port")
+    ws_url = schema.Int(title=u"ws_url", required=False, readonly=True)
 
 
 class TtyConsole(ReadonlyContainer):
@@ -64,10 +68,43 @@ class SshConsole(ReadonlyContainer):
 class VncConsole(ReadonlyContainer):
     implements(IVncConsole, IGraphicalConsole)
 
+    proxy_processes = {}
+
     def __init__(self, hostname, port):
         self.__name__ = 'vnc'
         self.hostname = hostname
         self.port = port
+
+        self._ensure_proxy()
+
+    def _ensure_proxy(self):
+        if self.proxy_processes.has_key(self.hostname):
+            # check if the proxy process has matching vnc port
+            # otherwise kills it
+            if self.proxy_processes[self.hostname].port != self.port:
+                self.proxy_processes[self.hostname].kill()
+                del self.proxy_processes[self.hostname]
+
+        if not self.proxy_processes.has_key(self.hostname):
+            self.proxy_processes[self.hostname] = VncProxyProcess(self.hostname, self.port)
+
+    @property
+    def ws_url(self):
+        self._ensure_proxy()
+        proxy_port = self.proxy_processes[self.hostname].proxy_port
+        return 'ws://%s:%s/' % (self.hostname, proxy_port)
+
+
+class VncProxyProcess(object):
+    def __init__(self, hostname, port):
+        self.port = port
+        self.proxy_port = port + 1000
+        self.process = subprocess.Popen(['python', 'utils/wsproxy.py', '--web', '/home/marko/Projects/opennode/noVNC', str(self.proxy_port), '%s:%s' % (hostname, self.port)])
+
+    def kill(self):
+        self.process.terminate()
+        time.sleep(0.5)
+        self.process.kill()
 
 
 class Consoles(Container):
