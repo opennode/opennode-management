@@ -176,10 +176,7 @@ class TerminalServerMixin(object):
     def render_POST(self, request):
         session_id = request.args.get('session', [None])[0]
 
-        size = (request.args['width'][0], request.args['height'][0])
-        size = [int(i) if i != 'undefined' else 0 for i in size]
-        if size == (0, 0):
-            size = (80, 25)
+        size = (int(request.args['width'][0]), int(request.args['height'][0]))
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
