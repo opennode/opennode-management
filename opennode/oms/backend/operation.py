@@ -1,7 +1,7 @@
 from zope.interface import Interface
 
 
-__all__ = ['IJob', 'IFuncInstalled', 'IGetComputeInfo', 'IListVMS', 'IStartVM', 'IShutdownVM', 'IDestroyVM', 'ISuspendVM', 'IResumeVM', 'IRebootVM']
+__all__ = ['IJob', 'IFuncInstalled', 'IGetComputeInfo', 'IListVMS', 'IStartVM', 'IShutdownVM', 'IDestroyVM', 'ISuspendVM', 'IResumeVM', 'IRebootVM', 'IHostInterfaces']
 
 
 class IJob(Interface):
@@ -23,6 +23,11 @@ class IBotoManageable(Interface):
 
 class IGetComputeInfo(IJob):
     """Returns general information about a compute (os, architecture, devices, etc)."""
+
+
+class IHostInterfaces(IJob):
+    """Returns detailed info about host interfaces. hardware.info doesn't work on all archs."""
+
 
 class IListVMS(IJob):
     """List vms"""

@@ -11,6 +11,11 @@ class INetworkInterface(Interface):
     name = schema.TextLine(title=u"Interface name", min_length=3)
     mac = schema.TextLine(title=u"MAC", min_length=17)
     state = schema.Choice(title=u"State", values=(u'active', u'inactive'))
+    ipv4_address = schema.TextLine(title=u"IPv4 network address", min_length=7, required=False)
+
+
+class IBridgeInterface(INetworkInterface):
+    members = schema.List(title=u"Bridge members", required=False, readonly=True)
 
 
 class NetworkInterface(ReadonlyContainer):
@@ -28,6 +33,21 @@ class NetworkInterface(ReadonlyContainer):
         if self.network:
             return {'network': Symlink('network', self.network)}
         return {}
+
+
+class BridgeInterface(NetworkInterface):
+    implements(IBridgeInterface)
+
+    def __init__(self, *args):
+        super(BridgeInterface, self).__init__(*args)
+
+        self.members = []
+
+    @property
+    def _items(self):
+        res = super(BridgeInterface, self)._items
+        # TODO: add symlinks for bridge members
+        return res
 
 
 class NetworkInterfaces(Container):

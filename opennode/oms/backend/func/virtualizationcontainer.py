@@ -1,10 +1,14 @@
+import transaction
+
 from grokcore.component import Adapter, context, implements
 from twisted.internet import defer
 from zope.interface import Interface
 
-from opennode.oms.backend.operation import IListVMS
+from opennode.oms.backend.operation import IListVMS, IHostInterfaces
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
+from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, BridgeInterface
+from opennode.oms.zodb import db
 
 
 backends = {'test': 'test:///tmp/func_vm_test_state.xml',
@@ -56,3 +60,40 @@ class ListVirtualizationContainerAction(Action):
             for console in vm['consoles']:
                 attrs = " ".join(["%s=%s" % pair for pair in console.items()])
                 cmd.write(" %s      %s\n" % (' '*max_key_len, attrs))
+
+class SyncAction(Action):
+    """Force vms sync + sync host info"""
+    context(IVirtualizationContainer)
+
+    action('sync')
+
+    @defer.inlineCallbacks
+    def execute(self, cmd, args):
+        # sync host interfaces (this is not the right place, but ...)
+        host_compute = self.context.__parent__
+        job = IHostInterfaces(host_compute)
+        ifaces = yield job.run()
+
+        self._sync_ifaces(ifaces)
+
+    @db.transact
+    def _sync_ifaces(self, ifaces):
+        host_compute = self.context.__parent__
+
+        host_compute.interfaces = NetworkInterfaces()
+        for interface in ifaces:
+            cls = NetworkInterface
+            if interface['type'] == 'bridge':
+                cls = BridgeInterface
+
+            iface_node = cls(interface['name'], None, interface['mac'], 'active')
+
+            if interface.has_key('ip'):
+                print  "SETTING IP ADDR", interface['ip']
+                iface_node.ipv4_address = interface['ip']
+            if interface['type'] == 'bridge':
+                iface_node.members = interface['members']
+
+            host_compute.interfaces.add(iface_node)
+
+        transaction.commit()
