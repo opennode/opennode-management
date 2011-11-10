@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import transaction
 from grokcore.component import context, subscribe, baseclass
 from twisted.internet import defer
 
@@ -53,6 +54,8 @@ class SyncAction(Action):
         self.context.interfaces = NetworkInterfaces()
         for interface in vm['interfaces']:
             self.context.interfaces.add(NetworkInterface(interface['name'], None, interface['mac'], 'active'))
+
+        transaction.commit()
 
 
 class FakeConsoles(Action):
