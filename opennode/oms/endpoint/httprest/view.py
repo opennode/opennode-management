@@ -139,7 +139,7 @@ class ComputeView(HttpRestView):
                 'diskspace_vzpartition': self.context.diskspace_vzpartition,
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
-                'bridge_interfaces': self._dummy_network_data()['bridge_interfaces'],
+                'bridge_interfaces': self._network_interfaces(request),
                 'vms': self._vms(request)
                 }
 
@@ -147,6 +147,13 @@ class ComputeView(HttpRestView):
         if not self.context['vms']:
             return {}
         return IHttpRestView(self.context['vms']).render_recursive(request, 2)
+
+    def _network_interfaces(self, request):
+        try:
+            return IHttpRestView(self.context['interfaces']).render_recursive(request, 1)['children']
+        except:
+            #return self._dummy_network_data()['bridge_interfaces']
+            return []
 
     def _dummy_network_data(self):
         return {

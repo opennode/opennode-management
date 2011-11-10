@@ -9,10 +9,16 @@ from .symlink import Symlink
 
 class INetworkInterface(Interface):
     name = schema.TextLine(title=u"Interface name", min_length=3)
-    mac = schema.TextLine(title=u"MAC", min_length=17)
+    hw_address = schema.TextLine(title=u"MAC", min_length=17)
     state = schema.Choice(title=u"State", values=(u'active', u'inactive'))
     ipv4_address = schema.TextLine(title=u"IPv4 network address", min_length=7, required=False)
+    ipv6_address = schema.TextLine(title=u"IPv6 network address", min_length=7, required=False)
 
+    metric = schema.Int(title=u"Metric")
+    bcast = schema.TextLine(title=u"Broadcast")
+    stp = schema.Bool(title=u"STP enabled")
+    rx = schema.TextLine(title=u"RX bytes")
+    tx = schema.TextLine(title=u"TX bytes")
 
 class IBridgeInterface(INetworkInterface):
     members = schema.List(title=u"Bridge members", required=False, readonly=True)
@@ -21,18 +27,44 @@ class IBridgeInterface(INetworkInterface):
 class NetworkInterface(ReadonlyContainer):
     implements(INetworkInterface)
 
-    def __init__(self, name, network, mac, state):
+    def __init__(self, name, network, hw_address, state):
         self.__name__ = name
         self.name = name
-        self.mac = mac
+        self.hw_address = hw_address
         self.state = state
         self.network = network
+
+        self.metric = 1
+        self.tx = ''
+        self.rx = ''
+        self.stp = False
+
+        self.ipv6_address = ''
 
     @property
     def _items(self):
         if self.network:
             return {'network': Symlink('network', self.network)}
         return {}
+
+    @property
+    def bcast(self):
+        if not self.ipv4_address:
+            return None
+
+        ip, prefix = self.ipv4_address.split('/')
+        l = 0
+        for b in ip.split('.'):
+            l = l << 8 | int(b)
+        mask = 0xffffffff
+        for i in xrange(0, int(prefix)):
+            mask = mask >> 1
+        l = l | mask
+        o = []
+        for i in xrange(0,4):
+            o.insert(0, l & 0xff)
+            l = l >> 8
+        return '.'.join(str(i) for i in o)
 
 
 class BridgeInterface(NetworkInterface):
