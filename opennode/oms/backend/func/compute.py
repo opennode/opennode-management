@@ -21,13 +21,14 @@ class SyncAction(Action):
 
     action('sync')
 
+    @defer.inlineCallbacks
     def execute(self, cmd, args):
-
-        self._sync_consoles(cmd)
+        yield self._sync_consoles(cmd)
 
         if IVirtualCompute.providedBy(self.context):
-            return self._sync_virtual(cmd)
+            yield self._sync_virtual(cmd)
 
+    @db.transact
     def _sync_consoles(self, cmd):
         self.context.consoles = Consoles()
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
