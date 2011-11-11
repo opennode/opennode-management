@@ -48,6 +48,9 @@ class SyncAction(Action):
 
     @db.transact
     def _sync(self, cmd, vm):
+        return self.sync_vm(cmd, vm)
+
+    def sync_vm(self, cmd, vm):
         cmd.write("syncing %s\n" % self.context)
         self.context.state = unicode(vm['state'])
         self.context.effective_state = self.context.state
@@ -63,8 +66,6 @@ class SyncAction(Action):
         self.context.interfaces = NetworkInterfaces()
         for interface in vm['interfaces']:
             self.context.interfaces.add(NetworkInterface(interface['name'], None, interface['mac'], 'active'))
-
-        transaction.commit()
 
 
 class FakeConsoles(Action):
