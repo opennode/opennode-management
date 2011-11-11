@@ -1,6 +1,7 @@
 import unittest
 
 import mock
+import transaction
 from grokcore.component.testing import grok
 from martian.testing import FakeModule
 from nose.tools import eq_, assert_raises
@@ -143,6 +144,7 @@ class SshTestCase(unittest.TestCase):
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
@@ -181,6 +183,7 @@ class SshTestCase(unittest.TestCase):
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('cat computes/%s' % cid)
 
@@ -203,6 +206,7 @@ class SshTestCase(unittest.TestCase):
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('cat computes/%s' % cid)
 
@@ -239,6 +243,7 @@ class SshTestCase(unittest.TestCase):
 
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         orig_current_object = MoveCmd.current_obj
 
@@ -254,6 +259,7 @@ class SshTestCase(unittest.TestCase):
         computes = db.get_root()['oms_root']['computes']
         compute = Compute('linux', 'tux-for-test', 2000, 'active')
         cid = computes.add(compute)
+        transaction.commit()
 
         self._cmd('mv /machines/%s /machines/123' % cid)
         eq_(compute.__name__, '123')
@@ -269,6 +275,7 @@ class SshTestCase(unittest.TestCase):
     def test_modify_compute(self):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST' % cid)
         self.terminal.reset_mock()
@@ -297,6 +304,7 @@ class SshTestCase(unittest.TestCase):
     def test_modify_compute_verbose(self):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST -v' % cid)
         with assert_mock(self.terminal) as t:
@@ -318,6 +326,7 @@ class SshTestCase(unittest.TestCase):
     def test_modify_compute_errors(self):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('set computes/%s hostname=x' % cid)
         with assert_mock(self.terminal) as t:
@@ -436,6 +445,7 @@ class SshTestCase(unittest.TestCase):
     def test_context_dependent_help(self):
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self.terminal.reset_mock()
         self._cmd('set computes/%s -h' % cid)
@@ -487,6 +497,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         computes = db.get_root()['oms_root']['computes']
         cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        transaction.commit()
 
         self._cmd('echo /computes/*-[a-z0-9]*-*')
         with assert_mock(self.terminal) as t:

@@ -92,6 +92,7 @@ def transact(fun):
         if not _db: init()
 
         try:
+            transaction.begin()
             result = fun(*args, **kwargs)
         except:
             transaction.abort()
