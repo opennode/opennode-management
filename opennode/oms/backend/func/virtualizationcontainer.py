@@ -62,26 +62,34 @@ class ListVirtualizationContainerAction(Action):
                 attrs = " ".join(["%s=%s" % pair for pair in console.items()])
                 cmd.write(" %s      %s\n" % (' '*max_key_len, attrs))
 
-class SyncAction(Action):
+
+class SyncVmsAction(Action):
     """Force vms sync + sync host info"""
     context(IVirtualizationContainer)
 
     action('sync')
 
-    @defer.inlineCallbacks
+    @db.transact
     def execute(self, cmd, args):
+        deferred = self._execute(cmd, args)
+        import time
+        while not deferred.called:
+            time.sleep(0.1)
+
+    @defer.inlineCallbacks
+    def _execute(self, cmd, args):
         # sync host interfaces (this is not the right place, but ...)
         host_compute = self.context.__parent__
         job = IHostInterfaces(host_compute)
         ifaces = yield job.run()
 
-        self._sync_ifaces(ifaces)
+        yield self._sync_ifaces(ifaces)
 
         # sync virtual computes
-        self._sync_vms()
+        yield self._sync_vms(cmd)
 
     @defer.inlineCallbacks
-    def _sync_vms(self):
+    def _sync_vms(self, cmd):
         submitter = IVirtualizationContainerSubmitter(self.context)
 
         remote_vms = yield submitter.submit(IListVMS)
@@ -97,9 +105,11 @@ class SyncAction(Action):
             alsoProvides(new_compute, IVirtualCompute)
             self.context.add(new_compute)
 
-        transaction.commit()
+        # sync each vm
+        from opennode.oms.backend.func.compute import SyncAction
+        for action in [SyncAction(i) for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]:
+            yield action.execute(cmd, object())
 
-    @db.transact
     def _sync_ifaces(self, ifaces):
         host_compute = self.context.__parent__
 
@@ -118,4 +128,3 @@ class SyncAction(Action):
 
             host_compute.interfaces.add(iface_node)
 
-        transaction.commit()
