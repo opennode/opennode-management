@@ -67,7 +67,10 @@ class SyncAction(Action):
 
         self.context.interfaces = NetworkInterfaces()
         for interface in vm['interfaces']:
-            self.context.interfaces.add(NetworkInterface(interface['name'], None, interface['mac'], 'active'))
+            iface = NetworkInterface(interface['name'], None, interface['mac'], 'active')
+            if interface.has_key('ipv4_address'):
+                iface.ipv4_address = interface['ipv4_address']
+            self.context.interfaces.add(iface)
 
 
 class FakeConsoles(Action):
