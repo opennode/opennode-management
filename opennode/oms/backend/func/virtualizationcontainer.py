@@ -47,7 +47,7 @@ class ListVirtualizationContainerAction(Action):
         try:
             vms = yield submitter.submit(IListVMS)
         except Exception as e:
-            cmd.write("%s\n" % (": ".join(msg for msg in e.args if not msg.startswith('  File "/'))))
+            cmd.write("%s\n" % (": ".join(msg for msg in e.args if isinstance(msg, str) and not msg.startswith('  File "/'))))
 
         max_key_len = max(len(vm['name']) for vm in vms)
 
