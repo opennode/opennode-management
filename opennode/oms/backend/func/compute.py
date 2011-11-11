@@ -29,7 +29,7 @@ class SyncAction(Action):
 
     @db.transact
     def _sync_consoles(self, cmd):
-        return self._sync_consoles(cmd)
+        return self.sync_consoles(cmd)
 
     def sync_consoles(self, cmd):
         self.context.consoles = Consoles()
