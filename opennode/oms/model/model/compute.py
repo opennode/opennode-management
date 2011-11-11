@@ -40,7 +40,7 @@ class Compute(Container):
 
     __contains__ = IInCompute
 
-    ipv4_address = u'0.0.0.0/32'
+    _ipv4_address = u'0.0.0.0/32'
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
@@ -67,7 +67,7 @@ class Compute(Container):
         self.state = state
         self.template = template
         if ipv4_address:
-            self.ipv4_address = ipv4_address
+            self._ipv4_address = ipv4_address
 
         if self.template:
             alsoProvides(self, IVirtualCompute)
@@ -129,6 +129,14 @@ class Compute(Container):
 
     interfaces = property(get_interfaces, set_interfaces)
 
+    @property
+    def ipv4_address(self):
+        if not self._items.has_key('interfaces'):
+            return self._ipv4_address
+        addresses = [i.ipv4_address for i in self._items['interfaces'] if i.ipv4_address]
+        if not addresses:
+            return self._ipv4_address
+        return addresses[0]
 
 class IVirtualCompute(Interface):
     """A virtual compute."""
