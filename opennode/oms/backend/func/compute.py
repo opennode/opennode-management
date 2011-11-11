@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import transaction
 from grokcore.component import context, subscribe, baseclass
 from twisted.internet import defer
 
