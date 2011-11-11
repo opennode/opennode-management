@@ -73,19 +73,6 @@ class SyncAction(Action):
             self.context.interfaces.add(iface)
 
 
-class FakeConsoles(Action):
-    context(ICompute)
-
-    action('fake_consoles')
-
-    def execute(self, cmd, args):
-        self.context.consoles = Consoles()
-
-        ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
-        self.context.consoles.add(ssh_console)
-        self.context.consoles.add(Symlink('default', ssh_console))
-
-
 class InfoAction(Action):
     """This is a temporary command used to fetch realtime info"""
     context(IVirtualCompute)
