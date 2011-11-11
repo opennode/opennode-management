@@ -108,7 +108,9 @@ class SyncVmsAction(Action):
         from opennode.oms.backend.func.compute import SyncAction
         for action in [SyncAction(i) for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]:
             remote_vm = [i for i in remote_vms if i['uuid'] == action.context.__name__][0]
-            yield action.sync_vm(cmd, remote_vm)
+
+            action.sync_consoles(cmd)
+            action.sync_vm(cmd, remote_vm)
 
     def _sync_ifaces(self, ifaces):
         host_compute = self.context.__parent__

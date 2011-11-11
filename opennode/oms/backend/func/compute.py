@@ -30,6 +30,9 @@ class SyncAction(Action):
 
     @db.transact
     def _sync_consoles(self, cmd):
+        return self._sync_consoles()
+
+    def sync_consoles(self, cmd):
         self.context.consoles = Consoles()
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
         self.context.consoles.add(ssh_console)
