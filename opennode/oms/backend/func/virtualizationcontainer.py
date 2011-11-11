@@ -1,13 +1,13 @@
 import transaction
-
 from grokcore.component import Adapter, context, implements
 from twisted.internet import defer
-from zope.interface import Interface
+from zope.interface import Interface, alsoProvides
 
 from opennode.oms.backend.operation import IListVMS, IHostInterfaces
 from opennode.oms.model.model.actions import Action, action
-from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
+from opennode.oms.model.model.compute import IVirtualCompute, Compute
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, BridgeInterface
+from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 from opennode.oms.zodb import db
 
 
@@ -76,6 +76,28 @@ class SyncAction(Action):
         ifaces = yield job.run()
 
         self._sync_ifaces(ifaces)
+
+        # sync virtual computes
+        self._sync_vms()
+
+    @defer.inlineCallbacks
+    def _sync_vms(self):
+        submitter = IVirtualizationContainerSubmitter(self.context)
+
+        remote_vms = yield submitter.submit(IListVMS)
+        local_vms = [i for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]
+
+        remote_uuids = set(i['uuid'] for i in remote_vms)
+        local_uuids = set(i.__name__ for i in local_vms)
+
+        for vm_uuid in remote_uuids.difference(local_uuids):
+            remote_vm = [i for i in remote_vms if i['uuid'] == vm_uuid][0]
+            new_compute = Compute('linux', remote_vm['name'], 2000, remote_vm['state'])
+            new_compute.__name__ = vm_uuid
+            alsoProvides(new_compute, IVirtualCompute)
+            self.context.add(new_compute)
+
+        transaction.commit()
 
     @db.transact
     def _sync_ifaces(self, ifaces):
