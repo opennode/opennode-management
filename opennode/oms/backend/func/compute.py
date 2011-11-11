@@ -17,12 +17,25 @@ from opennode.oms.zodb import db
 
 class SyncAction(Action):
     """Force compute sync"""
-    context(IVirtualCompute)
+    context(ICompute)
 
     action('sync')
 
-    @defer.inlineCallbacks
     def execute(self, cmd, args):
+
+        self._sync_consoles(cmd)
+
+        if IVirtualCompute.providedBy(self.context):
+            return self._sync_virtual(cmd)
+
+    def _sync_consoles(self, cmd):
+        self.context.consoles = Consoles()
+        ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
+        self.context.consoles.add(ssh_console)
+        self.context.consoles.add(Symlink('default', ssh_console))
+
+    @defer.inlineCallbacks
+    def _sync_virtual(self, cmd):
         submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
         try:
             # TODO: not efficient but for now it's not important to add an ad-hoc func method for this.
@@ -37,17 +50,12 @@ class SyncAction(Action):
         cmd.write("syncing %s\n" % self.context)
         self.context.state = unicode(vm['state'])
         self.context.effective_state = self.context.state
-        self.context.consoles = Consoles()
 
         for idx, console in enumerate(vm['consoles']):
             if console['type'] == 'pty':
                 self.context.consoles.add(TtyConsole('tty%s'% idx, console['pty']))
             if console['type'] == 'vnc':
                 self.context.consoles.add(VncConsole(self.context.__parent__.__parent__.hostname, int(console['port'])))
-
-        ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
-        self.context.consoles.add(ssh_console)
-        self.context.consoles.add(Symlink('default', ssh_console))
 
         # networks
 
