@@ -40,6 +40,7 @@ class NetworkInterface(ReadonlyContainer):
         self.stp = False
 
         self.ipv6_address = ''
+        self.ipv4_address = ''
 
     @property
     def _items(self):
