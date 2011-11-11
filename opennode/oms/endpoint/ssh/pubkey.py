@@ -13,16 +13,15 @@ class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
         # Super is old-style class without constructor
         self.publicKey = None
 
-        home = os.environ["HOME"]
-        for pubkey in ["id_dsa.pub", "id_rsa.pub"]:
-            name = "%s/.ssh/%s" % (home, pubkey)
-            if os.path.exists(name):
-                f = open(name, 'r')
-                self.publicKey = f.read()
-                break
-
     def checkKey(self, credentials):
         """Accepts any user name"""
-        if not self.publicKey:
-            return False
-        return keys.Key.fromString(data=self.publicKey).blob() == credentials.blob
+
+        home = os.environ["HOME"]
+        with open('%s/.ssh/authorized_keys' % home) as f:
+            for key in f:
+                if self._checkKey(credentials, key):
+                    return True
+        return  False
+
+    def _checkKey(self, credentials, key):
+        return keys.Key.fromString(data=key).blob() == credentials.blob
