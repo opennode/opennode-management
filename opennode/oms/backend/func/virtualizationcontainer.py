@@ -87,10 +87,9 @@ class SyncAction(Action):
             if interface['type'] == 'bridge':
                 cls = BridgeInterface
 
-            iface_node = cls(interface['name'], None, interface['mac'], 'active')
+            iface_node = cls(interface['name'], None, interface.get('mac', None), 'active')
 
             if interface.has_key('ip'):
-                print  "SETTING IP ADDR", interface['ip']
                 iface_node.ipv4_address = interface['ip']
             if interface['type'] == 'bridge':
                 iface_node.members = interface['members']
