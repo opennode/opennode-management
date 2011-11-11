@@ -10,6 +10,7 @@ from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
 from .symlink import Symlink
+from opennode.oms.backend.operation import IFuncInstalled
 from opennode.oms.model.schema import Path
 
 
@@ -71,6 +72,8 @@ class Compute(Container):
 
         if self.template:
             alsoProvides(self, IVirtualCompute)
+        else:
+            alsoProvides(self, IFuncInstalled)
 
         alsoProvides(self, IIncomplete)
 
