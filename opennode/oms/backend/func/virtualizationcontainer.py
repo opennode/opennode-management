@@ -1,4 +1,3 @@
-import transaction
 from grokcore.component import Adapter, context, implements
 from twisted.internet import defer
 from zope.interface import Interface, alsoProvides
