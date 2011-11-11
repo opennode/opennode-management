@@ -37,6 +37,10 @@ class ISshConsole(IConsole):
     port = schema.Int(title=u"port")
 
 
+class IOpenVzConsole(IConsole):
+    cid = schema.Int(title=u"cid")
+
+
 class IVncConsole(IConsole):
     hostname = schema.TextLine(title=u"hostname")
     port = schema.Int(title=u"port")
@@ -63,6 +67,14 @@ class SshConsole(ReadonlyContainer):
         self.user = user
         self.hostname = hostname
         self.port = port
+
+
+class OpenVzConsole(ReadonlyContainer):
+    implements(IOpenVzConsole, ITextualConsole)
+
+    def __init__(self, name, cid):
+        self.__name__ = name
+        self.cid = cid
 
 
 class VncConsole(ReadonlyContainer):

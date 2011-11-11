@@ -8,7 +8,7 @@ from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, IS
 from opennode.oms.model.form import IModelModifiedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute
-from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, VncConsole
+from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.zodb import db
@@ -60,6 +60,8 @@ class SyncAction(Action):
         for idx, console in enumerate(vm['consoles']):
             if console['type'] == 'pty':
                 self.context.consoles.add(TtyConsole('tty%s'% idx, console['pty']))
+            if console['type'] == 'openvz':
+                self.context.consoles.add(OpenVzConsole('tty%s'% idx, console['cid']))
             if console['type'] == 'vnc':
                 self.context.consoles.add(VncConsole(self.context.__parent__.__parent__.hostname, int(console['port'])))
 
