@@ -432,6 +432,43 @@ provideAdapter(SetOrMkCmdDynamicArguments, adapts=(SetAttrCmd, ))
 provideAdapter(SetOrMkCmdDynamicArguments, adapts=(CreateObjCmd, ))
 
 
+class LinkCmd(Cmd):
+    """Creates a (sym)link to an object."""
+    implements(ICmdArgumentsSyntax)
+
+    command('ln')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-s', action='store_true', help="ignored, as we only have symbolic links")
+        parser.add_argument('-f', action='store_true', help="Force, delete destination if exists")
+        parser.add_argument('src')
+        parser.add_argument('dst')
+        return parser
+
+    @db.transact
+    def execute(self, args):
+        src_obj = self.traverse(args.src)
+        if not src_obj:
+            self.write("cannot create symlink: Source file not found\n")
+            return
+
+        dst_obj = self.traverse(args.dst)
+        if dst_obj:
+            if args.f:
+                self.write("currently -f is not implemented\n")
+                # del dst_obj.__parent__[dst_obj.__name__]
+            else:
+                self.write("cannot create symlink: File exists\n")
+                return
+
+        dst_dir = self.current_obj
+        if os.path.dirname(args.dst):
+            dst_dir = self.traverse(os.path.dirname(args.dst))
+
+        dst_dir.add(Symlink(os.path.basename(args.dst), src_obj))
+
+
 class FileCmd(Cmd):
     """Outputs the type of an object."""
     implements(ICmdArgumentsSyntax)
