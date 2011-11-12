@@ -140,12 +140,18 @@ class ComputeView(HttpRestView):
                 'diskspace_backuppartition': self.context.diskspace_backuppartition,
                 'startup_timestamp': self.context.startup_timestamp,
                 'bridge_interfaces': self._network_interfaces(request),
-                'vms': self._vms(request)
+                'children': self._children(request),
                 }
+
+    def _children(self, request):
+        ret = [
+            self._vms(request),
+        ]
+        return [i for i in ret if i]
 
     def _vms(self, request):
         if not self.context['vms']:
-            return {}
+            return None
         return IHttpRestView(self.context['vms']).render_recursive(request, 2)
 
     def _network_interfaces(self, request):
