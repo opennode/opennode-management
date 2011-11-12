@@ -175,6 +175,11 @@ class Computes(AddingContainer):
         machines = db.get_root()['oms_root'].machines
         return (machines.hangar if IVirtualCompute.providedBy(item) else machines).add(item)
 
+    def __delitem__(self, key):
+        item = self._items[key]
+        if isinstance(item, Symlink):
+            del item.target.__parent__[item.target.__name__]
+
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
