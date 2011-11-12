@@ -267,14 +267,17 @@ class RemoveCmd(Cmd):
     @db.transact
     def execute(self, args):
         for path in args.paths:
-            obj = self.traverse(path)
-            if not obj:
+            obj_dir = self.current_obj
+            if os.path.dirname(path):
+                obj_dir = self.traverse(os.path.dirname(path))
+
+            obj = obj_dir[os.path.basename(path)]
+
+            if not obj_dir or not obj:
                 self.write("No such object: %s\n" % path)
                 continue
 
-            del obj.__parent__[obj.__name__]
-
-        transaction.commit()
+            del obj_dir[obj.__name__]
 
 
 class MoveCmd(Cmd):
