@@ -22,10 +22,28 @@ class SyncAction(Action):
 
     @defer.inlineCallbacks
     def execute(self, cmd, args):
+        default = self.default_console()
+
         yield self._sync_consoles(cmd)
 
         if IVirtualCompute.providedBy(self.context):
             yield self._sync_virtual(cmd)
+
+        yield self._create_default_console(default)
+
+    @db.transact
+    def _create_default_console(self, cmd):
+        return self.create_default_console(cmd)
+
+    def default_console(self):
+        default = self.context.consoles['default']
+        if default:
+            return default.target.__name__
+
+    def create_default_console(self, default):
+        if not default or not self.context.consoles[default]:
+            default = 'ssh'
+        self.context.consoles.add(Symlink('default', self.context.consoles[default]))
 
     @db.transact
     def _sync_consoles(self, cmd):
@@ -35,7 +53,6 @@ class SyncAction(Action):
         self.context.consoles = Consoles()
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
         self.context.consoles.add(ssh_console)
-        self.context.consoles.add(Symlink('default', ssh_console))
 
     @defer.inlineCallbacks
     def _sync_virtual(self, cmd):

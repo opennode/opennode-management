@@ -97,7 +97,11 @@ class AddingContainer(ReadonlyContainer):
     """
 
     def can_contain(self, item):
+        from opennode.oms.model.model.symlink import Symlink
+
         if isinstance(self.__contains__, InterfaceClass):
+            if isinstance(item, Symlink):
+                item = item.target
             return self.__contains__.providedBy(item) or self.__contains__.implementedBy(item)
         else:
             return isinstance(item, self.__contains__) or issubclass(item, self.__contains__)

@@ -109,8 +109,11 @@ class SyncVmsAction(Action):
         for action in [SyncAction(i) for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]:
             remote_vm = [i for i in remote_vms if i['uuid'] == action.context.__name__][0]
 
+            # todo delegate all this into the action itself
+            default_console = action.default_console()
             action.sync_consoles(cmd)
             action.sync_vm(cmd, remote_vm)
+            action.create_default_console(default_console)
 
     def _sync_ifaces(self, ifaces):
         host_compute = self.context.__parent__
