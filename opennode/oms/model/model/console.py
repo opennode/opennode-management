@@ -111,7 +111,7 @@ class VncProxyProcess(object):
     def __init__(self, hostname, port):
         self.port = port
         self.proxy_port = port + 1000
-        self.process = subprocess.Popen(['python', 'utils/wsproxy.py', '--web', '/home/marko/Projects/opennode/noVNC', str(self.proxy_port), '%s:%s' % (hostname, self.port)])
+        self.process = subprocess.Popen(['python', 'utils/wsproxy.py', str(self.proxy_port), '%s:%s' % (hostname, self.port)])
 
     def kill(self):
         self.process.terminate()
