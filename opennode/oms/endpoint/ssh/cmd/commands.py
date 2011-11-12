@@ -119,24 +119,23 @@ class ChangeDirCmd(Cmd):
         if os.path.isabs(path):
             objs.insert(0, db.deref(self.obj_path[0]))
 
-
         # Handle '//foo/bar//fee'
         path_components = path.split('/')
         path_components[1:] = [i for i in path_components[1:] if i != '']
 
+        oms_root = self.obj_path[0]
+
+        if path_components[0] == '':
+            del self.obj_path[:]
+            del self.path[:]
+
         for obj, name in zip(objs, path_components):
             ref = db.ref(obj)
-            try:
-                # Try to find the object in the current path:
-                overlap = self.obj_path.index(ref)
-            except ValueError:
-                # ... if not found, add it:
-                self.obj_path.append(ref)
-                self.path.append(name)
-            else:
-                # ... otherwise remove everything that follows it:
-                self.obj_path[overlap+1:] = []
-                self.path[overlap+1:] = []
+            if name == '.' or (ref == oms_root and oms_root in self.obj_path):
+                continue
+
+            self.obj_path.append(ref)
+            self.path.append(name)
 
 
 class ListDirContentsCmd(Cmd):
