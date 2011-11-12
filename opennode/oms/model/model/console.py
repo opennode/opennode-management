@@ -177,16 +177,40 @@ class SshAttachAction(AttachAction):
         ssh_connect_interactive_shell(self.context.user, self.context.hostname, self.context.port, self.transport, self._set_channel, size)
 
 
-class TtyAttachAction(AttachAction):
-    context(ITtyConsole)
+class HypervisorSshAttachAction(AttachAction):
+    """For consoles that are attached by running a command on the hypervisor host."""
+    baseclass()
 
     def _do_connection(self, size):
-        self.write("Attaching to %s. Use ^] to force exit.\n" % (self.context.pty.encode('utf-8')))
+        self.write("Attaching to %s. Use ^] to force exit.\n" % self.name)
 
-        command = 'screen -xRR %s %s' % (self.context.pty.replace('/',''), self.context.pty)
         phy = self.context.__parent__.__parent__.__parent__.__parent__
 
-        ssh_connect_interactive_shell('root', phy.hostname, 22, self.transport, self._set_channel, size, command)
+        ssh_connect_interactive_shell('root', phy.hostname, 22, self.transport, self._set_channel, size, self.command)
+
+
+class TtyAttachAction(HypervisorSshAttachAction):
+    context(ITtyConsole)
+
+    @property
+    def command(self):
+        return 'screen -xRR %s %s' % (self.context.pty.replace('/',''), self.context.pty)
+
+    @property
+    def name(self):
+        return self.context.pty.encode('utf-8')
+
+
+class OpenvzAttachAction(HypervisorSshAttachAction):
+    context(IOpenVzConsole)
+
+    @property
+    def command(self):
+        return 'vzctl enter %s' % (self.context.cid)
+
+    @property
+    def name(self):
+        return self.context.cid
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(IConsole, ))
