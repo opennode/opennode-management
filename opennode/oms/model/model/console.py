@@ -121,6 +121,7 @@ class VncProxyProcess(object):
 
 class Consoles(Container):
     __name__ = 'consoles'
+    __contains__ = IConsole
 
 
 class AttachAction(Action):
