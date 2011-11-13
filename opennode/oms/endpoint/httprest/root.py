@@ -103,6 +103,8 @@ class HttpRestServer(resource.Resource):
             if exc.message:
                 request.write("%s\n" % exc.message)
         except Exception:
+            request.setResponseCode(500, "Server Error")
+            request.write("%s %s\n\n" % (500, "Server Error"))
             Failure().printTraceback(request)
         else:
             # allow views to take full control of output streaming
