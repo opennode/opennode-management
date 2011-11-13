@@ -15,18 +15,38 @@ class EmptyResponse(Exception):
     pass
 
 
-class NotFound(Exception):
-    pass
+class HttpStatus(Exception):
+    @property
+    def status_code(self):
+        raise NotImplementedError
+
+    @property
+    def status_description(self):
+        raise NotImplementedError
 
 
-class NotImplemented(Exception):
-    pass
+class NotFound(HttpStatus):
+    status_code = 404
+    status_description = "Not Found"
 
 
-class SeeCanonical(Exception):
+class NotImplemented(HttpStatus):
+    status_code = 501
+    status_description = "Not Implemented"
+
+
+class SeeCanonical(HttpStatus):
+    status_code = 301
+    status_description = "Moved Permanently"
+
     def __init__(self, url, *args, **kwargs):
         super(SeeCanonical, self).__init__(*args, **kwargs)
         self.url = url
+
+
+class BadRequest(HttpStatus):
+    status_code = 400
+    status_description = "Bad Request"
 
 
 class HttpRestServer(resource.Resource):
@@ -77,15 +97,11 @@ class HttpRestServer(resource.Resource):
                 raise ret
         except EmptyResponse:
             pass
-        except NotFound:
-            request.setResponseCode(404, "Not Found")
-            request.write("404 Not Found\n")
-        except SeeCanonical as exc:
-            request.setResponseCode(301, 'Moved Permanently')
-            request.setHeader('Location', exc.url)
-        except NotImplemented as exc:
-            request.write("Not implemented: %s" % exc.message)
-            request.setResponseCode(501, "Not implemented")
+        except HttpStatus as exc:
+            request.setResponseCode(exc.status_code, exc.status_description)
+            request.write("%s %s\n" % (exc.status_code, exc.status_description))
+            if exc.message:
+                request.write("%s\n" % exc.message)
         except Exception:
             Failure().printTraceback(request)
         else:
