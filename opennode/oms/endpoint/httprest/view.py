@@ -23,7 +23,7 @@ from opennode.oms.util import get_direct_interfaces
 class DefaultView(HttpRestView):
     context(object)
 
-    def render(self, request):
+    def render_GET(self, request):
         obj = self.context
         # NODE: code copied from commands.py:CatCmd
         schemas = get_direct_interfaces(obj)
@@ -59,7 +59,7 @@ class DefaultView(HttpRestView):
 class ContainerView(DefaultView):
     context(IContainer)
 
-    def render(self, request):
+    def render_GET(self, request):
         depth = request.args.get('depth', ['0'])[0]
         try:
             depth = int(depth)
