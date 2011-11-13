@@ -13,7 +13,8 @@ from zope.component import provideSubscriptionAdapter, provideAdapter
 import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax, GroupDictAction, VirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
+                                               GroupDictAction, VirtualConsoleArgumentParser)
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
 from opennode.oms.model.form import ApplyRawData
@@ -44,7 +45,8 @@ class CommonArgs(Subscription):
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('-v', '--verbose', action='count', help="be verbose, use it multiple times to increase verbosity")
+        parser.add_argument('-v', '--verbose', action='count',
+                            help="be verbose, use it multiple times to increase verbosity")
         return parser
 
 
@@ -56,7 +58,8 @@ class ChangeDirCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('path', nargs='?')
-        parser.add_argument('-P', action='store_true', help="use physical directory structure instead of following symbolic links")
+        parser.add_argument('-P', action='store_true',
+                            help="use physical directory structure instead of following symbolic links")
         return parser
 
     @db.transact
@@ -421,8 +424,9 @@ class SetOrMkCmdDynamicArguments(Adapter):
                     kwargs['is_path'] = True
                     kwargs['base_path'] = field.base_path
 
-                parser.add_argument('=' + name, required=args_required and field.required, type=type, action=GroupDictAction,
-                                    group='keywords', help=field.title.encode('utf8'), choices=choices, **kwargs)
+                parser.add_argument('=%s' % name, required=(args_required and field.required),
+                                    type=type, action=GroupDictAction, group='keywords',
+                                    help=field.title.encode('utf8'), choices=choices, **kwargs)
 
         return parser
 
@@ -531,7 +535,8 @@ class HelpCmd(Cmd):
         if args.command:
             yield self._cmd_help(args.command)
         else:
-            self.write("valid commands: %s\n" % (', '.join(sorted(i._format_names() for i in (yield self._commands())))))
+            cmd_names = ', '.join(sorted(i._format_names() for i in (yield self._commands())))
+            self.write("valid commands: %s\n" % cmd_names)
 
     @db.transact
     def _cmd_help(self, name):
@@ -641,9 +646,12 @@ class TaskListCmd(Cmd):
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('bsd', nargs='*', help="Ignored bsd args, for those who have unix type habits (e.g. 'ps xa')")
-        parser.add_argument('-d', action='store_true', help="Show recently finished (dead) tasks.")
-        parser.add_argument('-l', action='store_true', help="Show parent task id")
+        parser.add_argument('bsd', nargs='*',
+                            help="Ignored bsd args, for those who have unix type habits (e.g. 'ps xa')")
+        parser.add_argument('-d', action='store_true',
+                            help="Show recently finished (dead) tasks.")
+        parser.add_argument('-l', action='store_true',
+                            help="Show parent task id")
         return parser
 
     @db.transact
@@ -655,10 +663,15 @@ class TaskListCmd(Cmd):
 
         max_key_len = max(3, *[len(i) for i in Proc().content().keys()])
 
-        self.write("%s    %sTIME CMD\n" % ("TID".rjust(max_key_len), "PTID    ".rjust(max_key_len) if args.l else ''))
+        self.write("%s    %sTIME CMD\n" % ("TID".rjust(max_key_len),
+                                           "PTID    ".rjust(max_key_len) if args.l else ''))
+
         for tid, task in tasks.items():
             ptid = task.ptid
-            self.write("%s %s%s %s\n" % (tid.rjust(max_key_len), (ptid + ' ').rjust(max_key_len) if args.l else '', datetime.timedelta(0, int(task.uptime)), task.cmdline))
+            self.write("%s %s%s %s\n" % (tid.rjust(max_key_len),
+                                         (ptid + ' ').rjust(max_key_len) if args.l else '',
+                                         datetime.timedelta(0, int(task.uptime)),
+                                         task.cmdline))
 
 
 class OmsShellCmd(Cmd):

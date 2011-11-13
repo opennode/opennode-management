@@ -86,7 +86,9 @@ class ContainerView(DefaultView):
         if q:
             items = [item for item in items if IFiltrable(item).match(q)]
 
-        children = [IHttpRestView(item).render_recursive(request, depth - 1) for item in items if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
+        children = [IHttpRestView(item).render_recursive(request, depth - 1)
+                    for item in items
+                    if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
 
         # backward compatibility:
         # top level results for pure containers are plain lists
@@ -114,7 +116,8 @@ class VirtualizationContainerView(ContainerView):
     context(VirtualizationContainer)
 
     def blacklisted(self, item):
-        return super(VirtualizationContainerView, self).blacklisted(item) or isinstance(item, ActionsContainer)
+        return (super(VirtualizationContainerView, self).blacklisted(item)
+                or isinstance(item, ActionsContainer))
 
 
 class ComputeView(HttpRestView):
@@ -160,7 +163,8 @@ class ComputeView(HttpRestView):
 
     def _network_interfaces(self, request):
         try:
-            return IHttpRestView(self.context['interfaces']).render_recursive(request, 1)['children']
+            view = IHttpRestView(self.context['interfaces'])
+            return view.render_recursive(request, 1)['children']
         except:
             #return self._dummy_network_data()['bridge_interfaces']
             return []
