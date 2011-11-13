@@ -49,9 +49,7 @@ class DefaultView(HttpRestView):
         if not form.errors:
             form.apply()
         else:
-            sio = StringIO.StringIO()
-            form.write_errors(to=sio)
-            raise Exception(sio.getvalue())
+            return form.error_dict()
 
         return json.dumps('ok')
 
