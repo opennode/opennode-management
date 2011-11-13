@@ -45,7 +45,7 @@ class DefaultView(HttpRestView):
     def render_PUT(self, request):
         data = json.load(request.content)
 
-        form = ApplyRawData(data, self.context)
+        form = ApplyRawData(data, obj=self.context)
         if not form.errors:
             form.apply()
         else:
