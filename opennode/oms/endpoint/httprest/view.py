@@ -1,4 +1,3 @@
-import StringIO
 import json
 from collections import OrderedDict
 
