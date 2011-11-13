@@ -60,7 +60,11 @@ class ContainerView(DefaultView):
     context(IContainer)
 
     def render(self, request):
-        depth = int(request.args.get('depth', ['1'])[0])
+        depth = request.args.get('depth', ['0'])[0]
+        try:
+            depth = int(depth)
+        except ValueError:
+            depth = 0
         return self.render_recursive(request, depth, top_level=True)
 
     def render_recursive(self, request, depth, top_level=False):
@@ -91,7 +95,7 @@ class ContainerView(DefaultView):
 
         #if not top_level or depth > 1:
         #if depth > 1:
-        if not top_level or depth > 1:
+        if not top_level or depth > 0:
             container_properties['children'] = children
         return  container_properties
 
