@@ -83,9 +83,9 @@ class HttpRestServer(resource.Resource):
         except SeeCanonical as exc:
             request.setResponseCode(301, 'Moved Permanently')
             request.setHeader('Location', exc.url)
-            request.setResponseCode(501, "Not implemented")
         except NotImplemented as exc:
             request.write("Not implemented: %s" % exc.message)
+            request.setResponseCode(501, "Not implemented")
         except Exception:
             Failure().printTraceback(request)
         else:
