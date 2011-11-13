@@ -116,10 +116,16 @@ class ApplyRawData(object):
         assert not self.errors, "There should be no validation errors"
         self.tmp_obj.apply()
 
-    def write_errors(self, to):
+    def error_dict(self):
+        ret = {}
         for key, error in self.errors:
             msg = error.doc().encode('utf8')
-            to.write("%s: %s\n" % (key, msg) if key else "%s\n" % msg)
+            ret[key or '__all__'] = msg
+        return ret
+
+    def write_errors(self, to):
+        for key, msg in self.error_dict().items():
+            to.write("%s: %s\n" % (key, msg) if key is not '__all__' else "%s\n" % msg)
 
 
 class TmpObj(object):
