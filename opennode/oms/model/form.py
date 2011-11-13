@@ -120,7 +120,7 @@ class ApplyRawData(object):
         ret = {}
         for key, error in self.errors:
             msg = error.doc().encode('utf8')
-            ret[key or '__all__'] = msg
+            ret[key if key is not None else '__all__'] = msg
         return ret
 
     def write_errors(self, to):
