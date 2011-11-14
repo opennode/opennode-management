@@ -167,7 +167,7 @@ class TerminalSession(object):
     def write(self, request):
         # chunk writes because the javascript renderer is very slow
         # this avoids long pauses to the user.
-        chunk_size = 100
+        chunk_size = 4000
 
         unicode_buffer = self.buffer.decode('utf-8')
 
