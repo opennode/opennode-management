@@ -183,3 +183,24 @@ class Computes(AddingContainer):
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
+
+# #####################
+# hack (but lowercase)
+#
+# let the onc guy work
+# #####################
+
+from .base import IContainerExtender
+from grokcore.component import Subscription, baseclass
+
+
+class TemplatesComputeExtension(Subscription):
+    implements(IContainerExtender)
+    baseclass()
+
+    def extend(self):
+        from opennode.oms.zodb import db
+        return {'templates': Symlink('templates', db.get_root()['oms_root']['templates'])}
+
+
+provideSubscriptionAdapter(TemplatesComputeExtension, adapts=(Compute, ))
