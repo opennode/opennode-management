@@ -120,7 +120,7 @@ class VirtualizationContainerView(ContainerView):
 class ComputeView(HttpRestView):
     context(Compute)
 
-    def render(self, request):
+    def render_GET(self, request):
 
         return {'id': self.context.__name__,
                 'hostname': self.context.hostname,

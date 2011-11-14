@@ -15,4 +15,4 @@ class HttpRestView(Adapter):
     baseclass()
 
     def render_recursive(self, request, depth):
-        return self.render(request)
+        return self.render_GET(request)
