@@ -236,19 +236,19 @@ class CatObjectCmd(Cmd):
             self.write("Unable to create a printable representation.\n")
             return
 
+        data = OrderedDict()
         for schema in schemas:
             fields = zope.schema.getFieldsInOrder(schema)
-            data = OrderedDict()
             for name, field in fields:
                 key = field.description or field.title
                 key = key.encode('utf8')
                 data[key] = field.get(obj)
 
-            if data:
-                max_key_len = max(len(key) for key in data)
-                for key, value in data.items():
-                    self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
-                                             str(value).encode('utf8')))
+        if data:
+            max_key_len = max(len(key) for key in data)
+            for key, value in data.items():
+                self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
+                                         str(value).encode('utf8')))
 
         if IIncomplete.providedBy(obj):
             self.write("-----------------\n")
