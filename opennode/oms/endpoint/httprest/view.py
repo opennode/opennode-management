@@ -38,6 +38,7 @@ class DefaultView(HttpRestView):
                 data[key] = field.get(obj)
 
         data['id'] = obj.__name__
+        data['__type__'] = type(self.context).__name__
 
         return data
 
@@ -65,7 +66,7 @@ class ContainerView(DefaultView):
         return self.render_recursive(request, depth, top_level=True)
 
     def render_recursive(self, request, depth, top_level=False):
-        container_properties = {'id': self.context.__name__}
+        container_properties = {'id': self.context.__name__, '__type__': type(self.context).__name__}
 
         try:
             container_properties = super(ContainerView, self).render_GET(request)
@@ -123,6 +124,7 @@ class ComputeView(HttpRestView):
     def render_GET(self, request):
 
         return {'id': self.context.__name__,
+                '__type__': type(self.context).__name__,
                 'hostname': self.context.hostname,
                 'ipv4_address': self.context.ipv4_address,
                 'ipv6_address': self.context.ipv6_address,
@@ -150,6 +152,7 @@ class ComputeView(HttpRestView):
     def _children(self, request):
         ret = [
             self._vms(request),
+            self._templates(request),
         ]
         return [i for i in ret if i]
 
@@ -157,6 +160,11 @@ class ComputeView(HttpRestView):
         if not self.context['vms']:
             return None
         return IHttpRestView(self.context['vms']).render_recursive(request, 2)
+
+    def _templates(self, request):
+        if not self.context['templates']:
+            return None
+        return IHttpRestView(follow_symlinks(self.context['templates'])).render_recursive(request, 2)
 
     def _network_interfaces(self, request):
         try:
