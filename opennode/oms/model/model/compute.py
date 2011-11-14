@@ -200,7 +200,9 @@ class TemplatesComputeExtension(Subscription):
 
     def extend(self):
         from opennode.oms.zodb import db
-        return {'templates': Symlink('templates', db.get_root()['oms_root']['templates'])}
+        if self.context._items.has_key('vms'):
+            return {'templates': Symlink('templates', db.get_root()['oms_root']['templates'])}
+        return {}
 
 
 provideSubscriptionAdapter(TemplatesComputeExtension, adapts=(Compute, ))
