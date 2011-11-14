@@ -68,7 +68,7 @@ class ContainerView(DefaultView):
         container_properties = {'id': self.context.__name__}
 
         try:
-            container_properties = super(ContainerView, self).render(request)
+            container_properties = super(ContainerView, self).render_GET(request)
         except Exception:
             pass
 
