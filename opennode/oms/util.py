@@ -20,7 +20,10 @@ def get_direct_interfaces(obj):
     """
     cls = obj if isinstance(obj, type) else type(obj)
 
-    interfaces = list(zope.interface.implementedBy(cls).interfaces())
+    if not isinstance(obj, type) and hasattr(obj, 'implemented_interfaces') :
+        interfaces = obj.implemented_interfaces()
+    else:
+        interfaces = list(zope.interface.implementedBy(cls).interfaces())
 
     for base_cls in cls.__bases__:
         for interface in list(zope.interface.implementedBy(base_cls).interfaces()):
