@@ -24,6 +24,9 @@ class ICompute(Interface):
     state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'suspended'))
     effective_state = schema.TextLine(title=u"Effective state", readonly=True, required=False)
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
+    ncpus = schema.Int(title=u"CPU/cores number", description=u"Number of CPU/cores", required=False)
+    cpu_limit = schema.Float(title=u"CPU limit", description=u"Cpu limit", required=False)
+    diskspace = schema.Int(title=u"Disk size", description=u"Size of main volume", required=False)
 
 
 class IInCompute(Interface):
@@ -58,6 +61,9 @@ class Compute(Container):
     diskspace_vzpartition = 77.7
     diskspace_backuppartition = 77.7
     startup_timestamp = "2011-07-06 01:23:45"
+    ncpus = 1
+    cpu_limit = 1.0
+    autostart = False
 
     def __init__(self, architecture, hostname, memory, state, template=None, ipv4_address=None):
         super(Compute, self).__init__()
@@ -141,8 +147,11 @@ class Compute(Container):
             return self._ipv4_address
         return addresses[0]
 
+
 class IVirtualCompute(Interface):
     """A virtual compute."""
+
+    autostart = schema.Bool(title=u"Autostart", description=u"Start on boot", required=False)
 
 
 class Computes(AddingContainer):
