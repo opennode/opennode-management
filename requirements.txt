@@ -2,6 +2,8 @@ Twisted
 storm
 transaction
 zope.component
+zope.app.catalog
+zope.app.intid
 grokcore.component
 columnize
 ipython>=0.11

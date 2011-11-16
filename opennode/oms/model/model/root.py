@@ -7,6 +7,7 @@ from .log import Log
 from .machines import Machines
 from .network import Networks
 from .proc import Proc
+from .search import SearchContainer
 from .template import Templates
 
 
@@ -25,6 +26,7 @@ class OmsRoot(ReadonlyContainer):
         'computes': self.computes,
         'templates': self.templates,
         'machines': self.machines,
+        'search': self.search,
         'networks': self.networks,
         'bin': self.bin,
         'proc': self.proc,
@@ -69,6 +71,13 @@ class OmsRoot(ReadonlyContainer):
             self._networks = Networks()
             self._networks.__parent__ = self
         return self._networks
+
+    @property
+    def search(self):
+        if not getattr(self, '_search', None):
+            self._search = SearchContainer()
+            self._search.__parent__ = self
+        return self._search
 
 
     def __str__(self):
