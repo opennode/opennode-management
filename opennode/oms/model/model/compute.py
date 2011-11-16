@@ -5,10 +5,11 @@ from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
 
 from .actions import ActionsContainerExtension
-from .base import IContainer, Container, AddingContainer, IIncomplete
+from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
 from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
+from .search import ITagged
 from .symlink import Symlink
 from opennode.oms.backend.operation import IFuncInstalled
 from opennode.oms.model.schema import Path
@@ -40,7 +41,7 @@ class IDeployed(Interface):
 class Compute(Container):
     """A compute node."""
 
-    implements(ICompute)
+    implements(ICompute, IDisplayName, ITagged)
 
     __contains__ = IInCompute
 
@@ -96,6 +97,9 @@ class Compute(Container):
 
         """
         return [self.hostname, ]
+
+    def tags(self):
+        return ['tagx', 'tagy', self.architecture.encode('utf-8'), self.state.encode('utf-8')]
 
     def get_effective_state(self):
         """Since we lack schema/data upgrade scripts I have to
@@ -201,7 +205,6 @@ provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
 
 from .base import IContainerExtender
 from grokcore.component import Subscription, baseclass
-
 
 class TemplatesComputeExtension(Subscription):
     implements(IContainerExtender)

@@ -8,6 +8,7 @@ from .actions import ActionsContainerExtension
 from .base import Container
 from .byname import ByNameContainerExtension
 from .compute import Compute, IInCompute
+from .search import ITagged
 
 
 class IVirtualizationContainer(Interface):
@@ -15,7 +16,7 @@ class IVirtualizationContainer(Interface):
 
 
 class VirtualizationContainer(Container):
-    implements(IVirtualizationContainer, IInCompute)
+    implements(IVirtualizationContainer, IInCompute, ITagged)
 
     __contains__ = Compute
 
@@ -28,6 +29,9 @@ class VirtualizationContainer(Container):
 
     def __str__(self):
         return 'virtualizationcontainer%s' % self.__name__
+
+    def tags(self):
+        return [self.backend.encode('utf-8')]
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(VirtualizationContainer, ))

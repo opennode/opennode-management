@@ -4,8 +4,9 @@ from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
-from .base import Model, Container
+from .base import Model, Container, IDisplayName
 from .byname import ByNameContainerExtension
+from .search import ITagged
 
 
 class ITemplate(Interface):
@@ -18,7 +19,7 @@ class ITemplate(Interface):
 
 
 class Template(Model):
-    implements(ITemplate)
+    implements(ITemplate, IDisplayName, ITagged)
 
     def __init__(self, name, base_type, min_cores=0, max_cores=float('inf'), min_memory=0, max_memory=float('inf')):
         self.name = name
@@ -31,6 +32,9 @@ class Template(Model):
 
     def display_name(self):
         return self.name
+
+    def tags(self):
+        return ['template_x', self.base_type.encode('utf-8')]
 
 
 class Templates(Container):
