@@ -35,6 +35,11 @@ class IContainer(IModel):
         """Returns an iterator over the items in this container."""
 
 
+class IDisplayName(Interface):
+    def display_name():
+        """Name for display"""
+
+
 class IIncomplete(Interface):
     def missing_parts():
         """Lists all the missing items which this object lacks before it can the
@@ -48,9 +53,6 @@ class Model(persistent.Persistent):
 
     __parent__ = None
     __name__ = None
-
-    def display_name(self):
-        return None
 
     def implemented_interfaces(self):
         return get_direct_interfaces(type(self)) + list(directlyProvidedBy(self).interfaces())

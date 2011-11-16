@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from grokcore.component import Subscription, baseclass
 from zope.interface import implements
 
-from .base import IContainerExtender, ReadonlyContainer
+from .base import IContainerExtender, ReadonlyContainer, IDisplayName
 from .symlink import Symlink, follow_symlinks
 
 
@@ -21,9 +21,14 @@ class ByNameContainer(ReadonlyContainer):
     def content(self):
         items = {}
         for item in self.__parent__.listcontent():
-            display_name = follow_symlinks(item).display_name()
-            if display_name:
-                items[display_name] = Symlink(display_name, item)
+            real_item = follow_symlinks(item)
+
+            # TODO: check why queryAdapter cannot be used here
+            if IDisplayName.providedBy(real_item):
+                named = IDisplayName(real_item)
+                if named:
+                    display_name = named.display_name()
+                    items[display_name] = Symlink(display_name, item)
 
         return items
 
