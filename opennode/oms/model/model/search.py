@@ -38,6 +38,9 @@ class SearchContainer(ReadonlyContainer):
         self.catalog['name'] = TextIndex('display_name', IDisplayName, True)
         self.ids = IntIds()
 
+    def clear(self):
+        self.catalog.clear()
+
     def index_object(self, obj):
         real_obj = follow_symlinks(obj)
         try:
@@ -116,7 +119,7 @@ class ReindexAction(Action):
         @db.transact
         def doit():
             search = db.get_root()['oms_root']['search']
-            search.catalog.clear()
+            search.clear()
 
             objs = set()
             def collect(container):
