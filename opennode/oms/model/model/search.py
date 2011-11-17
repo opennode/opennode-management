@@ -18,6 +18,8 @@ from .symlink import Symlink, follow_symlinks
 from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
 from twisted.internet import reactor
+from zope.keyreference.interfaces import NotYet
+from twisted.python import log
 
 
 class ITagged(Interface):
@@ -38,10 +40,16 @@ class SearchContainer(ReadonlyContainer):
 
     def index_object(self, obj):
         real_obj = follow_symlinks(obj)
-        self.catalog.index_doc(self.ids.register(real_obj), real_obj)
+        try:
+            self.catalog.index_doc(self.ids.register(real_obj), real_obj)
+        except NotYet:
+            log.msg("cannot index object because not yet committed")
 
     def unindex_object(self, obj):
-        self.catalog.unindex_doc(self.ids.register(obj))
+        try:
+            self.catalog.unindex_doc(self.ids.register(obj))
+        except NotYet:
+            log.msg("cannot index object because not yet committed")
 
     def search(self, **kwargs):
         # HACK, we should be able to setup a persistent utility
