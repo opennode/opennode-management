@@ -8,7 +8,7 @@ import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
-from zope.component import provideSubscriptionAdapter, provideAdapter
+from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 
 import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
@@ -17,7 +17,7 @@ from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualC
                                                GroupDictAction, VirtualConsoleArgumentParser)
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
-from opennode.oms.model.form import ApplyRawData
+from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
@@ -284,7 +284,9 @@ class RemoveCmd(Cmd):
                 self.write("No such object: %s\n" % path)
                 continue
 
+            parent = obj.__parent__
             del obj_dir[obj.__name__]
+            handle(obj, ModelDeletedEvent(parent))
 
 
 class MoveCmd(Cmd):

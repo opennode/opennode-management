@@ -15,7 +15,7 @@ from zope.keyreference.persistent import KeyReferenceToPersistent
 from .actions import ActionsContainerExtension, Action, action
 from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, IContainer, IModel, Container
 from .symlink import Symlink, follow_symlinks
-from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent
+from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
 from twisted.internet import reactor
 
@@ -39,6 +39,9 @@ class SearchContainer(ReadonlyContainer):
     def index_object(self, obj):
         real_obj = follow_symlinks(obj)
         self.catalog.index_doc(self.ids.register(real_obj), real_obj)
+
+    def unindex_object(self, obj):
+        self.catalog.unindex_doc(self.ids.register(obj))
 
     def search(self, **kwargs):
         # HACK, we should be able to setup a persistent utility
@@ -80,6 +83,16 @@ def reindex_created_model(model, event):
     # we cannot use the object in this transaction since it's not yet committed,
     # we'll retry to index it later, once the transaction is committed
     reactor.callLater(0.1, get_and_reindex, 0, canonical_path(model))
+
+
+@subscribe(Model, IModelDeletedEvent)
+def unindex_deleted_model(model, event):
+    if isinstance(model, Symlink):
+        return
+
+    from opennode.oms.zodb import db
+    search = db.get_root()['oms_root']['search']
+    search.unindex_object(model)
 
 
 class ReindexAction(Action):
