@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from grokcore.component import Adapter, context
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
@@ -16,7 +17,7 @@ class IVirtualizationContainer(Interface):
 
 
 class VirtualizationContainer(Container):
-    implements(IVirtualizationContainer, IInCompute, ITagged)
+    implements(IVirtualizationContainer, IInCompute)
 
     __contains__ = Compute
 
@@ -30,6 +31,12 @@ class VirtualizationContainer(Container):
     def __str__(self):
         return 'virtualizationcontainer%s' % self.__name__
 
+
+class VirtualizationContainerTags(Adapter):
+    implements(ITagged)
+    context(VirtualizationContainer)
+
+    @property
     def tags(self):
         return [self.backend.encode('utf-8')]
 

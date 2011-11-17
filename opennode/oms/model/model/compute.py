@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 
+from grokcore.component import Adapter, context, Subscription, baseclass
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
 
 from .actions import ActionsContainerExtension
-from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
+from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName, IContainerExtender
 from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
@@ -41,7 +42,7 @@ class IDeployed(Interface):
 class Compute(Container):
     """A compute node."""
 
-    implements(ICompute, IDisplayName, ITagged)
+    implements(ICompute, IDisplayName)
 
     __contains__ = IInCompute
 
@@ -98,9 +99,6 @@ class Compute(Container):
         """
         return [self.hostname, ]
 
-    def tags(self):
-        return ['tagx', 'tagy', self.architecture.encode('utf-8'), self.state.encode('utf-8')]
-
     def get_effective_state(self):
         """Since we lack schema/data upgrade scripts I have to
         resort on this tricks to cope with the fact that I have
@@ -150,6 +148,15 @@ class Compute(Container):
         if not addresses:
             return self._ipv4_address
         return addresses[0]
+
+
+class ComputeTags(Adapter):
+    implements(ITagged)
+    context(Compute)
+
+    @property
+    def tags(self):
+        return ['zerotag', 'tagy', self.context.architecture.encode('utf-8'), self.context.state.encode('utf-8')]
 
 
 class IVirtualCompute(Interface):
@@ -203,8 +210,6 @@ provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
 # let the onc guy work
 # #####################
 
-from .base import IContainerExtender
-from grokcore.component import Subscription, baseclass
 
 class TemplatesComputeExtension(Subscription):
     implements(IContainerExtender)

@@ -34,7 +34,7 @@ class SearchContainer(ReadonlyContainer):
     def __init__(self):
         self.tag_container = SearchByTagContainer(self)
         self.catalog = Catalog()
-        self.catalog['tags'] = KeywordIndex('tags', ITagged, True)
+        self.catalog['tags'] = KeywordIndex('tags', ITagged)
         self.catalog['name'] = TextIndex('display_name', IDisplayName, True)
         self.ids = IntIds()
 
