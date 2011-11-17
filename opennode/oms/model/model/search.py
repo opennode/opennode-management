@@ -32,14 +32,14 @@ class SearchContainer(ReadonlyContainer):
     __name__ = 'search'
 
     def __init__(self):
+        self.clear()
+
+    def clear(self):
         self.tag_container = SearchByTagContainer(self)
         self.catalog = Catalog()
         self.catalog['tags'] = KeywordIndex('tags', ITagged)
         self.catalog['name'] = TextIndex('display_name', IDisplayName, True)
         self.ids = IntIds()
-
-    def clear(self):
-        self.catalog.clear()
 
     def index_object(self, obj):
         real_obj = follow_symlinks(obj)
