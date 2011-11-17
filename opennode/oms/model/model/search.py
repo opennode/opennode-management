@@ -122,6 +122,9 @@ class TagItems(ReadonlyContainer):
         res = {}
         for item in self.searcher.search(tags=self.__parent__.tag_path):
             name = item.__name__
+            if IDisplayName.providedBy(item):
+                name = IDisplayName(item).display_name()
+
             def find_free_name(tentative_name, idx):
                 next_name = '%s_%s' % (name, idx)
                 if res.has_key(tentative_name):
