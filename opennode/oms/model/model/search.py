@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from BTrees.OOBTree import OOTreeSet, difference
-from grokcore.component import context
+from grokcore.component import context, subscribe
 from zope import schema
 from zope.app.catalog.catalog import Catalog
 from zope.app.intid import IntIds
@@ -15,6 +15,9 @@ from zope.keyreference.persistent import KeyReferenceToPersistent
 from .actions import ActionsContainerExtension, Action, action
 from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, IContainer, IModel, Container
 from .symlink import Symlink, follow_symlinks
+from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent
+from opennode.oms.model.traversal import canonical_path, traverse_path
+from twisted.internet import reactor
 
 
 class ITagged(Interface):
@@ -45,6 +48,38 @@ class SearchContainer(ReadonlyContainer):
     @property
     def _items(self):
         return {'by-tag': self.tag_container}
+
+
+@subscribe(Model, IModelModifiedEvent)
+def reindex_modified_model(model, event):
+    # break import cycle
+    from opennode.oms.zodb import db
+
+    search = db.get_root()['oms_root']['search']
+    search.index_object(model)
+
+
+@subscribe(Model, IModelCreatedEvent)
+def reindex_created_model(model, event):
+    # break import cycle
+    from opennode.oms.zodb import db
+
+    @db.transact
+    def get_and_reindex(retry, path):
+        # we have to retrieve and index the object within this transaction
+        # otherwise intid mapping won't be correct.
+        objs, unresolved_path = traverse_path(db.get_root()['oms_root'], path)
+        if unresolved_path:
+            if retry < 5:
+                reactor.callLater(0.1 * retry, get_and_reindex, retry + 1, canonical_path(model))
+            return
+
+        search = db.get_root()['oms_root']['search']
+        search.index_object(objs[-1])
+
+    # we cannot use the object in this transaction since it's not yet committed,
+    # we'll retry to index it later, once the transaction is committed
+    reactor.callLater(0.1, get_and_reindex, 0, canonical_path(model))
 
 
 class ReindexAction(Action):

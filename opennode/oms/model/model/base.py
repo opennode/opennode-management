@@ -7,6 +7,8 @@ from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
 from opennode.oms.util import get_direct_interfaces
+from opennode.oms.model.form import ModelCreatedEvent
+from zope.component import handle
 
 
 class IModel(Interface):
@@ -115,7 +117,9 @@ class AddingContainer(ReadonlyContainer):
         if not self.can_contain(item):
             raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
 
-        return self._add(item)
+        res = self._add(item)
+        handle(item, ModelCreatedEvent(self))
+        return res
 
     def rename(self, old_name, new_name):
         self._items[new_name] = self._items[old_name]

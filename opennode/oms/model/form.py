@@ -23,12 +23,23 @@ class IModelModifiedEvent(Interface):
     """Model was modified"""
 
 
+class IModelCreatedEvent(Interface):
+    """Model was created"""
+
+
 class ModelModifiedEvent(object):
     implements(IModelModifiedEvent)
 
     def __init__(self, original, modified):
         self.original = original
         self.modified = modified
+
+
+class ModelCreatedEvent(object):
+    implements(IModelCreatedEvent)
+
+    def __init__(self, container):
+        self.container = container
 
 
 class ApplyRawData(object):
