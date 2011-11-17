@@ -22,7 +22,7 @@ class SyncAction(Action):
 
     @defer.inlineCallbacks
     def execute(self, cmd, args):
-        default = self.default_console()
+        default = yield self.default_console()
 
         yield self._sync_consoles(cmd)
 
@@ -35,6 +35,7 @@ class SyncAction(Action):
     def _create_default_console(self, cmd):
         return self.create_default_console(cmd)
 
+    @db.transact
     def default_console(self):
         default = self.context.consoles['default']
         if default:
