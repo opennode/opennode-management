@@ -270,6 +270,11 @@ class RemoveCmd(Cmd):
     def execute(self, args):
         for path in args.paths:
             obj_dir = self.current_obj
+
+            # cleanup trailing slash
+            if path.endswith('/'):
+                path = path[:-1]
+
             if os.path.dirname(path):
                 obj_dir = self.traverse(os.path.dirname(path))
 
