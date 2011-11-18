@@ -41,7 +41,7 @@ class TemplateTags(Adapter):
 
     @property
     def tags(self):
-        return ['template_x', self.base_type.encode('utf-8')]
+        return [self.base_type]
 
 
 class Templates(Container):

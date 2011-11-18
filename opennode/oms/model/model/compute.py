@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from grokcore.component import Adapter, context, Subscription, baseclass
+from grokcore.component import context, Subscription, baseclass
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
@@ -10,7 +10,7 @@ from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayN
 from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
-from .search import ITagged
+from .search import ModelTags
 from .symlink import Symlink
 from opennode.oms.backend.operation import IFuncInstalled
 from opennode.oms.model.schema import Path
@@ -150,13 +150,11 @@ class Compute(Container):
         return addresses[0]
 
 
-class ComputeTags(Adapter):
-    implements(ITagged)
+class ComputeTags(ModelTags):
     context(Compute)
 
-    @property
-    def tags(self):
-        return ['zerotag', 'tagy', self.context.architecture.encode('utf-8'), self.context.state.encode('utf-8')]
+    def auto_tags(self):
+        return [self.context.architecture, self.context.state]
 
 
 class IVirtualCompute(Interface):

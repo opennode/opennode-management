@@ -38,7 +38,7 @@ class VirtualizationContainerTags(Adapter):
 
     @property
     def tags(self):
-        return [self.backend.encode('utf-8')]
+        return [self.backend]
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(VirtualizationContainer, ))

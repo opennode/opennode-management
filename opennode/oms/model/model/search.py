@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
 from BTrees.OOBTree import OOTreeSet, difference
-from grokcore.component import context, subscribe
+from grokcore.component import context, subscribe, Adapter, baseclass
+from twisted.internet import reactor
+from twisted.python import log
 from zope import schema
 from zope.app.catalog.catalog import Catalog
 from zope.app.intid import IntIds
@@ -10,6 +12,7 @@ from zope.catalog.keyword import KeywordIndex
 from zope.catalog.text import TextIndex
 from zope.component import provideAdapter, provideUtility, provideSubscriptionAdapter
 from zope.interface import Interface, implements
+from zope.keyreference.interfaces import NotYet
 from zope.keyreference.persistent import KeyReferenceToPersistent
 
 from .actions import ActionsContainerExtension, Action, action
@@ -17,15 +20,52 @@ from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, ICont
 from .symlink import Symlink, follow_symlinks
 from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
-from twisted.internet import reactor
-from zope.keyreference.interfaces import NotYet
-from twisted.python import log
 
 
 class ITagged(Interface):
-    """Taggable model"""
-    def tags():
-        """tag list"""
+    tags = schema.Set(title=u"Tags", required=False)
+
+
+class ModelTags(Adapter):
+    implements(ITagged)
+    baseclass()
+
+    def auto_tags(self):
+        return set([])
+
+    def _get_tags(self):
+        # we have to check for None value because of TmpObj
+        if not hasattr(self.context, '_tags') or self.context._tags == None:
+            self.context._tags = set()
+        return self.context._tags
+
+    def _set_tags(self, value):
+        self.context._tags = value
+
+    def get_tags(self):
+        return set(self._get_tags()).union(set(self.auto_tags()))
+
+    def set_tags(self, values):
+        # we have to reset the object otherwise indexing framework
+        # won't update removed values
+        tags = set(self._get_tags())
+
+        if not any(i.startswith('-') or i.startswith('+') for i in values):
+            tags = set()
+
+        # ignore empty strings
+        for value in (i for i in values if i):
+            if value.startswith('-'):
+                if value[1:] in tags:
+                    tags.remove(value[1:])
+            elif value.startswith('+'):
+                tags.add(value[1:])
+            else:
+                tags.add(value)
+
+        self._set_tags(tags)
+
+    tags = property(get_tags, set_tags)
 
 
 class SearchContainer(ReadonlyContainer):
