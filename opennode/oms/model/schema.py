@@ -1,4 +1,8 @@
-from zope.schema import TextLine, getFieldsInOrder
+from grokcore.component import context, Adapter, baseclass
+from zope.component import getSiteManager, implementedBy
+from zope.interface import implements
+from zope.schema import TextLine, List, Set, getFieldsInOrder
+from zope.schema.interfaces import IFromUnicode
 
 from opennode.oms.util import get_direct_interfaces
 
@@ -13,8 +17,31 @@ def get_schemas(model_or_obj):
     for schema in get_direct_interfaces(model_or_obj):
         yield schema
 
+    model = model_or_obj if isinstance(model_or_obj, type) else type(model_or_obj)
+
+    for schema in getSiteManager().adapters._adapters[1].get(implementedBy(model), []):
+        yield schema
+
 
 def get_schema_fields(model_or_obj):
     for schema in get_schemas(model_or_obj):
-        for field in getFieldsInOrder(schema):
-            yield field
+        for name, field in getFieldsInOrder(schema):
+            yield name, field, schema
+
+
+class CollectionFromUnicode(Adapter):
+    implements(IFromUnicode)
+    baseclass()
+
+    def fromUnicode(self, value):
+        if isinstance(value, basestring):
+            value = value.split(',')
+        return self.context._type(value)
+
+
+class ListFromUnicode(CollectionFromUnicode):
+    context(List)
+
+
+class SetFromUnicode(CollectionFromUnicode):
+    context(Set)

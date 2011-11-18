@@ -2,6 +2,7 @@ import unittest
 
 import mock
 import transaction
+import zope.schema
 from grokcore.component.testing import grok
 from martian.testing import FakeModule
 from nose.tools import eq_, assert_raises
@@ -373,7 +374,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_mk_keyword_declaration(self):
         class ITest(Interface):
-            pass
+            attr = zope.schema.TextLine(title=u"Test")
 
         class Test(Model):
             implements(ITest)
@@ -402,7 +403,7 @@ class SshTestCase(unittest.TestCase):
 
         try:
             CreateObjCmd.current_obj = TestContainer()
-            self._cmd('mk some-test')
+            self._cmd('mk some-test attr=value')
             assert CreateObjCmd.current_obj.added
         finally:
             CreateObjCmd.current_obj = orig_current_object

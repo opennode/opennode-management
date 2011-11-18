@@ -1,4 +1,5 @@
 import zope.interface
+from zope.component import getSiteManager, implementedBy
 
 
 def get_direct_interfaces(obj):
@@ -42,6 +43,10 @@ def get_direct_interface(obj):
         return interfaces[0]
     else:
         raise Exception("Object implements more than 1 interface")
+
+
+def query_adapter_for_class(cls, interface):
+    return getSiteManager().adapters.lookup([implementedBy(cls)], interface)
 
 
 class Singleton(type):

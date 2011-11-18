@@ -231,10 +231,10 @@ class CatObjectCmd(Cmd):
 
     def _do_cat(self, obj):
         data = OrderedDict()
-        for name, field in get_schema_fields(obj):
+        for name, field, schema in get_schema_fields(obj):
             key = field.description or field.title
             key = key.encode('utf8')
-            data[key] = field.get(obj)
+            data[key] = field.get(schema(obj))
 
         if data:
             max_key_len = max(len(key) for key in data)
@@ -404,7 +404,7 @@ class SetOrMkCmdDynamicArguments(Adapter):
                                        if self.context.name == 'mk' else
                                        (self.context.traverse(args.path), False))
 
-        for name, field in get_schema_fields(model_or_obj):
+        for name, field, schema in get_schema_fields(model_or_obj):
             if field.readonly:
                 continue
 
