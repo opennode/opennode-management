@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 
-from grokcore.component import Adapter, context
+from grokcore.component import context
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
 
 from .base import Model, Container, IDisplayName
 from .byname import ByNameContainerExtension
-from .search import ITagged
+from .search import ModelTags
 
 
 class ITemplate(Interface):
@@ -35,13 +35,11 @@ class Template(Model):
         return self.name
 
 
-class TemplateTags(Adapter):
-    implements(ITagged)
+class TemplateTags(ModelTags):
     context(Template)
 
-    @property
-    def tags(self):
-        return [self.base_type]
+    def auto_tags(self):
+        return [u'virt_type:'+self.context.base_type]
 
 
 class Templates(Container):

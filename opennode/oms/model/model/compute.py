@@ -154,7 +154,13 @@ class ComputeTags(ModelTags):
     context(Compute)
 
     def auto_tags(self):
-        return [self.context.architecture, self.context.state]
+        res =  [u'arch:'+self.context.architecture, u'state:'+self.context.state]
+
+        from .virtualizationcontainer import IVirtualizationContainer
+        if IVirtualCompute.providedBy(self.context) and IVirtualizationContainer.providedBy(self.context.__parent__):
+            res.append(u'virt_type:'+self.context.__parent__.backend)
+
+        return res
 
 
 class IVirtualCompute(Interface):

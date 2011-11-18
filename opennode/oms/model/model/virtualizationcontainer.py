@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from grokcore.component import Adapter, context
+from grokcore.component import context
 from zope import schema
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements
@@ -9,7 +9,7 @@ from .actions import ActionsContainerExtension
 from .base import Container
 from .byname import ByNameContainerExtension
 from .compute import Compute, IInCompute
-from .search import ITagged
+from .search import ModelTags
 
 
 class IVirtualizationContainer(Interface):
@@ -32,13 +32,11 @@ class VirtualizationContainer(Container):
         return 'virtualizationcontainer%s' % self.__name__
 
 
-class VirtualizationContainerTags(Adapter):
-    implements(ITagged)
+class VirtualizationContainerTags(ModelTags):
     context(VirtualizationContainer)
 
-    @property
-    def tags(self):
-        return [self.backend]
+    def auto_tags(self):
+        return [u'virt_type:'+self.context.backend]
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(VirtualizationContainer, ))

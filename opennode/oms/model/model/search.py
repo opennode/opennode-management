@@ -43,7 +43,7 @@ class ModelTags(Adapter):
         self.context._tags = value
 
     def get_tags(self):
-        return set(self._get_tags()).union(set(self.auto_tags()))
+        return set(self._get_tags()).union(set(self.auto_tags())).union(set([u"type:" + type(self.context).__name__.lower()]))
 
     def set_tags(self, values):
         # we have to reset the object otherwise indexing framework
