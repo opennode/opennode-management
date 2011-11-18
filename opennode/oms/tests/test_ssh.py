@@ -334,6 +334,51 @@ class SshTestCase(unittest.TestCase):
             t.write("hostname: Value is too short\n")
 
     @run_in_reactor
+    def test_modify_compute_tags(self):
+        computes = db.get_root()['oms_root']['computes']
+        cmpt=Compute('linux', u'tux-for-test', 2000, u'active')
+        cid = computes.add(cmpt)
+        transaction.commit()
+
+        self._cmd('set computes/%s tags=taga,tagb' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:      \tlinux\n')
+            t.write('Host name:         \ttux-for-test\n')
+            t.write('IPv4 address:      \t0.0.0.0/32\n')
+            t.write('IPv6 address:      \t::/128\n')
+            t.write('CPU Speed in MHz:  \t2000\n')
+            t.write('RAM size in MB:    \t2000\n')
+            t.write('State:             \tactive\n')
+            t.write('Effective state:   \tactive\n')
+            t.write('Template:          \tNone\n')
+            t.write('Number of CPU/cores:\t1\n')
+            t.write('Cpu limit:         \t1.0\n')
+            t.write('Size of main volume:\t750\n')
+            t.write('Tags:              \tactive, taga, tagb, linux\n')
+
+        self._cmd('set computes/%s tags=taga,-tagb' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            t.write('Architecture:      \tlinux\n')
+            t.write('Host name:         \ttux-for-test\n')
+            t.write('IPv4 address:      \t0.0.0.0/32\n')
+            t.write('IPv6 address:      \t::/128\n')
+            t.write('CPU Speed in MHz:  \t2000\n')
+            t.write('RAM size in MB:    \t2000\n')
+            t.write('State:             \tactive\n')
+            t.write('Effective state:   \tactive\n')
+            t.write('Template:          \tNone\n')
+            t.write('Number of CPU/cores:\t1\n')
+            t.write('Cpu limit:         \t1.0\n')
+            t.write('Size of main volume:\t750\n')
+            t.write('Tags:              \tactive, taga, linux\n')
+
+    @run_in_reactor
     def test_create_compute(self):
         self._cmd("cd /computes")
         self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
