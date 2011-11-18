@@ -10,7 +10,6 @@ from twisted.conch.insults.insults import modes
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 
-import opennode.oms.model.schema
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
@@ -23,8 +22,8 @@ from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
+from opennode.oms.model.schema import Path, get_schema_fields
 from opennode.oms.model.traversal import canonical_path
-from opennode.oms.util import get_direct_interfaces
 from opennode.oms.zodb import db
 
 
@@ -231,18 +230,11 @@ class CatObjectCmd(Cmd):
                 self._do_cat(obj)
 
     def _do_cat(self, obj):
-        schemas = get_direct_interfaces(obj)
-        if len(schemas) == 0:
-            self.write("Unable to create a printable representation.\n")
-            return
-
         data = OrderedDict()
-        for schema in schemas:
-            fields = zope.schema.getFieldsInOrder(schema)
-            for name, field in fields:
-                key = field.description or field.title
-                key = key.encode('utf8')
-                data[key] = field.get(obj)
+        for name, field in get_schema_fields(obj):
+            key = field.description or field.title
+            key = key.encode('utf8')
+            data[key] = field.get(obj)
 
         if data:
             max_key_len = max(len(key) for key in data)
@@ -412,28 +404,25 @@ class SetOrMkCmdDynamicArguments(Adapter):
                                        if self.context.name == 'mk' else
                                        (self.context.traverse(args.path), False))
 
-        schemas = get_direct_interfaces(model_or_obj)
+        for name, field in get_schema_fields(model_or_obj):
+            if field.readonly:
+                continue
 
-        for schema in schemas:
-            for name, field in zope.schema.getFields(schema).items():
-                if field.readonly:
-                    continue
+            choices = ([i.value.encode('utf-8') for i in field.vocabulary]
+                       if isinstance(field, zope.schema.Choice) else
+                       None)
 
-                choices = ([i.value.encode('utf-8') for i in field.vocabulary]
-                           if isinstance(field, zope.schema.Choice) else
-                           None)
+            type = (int if isinstance(field, zope.schema.Int)
+                    else None)
 
-                type = (int if isinstance(field, zope.schema.Int)
-                        else None)
+            kwargs = {}
+            if isinstance(field, Path):
+                kwargs['is_path'] = True
+                kwargs['base_path'] = field.base_path
 
-                kwargs = {}
-                if isinstance(field, opennode.oms.model.schema.Path):
-                    kwargs['is_path'] = True
-                    kwargs['base_path'] = field.base_path
-
-                parser.add_argument('=%s' % name, required=(args_required and field.required),
-                                    type=type, action=GroupDictAction, group='keywords',
-                                    help=field.title.encode('utf8'), choices=choices, **kwargs)
+            parser.add_argument('=%s' % name, required=(args_required and field.required),
+                                type=type, action=GroupDictAction, group='keywords',
+                                help=field.title.encode('utf8'), choices=choices, **kwargs)
 
         return parser
 

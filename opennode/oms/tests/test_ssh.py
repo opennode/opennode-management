@@ -168,7 +168,7 @@ class SshTestCase(unittest.TestCase):
         for folder in self.tlds:
             self._cmd('cat %s' % folder)
             with assert_mock(self.terminal) as t:
-                t.write("Unable to create a printable representation.\n")
+                t.write("user@oms:/# ")
             self.terminal.reset_mock()
 
     @run_in_reactor

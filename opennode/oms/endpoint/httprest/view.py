@@ -1,7 +1,6 @@
 import json
 from collections import OrderedDict
 
-import zope.schema
 from grokcore.component import context
 from zope.component import queryAdapter
 
@@ -9,14 +8,14 @@ from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import Machines, Compute
+from opennode.oms.model.model.actions import ActionsContainer
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
-from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.model.symlink import follow_symlinks
-from opennode.oms.model.model.actions import ActionsContainer
-from opennode.oms.util import get_direct_interfaces
+from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
+from opennode.oms.model.schema import get_schema_fields
 
 
 class DefaultView(HttpRestView):
@@ -25,17 +24,11 @@ class DefaultView(HttpRestView):
     def render_GET(self, request):
         obj = self.context
         # NODE: code copied from commands.py:CatCmd
-        schemas = get_direct_interfaces(obj)
-        if len(schemas) == 0:
-            raise Exception("Unable to create a printable representation.\n")
-            return
 
         data = OrderedDict()
-        for schema in schemas:
-            fields = zope.schema.getFieldsInOrder(schema)
-            for key, field in fields:
-                key = key.encode('utf8')
-                data[key] = field.get(obj)
+        for key, field in get_schema_fields(obj):
+            key = key.encode('utf8')
+            data[key] = field.get(obj)
 
         data['id'] = obj.__name__
         data['__type__'] = type(self.context).__name__
