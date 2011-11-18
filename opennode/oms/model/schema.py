@@ -9,8 +9,12 @@ class Path(TextLine):
         super(TextLine, self).__init__(*args, **kw)
 
 
+def get_schemas(model_or_obj):
+    for schema in get_direct_interfaces(model_or_obj):
+        yield schema
+
+
 def get_schema_fields(model_or_obj):
-    schemas = get_direct_interfaces(model_or_obj)
-    for schema in schemas:
+    for schema in get_schemas(model_or_obj):
         for field in getFieldsInOrder(schema):
             yield field

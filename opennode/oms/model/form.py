@@ -6,6 +6,7 @@ from zope.interface import Interface, implements
 from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
 
 from opennode.oms.util import get_direct_interfaces
+from opennode.oms.model.schema import get_schemas
 
 
 __all__ = ['ApplyRawData']
@@ -59,7 +60,9 @@ class ApplyRawData(object):
         assert isinstance(data, dict)
         assert (obj or model) and not (obj and model), "One of either obj or model needs to be provided, but not both"
 
-        self.schemas = get_direct_interfaces(obj or model)
+        # had to convert to list because of a weird issue
+        # in line 115
+        self.schemas = list(get_schemas(obj or model))
 
         self.data = data
         self.obj = obj
