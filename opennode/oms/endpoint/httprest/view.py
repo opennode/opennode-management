@@ -59,12 +59,7 @@ class ContainerView(DefaultView):
         return self.render_recursive(request, depth, top_level=True)
 
     def render_recursive(self, request, depth, top_level=False):
-        container_properties = {'id': self.context.__name__, '__type__': type(self.context).__name__}
-
-        try:
-            container_properties = super(ContainerView, self).render_GET(request)
-        except Exception:
-            pass
+        container_properties = super(ContainerView, self).render_GET(request)
 
         if depth < 1:
             return container_properties
