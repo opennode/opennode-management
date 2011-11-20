@@ -10,6 +10,7 @@ class Symlink(Model):
         self.__name__ = name
         self.target = target
 
+
 def follow_symlinks(item):
     """Returns the object pointed to a symlink chain."""
     if isinstance(item, Symlink):

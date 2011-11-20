@@ -58,7 +58,8 @@ class ApplyRawData(object):
 
     def __init__(self, data, obj=None, model=None):
         assert isinstance(data, dict)
-        assert (obj or model) and not (obj and model), "One of either obj or model needs to be provided, but not both"
+        assert (obj or model) and not (obj and model), \
+               "One of either obj or model needs to be provided, but not both"
 
         self.schemas = list(get_schemas(obj or model))
         self.fields = list(get_schema_fields(obj or model))
