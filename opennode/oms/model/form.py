@@ -110,7 +110,13 @@ class ApplyRawData(object):
 
             if not errors:
                 for schema in self.schemas:
-                    errors.extend(zope.schema.getValidationErrors(schema, self.adapted_tmp_obj(tmp_obj, schema)))
+                    # XXX: We should not be adapting TmpObj's...  I've
+                    # fixed the issue for no with the `if` but nobody
+                    # knows what other issues this might cause in the
+                    # future, or what other (hidden) issues adapting
+                    # TmpObj's will cause.
+                    adapted = self.adapted_tmp_obj(tmp_obj, schema)
+                    errors.extend(zope.schema.getValidationErrors(schema, adapted))
 
         self._errors = errors
         return errors
@@ -165,6 +171,8 @@ class TmpObj(object):
         self.__dict__['modified_attrs'] = {}
 
     def __getattr__(self, name):
+        if name.startswith('__'):
+            raise AttributeError, name
         if name in self.__dict__['modified_attrs']:
             return self.__dict__['modified_attrs'][name]
         else:
