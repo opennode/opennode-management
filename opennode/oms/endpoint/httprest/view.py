@@ -26,6 +26,9 @@ class DefaultView(HttpRestView):
         data['id'] = self.context.__name__
         data['__type__'] = type(self.context).__name__
         data['url'] = ILocation(self.context).get_url()
+        # XXX: Temporary hack--simplejson can't serialize sets
+        if 'tags' in data:
+            data['tags'] = list(data['tags'])
 
         return data
 

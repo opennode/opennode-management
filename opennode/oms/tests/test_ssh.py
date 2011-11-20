@@ -19,6 +19,7 @@ from opennode.oms.model.model.base import Model, Container
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
+from opennode.oms.tests.util import whatever
 
 
 class SshTestCase(unittest.TestCase):
@@ -189,13 +190,13 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \ttux-for-test\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \ttux-for-test\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
+            whatever(t)
+            t.write('State:               \tactive\n')
 
     @run_in_reactor
     def test_rm_compute(self):
