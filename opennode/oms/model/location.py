@@ -29,6 +29,8 @@ class ModelLocation(Adapter):
         return ILocation(self.context.__parent__).get_path() + [self.context.__name__]
 
     def get_url(self):
+        if not self.context.__parent__:
+            return None
         return '%s%s/' % (ILocation(self.context.__parent__).get_url(), self.context.__name__)
 
 
