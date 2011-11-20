@@ -17,18 +17,66 @@ from opennode.oms.model.schema import Path
 
 
 class ICompute(Interface):
-    architecture = schema.Choice(title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
-    hostname = schema.TextLine(title=u"Host name", min_length=3)
-    ipv4_address = schema.TextLine(title=u"IPv4 address", min_length=7, required=False)
-    ipv6_address = schema.TextLine(title=u"IPv6 address", min_length=6, required=False)
-    speed = schema.Int(title=u"CPU Speed", description=u"CPU Speed in MHz", readonly=True, required=False)
-    memory = schema.Int(title=u"RAM Size", description=u"RAM size in MB")
-    state = schema.Choice(title=u"State", values=(u'active', u'inactive', u'suspended'))
-    effective_state = schema.TextLine(title=u"Effective state", readonly=True, required=False)
+    # Hardware/platform info
+    architecture = schema.Choice(
+        title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
+    cpu_info = schema.TextLine(
+        title=u"CPU Info", description=u"Info about the CPU such as model, speed in Hz, cache size")
+    os_release = schema.TextLine(
+        title=u"OS Release", description=u"OS version info")
+    kernel = schema.TextLine(
+        title=u"Kernel", description=u"Kernel version (if applicable)")
+    disk_info = schema.TextLine(
+        title=u"Disk Info", description=u"Info about the pyhysical installed disk(s)",
+        required=False)
+    memory_info = schema.TextLine(
+        title=u"Memory Info", description=(u"Info about the physical installed memory "
+                     "banks such as model, make, speed, latency"),
+        required=False)
+
+    # Network parameters
+    hostname = schema.TextLine(
+        title=u"Host name", min_length=3)
+    ipv4_address = schema.TextLine(
+        title=u"IPv4 address", min_length=7, required=False)
+    ipv6_address = schema.TextLine(
+        title=u"IPv6 address", min_length=6, required=False)
+
+    # State
+    state = schema.Choice(
+        title=u"State", values=(u'active', u'inactive', u'suspended'))
+    effective_state = schema.TextLine(
+        title=u"Effective state", readonly=True, required=False)
+
+    # Processing/network capabilities:
+    num_cores = schema.Int(
+        title=u"Num. Cores", description=u"Total number of cores across all CPUs",
+        required=False)
+    memory = schema.Int(
+        title=u"RAM Size", description=u"RAM size in MB")
+    diskspace = schema.Dict(
+        title=u"Disk size", description=u"List of disk partition sizes",
+        key_type=schema.TextLine(), value_type=schema.Int())
+    network = schema.Float(
+        title=u"Network", description=u"Network bandwidth in Mbps",
+        required=False)
+
+    # Resource utilization/load:
+    cpu_usage = schema.Tuple(
+        title=u"CPU Load", description=u"CPU load during the past 1, 5 and 15 minutes",
+        value_type=schema.Float())
+    memory_usage = schema.Float(
+        title=u"Memory Usage", description=u"Memory usage in MB")
+    diskspace_usage = schema.Dict(
+        title=u"Diskspace Utilization", description=u"List of disk partition usages",
+        key_type=schema.TextLine(), value_type=schema.Float())
+    network_usage = schema.Tuple(
+        title=u"Network Load", description=u"Network load in Mb/s (incoming and outgoing)",
+        value_type=schema.Float())
+
+    # VM only
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
-    ncpus = schema.Int(title=u"CPU/cores number", description=u"Number of CPU/cores", required=False)
-    cpu_limit = schema.Float(title=u"CPU limit", description=u"Cpu limit", required=False)
-    diskspace = schema.Int(title=u"Disk size", description=u"Size of main volume", required=False)
+    cpu_limit = schema.Float(title=u"CPU limit", description=u"CPU usage limit", required=False)
 
 
 class IInCompute(Interface):
