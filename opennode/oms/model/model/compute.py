@@ -102,10 +102,19 @@ class Compute(Container):
     disk_info = "Seagate Barracuda SuperSaver 2000TB BuyNow!"
     memory_info = "1333MHz DDR SuperGoodMemory!"
 
-    network = 100.0
-    memory = 2048,
     os_release = "build 35"
     kernel = "2.6.18-238.9.1.el5.028stab089.1"
+
+    num_cores = 1
+    memory = 2048,
+    network = 100.0
+    diskspace = {
+        'root': 500,
+        'boot': 100,
+        'storage': 1000,
+    }
+    swap_size = 4192
+
 
     cpu_usage = (0.1, 0.11, 0.14)
     memory_usage = 773.2
@@ -115,10 +124,6 @@ class Compute(Container):
         'boot': 49,
         'storage': 748,
     }
-
-    diskspace = 750
-    swap_size = 7777
-    num_cores = 1
 
     cpu_limit = 1.0
 
