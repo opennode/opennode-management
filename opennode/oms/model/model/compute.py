@@ -98,22 +98,32 @@ class Compute(Container):
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
-    cpu = "Intel Xeon 12.2GHz"
+    cpu_info = "Intel Xeon 12.2GHz"
+    disk_info = "Seagate Barracuda SuperSaver 2000TB BuyNow!"
+    memory_info = "1333MHz DDR SuperGoodMemory!"
+
+    network = 100.0
     memory = 2048,
     os_release = "build 35"
     kernel = "2.6.18-238.9.1.el5.028stab089.1"
-    network_usage = 1000
-    speed = 2000
+
+    cpu_usage = (0.1, 0.11, 0.14)
+    memory_usage = 773.2
+    network_usage = (55.2, 21.9)
+    diskspace_usage = {
+        'root': 249,
+        'boot': 49,
+        'storage': 748,
+    }
+
     diskspace = 750
     swap_size = 7777
-    diskspace_rootpartition = 77.7
-    diskspace_storagepartition = 77.7
-    diskspace_vzpartition = 77.7
-    diskspace_backuppartition = 77.7
-    startup_timestamp = "2011-07-06 01:23:45"
-    ncpus = 1
+    num_cores = 1
+
     cpu_limit = 1.0
+
     autostart = False
+    startup_timestamp = "2011-07-06 01:23:45"
 
     def __init__(self, architecture, hostname, memory, state, template=None, ipv4_address=None):
         super(Compute, self).__init__()
