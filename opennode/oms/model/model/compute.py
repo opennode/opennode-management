@@ -85,7 +85,7 @@ class ICompute(Interface):
 
     # VM only
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
-    cpu_limit = schema.Float(title=u"CPU limit", description=u"CPU usage limit", required=False)
+    cpu_limit = schema.Float(title=u"CPU Limit", description=u"CPU usage limit", required=False)
 
 
 class IInCompute(Interface):
