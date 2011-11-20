@@ -19,7 +19,6 @@ from .actions import ActionsContainerExtension, Action, action
 from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, IContainer, IModel, Container
 from .symlink import Symlink, follow_symlinks
 from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
-from opennode.oms.model.traversal import canonical_path, traverse_path
 
 
 class ITagged(Interface):
@@ -117,6 +116,7 @@ def reindex_modified_model(model, event):
 def reindex_created_model(model, event):
     # break import cycle
     from opennode.oms.zodb import db
+    from opennode.oms.model.traversal import canonical_path, traverse_path
 
     @db.transact
     def get_and_reindex(retry, path):
