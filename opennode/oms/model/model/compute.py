@@ -21,11 +21,14 @@ class ICompute(Interface):
     architecture = schema.Choice(
         title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
     cpu_info = schema.TextLine(
-        title=u"CPU Info", description=u"Info about the CPU such as model, speed in Hz, cache size")
+        title=u"CPU Info", description=u"Info about the CPU such as model, speed in Hz, cache size",
+        required=False)
     os_release = schema.TextLine(
-        title=u"OS Release", description=u"OS version info")
+        title=u"OS Release", description=u"OS version info",
+        required=False)
     kernel = schema.TextLine(
-        title=u"Kernel", description=u"Kernel version (if applicable)")
+        title=u"Kernel", description=u"Kernel version (if applicable)",
+        required=False)
     disk_info = schema.TextLine(
         title=u"Disk Info", description=u"Info about the physical installed disk(s)",
         required=False)
@@ -53,10 +56,12 @@ class ICompute(Interface):
         title=u"Num. Cores", description=u"Total number of cores across all CPUs",
         required=False)
     memory = schema.Int(
-        title=u"RAM Size", description=u"RAM size in MB")
+        title=u"RAM Size", description=u"RAM size in MB",
+        required=False)
     diskspace = schema.Dict(
         title=u"Disk size", description=u"List of disk partition sizes",
-        key_type=schema.TextLine(), value_type=schema.Float())
+        key_type=schema.TextLine(), value_type=schema.Float(),
+        required=False)
     network = schema.Float(
         title=u"Network", description=u"Network bandwidth in Mbps",
         required=False)
@@ -64,15 +69,19 @@ class ICompute(Interface):
     # Resource utilization/load:
     cpu_usage = schema.Tuple(
         title=u"CPU Load", description=u"CPU load during the past 1, 5 and 15 minutes",
-        value_type=schema.Float())
+        value_type=schema.Float(),
+        required=False)
     memory_usage = schema.Float(
-        title=u"Memory Usage", description=u"Memory usage in MB")
+        title=u"Memory Usage", description=u"Memory usage in MB",
+        required=False)
     diskspace_usage = schema.Dict(
         title=u"Diskspace Utilization", description=u"List of disk partition usages",
-        key_type=schema.TextLine(), value_type=schema.Float())
+        key_type=schema.TextLine(), value_type=schema.Float(),
+        required=False)
     network_usage = schema.Tuple(
         title=u"Network Load", description=u"Network load in Mb/s (incoming and outgoing)",
-        value_type=schema.Float())
+        value_type=schema.Float(),
+        required=False)
 
     # VM only
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
