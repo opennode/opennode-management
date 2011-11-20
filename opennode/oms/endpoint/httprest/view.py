@@ -25,6 +25,7 @@ class DefaultView(HttpRestView):
 
         data['id'] = self.context.__name__
         data['__type__'] = type(self.context).__name__
+        data['url'] = ILocation(self.context).get_url()
 
         return data
 
