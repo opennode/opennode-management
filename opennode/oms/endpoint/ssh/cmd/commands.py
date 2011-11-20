@@ -1,7 +1,6 @@
 import datetime
 import os
 import time
-from collections import OrderedDict
 
 import transaction
 import zope.schema
@@ -22,7 +21,7 @@ from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
-from opennode.oms.model.schema import Path, get_schema_fields
+from opennode.oms.model.schema import Path, get_schema_fields, model_to_dict
 from opennode.oms.model.traversal import canonical_path
 from opennode.oms.zodb import db
 
@@ -230,11 +229,7 @@ class CatObjectCmd(Cmd):
                 self._do_cat(obj)
 
     def _do_cat(self, obj):
-        data = OrderedDict()
-        for name, field, schema in get_schema_fields(obj):
-            key = field.description or field.title
-            key = key.encode('utf8')
-            data[key] = field.get(schema(obj))
+        data = model_to_dict(obj)
 
         if data:
             max_key_len = max(len(key) for key in data)

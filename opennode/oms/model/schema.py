@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
@@ -45,3 +47,11 @@ class ListFromUnicode(CollectionFromUnicode):
 
 class SetFromUnicode(CollectionFromUnicode):
     context(Set)
+
+
+def model_to_dict(obj):
+    data = OrderedDict()
+    for key, field, schema in get_schema_fields(obj):
+        key = key.encode('utf8')
+        data[key] = field.get(schema(obj))
+    return data

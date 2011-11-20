@@ -1,5 +1,4 @@
 import json
-from collections import OrderedDict
 
 from grokcore.component import context
 from zope.component import queryAdapter
@@ -15,22 +14,16 @@ from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
-from opennode.oms.model.schema import get_schema_fields
+from opennode.oms.model.schema import model_to_dict
 
 
 class DefaultView(HttpRestView):
     context(object)
 
     def render_GET(self, request):
-        obj = self.context
-        # NODE: code copied from commands.py:CatCmd
+        data = model_to_dict(self.context)
 
-        data = OrderedDict()
-        for key, field in get_schema_fields(obj):
-            key = key.encode('utf8')
-            data[key] = field.get(obj)
-
-        data['id'] = obj.__name__
+        data['id'] = self.context.__name__
         data['__type__'] = type(self.context).__name__
 
         return data
