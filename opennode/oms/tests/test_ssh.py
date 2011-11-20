@@ -194,9 +194,9 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Host name:           \ttux-for-test\n')
             whatever(t)
-            t.write('RAM Size:            \t2000\n')
-            whatever(t)
             t.write('State:               \tactive\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
 
     @run_in_reactor
     def test_rm_compute(self):
@@ -213,13 +213,13 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \ttux-for-test\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \ttux-for-test\n')
+            whatever(t)
+            t.write('State:               \tactive\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
 
         self._cmd('rm computes/%s' % cid)
 
@@ -270,7 +270,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat /machines/123')
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
+            t.write('Architecture:        \tlinux\n')
 
 
     @run_in_reactor
@@ -284,13 +284,13 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \tTUX-FOR-TEST\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \tTUX-FOR-TEST\n')
+            whatever(t)
+            t.write('State:               \tactive\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
 
         self.terminal.reset_mock()
         self._cmd('set computes/123')
@@ -316,13 +316,13 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \tTUX-FOR-TEST\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \tTUX-FOR-TEST\n')
+            whatever(t)
+            t.write('State:               \tactive\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
 
     @run_in_reactor
     def test_modify_compute_errors(self):
@@ -346,38 +346,41 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \ttux-for-test\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
-            t.write('Effective state:   \tactive\n')
-            t.write('Template:          \tNone\n')
-            t.write('Number of CPU/cores:\t1\n')
-            t.write('Cpu limit:         \t1.0\n')
-            t.write('Size of main volume:\t750\n')
-            t.write('Tags:              \tactive, taga, tagb, linux\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \ttux-for-test\n')
+            t.write('IPv4 address:        \t0.0.0.0/32\n')
+            t.write('IPv6 address:        \t::/128\n')
+            t.write('State:               \tactive\n')
+            t.write('Effective state:     \tactive\n')
+            #~ whatever(t)
+            t.write('Num. Cores:          \t1\n')
+            t.write('RAM Size:            \t2000\n')
+            #~ t.write('Disk Size:           \t750\n')
+            whatever(t)
+            t.write('Template:            \tNone\n')
+            t.write('CPU Limit:           \t1.0\n')
+            t.write('Tags:                \ttagb, state:active, taga, arch:linux, type:compute\n')
 
         self._cmd('set computes/%s tags=taga,-tagb' % cid)
         self.terminal.reset_mock()
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \ttux-for-test\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
-            t.write('Effective state:   \tactive\n')
-            t.write('Template:          \tNone\n')
-            t.write('Number of CPU/cores:\t1\n')
-            t.write('Cpu limit:         \t1.0\n')
-            t.write('Size of main volume:\t750\n')
-            t.write('Tags:              \tactive, taga, linux\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \ttux-for-test\n')
+            t.write('IPv4 address:        \t0.0.0.0/32\n')
+            t.write('IPv6 address:        \t::/128\n')
+            t.write('State:               \tactive\n')
+            t.write('Effective state:     \tactive\n')
+            t.write('Num. Cores:          \t1\n')
+            t.write('RAM Size:            \t2000\n')
+            #~ t.write('Disk Size:           \t750\n')
+            whatever(t)
+            t.write('Template:            \tNone\n')
+            t.write('CPU Limit:           \t1.0\n')
+            t.write('Tags:                \tstate:active, taga, arch:linux, type:compute\n')
 
     @run_in_reactor
     def test_create_compute(self):
@@ -389,13 +392,13 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat %s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:      \tlinux\n')
-            t.write('Host name:         \tTUX-FOR-TEST\n')
-            t.write('IPv4 address:      \t0.0.0.0/32\n')
-            t.write('IPv6 address:      \t::/128\n')
-            t.write('CPU Speed in MHz:  \t2000\n')
-            t.write('RAM size in MB:    \t2000\n')
-            t.write('State:             \tactive\n')
+            t.write('Architecture:        \tlinux\n')
+            whatever(t)
+            t.write('Host name:           \tTUX-FOR-TEST\n')
+            whatever(t)
+            t.write('State:               \tactive\n')
+            whatever(t)
+            t.write('RAM Size:            \t2000\n')
 
     @run_in_reactor
     def test_create_compute_mandatory_args(self):
