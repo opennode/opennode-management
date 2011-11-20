@@ -114,35 +114,50 @@ def _pretty_print(name, args, kwargs):
 
 
 class MethodProxy(object):
-    def __init__(self, mock, name, index):
+    def __init__(self, mock, name, index, proxy):
         self.mock = mock
         self.name = name
         self.index = index
+        self.proxy = proxy
 
     def __call__(self, *args, **kwargs):
-        assert len(self.mock.method_calls) > self.index, \
-               "Expected a %s call but instead there was no call" % _pretty_print(self.name, args, kwargs)
+        while True:
+            assert len(self.mock.method_calls) > self.index, \
+                   ("Expected a %s call but instead there was no call" % _pretty_print(self.name, args, kwargs)
+                    if not self.proxy.__dict__['whatever'] else
+                    "No matching call found for %s" % _pretty_print(self.name, args, kwargs))
 
-        call = self.mock.method_calls[self.index]
+            call = self.mock.method_calls[self.index]
 
-        def msg():
-            return "Expected a %s call but found %s instead" % (_pretty_print(self.name, args, kwargs),
-                                                                _pretty_print(*call))
+            def msg():
+                return "Expected a %s call but found %s instead" % (_pretty_print(self.name, args, kwargs),
+                                                                    _pretty_print(*call))
 
-        assert call[0] == self.name, msg()
+            try:
+                assert call[0] == self.name, msg()
 
-        assert args == call[1], msg()
+                assert args == call[1], msg()
 
-        assert kwargs == call[2], msg()
+                assert kwargs == call[2], msg()
+            except AssertionError:
+                if self.proxy.__dict__['whatever']:
+                    self.index += 1
+                else:
+                    raise
+            else:
+                if self.proxy.__dict__['whatever']:
+                    self.proxy.__dict__['whatever'] = False
+                break
 
 
 class MockProxy(object):
     def __init__(self, mock):
         self.mock = mock
         self.next_method_index = 0
+        self.whatever = False
 
     def __getattr__(self, name):
-        ret = MethodProxy(self.__dict__['mock'], name, self.__dict__['next_method_index'])
+        ret = MethodProxy(self.__dict__['mock'], name, self.__dict__['next_method_index'], self)
         self.__dict__['next_method_index'] += 1
         return ret
 
@@ -172,6 +187,17 @@ def skip(mock_proxy, num):
     if calls_left < num:
         raise AssertionError("There should be at least %s more method calls but there are only %s" % (num, calls_left))
     mock_proxy.__dict__['next_method_index'] += num
+
+
+def whatever(mock_proxy):
+    """Causes the next method invocation expectation to skip any
+    mismatching calls.
+
+    This can be used to ignore any number of method invocations before
+    a suitable one is found and matched.
+
+    """
+    mock_proxy.__dict__['whatever'] = True
 
 
 class CallDescr(namedtuple('CallDescrBase', ('name', 'args', 'kwargs', 'mock_proxy'))):
