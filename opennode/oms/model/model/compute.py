@@ -27,7 +27,7 @@ class ICompute(Interface):
     kernel = schema.TextLine(
         title=u"Kernel", description=u"Kernel version (if applicable)")
     disk_info = schema.TextLine(
-        title=u"Disk Info", description=u"Info about the pyhysical installed disk(s)",
+        title=u"Disk Info", description=u"Info about the physical installed disk(s)",
         required=False)
     memory_info = schema.TextLine(
         title=u"Memory Info", description=(u"Info about the physical installed memory "
@@ -56,7 +56,7 @@ class ICompute(Interface):
         title=u"RAM Size", description=u"RAM size in MB")
     diskspace = schema.Dict(
         title=u"Disk size", description=u"List of disk partition sizes",
-        key_type=schema.TextLine(), value_type=schema.Int())
+        key_type=schema.TextLine(), value_type=schema.Float())
     network = schema.Float(
         title=u"Network", description=u"Network bandwidth in Mbps",
         required=False)
