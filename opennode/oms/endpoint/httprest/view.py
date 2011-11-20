@@ -106,8 +106,8 @@ class VirtualizationContainerView(ContainerView):
 class ComputeView(ContainerView):
     context(Compute)
 
-    def render_GET(self, request):
-        ret = super(ComputeView, self).render_GET(request)
+    def render_recursive(self, request, *args, **kwargs):
+        ret = super(ComputeView, self).render_recursive(request, *args, **kwargs)
 
         ret.update({
             'features': [i.__name__ for i in self.context.implemented_interfaces()],
