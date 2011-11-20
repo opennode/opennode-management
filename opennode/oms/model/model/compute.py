@@ -121,6 +121,7 @@ class Compute(Container):
     memory = 2048,
     network = 100.0
     diskspace = {
+        u'total': 2000.0,
         u'root': 500.0,
         u'boot': 100.0,
         u'storage': 1000.0,
