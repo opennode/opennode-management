@@ -229,7 +229,7 @@ class CatObjectCmd(Cmd):
                 self._do_cat(obj)
 
     def _do_cat(self, obj):
-        data = model_to_dict(obj)
+        data = model_to_dict(obj, use_titles=True)
 
         if data:
             max_key_len = max(len(key) for key in data)

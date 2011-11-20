@@ -51,9 +51,12 @@ class SetFromUnicode(CollectionFromUnicode):
 
 # XXX: Might not be the best place nor name for it, but at least the
 # duplication has been eliminated for now.
-def model_to_dict(obj):
+def model_to_dict(obj, use_titles=False):
     data = OrderedDict()
     for key, field, schema in get_schema_fields(obj):
-        key = key.encode('utf8')
+        if not use_titles:
+            key = key.encode('utf8')
+        else:
+            key = field.title
         data[key] = field.get(schema(obj))
     return data
