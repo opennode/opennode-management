@@ -119,13 +119,15 @@ class MethodProxy(object):
         self.name = name
         self.index = index
         self.proxy = proxy
+        self.whatever_tries = []
 
     def __call__(self, *args, **kwargs):
         while True:
             assert len(self.mock.method_calls) > self.index, \
                    ("Expected a %s call but instead there was no call" % _pretty_print(self.name, args, kwargs)
                     if not self.proxy.__dict__['whatever'] else
-                    "No matching call found for %s" % _pretty_print(self.name, args, kwargs))
+                    "No matching call found for %s; found: %s" % (_pretty_print(self.name, args, kwargs),
+                                                                   "; ".join(_pretty_print(n, a, kw) for n, a, kw in self.whatever_tries)))
 
             call = self.mock.method_calls[self.index]
 
@@ -141,6 +143,7 @@ class MethodProxy(object):
                 assert kwargs == call[2], msg()
             except AssertionError:
                 if self.proxy.__dict__['whatever']:
+                    self.whatever_tries.append(self.mock.method_calls[self.index])
                     self.index += 1
                 else:
                     raise
@@ -148,6 +151,8 @@ class MethodProxy(object):
                 if self.proxy.__dict__['whatever']:
                     self.proxy.__dict__['whatever'] = False
                 break
+        self.proxy.whatever = False
+        self.proxy.next_method_index = self.index + 1
 
 
 class MockProxy(object):
