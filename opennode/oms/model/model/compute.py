@@ -107,20 +107,20 @@ class Compute(Container):
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
-    cpu_info = "Intel Xeon 12.2GHz"
-    disk_info = "Seagate Barracuda SuperSaver 2000TB BuyNow!"
-    memory_info = "1333MHz DDR SuperGoodMemory!"
+    cpu_info = u"Intel Xeon 12.2GHz"
+    disk_info = u"Seagate Barracuda SuperSaver 2000TB BuyNow!"
+    memory_info = u"1333MHz DDR SuperGoodMemory!"
 
-    os_release = "build 35"
-    kernel = "2.6.18-238.9.1.el5.028stab089.1"
+    os_release = u"build 35"
+    kernel = u"2.6.18-238.9.1.el5.028stab089.1"
 
     num_cores = 1
     memory = 2048,
     network = 100.0
     diskspace = {
-        'root': 500,
-        'boot': 100,
-        'storage': 1000,
+        u'root': 500.0,
+        u'boot': 100.0,
+        u'storage': 1000.0,
     }
     swap_size = 4192
 
@@ -129,9 +129,9 @@ class Compute(Container):
     memory_usage = 773.2
     network_usage = (55.2, 21.9)
     diskspace_usage = {
-        'root': 249,
-        'boot': 49,
-        'storage': 748,
+        u'root': 249.0,
+        u'boot': 49.3,
+        u'storage': 748.3,
     }
 
     cpu_limit = 1.0
