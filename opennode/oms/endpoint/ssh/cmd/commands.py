@@ -238,7 +238,7 @@ class CatObjectCmd(Cmd):
                     pretty_value = ', '.join(str(i) for i in value)
                 else:
                     pretty_value = value
-                self.write("%s\t%s\n" % ((key + ':').ljust(max_key_len),
+                self.write("%s\t%s\n" % ((key.encode('utf8') + ':').ljust(max_key_len),
                                          str(pretty_value).encode('utf8')))
 
         if IIncomplete.providedBy(obj):
