@@ -87,7 +87,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_cd_errors(self):
         computes = db.get_root()['oms_root']['computes']
-        computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
 
         # TODO: reenable this when we'll have another leaf object.
 
@@ -121,7 +121,7 @@ class SshTestCase(unittest.TestCase):
             t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
 
         computes = db.get_root()['oms_root']['computes']
-        computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
 
         # TODO: put back this when we find another leaf object
 
@@ -145,7 +145,7 @@ class SshTestCase(unittest.TestCase):
             no_more_calls(t)
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self.terminal.reset_mock()
@@ -184,7 +184,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('cat computes/%s' % cid)
@@ -207,7 +207,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('cat computes/%s' % cid)
@@ -244,7 +244,7 @@ class SshTestCase(unittest.TestCase):
             __contains__ = Compute
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         orig_current_object = MoveCmd.current_obj
@@ -259,7 +259,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_rename_compute(self):
         computes = db.get_root()['oms_root']['computes']
-        compute = Compute('linux', 'tux-for-test', 2000, 'active')
+        compute = Compute('tux-for-test', 'active', 'linux', 2000)
         cid = computes.add(compute)
         transaction.commit()
 
@@ -276,7 +276,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST' % cid)
@@ -305,7 +305,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute_verbose(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('set computes/%s hostname=TUX-FOR-TEST -v' % cid)
@@ -327,7 +327,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute_errors(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('set computes/%s hostname=x' % cid)
@@ -337,7 +337,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute_tags(self):
         computes = db.get_root()['oms_root']['computes']
-        cmpt=Compute('linux', u'tux-for-test', 2000, u'active')
+        cmpt=Compute(u'tux-for-test', u'active', 'linux', 2000)
         cid = computes.add(cmpt)
         transaction.commit()
 
@@ -494,7 +494,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_context_dependent_help(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self.terminal.reset_mock()
@@ -546,7 +546,7 @@ class SshTestCase(unittest.TestCase):
 
         self.terminal.reset_mock()
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._cmd('echo /computes/*-[a-z0-9]*-*')
