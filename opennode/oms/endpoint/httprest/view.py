@@ -10,11 +10,12 @@ from opennode.oms.model.model import Machines, Compute
 from opennode.oms.model.model.actions import ActionsContainer
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
-from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.hangar import Hangar
+from opennode.oms.model.model.search import SearchContainer, SearchResult
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.schema import model_to_dict
+from opennode.oms.zodb import db
 
 
 class DefaultView(HttpRestView):
@@ -63,12 +64,6 @@ class ContainerView(DefaultView):
 
         items = map(follow_symlinks, self.context.listcontent())
 
-        q = request.args.get('q', [''])[0]
-        q = q.decode('utf-8')
-
-        if q:
-            items = [item for item in items if IFiltrable(item).match(q)]
-
         children = [IHttpRestView(item).render_recursive(request, depth - 1)
                     for item in items
                     if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
@@ -86,6 +81,22 @@ class ContainerView(DefaultView):
 
     def blacklisted(self, item):
         return isinstance(item, ByNameContainer)
+
+
+class SearchView(ContainerView):
+    context(SearchContainer)
+
+    def render_GET(self, request):
+        q = request.args.get('q', [''])[0]
+        q = q.decode('utf-8')
+
+        if not q:
+            return super(SearchView, self).render_GET(request)
+
+        search = db.get_root()['oms_root']['search']
+        res = SearchResult(search, q)
+
+        return IHttpRestView(res).render_GET(request)
 
 
 class MachinesView(ContainerView):

@@ -10,7 +10,7 @@ from zope.app.intid import IntIds
 from zope.app.intid.interfaces import IIntIds
 from zope.catalog.keyword import KeywordIndex
 from zope.catalog.text import TextIndex
-from zope.component import provideAdapter, provideUtility, provideSubscriptionAdapter
+from zope.component import provideAdapter, provideUtility, provideSubscriptionAdapter, queryAdapter
 from zope.interface import Interface, implements
 from zope.keyreference.interfaces import NotYet
 from zope.keyreference.persistent import KeyReferenceToPersistent
@@ -21,8 +21,38 @@ from .symlink import Symlink, follow_symlinks
 from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
 
 
+class ITokenized(Interface):
+    def tokens():
+        """Returns all tokens relevant for a model as a single string"""
+
+
+class ITokenizer(Interface):
+    def tokens():
+        """Returns all tokens relevant for a model as a list of tokens"""
+
+
 class ITagged(Interface):
     tags = schema.Set(title=u"Tags", required=False)
+
+
+class ModelTokenizer(Adapter):
+    implements(ITokenized)
+    context(Model)
+
+    def tokens(self):
+        """Hackish way to quickly take all important tokens"""
+        tokens = []
+        if IDisplayName.providedBy(self.context):
+            tokens.append(IDisplayName(self.context).display_name())
+
+        if queryAdapter(self.context, ITagged):
+            for tag in ITagged(self.context).tags:
+                # hack, zope catalog treats ':' specially
+                tokens.append(tag.replace(':', '_'))
+                namespace, name = tag.split(':')
+                tokens.append(name)
+
+        return ' '.join(tokens)
 
 
 class ModelTags(Adapter):
@@ -80,6 +110,8 @@ class SearchContainer(ReadonlyContainer):
         self.catalog = Catalog()
         self.catalog['tags'] = KeywordIndex('tags', ITagged)
         self.catalog['name'] = TextIndex('display_name', IDisplayName, True)
+        self.catalog['__all'] = TextIndex('tokens', ITokenized, True)
+
         self.ids = IntIds()
 
     def index_object(self, obj):
@@ -100,9 +132,41 @@ class SearchContainer(ReadonlyContainer):
         provideUtility(self.ids, IIntIds)
         return list(self.catalog.searchResults(**kwargs))
 
+    def search_goog(self, query):
+        # hack, zope catalog treats ':' specially
+        return self.search(__all=query.replace(':', '_'))
+
     @property
     def _items(self):
         return {'by-tag': self.tag_container}
+
+
+class SearchResult(ReadonlyContainer):
+    def __init__(self, parent, query):
+        self.__parent__ = parent
+        self.__name__ = query
+        self.query = query
+
+    def search_goog(self, query):
+        return self.__parent__.search_goog(query)
+
+    @property
+    def _items(self):
+        res = {}
+        for item in self.__parent__.search_goog(self.query):
+            name = item.__name__
+            if IDisplayName.providedBy(item):
+                name = IDisplayName(item).display_name()
+
+            def find_free_name(tentative_name, idx):
+                next_name = '%s_%s' % (name, idx)
+                if res.has_key(tentative_name):
+                    return find_free_name(next_name, idx+1)
+                return tentative_name
+
+            name = find_free_name(name, 0)
+            res[name] = Symlink(name, item)
+        return res
 
 
 @subscribe(Model, IModelModifiedEvent)
