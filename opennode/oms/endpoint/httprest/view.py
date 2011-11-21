@@ -123,13 +123,26 @@ class VirtualizationContainerView(ContainerView):
         if not isinstance(data, dict):
             raise BadRequest, "Input data must be a dictionary"
 
-        form = ApplyRawData(data, model=Compute)
-        if form.errors:
-            return form.error_dict()
+        return {
+            'success': True,
+            'result': data
+        }
 
-        compute = form.create()
-        self.context.add(compute)
-        return IHttpRestView(compute).render(request)
+        return {
+            'success': False,
+            'errors': [
+                {'id': 'hostname', 'msg': "must be present"},
+                {'id': 'diskspace', 'msg': "must be present"},
+            ]
+        }
+
+        #~ form = ApplyRawData(data, model=Compute)
+        #~ if form.errors:
+        #~     return form.error_dict()
+
+        #~ compute = form.create()
+        #~ self.context.add(compute)
+        #~ return IHttpRestView(compute).render(request)
 
 
 class ComputeView(ContainerView):
