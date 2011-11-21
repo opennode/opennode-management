@@ -35,8 +35,8 @@ class CmdCompletionTestCase(unittest.TestCase):
     def tearDown(self):
         registry.commands = self.orig_commands
 
-    def make_compute(self, hostname=u'tux-for-test', status=u'active', arch=u'linux', memory=2000):
-        return Compute(hostname, status, arch, memory)
+    def make_compute(self, hostname=u'tux-for-test', state=u'active', arch=u'linux', memory=2000):
+        return Compute(hostname, state, arch, memory)
 
     def _input(self, string):
         for s in string:
@@ -161,28 +161,28 @@ class CmdCompletionTestCase(unittest.TestCase):
         cid = computes.add(self.make_compute())
         transaction.commit()
 
-        self._tab_after('set /computes/%s arch' % cid)
+        self._tab_after('set /computes/%s st' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('itecture=')
+            t.write('ate=')
             no_more_calls(t)
 
-        self._tab_after('li')
+        self._tab_after('ina')
         with assert_mock(self.terminal) as t:
-            t.write('nux ')
+            t.write('ctive ')
             no_more_calls(t)
 
     @run_in_reactor
     def test_complete_keyword_switches_mk(self):
         self.oms_ssh.lineReceived('cd computes')
 
-        self._tab_after('mk compute arch')
+        self._tab_after('mk compute st')
         with assert_mock(self.terminal) as t:
-            t.write('itecture=')
+            t.write('ate=')
             no_more_calls(t)
 
-        self._tab_after('li')
+        self._tab_after('ina')
         with assert_mock(self.terminal) as t:
-            t.write('nux ')
+            t.write('ctive ')
             no_more_calls(t)
 
     @run_in_reactor
@@ -190,17 +190,17 @@ class CmdCompletionTestCase(unittest.TestCase):
         """Test consuming of already completed switches when there are mandatory arguments."""
         self.oms_ssh.lineReceived('cd computes')
 
-        self._tab_after('mk compute arch')
+        self._tab_after('mk compute st')
         with assert_mock(self.terminal) as t:
-            t.write('itecture=')
+            t.write('ate=')
             no_more_calls(t)
 
-        self._tab_after('li')
+        self._tab_after('ina')
         with assert_mock(self.terminal) as t:
-            t.write('nux ')
+            t.write('ctive ')
             no_more_calls(t)
 
-        self._tab_after('arch')
+        self._tab_after('st')
         assert not self.terminal.method_calls
 
     @run_in_reactor

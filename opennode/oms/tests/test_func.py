@@ -15,8 +15,12 @@ from opennode.oms.model.model.virtualizationcontainer import VirtualizationConta
 from opennode.oms.tests.util import run_in_reactor, funcd_running
 
 
+def make_compute(hostname=u'tux-for-test', state=u'active', memory=2000):
+    return Compute(hostname, state, memory)
+
+
 def test_adaption():
-    compute = Compute(architecture='linux', hostname='tuxtest', memory=2048, state='online')
+    compute = make_compute()
     alsoProvides(compute, IFuncInstalled)
     assert isinstance(IGetComputeInfo(compute, None), FuncGetComputeInfo)
 
@@ -24,7 +28,7 @@ def test_adaption():
 @unittest.skipUnless(funcd_running, "func not running")
 @run_in_reactor(funcd_running and 2)
 def test_get_info():
-    compute = Compute(architecture='linux', hostname='localhost', memory=2048, state='online')
+    compute = make_compute(hostname=u'localhost')
     alsoProvides(compute, IFuncInstalled)
     job = IGetComputeInfo(compute, None)
     job.run()
@@ -34,7 +38,7 @@ def test_get_info():
 @run_in_reactor(funcd_running and 1)
 @defer.inlineCallbacks
 def test_operate_vm():
-    compute = Compute(architecture='linux', hostname=u'localhost', memory=2048, state='online')
+    compute = make_compute(hostname=u'localhost')
     alsoProvides(compute, IFuncInstalled)
 
     backend = 'test://' + os.path.join(os.getcwd(), "opennode/oms/tests/u1.xml")
@@ -58,10 +62,10 @@ def test_operate_vm():
 def test_activate_compute():
     shutil.copy(os.path.join(os.getcwd(), 'opennode/oms/tests/u1.xml'), '/tmp/func_vm_test_state.xml')
 
-    compute = Compute(architecture=u'linux', hostname=u'vm1', memory=2048, state=u'inactive')
+    compute = make_compute(hostname=u'vm1', state=u'inactive')
     compute.__name__ = '4dea22b31d52d8f32516782e98ab3fa0'
 
-    dom0 = Compute(architecture=u'linux', hostname=u'localhost', memory=2048, state=u'active')
+    dom0 = make_compute(hostname=u'localhost', state=u'active')
     alsoProvides(dom0, IFuncInstalled)
 
     container = VirtualizationContainer('test')

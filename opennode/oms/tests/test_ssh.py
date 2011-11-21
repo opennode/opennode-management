@@ -51,8 +51,8 @@ class SshTestCase(unittest.TestCase):
     def _cmd(self, cmd):
         self.oms_ssh.lineReceived(cmd)
 
-    def make_compute(self, hostname=u'tux-for-test', status=u'active', arch=u'linux', memory=2000):
-        return Compute(hostname, status, arch, memory)
+    def make_compute(self, hostname=u'tux-for-test', state=u'active', memory=2000):
+        return Compute(hostname, state, memory)
 
     def test_quit(self):
         self._cmd('quit')
@@ -191,9 +191,8 @@ class SshTestCase(unittest.TestCase):
         transaction.commit()
 
         self._cmd('cat computes/%s' % cid)
-
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \ttux-for-test\n')
             whatever(t)
@@ -216,7 +215,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \ttux-for-test\n')
             whatever(t)
@@ -273,7 +272,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat /machines/123')
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
 
 
     @run_in_reactor
@@ -287,7 +286,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
             whatever(t)
@@ -319,7 +318,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
             whatever(t)
@@ -349,7 +348,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \ttux-for-test\n')
             t.write('IPv4 address:        \t0.0.0.0/32\n')
@@ -363,14 +362,14 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Template:            \tNone\n')
             t.write('CPU Limit:           \t1.0\n')
-            t.write('Tags:                \tarch:linux, label:taga, label:tagb, state:active, type:compute\n')
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:taga, label:tagb, state:active, type:compute\n')
 
         self._cmd('set computes/%s tags=taga,-tagb' % cid)
         self.terminal.reset_mock()
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \ttux-for-test\n')
             t.write('IPv4 address:        \t0.0.0.0/32\n')
@@ -383,19 +382,19 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Template:            \tNone\n')
             t.write('CPU Limit:           \t1.0\n')
-            t.write('Tags:                \tarch:linux, label:taga, state:active, type:compute\n')
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:taga, state:active, type:compute\n')
 
     @run_in_reactor
     def test_create_compute(self):
         self._cmd("cd /computes")
-        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000 state=active")
+        self._cmd("mk compute hostname=TUX-FOR-TEST memory=2000 state=active")
         cid = self.terminal.method_calls[-2][1][0]
 
         self.terminal.reset_mock()
         self._cmd('cat %s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tlinux\n')
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
             whatever(t)
@@ -408,7 +407,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd("cd /computes")
 
         self.terminal.reset_mock()
-        self._cmd("mk compute architecture=linux hostname=TUX-FOR-TEST memory=2000")
+        self._cmd("mk compute hostname=TUX-FOR-TEST memory=2000")
 
         with assert_mock(self.terminal) as t:
             t.write("argument =state is required")
@@ -418,7 +417,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd("cd /computes")
 
         self.terminal.reset_mock()
-        self._cmd("mk compute architecture=linux hostname=x memory=2 state=active")
+        self._cmd("mk compute hostname=x memory=2 state=active")
 
         with assert_mock(self.terminal) as t:
             t.write("hostname: Value is too short\n")

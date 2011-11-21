@@ -18,8 +18,10 @@ from opennode.oms.model.schema import Path
 
 class ICompute(Interface):
     # Hardware/platform info
-    architecture = schema.Choice(
-        title=u"Architecture", values=(u'linux', u'win32', u'darwin', u'bsd', u'solaris'))
+    architecture = schema.Tuple(
+        title=u"Architecture", description=u"OS arch, OS type, OS distribution/flavour",
+        value_type=schema.TextLine(), max_length=3, min_length=3,
+        required=False)
     cpu_info = schema.TextLine(
         title=u"CPU Info", description=u"Info about the CPU such as model, speed in Hz, cache size",
         required=False)
@@ -110,6 +112,7 @@ class Compute(Container):
     ipv6_address = u'::/128'
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
+    architecture = (u'x86_64', u'linux', u'centos')
     cpu_info = u"Intel Xeon 12.2GHz"
     disk_info = u"Seagate Barracuda SuperSaver 2000TB BuyNow!"
     memory_info = u"1333MHz DDR SuperGoodMemory!"
@@ -143,10 +146,9 @@ class Compute(Container):
     autostart = False
     startup_timestamp = "2011-07-06 01:23:45"
 
-    def __init__(self, hostname, state, architecture, memory=None, template=None, ipv4_address=None):
+    def __init__(self, hostname, state, memory=None, template=None, ipv4_address=None):
         super(Compute, self).__init__()
 
-        self.architecture = architecture
         self.hostname = hostname
         self.memory = memory
         self.state = state
@@ -230,7 +232,10 @@ class ComputeTags(ModelTags):
     context(Compute)
 
     def auto_tags(self):
-        res =  [u'arch:'+self.context.architecture, u'state:'+self.context.state]
+        res =  [u'state:'+self.context.state]
+        if self.context.architecture:
+            for i in self.context.architecture:
+                res.append(u'arch:'+i)
 
         from .virtualizationcontainer import IVirtualizationContainer
         if IVirtualCompute.providedBy(self.context) and IVirtualizationContainer.providedBy(self.context.__parent__):

@@ -235,7 +235,10 @@ class CatObjectCmd(Cmd):
             max_key_len = max(len(key) for key in data)
             for key, value in data.items():
                 if hasattr(value, '__iter__'):
-                    pretty_value = ', '.join(sorted(str(i) for i in value))
+                    strings = [str(i) for i in value]
+                    if not isinstance(value, tuple):
+                        strings = sorted(strings)
+                    pretty_value = ', '.join(strings)
                 else:
                     pretty_value = value
                 self.write("%s\t%s\n" % ((key.encode('utf8') + ':').ljust(max_key_len),
