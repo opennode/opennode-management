@@ -223,7 +223,7 @@ class Compute(Container):
         addresses = [i.ipv4_address for i in self._items['interfaces'] if i.ipv4_address]
         if not addresses:
             return self._ipv4_address
-        return addresses[0]
+        return unicode(addresses[0])
 
 
 class ComputeTags(ModelTags):
