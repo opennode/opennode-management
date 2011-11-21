@@ -65,7 +65,7 @@ class ICompute(Interface):
     network = schema.Float(
         title=u"Network", description=u"Network bandwidth in Mbps",
         required=False)
-    swap_size = schema.Float(
+    swap_size = schema.Int(
         title=u"Swap Size", description=u"Swap size",
         required=False)
 
