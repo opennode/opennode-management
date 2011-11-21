@@ -99,7 +99,7 @@ class SyncVmsAction(Action):
 
         for vm_uuid in remote_uuids.difference(local_uuids):
             remote_vm = [i for i in remote_vms if i['uuid'] == vm_uuid][0]
-            new_compute = Compute('linux', remote_vm['name'], 2000, remote_vm['state'])
+            new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
             new_compute.__name__ = vm_uuid
             alsoProvides(new_compute, IVirtualCompute)
             self.context.add(new_compute)
