@@ -35,6 +35,9 @@ class CmdCompletionTestCase(unittest.TestCase):
     def tearDown(self):
         registry.commands = self.orig_commands
 
+    def make_compute(self, hostname=u'tux-for-test', status=u'active', arch=u'linux', memory=2000):
+        return Compute(hostname, status, arch, memory)
+
     def _input(self, string):
         for s in string:
             self.oms_ssh.characterReceived(s, False)
@@ -155,7 +158,7 @@ class CmdCompletionTestCase(unittest.TestCase):
     @run_in_reactor
     def test_complete_keyword_switches(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
+        cid = computes.add(self.make_compute())
         transaction.commit()
 
         self._tab_after('set /computes/%s arch' % cid)
@@ -279,7 +282,7 @@ class CmdCompletionTestCase(unittest.TestCase):
     @run_in_reactor
     def test_complete_container_symlink(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
+        cid = computes.add(self.make_compute())
         transaction.commit()
 
         self._tab_after('cd /computes/%s' % cid)
