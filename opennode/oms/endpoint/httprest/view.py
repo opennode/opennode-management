@@ -4,6 +4,7 @@ from grokcore.component import context
 from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
+from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import Machines, Compute
@@ -112,6 +113,23 @@ class VirtualizationContainerView(ContainerView):
     def blacklisted(self, item):
         return (super(VirtualizationContainerView, self).blacklisted(item)
                 or isinstance(item, ActionsContainer))
+
+    def render_POST(self, request):
+        try:
+            data = json.load(request.content)
+        except ValueError:
+            raise BadRequest, "Input data could not be parsed"
+
+        if not isinstance(data, dict):
+            raise BadRequest, "Input data must be a dictionary"
+
+        form = ApplyRawData(data, model=Compute)
+        if form.errors:
+            return form.error_dict()
+
+        compute = form.create()
+        self.context.add(compute)
+        return IHttpRestView(compute).render(request)
 
 
 class ComputeView(ContainerView):
