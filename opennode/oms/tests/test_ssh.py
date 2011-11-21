@@ -360,7 +360,7 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Template:            \tNone\n')
             t.write('CPU Limit:           \t1.0\n')
-            t.write('Tags:                \ttagb, state:active, taga, arch:linux, type:compute\n')
+            t.write('Tags:                \tarch:linux, label:taga, label:tagb, state:active, type:compute\n')
 
         self._cmd('set computes/%s tags=taga,-tagb' % cid)
         self.terminal.reset_mock()
@@ -380,7 +380,7 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Template:            \tNone\n')
             t.write('CPU Limit:           \t1.0\n')
-            t.write('Tags:                \tstate:active, taga, arch:linux, type:compute\n')
+            t.write('Tags:                \tarch:linux, label:taga, state:active, type:compute\n')
 
     @run_in_reactor
     def test_create_compute(self):
