@@ -24,16 +24,19 @@ class SyncAction(Action):
     def execute(self, cmd, args):
         default = yield self.default_console()
 
-        yield self._sync_consoles(cmd)
+        try:
+            yield self._sync_consoles()
 
-        if IVirtualCompute.providedBy(self.context):
-            yield self._sync_virtual(cmd)
+            if IVirtualCompute.providedBy(self.context):
+                yield self._sync_virtual()
 
-        yield self._create_default_console(default)
+            yield self._create_default_console(default)
+        except Exception as e:
+            cmd.write("%s\n" % (": ".join(msg for msg in e.args if not msg.startswith('  File "/'))))
 
     @db.transact
-    def _create_default_console(self, cmd):
-        return self.create_default_console(cmd)
+    def _create_default_console(self, default):
+        return self.create_default_console(default)
 
     @db.transact
     def default_console(self):
@@ -47,31 +50,27 @@ class SyncAction(Action):
         self.context.consoles.add(Symlink('default', self.context.consoles[default]))
 
     @db.transact
-    def _sync_consoles(self, cmd):
-        return self.sync_consoles(cmd)
+    def _sync_consoles(self):
+        return self.sync_consoles()
 
-    def sync_consoles(self, cmd):
+    def sync_consoles(self):
         self.context.consoles = Consoles()
         ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
         self.context.consoles.add(ssh_console)
 
     @defer.inlineCallbacks
-    def _sync_virtual(self, cmd):
+    def _sync_virtual(self):
         submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
-        try:
-            # TODO: not efficient but for now it's not important to add an ad-hoc func method for this.
-            for vm in (yield submitter.submit(IListVMS)):
-                if vm['uuid'] == self.context.__name__:
-                    yield self._sync(cmd, vm)
-        except Exception as e:
-            cmd.write("%s\n" % (": ".join(msg for msg in e.args if not msg.startswith('  File "/'))))
+        # TODO: not efficient but for now it's not important to add an ad-hoc func method for this.
+        for vm in (yield submitter.submit(IListVMS)):
+            if vm['uuid'] == self.context.__name__:
+                yield self._sync(vm)
 
     @db.transact
-    def _sync(self, cmd, vm):
-        return self.sync_vm(cmd, vm)
+    def _sync(self, vm):
+        return self.sync_vm(vm)
 
-    def sync_vm(self, cmd, vm):
-        cmd.write("syncing %s\n" % self.context)
+    def sync_vm(self, vm):
         self.context.state = unicode(vm['state'])
         self.context.effective_state = self.context.state
 
