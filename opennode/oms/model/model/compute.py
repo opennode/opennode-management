@@ -143,7 +143,7 @@ class Compute(Container):
     autostart = False
     startup_timestamp = "2011-07-06 01:23:45"
 
-    def __init__(self, architecture, hostname, memory, state, template=None, ipv4_address=None):
+    def __init__(self, hostname, state, architecture, memory=None, template=None, ipv4_address=None):
         super(Compute, self).__init__()
 
         self.architecture = architecture
