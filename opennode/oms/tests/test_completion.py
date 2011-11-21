@@ -155,7 +155,7 @@ class CmdCompletionTestCase(unittest.TestCase):
     @run_in_reactor
     def test_complete_keyword_switches(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._tab_after('set /computes/%s arch' % cid)
@@ -279,7 +279,7 @@ class CmdCompletionTestCase(unittest.TestCase):
     @run_in_reactor
     def test_complete_container_symlink(self):
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(Compute('linux', 'tux-for-test', 2000, 'active'))
+        cid = computes.add(Compute('tux-for-test', 'active', 'linux', 2000))
         transaction.commit()
 
         self._tab_after('cd /computes/%s' % cid)
