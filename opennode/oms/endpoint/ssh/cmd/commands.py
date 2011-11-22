@@ -234,7 +234,9 @@ class CatObjectCmd(Cmd):
         if data:
             max_key_len = max(len(key) for key in data)
             for key, value in data.items():
-                if hasattr(value, '__iter__'):
+                if isinstance(value, dict):
+                    pretty_value = ', '.join(['%s:%s' % i for i in value.items()])
+                elif hasattr(value, '__iter__'):
                     strings = [str(i) for i in value]
                     if not isinstance(value, tuple):
                         strings = sorted(strings)
