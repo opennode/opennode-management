@@ -34,6 +34,10 @@ class Template(Model):
     def display_name(self):
         return self.name
 
+    @property
+    def nicknames(self):
+        return [self.name, self.base_type]
+
 
 class TemplateTags(ModelTags):
     context(Template)
