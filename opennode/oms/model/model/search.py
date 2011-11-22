@@ -119,7 +119,11 @@ class SearchContainer(ReadonlyContainer):
         try:
             self.catalog.index_doc(self.ids.register(real_obj), real_obj)
         except NotYet:
-            log.msg("cannot index object because not yet committed")
+            log.msg("cannot index object %s because not yet committed" % (obj,))
+
+    def _index_object(self, obj):
+        real_obj = follow_symlinks(obj)
+        self.catalog.index_doc(self.ids.register(real_obj), real_obj)
 
     def unindex_object(self, obj):
         try:
@@ -190,16 +194,27 @@ def reindex_created_model(model, event):
         # otherwise intid mapping won't be correct.
         objs, unresolved_path = traverse_path(db.get_root()['oms_root'], path)
         if unresolved_path:
-            if retry < 5:
-                reactor.callLater(0.1 * retry, get_and_reindex, retry + 1, canonical_path(model))
+            if retry < 10:
+                reactor.callLater(0.2 * retry, get_and_reindex, retry + 1, path)
             return
 
         search = db.get_root()['oms_root']['search']
-        search.index_object(objs[-1])
+        search._index_object(objs[-1])
+
+    def get_and_reindex_retry(retry, path):
+        deferred = get_and_reindex(retry, path)
+        @deferred
+        def on_error(*args):
+            if retry < 10:
+                import time
+                time.sleep(0.2)
+                get_and_reindex_retry(retry + 1, path)
+            else:
+                log.msg("Indexing of new object %s failed during commit after %s attempts (%s)" % (path, retry, args))
 
     # we cannot use the object in this transaction since it's not yet committed,
     # we'll retry to index it later, once the transaction is committed
-    reactor.callLater(0.1, get_and_reindex, 0, canonical_path(model))
+    reactor.callLater(0.1, get_and_reindex_retry, 0, canonical_path(model))
 
 
 @subscribe(Model, IModelDeletedEvent)
