@@ -92,6 +92,10 @@ class SyncVmsAction(Action):
         submitter = IVirtualizationContainerSubmitter(self.context)
 
         remote_vms = yield submitter.submit(IListVMS)
+        self._sync_vms_2(remote_vms)
+
+    @db.transact
+    def _sync_vms_2(self, remote_vms):
         local_vms = [i for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]
 
         remote_uuids = set(i['uuid'] for i in remote_vms)
@@ -110,11 +114,12 @@ class SyncVmsAction(Action):
             remote_vm = [i for i in remote_vms if i['uuid'] == action.context.__name__][0]
 
             # todo delegate all this into the action itself
-            default_console = yield action.default_console()
-            action.sync_consoles(cmd)
-            action.sync_vm(cmd, remote_vm)
+            default_console = action.default_console()
+            action.sync_consoles()
+            action.sync_vm(remote_vm)
             action.create_default_console(default_console)
 
+    @db.transact
     def _sync_ifaces(self, ifaces):
         host_compute = self.context.__parent__
 
