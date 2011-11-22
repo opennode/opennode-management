@@ -3,7 +3,7 @@ from collections import OrderedDict
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
-from zope.schema import TextLine, List, Set, getFieldsInOrder
+from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
 from zope.schema.interfaces import IFromUnicode
 
 from opennode.oms.util import get_direct_interfaces
@@ -47,6 +47,25 @@ class ListFromUnicode(CollectionFromUnicode):
 
 class SetFromUnicode(CollectionFromUnicode):
     context(Set)
+
+
+class TupleFromUnicode(CollectionFromUnicode):
+    context(Tuple)
+
+
+class DictFromUnicode(Adapter):
+    implements(IFromUnicode)
+    context(Dict)
+
+    def fromUnicode(self, value):
+        if isinstance(value, basestring):
+            value = [i.split(':') for i in value.split(',')]
+        res = self.context._type(value)
+
+        def convert(k, v):
+            return (IFromUnicode(self.context.key_type).fromUnicode(unicode(v)), IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
+
+        return self.context._type([convert(k, v) for k, v in res.items()])
 
 
 # XXX: Might not be the best place nor name for it, but at least the
