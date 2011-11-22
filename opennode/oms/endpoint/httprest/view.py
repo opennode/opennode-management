@@ -49,7 +49,9 @@ class DefaultView(HttpRestView):
         form = ApplyRawData(data, obj=self.context)
         if not form.errors:
             form.apply()
+            return IHttpRestView(self.context).render_recursive(request, depth=0)
         else:
+            request.setResponseCode(BadRequest.status_code)
             return form.error_dict()
 
         return json.dumps('ok')
