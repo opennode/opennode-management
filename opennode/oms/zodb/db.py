@@ -6,6 +6,7 @@ import transaction
 from ZEO.ClientStorage import ClientStorage
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
+from twisted.python import log
 from twisted.python.threadable import isInIOThread
 from twisted.python.threadpool import ThreadPool
 
@@ -76,6 +77,21 @@ def get_connection():
 
 def get_root():
     return get_connection().root()
+
+
+def assert_transact(fun):
+    """Used to decorate methods which assume to be running in a threadpool used for blocking io,
+    for example those created by @db.transact.
+
+    """
+
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        if isInIOThread() and not _testing:
+            log.msg('The ZODB should not be accessed from the main thread')
+            raise Exception('The ZODB should not be accessed from the main thread')
+        return fun(*args, **kwargs)
+    return wrapper
 
 
 def transact(fun):
