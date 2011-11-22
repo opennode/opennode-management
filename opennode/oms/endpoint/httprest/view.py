@@ -24,16 +24,9 @@ class DefaultView(HttpRestView):
     context(object)
 
     def render_OPTIONS(self, request):
-        headers = request.responseHeaders
-
         all_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD']
         has_methods = [m for m in all_methods if hasattr(self, 'render_%s' % m)] + ['OPTIONS']
-        headers.addRawHeader('Allow', ', '.join(has_methods))
-
-        headers.addRawHeader('Access-Control-Allow-Origin', '*')
-        headers.addRawHeader('Access-Control-Allow-Methods', ', '.join(has_methods))
-        # this is necessary for firefox
-        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
+        request.setHeader('Allow', ', '.join(has_methods))
 
         return EmptyResponse
 

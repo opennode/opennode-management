@@ -73,7 +73,8 @@ class HttpRestServer(resource.Resource):
     def _render(self, request):
         request.setHeader('Content-type', 'application/json')
         request.setHeader('Access-Control-Allow-Origin', '*')
-        request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
+        request.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS, HEAD')
+        request.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
 
         ret = None
         try:
