@@ -66,23 +66,8 @@ class HttpRestServer(resource.Resource):
         self.avatar = avatar
 
     def render(self, request):
-        if request.method == 'OPTIONS':
-            return self.render_OPTIONS(request)
-
         self._render(request)
         return NOT_DONE_YET
-
-    def render_OPTIONS(self, request):
-        """Return headers which allow cross domain xhr for this."""
-        headers = request.responseHeaders
-        headers.addRawHeader('Access-Control-Allow-Origin', '*')
-        headers.addRawHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        # this is necessary for firefox
-        headers.addRawHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
-        # this is to adhere to the OPTIONS method, not necessary for cross-domain
-        headers.addRawHeader('Allow', 'GET, POST, OPTIONS')
-
-        return ""
 
     @defer.inlineCallbacks
     def _render(self, request):
