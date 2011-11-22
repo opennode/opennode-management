@@ -123,26 +123,32 @@ class VirtualizationContainerView(ContainerView):
         if not isinstance(data, dict):
             raise BadRequest, "Input data must be a dictionary"
 
+        # cleanup hacks
+        data['state'] = 'active' if data['start_on_boot'] else 'inactive'
+        if data.has_key('diskspace'):
+            data['diskspace'] = {'root': data['diskspace']}
+
+        for k in ['dns1', 'dns2', 'root_password', 'root_password_repeat', 'network-type', 'start_on_boot']:
+             if data.has_key(k):
+                 del data[k]
+
+        form = ApplyRawData(data, model=Compute)
+        if form.errors or not data.get('template', None):
+            template_error = [dict(id='template', msg="missing value")] if not data.get('template', None) else []
+            return {
+                'success': False,
+                'errors': [dict(id=k, msg=v) for k,v in form.error_dict().items()] + template_error
+                }
+
+        compute = form.create()
+        self.context.add(compute)
+
+        data['id'] = compute.__name__
+
         return {
             'success': True,
-            'result': data
+            'result': IHttpRestView(compute).render_GET(request)
         }
-
-        return {
-            'success': False,
-            'errors': [
-                {'id': 'hostname', 'msg': "must be present"},
-                {'id': 'diskspace', 'msg': "must be present"},
-            ]
-        }
-
-        #~ form = ApplyRawData(data, model=Compute)
-        #~ if form.errors:
-        #~     return form.error_dict()
-
-        #~ compute = form.create()
-        #~ self.context.add(compute)
-        #~ return IHttpRestView(compute).render(request)
 
 
 class ComputeView(ContainerView):
