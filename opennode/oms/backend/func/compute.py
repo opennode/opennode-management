@@ -120,7 +120,6 @@ class SyncAction(Action):
 
     def distro(self, info):
         return unicode(info['os'].split()[0])
-                       
 
 
 class InfoAction(Action):
