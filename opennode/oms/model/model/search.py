@@ -72,7 +72,7 @@ class ModelTags(Adapter):
         self.context._tags = value
 
     def get_tags(self):
-        return (set([u'label:' + i for i in self._get_tags()])
+        return (set(self._get_tags())
                 .union(set(self.auto_tags()))
                 .union(set([u"type:" + type(self.context).__name__.lower()])))
 
