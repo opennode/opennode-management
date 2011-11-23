@@ -385,6 +385,67 @@ class SshTestCase(unittest.TestCase):
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:taga, state:active, type:compute\n')
 
     @run_in_reactor
+    def test_special_compute_tags(self):
+        computes = db.get_root()['oms_root']['computes']
+        cmpt=self.make_compute()
+        cid = computes.add(cmpt)
+        transaction.commit()
+
+        self._cmd('set computes/%s tags=foo' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
+
+
+        self._cmd('set computes/%s tags=label:foo' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
+
+
+        self._cmd('set computes/%s tags=+type:foo' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
+
+
+        self._cmd('set computes/%s tags="+space: ship"' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, space:ship, state:active, type:compute\n')
+
+
+        self._cmd('set computes/%s tags=stuff:' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
+
+
+        self._cmd('set computes/%s tags=,,' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
+
+
+    @run_in_reactor
     def test_create_compute(self):
         self._cmd("cd /computes")
         self._cmd("mk compute hostname=TUX-FOR-TEST memory=2000 state=active")

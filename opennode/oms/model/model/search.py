@@ -59,6 +59,9 @@ class ModelTags(Adapter):
     implements(ITagged)
     baseclass()
 
+    # TODO: obtain these prefixes from the declarations in the single models.
+    __reserved_prefixes__ = set(['type', 'arch', 'virt', 'state'])
+
     def auto_tags(self):
         return set([])
 
@@ -77,6 +80,13 @@ class ModelTags(Adapter):
                 .union(set([u"type:" + type(self.context).__name__.lower()])))
 
     def set_tags(self, values):
+        """If tag names begin with + or - this setter will add or remove tags
+        from the tag set, otherwise the set will be replaced.
+
+        Tags are composed of a 'prefix' and a 'name'. If not specified, the default prefix is 'label:'.
+        The user cannot add/remove tags in the one of the 'reserved prefixes'.
+
+        """
         # we have to reset the object otherwise indexing framework
         # won't update removed values
         tags = set(self._get_tags())
@@ -86,11 +96,24 @@ class ModelTags(Adapter):
 
         # ignore empty strings
         for value in (i for i in values if i):
-            if value.startswith('-'):
-                if value[1:] in tags:
-                    tags.remove(value[1:])
-            elif value.startswith('+'):
-                tags.add(value[1:])
+            op = value[0] if value[0] in ['-', '+'] else None
+            if op:
+                value = value[1:]
+
+            if ':' not in value:
+                value = u'label:' + value
+
+            prefix, name = [i.strip() for i in value.split(':')]
+            value = prefix + ':' + name
+
+            if prefix in self.__reserved_prefixes__:
+                continue
+            if not name:
+                continue
+
+            if op == '-':
+                if value in tags:
+                    tags.remove(value)
             else:
                 tags.add(value)
 
