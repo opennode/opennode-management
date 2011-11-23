@@ -54,8 +54,6 @@ class DefaultView(HttpRestView):
             request.setResponseCode(BadRequest.status_code)
             return form.error_dict()
 
-        return json.dumps('ok')
-
 
 class ContainerView(DefaultView):
     context(IContainer)
