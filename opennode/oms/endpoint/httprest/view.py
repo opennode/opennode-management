@@ -136,7 +136,7 @@ class VirtualizationContainerView(ContainerView):
 
         # cleanup hacks
         data['state'] = 'active' if data['start_on_boot'] else 'inactive'
-        if data.has_key('diskspace'):
+        if data.get('diskspace'):
             data['diskspace'] = {'root': data['diskspace']}
 
         for k in ['dns1', 'dns2', 'root_password', 'root_password_repeat', 'network-type', 'start_on_boot']:
@@ -144,8 +144,8 @@ class VirtualizationContainerView(ContainerView):
                  del data[k]
 
         form = ApplyRawData(data, model=Compute)
-        if form.errors or not data.get('template', None):
-            template_error = [dict(id='template', msg="missing value")] if not data.get('template', None) else []
+        if form.errors or not data.get('template'):
+            template_error = [dict(id='template', msg="missing value")] if not data.get('template') else []
             return {
                 'success': False,
                 'errors': [dict(id=k, msg=v) for k,v in form.error_dict().items()] + template_error
