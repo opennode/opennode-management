@@ -192,9 +192,9 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-            whatever(t)
             t.write('Host name:           \ttux-for-test\n')
+            whatever(t)
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('State:               \tactive\n')
             whatever(t)
@@ -215,9 +215,9 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat computes/%s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-            whatever(t)
             t.write('Host name:           \ttux-for-test\n')
+            whatever(t)
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('State:               \tactive\n')
             whatever(t)
@@ -272,8 +272,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat /machines/123')
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-
+            t.write('Host name:           \ttux-for-test\n')
 
     @run_in_reactor
     def test_modify_compute(self):
@@ -286,9 +285,9 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-            whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
+            whatever(t)
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('State:               \tactive\n')
             whatever(t)
@@ -318,13 +317,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-            whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
-            whatever(t)
-            t.write('State:               \tactive\n')
-            whatever(t)
-            t.write('RAM Size:            \t2000\n')
 
     @run_in_reactor
     def test_modify_compute_errors(self):
@@ -348,20 +341,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
-            t.write('Host name:           \ttux-for-test\n')
-            t.write('IPv4 address:        \t0.0.0.0/32\n')
-            t.write('IPv6 address:        \t::/128\n')
-            t.write('State:               \tactive\n')
-            t.write('Effective state:     \tactive\n')
-            #~ whatever(t)
-            t.write('Num. Cores:          \t1\n')
-            t.write('RAM Size:            \t2000\n')
-            #~ t.write('Disk Size:           \t750\n')
-            whatever(t)
-            t.write('Template:            \tNone\n')
-            t.write('CPU Limit:           \t1.0\n')
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:taga, label:tagb, state:active, type:compute\n')
 
         self._cmd('set computes/%s tags=taga,-tagb' % cid)
@@ -369,19 +349,7 @@ class SshTestCase(unittest.TestCase):
 
         self._cmd('cat computes/%s' % cid)
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
-            t.write('Host name:           \ttux-for-test\n')
-            t.write('IPv4 address:        \t0.0.0.0/32\n')
-            t.write('IPv6 address:        \t::/128\n')
-            t.write('State:               \tactive\n')
-            t.write('Effective state:     \tactive\n')
-            t.write('Num. Cores:          \t1\n')
-            t.write('RAM Size:            \t2000\n')
-            #~ t.write('Disk Size:           \t750\n')
-            whatever(t)
-            t.write('Template:            \tNone\n')
-            t.write('CPU Limit:           \t1.0\n')
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:taga, state:active, type:compute\n')
 
     @run_in_reactor
@@ -455,9 +423,9 @@ class SshTestCase(unittest.TestCase):
         self._cmd('cat %s' % cid)
 
         with assert_mock(self.terminal) as t:
-            t.write('Architecture:        \tx86_64, linux, centos\n')
-            whatever(t)
             t.write('Host name:           \tTUX-FOR-TEST\n')
+            whatever(t)
+            t.write('Architecture:        \tx86_64, linux, centos\n')
             whatever(t)
             t.write('State:               \tactive\n')
             whatever(t)

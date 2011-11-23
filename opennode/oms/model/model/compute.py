@@ -17,6 +17,14 @@ from opennode.oms.model.schema import Path
 
 
 class ICompute(Interface):
+    # Network parameters
+    hostname = schema.TextLine(
+        title=u"Host name", min_length=3)
+    ipv4_address = schema.TextLine(
+        title=u"IPv4 address", min_length=7, required=False)
+    ipv6_address = schema.TextLine(
+        title=u"IPv6 address", min_length=6, required=False)
+
     # Hardware/platform info
     architecture = schema.Tuple(
         title=u"Architecture", description=u"OS arch, OS type, OS distribution/flavour",
@@ -38,14 +46,6 @@ class ICompute(Interface):
         title=u"Memory Info", description=(u"Info about the physical installed memory "
                      "banks such as model, make, speed, latency"),
         required=False)
-
-    # Network parameters
-    hostname = schema.TextLine(
-        title=u"Host name", min_length=3)
-    ipv4_address = schema.TextLine(
-        title=u"IPv4 address", min_length=7, required=False)
-    ipv6_address = schema.TextLine(
-        title=u"IPv6 address", min_length=6, required=False)
 
     # State
     state = schema.Choice(
