@@ -3,12 +3,14 @@ from __future__ import absolute_import
 from .virtualizationcontainer import IVirtualizationContainerSubmitter
 from grokcore.component import context, subscribe, baseclass
 from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM
-from opennode.oms.model.form import IModelModifiedEvent
+from opennode.oms.endpoint.ssh.detached import DetachedProtocol
+from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeployed, IDeployed
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
+from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
 from twisted.internet import defer
 from zope.interface import alsoProvides, noLongerProvides
@@ -160,7 +162,6 @@ class UndeployAction(Action):
         yield finalize_vm()
 
 
-
 class InfoAction(Action):
     """This is a temporary command used to fetch realtime info"""
     context(IVirtualCompute)
@@ -234,6 +235,17 @@ class RebootAction(ComputeAction):
     action('reboot')
 
     job = IRebootVM
+
+
+@subscribe(IVirtualCompute, IModelDeletedEvent)
+def delete_virtual_compute(model, event):
+    blocking_yield(DestroyComputeAction(model).execute(DetachedProtocol(), object()))
+    blocking_yield(UndeployAction(model).execute(DetachedProtocol(), object()))
+
+
+@subscribe(IVirtualCompute, IModelCreatedEvent)
+def create_virtual_compute(model, event):
+    DeployAction(model).execute(DetachedProtocol(), object())
 
 
 @subscribe(ICompute, IModelModifiedEvent)
