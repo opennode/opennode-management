@@ -28,7 +28,7 @@ class FuncBase(Adapter):
         self.job_id = action(*args, **kwargs)
 
         self.deferred = defer.Deferred()
-        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(args)))
+        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
 
         self.start_polling()
 
