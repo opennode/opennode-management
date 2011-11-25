@@ -60,3 +60,28 @@ class Singleton(type):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
+
+
+def blocking_yield(deferred):
+    """This utility is part of the HDK (hack development toolkit) use with care and remove it's usage asap.
+
+    Sometimes we have to synchronously wait for a deferred to complete,
+    for example when executing inside db.transact code, which cannot 'yield'
+    because currently db.transact doesn't handle returning a deferred.
+
+    Or because we are running code inside a handler which cannot return a deferred
+    otherwise we cannot block the caller or rollback the transaction in case of async code
+    throwing exception (scenario: we want to prevent deletion of node)
+
+    Use this utility only until you refactor the upstream code in order to use pure async code.
+    """
+
+    import time
+    from twisted.python.failure import Failure
+
+    while not deferred.called:
+        time.sleep(0.1)
+
+    res = deferred.result
+    if isinstance(res, Failure):
+        raise res.value
