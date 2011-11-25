@@ -108,7 +108,7 @@ class ModelTags(Adapter):
 
             if prefix in self.__reserved_prefixes__:
                 continue
-            if not name:
+            if not name or not prefix:
                 continue
 
             if op == '-':

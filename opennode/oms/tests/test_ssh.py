@@ -404,6 +404,15 @@ class SshTestCase(unittest.TestCase):
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
 
 
+        self._cmd('set computes/%s tags=:stuff' % cid)
+        self.terminal.reset_mock()
+
+        self._cmd('cat computes/%s' % cid)
+        with assert_mock(self.terminal) as t:
+            whatever(t)
+            t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
+
+
         self._cmd('set computes/%s tags=,,' % cid)
         self.terminal.reset_mock()
 
