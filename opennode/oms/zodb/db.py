@@ -111,6 +111,7 @@ def transact(fun):
             transaction.begin()
             result = fun(*args, **kwargs)
         except:
+            log.err("rolling back")
             transaction.abort()
             raise
         else:
