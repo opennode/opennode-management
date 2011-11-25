@@ -7,6 +7,7 @@ from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeployed, IDeployed
+from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
@@ -245,6 +246,8 @@ def delete_virtual_compute(model, event):
 
 @subscribe(IVirtualCompute, IModelCreatedEvent)
 def create_virtual_compute(model, event):
+    if not IVirtualizationContainer.providedBy(model.__parent__):
+        return
     DeployAction(model).execute(DetachedProtocol(), object())
 
 
