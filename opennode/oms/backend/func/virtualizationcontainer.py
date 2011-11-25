@@ -1,10 +1,10 @@
 from grokcore.component import Adapter, context, implements
 from twisted.internet import defer
-from zope.interface import Interface, alsoProvides
+from zope.interface import Interface, alsoProvides, noLongerProvides
 
 from opennode.oms.backend.operation import IListVMS, IHostInterfaces
 from opennode.oms.model.model.actions import Action, action
-from opennode.oms.model.model.compute import IVirtualCompute, Compute
+from opennode.oms.model.model.compute import IVirtualCompute, Compute, IDeployed, IUndeployed
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, BridgeInterface
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 from opennode.oms.zodb import db
@@ -106,12 +106,25 @@ class SyncVmsAction(Action):
             new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
             new_compute.__name__ = vm_uuid
             alsoProvides(new_compute, IVirtualCompute)
+            alsoProvides(new_compute, IDeployed)
             self.context.add(new_compute)
+
+        for vm_uuid in remote_uuids.intersection(local_uuids):
+            noLongerProvides(self.context[vm_uuid], IUndeployed)
+            alsoProvides(self.context[vm_uuid], IDeployed)
+
+        for vm_uuid in local_uuids.difference(remote_uuids):
+            noLongerProvides(self.context[vm_uuid], IDeployed)
+            alsoProvides(self.context[vm_uuid], IUndeployed)
+            self.context[vm_uuid].state = u'inactive'
 
         # sync each vm
         from opennode.oms.backend.func.compute import SyncAction
         for action in [SyncAction(i) for i in self.context.listcontent() if IVirtualCompute.providedBy(i)]:
-            remote_vm = [i for i in remote_vms if i['uuid'] == action.context.__name__][0]
+            matching = [i for i in remote_vms if i['uuid'] == action.context.__name__]
+            if not matching:
+                continue
+            remote_vm = matching[0]
 
             # todo delegate all this into the action itself
             default_console = action.default_console()
