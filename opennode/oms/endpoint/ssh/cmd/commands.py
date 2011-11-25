@@ -260,6 +260,7 @@ class RemoveCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
+        parser.add_argument('-f', action='store_true')
         return parser
 
     @db.transact
@@ -282,7 +283,12 @@ class RemoveCmd(Cmd):
 
             parent = obj.__parent__
             del obj_dir[obj.__name__]
-            handle(obj, ModelDeletedEvent(parent))
+
+            try:
+                handle(obj, ModelDeletedEvent(parent))
+            except Exception as e:
+                if not args.f:
+                    raise e
 
 
 class MoveCmd(Cmd):
