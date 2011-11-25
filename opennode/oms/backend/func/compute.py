@@ -22,10 +22,7 @@ class SyncAction(Action):
 
     @db.transact
     def execute(self, cmd, args):
-        deferred = self._execute(cmd, args)
-        import time
-        while not deferred.called:
-            time.sleep(0.1)
+        blocking_yield(self._execute(cmd, args))
 
     @defer.inlineCallbacks
     def _execute(self, cmd, args):

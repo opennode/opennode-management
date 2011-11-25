@@ -7,6 +7,7 @@ from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import IVirtualCompute, Compute, IDeployed, IUndeployed
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, BridgeInterface
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
+from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
 
 
@@ -70,10 +71,7 @@ class SyncVmsAction(Action):
 
     @db.transact
     def execute(self, cmd, args):
-        deferred = self._execute(cmd, args)
-        import time
-        while not deferred.called:
-            time.sleep(0.1)
+        blocking_yield(self._execute(cmd, args))
 
     @defer.inlineCallbacks
     def _execute(self, cmd, args):
