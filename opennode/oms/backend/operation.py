@@ -1,9 +1,6 @@
 from zope.interface import Interface
 
 
-__all__ = ['IJob', 'IFuncInstalled', 'IGetComputeInfo', 'IListVMS', 'IStartVM', 'IShutdownVM', 'IDestroyVM', 'ISuspendVM', 'IResumeVM', 'IRebootVM', 'IHostInterfaces']
-
-
 class IJob(Interface):
 
     def run():
@@ -27,6 +24,14 @@ class IGetComputeInfo(IJob):
 
 class IHostInterfaces(IJob):
     """Returns detailed info about host interfaces. hardware.info doesn't work on all archs."""
+
+
+class IDeployVM(IJob):
+    """Deploys a vm."""
+
+
+class IUndeployVM(IJob):
+    """Undeploys a vm."""
 
 
 class IListVMS(IJob):

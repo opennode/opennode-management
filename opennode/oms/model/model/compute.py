@@ -100,6 +100,9 @@ class IInCompute(Interface):
 class IDeployed(Interface):
     """Marker interface implemented when the compute has been deployed."""
 
+class IUndeployed(Interface):
+    """Marker interface implemented when the compute has not been deployed yet."""
+
 
 class Compute(Container):
     """A compute node."""
@@ -162,6 +165,7 @@ class Compute(Container):
             alsoProvides(self, IFuncInstalled)
 
         alsoProvides(self, IIncomplete)
+        alsoProvides(self, IUndeployed)
 
     def display_name(self):
         return self.hostname.encode('utf-8')

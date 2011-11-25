@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 
-from grokcore.component import context, subscribe, baseclass
-from twisted.internet import defer
-
 from .virtualizationcontainer import IVirtualizationContainerSubmitter
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled
+from grokcore.component import context, subscribe, baseclass
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM
 from opennode.oms.model.form import IModelModifiedEvent
 from opennode.oms.model.model.actions import Action, action
-from opennode.oms.model.model.compute import ICompute, IVirtualCompute
+from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeployed, IDeployed
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.zodb import db
+from twisted.internet import defer
+from zope.interface import alsoProvides, noLongerProvides
 
 
 class SyncAction(Action):
@@ -120,6 +120,48 @@ class SyncAction(Action):
 
     def distro(self, info):
         return unicode(info['os'].split()[0])
+
+
+class DeployAction(Action):
+    context(IUndeployed)
+
+    action('deploy')
+
+    @defer.inlineCallbacks
+    def execute(self, cmd, args):
+        submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
+        vm_parameters = dict(template_name = 'ubuntu-11.04-x86_64-asys', hostname=self.context.hostname, vm_type='openvz', uuid=self.context.__name__)
+        res = yield submitter.submit(IDeployVM, vm_parameters)
+        cmd.write('%s\n' % (res,))
+
+        @db.transact
+        def finalize_vm():
+            noLongerProvides(self.context, IUndeployed)
+            alsoProvides(self.context, IDeployed)
+            cmd.write("changed state from undeployed to deployed\n")
+
+        yield finalize_vm()
+
+
+class UndeployAction(Action):
+    context(IDeployed)
+
+    action('undeploy')
+
+    @defer.inlineCallbacks
+    def execute(self, cmd, args):
+        submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
+        res = yield submitter.submit(IUndeployVM, self.context.__name__)
+        cmd.write('%s\n' % (res,))
+
+        @db.transact
+        def finalize_vm():
+            noLongerProvides(self.context, IDeployed)
+            alsoProvides(self.context, IUndeployed)
+            cmd.write("changed state from deployed to undeployed\n")
+
+        yield finalize_vm()
+
 
 
 class InfoAction(Action):
