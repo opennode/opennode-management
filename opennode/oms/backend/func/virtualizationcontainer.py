@@ -49,7 +49,7 @@ class ListVirtualizationContainerAction(Action):
             cmd.write("%s\n" % (": ".join(str(msg) for msg in e.args if (not msg.startswith('  File "/') if isinstance(msg, str)  else True))))
             return
 
-        max_key_len = max(len(vm['name']) for vm in vms)
+        max_key_len = max([0] + [len(vm['name']) for vm in vms])
 
         for vm in vms:
             vm['name'] = vm['name'].ljust(max_key_len)
