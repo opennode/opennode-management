@@ -13,6 +13,7 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.search import SearchContainer, SearchResult
+from opennode.oms.model.model.stream import StreamSubscriber
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.schema import model_to_dict
@@ -162,3 +163,25 @@ class ComputeView(ContainerView):
             'startup_timestamp': self.context.startup_timestamp,
         })
         return ret
+
+
+class StreamView(HttpRestView):
+    context(StreamSubscriber)
+
+    def render(self, request):
+        import time
+        timestamp = int(time.time() * 1000)
+
+        data = json.load(request.content)
+        import random
+        def val(r):
+            if r.endswith('cpu_usage'):
+                return random.random()
+            if r.endswith('memory_usage'):
+                return random.randint(0, 100)
+            if r.endswith('network_usage'):
+                return random.randint(0, 100)
+            if r.endswith('diskspace_usage'):
+                return random.random() * 0.5 + 600  # useful
+        res = [[[timestamp, val(resource)]] for resource in data]
+        return [timestamp, dict(enumerate(res))]

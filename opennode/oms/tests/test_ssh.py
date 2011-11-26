@@ -24,7 +24,7 @@ from opennode.oms.tests.util import whatever
 
 class SshTestCase(unittest.TestCase):
 
-    tlds = ['bin', 'computes', 'log', 'machines', 'networks', 'proc', 'search', 'templates']
+    tlds = ['bin', 'computes', 'log', 'machines', 'networks', 'proc', 'search', 'stream', 'templates']
 
     @run_in_reactor
     @clean_db

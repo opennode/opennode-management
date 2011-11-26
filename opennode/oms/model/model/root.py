@@ -8,6 +8,7 @@ from .machines import Machines
 from .network import Networks
 from .proc import Proc
 from .search import SearchContainer
+from .stream import StreamSubscriber
 from .template import Templates
 
 
@@ -30,7 +31,8 @@ class OmsRoot(ReadonlyContainer):
         'networks': self.networks,
         'bin': self.bin,
         'proc': self.proc,
-        'log': self.log
+        'log': self.log,
+        'stream': self.stream,
     })
 
     def __init__(self):
@@ -78,6 +80,12 @@ class OmsRoot(ReadonlyContainer):
             self._search = SearchContainer()
             self._search.__parent__ = self
         return self._search
+
+    @property
+    def stream(self):
+        res = StreamSubscriber()
+        res.__parent__ = self
+        return res
 
 
     def __str__(self):
