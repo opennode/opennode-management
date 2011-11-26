@@ -156,7 +156,8 @@ class Compute(Container):
     autostart = False
     startup_timestamp = "2011-07-06 01:23:45"
 
-    zabbix_id = -1
+    zabbix_id = None
+
 
     def __init__(self, hostname, state, memory=None, template=None, ipv4_address=None):
         super(Compute, self).__init__()
