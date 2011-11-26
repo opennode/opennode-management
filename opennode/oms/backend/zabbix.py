@@ -8,6 +8,9 @@ from opennode.oms.model.model.hangar import IHangar
 
 import zabbix_api
 
+class ZabbixOperationException(Exception):
+    pass
+
 @subscribe(ICompute, IModelCreatedEvent)
 def add_compute_to_zabbix(model, event):
     if IHangar.providedBy(model.__parent__):
@@ -17,13 +20,25 @@ def add_compute_to_zabbix(model, event):
         return
     zapi = _zabbix_login()
     try:
-        resp = zapi.host.create({'host': model.hostname,
+        # check if a compute is already registered in zabbix
+        candidates = zapi.host.get({'output': 'shorten',
+                                   'filter': {'ip': [model.ipv4_address],
+                                               }
+                                     
+                                    })
+        if len(candidates) > 1:
+            raise ZabbixOperationException, \
+                    "Multiple matching zabbix entries for the compute: %s" %len(candidates) 
+        elif len(candidates) == 1:
+            model.zabbix_id = int(candidates[0]['hostid'])
+        else:
+            resp = zapi.host.create({'host': model.hostname,
                   'dns': model.hostname,
                   'ip': model.ipv4_address,
                   'useip': 1,
                   'groups': [{'groupid': config.get('zabbix', 'hostgroup.id')},],
                   'templates': [{'templateid': config.get('zabbix', 'template.id')}]})
-        model.zabbix_id = resp['hostids'][0]
+            model.zabbix_id = resp['hostids'][0]
     except zabbix_api.Already_Exists:
         pass
 
@@ -31,8 +46,9 @@ def add_compute_to_zabbix(model, event):
 def remove_compute_from_zabbix(model, event):
     if IHangar.providedBy(model.__parent__):
         return
-    zapi = _zabbix_login()
-    zapi.host.delete({'hostid': model.zabbix_id})
+    if model.zabbix_id is not None: # we don't have registration for that
+        zapi = _zabbix_login()
+        zapi.host.delete({'hostid': model.zabbix_id})
 
 def _zabbix_login():
     config = get_config()
