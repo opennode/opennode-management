@@ -6,8 +6,7 @@ from opennode.oms.model.form import IModelCreatedEvent, IModelDeletedEvent
 from opennode.oms.model.model.compute import ICompute
 from opennode.oms.model.model.hangar import IHangar
 
-from zabbix_api import ZabbixAPI
-
+import zabbix_api
 
 @subscribe(ICompute, IModelCreatedEvent)
 def add_compute_to_zabbix(model, event):
@@ -17,13 +16,16 @@ def add_compute_to_zabbix(model, event):
     if config.get('general', 'zabbix_enabled') != 'yes':
         return
     zapi = _zabbix_login()
-    resp = zapi.host.create({'host': model.hostname,
+    try:
+        resp = zapi.host.create({'host': model.hostname,
                   'dns': model.hostname,
                   'ip': model.ipv4_address,
                   'useip': 1,
                   'groups': [{'groupid': config.get('zabbix', 'hostgroup.id')},],
                   'templates': [{'templateid': config.get('zabbix', 'template.id')}]})
-    model.zabbix_id = resp['hostids'][0]
+        model.zabbix_id = resp['hostids'][0]
+    except zabbix_api.Already_Exists:
+        pass
 
 @subscribe(ICompute, IModelDeletedEvent)
 def remove_compute_from_zabbix(model, event):
@@ -34,7 +36,7 @@ def remove_compute_from_zabbix(model, event):
 
 def _zabbix_login():
     config = get_config()
-    zapi = ZabbixAPI(server=config.get('zabbix', 'server'), path='')
+    zapi = zabbix_api.ZabbixAPI(server=config.get('zabbix', 'server'), path='')
     zapi.login(config.get('zabbix', 'username'), config.get('zabbix', 'password'))
     return zapi
 
