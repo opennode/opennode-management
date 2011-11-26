@@ -3,7 +3,6 @@ OpenNode Management Service.
 """
 from twisted.internet.defer import Deferred
 
-
 def deferred_call(self, fun):
     if fun.__name__ == 'on_success':
         return self.addCallback(fun)
