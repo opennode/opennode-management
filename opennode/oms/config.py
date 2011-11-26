@@ -11,7 +11,7 @@ def get_config():
 
 class OmsConfig(ConfigParser.ConfigParser):
     def __init__(self, config_name='opennode-oms.conf', config_path='/etc/opennode'):
-        super(OmsConfig, self).__init__()
+        ConfigParser.ConfigParser.__init__(self)
         self.config_path = config_path
         self.config_name = config_name
         # read in OMS configuration values
