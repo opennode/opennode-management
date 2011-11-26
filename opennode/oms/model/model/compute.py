@@ -94,6 +94,11 @@ class ICompute(Interface):
     template = Path(title=u"Template", required=False, base_path='/templates/by-name/')
     cpu_limit = schema.Float(title=u"CPU Limit", description=u"CPU usage limit", required=False)
 
+    # Monitoring registrations
+    zabbix_id = schema.Int(
+        title=u"Zabbix host id", description=u"Id of the host as registered in Zabbix",
+        required=False, readonly=True)
+
 
 class IInCompute(Interface):
     """Implementors of this interface can be contained in a `Compute` container."""
@@ -150,6 +155,8 @@ class Compute(Container):
 
     autostart = False
     startup_timestamp = "2011-07-06 01:23:45"
+
+    zabbix_id = -1
 
     def __init__(self, hostname, state, memory=None, template=None, ipv4_address=None):
         super(Compute, self).__init__()
