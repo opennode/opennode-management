@@ -17,19 +17,10 @@ from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.zodb import db
-from opennode.oms.endpoint.httprest.root import EmptyResponse
 
 
 class DefaultView(HttpRestView):
     context(object)
-
-    def render_OPTIONS(self, request):
-        all_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD']
-        has_methods = [m for m in all_methods if hasattr(self, 'render_%s' % m)] + ['OPTIONS']
-        request.setHeader('Allow', ', '.join(has_methods))
-
-        return EmptyResponse
-
 
     def render_GET(self, request):
         data = model_to_dict(self.context)
