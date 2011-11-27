@@ -178,7 +178,11 @@ class StreamView(HttpRestView):
         data = json.load(request.content)
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
-            return objs[-1].events(timestamp)
+            return objs[-1].events(0, limit=1)
 
-        res = [[[timestamp, val(resource)]] for resource in data]
+        # ONC wants it in ascending time order
+        # while internally we prefer to keep it newest first to
+        # speed up filtering.
+        # Reversed is not json serializable so we have to reify to list.
+        res = [list(reversed(val(resource))) for resource in data]
         return [timestamp, dict(enumerate(res))]

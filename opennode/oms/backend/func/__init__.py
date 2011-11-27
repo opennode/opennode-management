@@ -6,7 +6,7 @@ from grokcore.component import Adapter, context, baseclass
 from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM
+from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics
 from opennode.oms.model.model.proc import Proc
 
 
@@ -70,6 +70,7 @@ FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
                 ISuspendVM: 'onode.vm.suspend_vm', IResumeVM: 'onode.vm.resume_vm',
                 IRebootVM: 'onode.vm.reboot_vm', IListVMS: 'onode.vm.list_vms',
                 IDeployVM: 'onode.vm.deploy_vm', IUndeployVM: 'onode.vm.undeploy_vm',
+                IGetGuestMetrics: 'onode.vm.metrics',
                 IHostInterfaces: 'onode.host.interfaces'}
 
 

@@ -4,11 +4,16 @@ from grokcore.component import Subscription, baseclass
 from zope.component import queryAdapter
 from zope.interface import implements
 
-from .base import ReadonlyContainer, IModel, IContainerExtender
+from .base import ReadonlyContainer, Model, IModel, IContainerExtender
+from zope.keyreference.persistent import KeyReferenceToPersistent
+from collections import defaultdict
 
 
 class IStream(IModel):
-    def events(after):
+    def events(after, limit):
+        pass
+
+    def add(event):
         pass
 
 
@@ -16,28 +21,41 @@ class IMetrics(IModel):
     pass
 
 
-class TransientStream(object):
+class TransientStream(Model):
+    """A stream which stores the data in memory in a capped collection"""
+
     implements(IStream)
+
+    MAX_LEN = 100
+
+    # Since this class is designed to be not persistent nor unique during
+    # execution, but reinstantiated at each traversal, we have to keepp
+    # the actual data somewhere. A two level dictionary structure serves the purpose
+    # key (parent model + metric name)
+    transient_store = defaultdict(lambda: defaultdict(list))
 
     def __init__(self, parent, name):
         self.__parent__ = parent
         self.__name__ = name
 
-        self.data = []
+    @property
+    def data(self):
+        return self.transient_store[KeyReferenceToPersistent(self.__parent__.__parent__)][self.__name__]
 
-    def events(self, after):
-        print "GETTING EVENTS AFTER", after
-        import random
+    def events(self, after, limit = None):
+        res = []
+        for idx, (ts, value) in enumerate(self.data):
+            if ts <= after or (limit and idx >= limit):
+                break
+            res.append((ts, value))
 
-        r = self.__name__
-        if r.endswith('cpu_usage'):
-            return random.random()
-        if r.endswith('memory_usage'):
-            return random.randint(0, 100)
-        if r.endswith('network_usage'):
-            return random.randint(0, 100)
-        if r.endswith('diskspace_usage'):
-            return random.random() * 0.5 + 600  # useful
+        return res
+
+    def add(self, event):
+        self.data.insert(0, event)
+
+        if len(self.data) > self.MAX_LEN:
+            self.data.pop()
 
 
 class StreamSubscriber(ReadonlyContainer):
