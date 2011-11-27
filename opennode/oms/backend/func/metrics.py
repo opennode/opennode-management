@@ -23,7 +23,7 @@ class VirtualComputeMetricGatherer(Adapter):
         vms = yield get_vms()
 
         # get the metrics for all running VMS
-        if not vms:
+        if not vms or self.context.state != u'active':
             return
         metrics = yield IVirtualizationContainerSubmitter(vms).submit(IGetGuestMetrics)
 
