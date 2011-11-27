@@ -1,5 +1,6 @@
 import zope.interface
 from zope.component import getSiteManager, implementedBy
+from zope.interface import classImplements
 
 
 def get_direct_interfaces(obj):
@@ -60,6 +61,35 @@ class Singleton(type):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
+
+
+def subscription_factory(cls, *args, **kwargs):
+    """Utility which allows to to quickly register a subscription adapters which returns new instantiated objects
+    of a given class
+
+    >>> provideSubscriptionAdapter(subscription_factory(MetricsDaemonProcess), adapts=(IProc,))
+
+    """
+
+    class SubscriptionFactoryWrapper(object):
+        def __new__(self, *_ignore):
+            return cls(*args)
+
+    interfaces = get_direct_interfaces(cls)
+    classImplements(SubscriptionFactoryWrapper, *interfaces)
+    return SubscriptionFactoryWrapper
+
+
+def adapter_value(value):
+    """Utility which allows to to quickly register a subscription adapter  as a value instead of
+
+    >>> provideSubscriptionAdapter(adapter_value(['useful', 'stuff']), adapts=(Compute,), provides=ISomething)
+
+    """
+
+    def wrapper(*_):
+        return value
+    return wrapper
 
 
 def blocking_yield(deferred):
