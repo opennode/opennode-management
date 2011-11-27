@@ -185,4 +185,5 @@ class StreamView(HttpRestView):
         # speed up filtering.
         # Reversed is not json serializable so we have to reify to list.
         res = [list(reversed(val(resource))) for resource in data]
+        res = [i for i in res if i]
         return [timestamp, dict(enumerate(res))]
