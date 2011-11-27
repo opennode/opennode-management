@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 from collections import OrderedDict
 
+from grokcore.component import querySubscriptions
 from zope import schema
 from zope.interface import Interface, implements
 
@@ -15,6 +16,11 @@ class ITask(Interface):
     cmdline = schema.TextLine(title=u"command line", description=u"Command line", readonly=True, required=False)
     uptime = schema.Int(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
     ptid = schema.TextLine(title=u"parent task", description=u"Parent task", readonly=True, required=False)
+
+
+class IProcess(Interface):
+    def run():
+        """Returns a deferred representing the background process execution"""
 
 
 class Task(Model):
@@ -45,11 +51,17 @@ class Proc(ReadonlyContainer):
 
     def __init__(self):
         super(Proc, self).__init__()
-
         # represents the init process, just for fun.
         self.tasks = OrderedDict({'1': Task('1', self, None, '/bin/init', '0')})
+
         self.dead_tasks = OrderedDict()
         self.next_id = 1
+
+        for i in querySubscriptions(self, IProcess):
+            self.spawn(i)
+
+    def spawn(self, process):
+        self._register(process.run(), process.__name__)
 
     def __str__(self):
         return 'Tasks'
@@ -61,7 +73,9 @@ class Proc(ReadonlyContainer):
 
     @classmethod
     def register(cls, deferred, cmdline=None, ptid='1'):
-        self = Proc()
+        return Proc()._register(deferred, cmdline, ptid)
+
+    def _register(self, deferred, cmdline=None, ptid='1'):
 
         self.next_id += 1
         new_id = str(self.next_id)
@@ -83,6 +97,8 @@ class Proc(ReadonlyContainer):
     def _unregister(cls, res, id):
         cls.unregister(id)
         return res
+
+
 
 
 class CompletedProc(ReadonlyContainer):
