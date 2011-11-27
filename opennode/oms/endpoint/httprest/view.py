@@ -1,4 +1,5 @@
 import json
+import time
 
 from grokcore.component import context
 from zope.component import queryAdapter
@@ -17,6 +18,7 @@ from opennode.oms.model.model.stream import StreamSubscriber
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.schema import model_to_dict
+from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
 
@@ -169,19 +171,14 @@ class StreamView(HttpRestView):
     context(StreamSubscriber)
 
     def render(self, request):
-        import time
         timestamp = int(time.time() * 1000)
+        oms_root = db.get_root()['oms_root']
+
 
         data = json.load(request.content)
-        import random
         def val(r):
-            if r.endswith('cpu_usage'):
-                return random.random()
-            if r.endswith('memory_usage'):
-                return random.randint(0, 100)
-            if r.endswith('network_usage'):
-                return random.randint(0, 100)
-            if r.endswith('diskspace_usage'):
-                return random.random() * 0.5 + 600  # useful
+            objs, unresolved_path = traverse_path(oms_root, r)
+            return objs[-1].events(timestamp)
+
         res = [[[timestamp, val(resource)]] for resource in data]
         return [timestamp, dict(enumerate(res))]

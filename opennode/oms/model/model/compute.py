@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from grokcore.component import context, Subscription, baseclass
 from zope import schema
-from zope.component import provideSubscriptionAdapter
+from zope.component import provideSubscriptionAdapter, provideAdapter
 from zope.interface import Interface, implements, alsoProvides
 
 from .actions import ActionsContainerExtension
@@ -11,9 +11,11 @@ from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
 from .search import ModelTags
+from .stream import MetricsContainerExtension, IMetrics
 from .symlink import Symlink
 from opennode.oms.backend.operation import IFuncInstalled
 from opennode.oms.model.schema import Path
+from opennode.oms.util import adapter_value
 
 
 class ICompute(Interface):
@@ -290,8 +292,13 @@ class Computes(AddingContainer):
             del item.target.__parent__[item.target.__name__]
 
 
+provideAdapter(adapter_value(['cpu_usage', 'memory_usage', 'network_usage', 'diskspace_usage']), adapts=(Compute,), provides=(IMetrics))
+
+
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
+provideSubscriptionAdapter(MetricsContainerExtension, adapts=(Compute, ))
+
 
 # #####################
 # hack (but lowercase)
