@@ -130,7 +130,11 @@ class DeployAction(Action):
     @defer.inlineCallbacks
     def execute(self, cmd, args):
         submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
-        vm_parameters = dict(template_name = 'ubuntu-11.04-x86_64-asys', hostname=self.context.hostname, vm_type='openvz', uuid=self.context.__name__)
+        vm_parameters = dict(template_name = self.context.template,
+                             hostname=self.context.hostname,
+                             vm_type='openvz',
+                             uuid=self.context.__name__,
+                             ip_address=self.context.ipv4_address.split('/')[0],)
         res = yield submitter.submit(IDeployVM, vm_parameters)
         cmd.write('%s\n' % (res,))
 
