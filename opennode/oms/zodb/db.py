@@ -129,6 +129,36 @@ def transact(fun):
     return wrapper
 
 
+def ro_transact(fun):
+    """Runs a callable inside a separate thread within a readonly ZODB transaction.
+
+    Transaction is always rolledback.
+
+    """
+
+    if not _threadpool:
+        init_threadpool()
+
+    def run_in_tx(fun, *args, **kwargs):
+        if not _db: init()
+
+        try:
+            transaction.begin()
+            return fun(*args, **kwargs)
+        finally:
+            transaction.abort()
+
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        if not _testing:
+            return deferToThreadPool(reactor, _threadpool,
+                                     lambda: run_in_tx(fun, *args, **kwargs))
+        else:
+            # No threading during testing
+            return defer.succeed(run_in_tx(fun, *args, **kwargs))
+    return wrapper
+
+
 def ref(obj):
     return obj._p_oid
 

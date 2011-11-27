@@ -54,7 +54,7 @@ class PathCompleter(PositionalCompleter):
     """Completes a path name."""
     baseclass()
 
-    @db.transact
+    @db.ro_transact
     def complete(self, token, parsed, parser, **kwargs):
         # If there is still any positional option to complete:
         if self.expected_action(parsed, parser):
@@ -92,7 +92,7 @@ class CommandCompleter(PathCompleter):
 
         defer.returnValue([value for value in list(cmds) + list(set(paths).difference(i+'*' for i in cmds)) if value.startswith(token)])
 
-    @db.transact
+    @db.ro_transact
     def _scan_search_path(self, protocol):
         dummy = commands.NoCommand(protocol)
 

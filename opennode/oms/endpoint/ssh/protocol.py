@@ -44,7 +44,7 @@ class OmsShellProtocol(InteractiveTerminal):
             # query is processing, but that would require a more complex
             # workaround.  This will not be a problem during testing as
             # DB access is blocking when testing.
-            self.obj_path = yield db.transact(lambda: [db.ref(db.get_root()['oms_root'])])()
+            self.obj_path = yield db.ro_transact(lambda: [db.ref(db.get_root()['oms_root'])])()
 
         _get_obj_path()
 
@@ -106,7 +106,7 @@ class OmsShellProtocol(InteractiveTerminal):
                 if key not in self.keyHandlers.keys():
                     self.keystrokeReceived(key, mod)
 
-    @db.transact
+    @db.ro_transact
     def parse_line(self, line):
         """Returns a command instance and parsed cmdline argument list.
 
