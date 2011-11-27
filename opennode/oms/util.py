@@ -1,6 +1,7 @@
 import zope.interface
 from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
+from twisted.internet import defer, reactor
 
 
 def get_direct_interfaces(obj):
@@ -90,6 +91,19 @@ def adapter_value(value):
     def wrapper(*_):
         return value
     return wrapper
+
+
+def async_sleep(secs):
+    """Util which helps writing synchronous looking code with
+    defer.inlineCallbacks.
+
+    Returns a deferred which is triggered after `secs` seconds.
+
+    """
+
+    d = defer.Deferred()
+    reactor.callLater(secs, d.callback, None)
+    return d
 
 
 def blocking_yield(deferred):
