@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from grokcore.component import subscribe
+import traceback
 
 from opennode.oms.config import get_config
 from opennode.oms.model.form import IModelCreatedEvent, IModelDeletedEvent
@@ -20,8 +21,9 @@ def add_compute_to_zabbix(model, event):
     config = get_config()
     if config.get('general', 'zabbix_enabled') != 'yes':
         return
-    zapi = _zabbix_login()
+
     try:
+        zapi = _zabbix_login()
         # check if a compute is already registered in zabbix
         candidates = zapi.host.get({'output': 'shorten',
                                    'filter': {'ip': [model.ipv4_address],
@@ -41,17 +43,35 @@ def add_compute_to_zabbix(model, event):
                   'groups': [{'groupid': config.get('zabbix', 'hostgroup.id')},],
                   'templates': [{'templateid': config.get('zabbix', 'template.id')}]})
             model.zabbix_id = resp['hostids'][0]
-    except zabbix_api.Already_Exists:
-        pass
+    except:
+        traceback.print_exc()
+
 
 
 @subscribe(ICompute, IModelDeletedEvent)
 def remove_compute_from_zabbix(model, event):
     if IHangar.providedBy(model.__parent__):
         return
+
     if model.zabbix_id is not None: # we don't have registration for that
-        zapi = _zabbix_login()
-        zapi.host.delete({'hostid': model.zabbix_id})
+        # check if a compute is already registered in zabbix
+        config = get_config()
+        if config.get('general', 'zabbix_enabled') != 'yes':
+            return
+
+        try:
+            zapi = _zabbix_login()
+
+            candidates = zapi.host.get({'output': 'shorten',
+                                        'filter': {'ip': [model.ipv4_address],
+                                                   }
+                                        })
+
+            if len(candidates) == 1:
+                zapi = _zabbix_login()
+                zapi.host.delete({'hostid': model.zabbix_id})
+        except:
+            traceback.print_exc()
 
 
 def _zabbix_login():
