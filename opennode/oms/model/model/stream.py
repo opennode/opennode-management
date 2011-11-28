@@ -43,6 +43,10 @@ class TransientStream(Model):
         return self.transient_store[KeyReferenceToPersistent(self.__parent__.__parent__)][self.__name__]
 
     def events(self, after, limit = None):
+        # XXX: if nobody fills the data (func issues) then we return fake data
+        if not self.data:
+            return self._fake_events(after, limit)
+
         res = []
         for idx, (ts, value) in enumerate(self.data):
             if ts <= after or (limit and idx >= limit):
@@ -56,6 +60,23 @@ class TransientStream(Model):
 
         if len(self.data) > self.MAX_LEN:
             self.data.pop()
+
+    def _fake_events(self, after, limit = None):
+        import random, time
+        timestamp = int(time.time() * 1000)
+
+        def fake_data():
+            r = self.__name__
+            if r.endswith('cpu_usage'):
+                return random.random()
+            if r.endswith('memory_usage'):
+                return random.randint(0, 100)
+            if r.endswith('network_usage'):
+                return random.randint(0, 100)
+            if r.endswith('diskspace_usage'):
+                return random.random() * 0.5 + 600  # useful
+
+        return [[timestamp, fake_data()]]
 
 
 class StreamSubscriber(ReadonlyContainer):
