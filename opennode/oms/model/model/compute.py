@@ -1,16 +1,17 @@
 from __future__ import absolute_import
 
-from grokcore.component import context, Subscription, baseclass
+from grokcore.component import context
 from zope import schema
 from zope.component import provideSubscriptionAdapter, provideAdapter
 from zope.interface import Interface, implements, alsoProvides
 
 from .actions import ActionsContainerExtension
-from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName, IContainerExtender
+from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
 from .byname import ByNameContainerExtension
 from .console import Consoles
 from .network import NetworkInterfaces
 from .search import ModelTags
+from .template import Templates
 from .stream import MetricsContainerExtension, IMetrics
 from .symlink import Symlink
 from opennode.oms.backend.operation import IFuncInstalled
@@ -211,6 +212,17 @@ class Compute(Container):
 
     consoles = property(get_consoles, set_consoles)
 
+    @property
+    def templates(self):
+        from opennode.oms.zodb import db
+        @db.assert_transact
+        def do_it():
+            if not self['templates']:
+                templates = Templates()
+                templates.__name__ = 'templates'
+                self._add(templates)
+            return self['templates']
+        return do_it()
 
     def get_interfaces(self):
         if not self._items.has_key('interfaces'):
@@ -298,24 +310,3 @@ provideAdapter(adapter_value(['cpu_usage', 'memory_usage', 'network_usage', 'dis
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
 provideSubscriptionAdapter(MetricsContainerExtension, adapts=(Compute, ))
-
-
-# #####################
-# hack (but lowercase)
-#
-# let the onc guy work
-# #####################
-
-
-class TemplatesComputeExtension(Subscription):
-    implements(IContainerExtender)
-    baseclass()
-
-    def extend(self):
-        from opennode.oms.zodb import db
-        if self.context._items.has_key('vms'):
-            return {'templates': Symlink('templates', db.get_root()['oms_root']['templates'])}
-        return {}
-
-
-provideSubscriptionAdapter(TemplatesComputeExtension, adapts=(Compute, ))

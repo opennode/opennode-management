@@ -2,11 +2,12 @@ from __future__ import absolute_import
 
 from .virtualizationcontainer import IVirtualizationContainerSubmitter
 from grokcore.component import context, subscribe, baseclass
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeployed, IDeployed
+from opennode.oms.model.model.template import Template
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
@@ -34,6 +35,8 @@ class SyncAction(Action):
         try:
             self.sync_consoles()
             self.sync_hw()
+            if IFuncInstalled.providedBy(self.context):
+                self.sync_templates()
 
             if IVirtualCompute.providedBy(self.context):
                 yield self._sync_virtual()
@@ -120,6 +123,23 @@ class SyncAction(Action):
 
     def distro(self, info):
         return unicode(info['os'].split()[0])
+
+    @defer.inlineCallbacks
+    def sync_templates(self):
+        print "SYNCING TEMPLATES"
+        submitter = IVirtualizationContainerSubmitter(self.context['vms'])
+        templates = yield submitter.submit(IGetLocalTemplates)
+        print "GOT TEMPLATES", templates
+
+        @db.transact
+        def update_templates():
+            template_container = self.context.templates
+            for i in templates:
+                if not template_container['by-name'][i]:
+                    print "ADDING TEMPLATE", i
+                    template_container.add(Template(i, 'openvz'))
+
+        yield update_templates()
 
 
 class DeployAction(Action):

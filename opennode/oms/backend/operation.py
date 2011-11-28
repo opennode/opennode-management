@@ -30,6 +30,10 @@ class IGetGuestMetrics(IJob):
     """Returns guest VM metrics."""
 
 
+class IGetLocalTemplates(IJob):
+    """Get local templates"""
+
+
 class IDeployVM(IJob):
     """Deploys a vm."""
 
