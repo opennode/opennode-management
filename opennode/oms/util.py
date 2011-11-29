@@ -128,4 +128,6 @@ def blocking_yield(deferred):
 
     res = deferred.result
     if isinstance(res, Failure):
+        import traceback
+        print traceback.print_tb(res.getTracebackObject())
         raise res.value
