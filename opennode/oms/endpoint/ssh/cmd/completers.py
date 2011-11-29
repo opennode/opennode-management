@@ -222,7 +222,7 @@ class EnvironmentCompleter(Completer):
 for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd, commands.LinkCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd, commands.LinkCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd, commands.LinkCmd, commands.KillTaskCmd]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=(command, ))
 
 for command in [commands.SetAttrCmd, commands.CreateObjCmd]:

@@ -2,7 +2,7 @@ from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, queryAdapter
 from zope.interface import implements, Interface
 
-from opennode.oms.model.model.proc import IProcess, Proc
+from opennode.oms.model.model.proc import IProcess, Proc, DaemonProcess
 from opennode.oms.util import subscription_factory, async_sleep
 from opennode.oms.zodb import db
 from opennode.oms.model.model.symlink import follow_symlinks
@@ -13,7 +13,7 @@ class IMetricsGatherer(Interface):
         """Gathers metrics for some object"""
 
 
-class MetricsDaemonProcess(object):
+class MetricsDaemonProcess(DaemonProcess):
     implements(IProcess)
 
     __name__ = "[metrics]"
@@ -26,7 +26,8 @@ class MetricsDaemonProcess(object):
                 # Currently we have special codes for gathering info about machines
                 # hostinginv VM, in future here we'll traverse the whole zodb and search for gatherers
                 # and maintain the gatherers via add/remove events.
-                yield self.gather_machines()
+                if not self.paused:
+                    yield self.gather_machines()
             except Exception:
                 import traceback
                 traceback.print_exc()

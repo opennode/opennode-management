@@ -17,22 +17,42 @@ class ITask(Interface):
     uptime = schema.Int(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
     ptid = schema.TextLine(title=u"parent task", description=u"Parent task", readonly=True, required=False)
 
+    def signal(name):
+        """Process a signal"""
+
 
 class IProcess(Interface):
     def run():
         """Returns a deferred representing the background process execution"""
 
+    def signal_handler(name):
+        """Process a signal"""
+
+
+class DaemonProcess(object):
+    def __init__(self):
+        self.paused = False
+
+    def signal_handler(self, name):
+        if name == 'STOP':
+            print "Stopping %s" % self.__name__
+            self.paused = True
+        elif name == 'CONT':
+            print "Continuing %s" % self.__name__
+            self.paused = False
+
 
 class Task(Model):
     implements(ITask)
 
-    def __init__(self, name, parent, deferred, cmdline, ptid):
+    def __init__(self, name, parent, deferred, cmdline, ptid, signal_handler=None):
         self.__name__ = name
         self.__parent__ = parent
         self.deferred = deferred
         self.cmdline = cmdline
         self.timestamp = time.time()
         self.ptid = ptid
+        self.signal_handler = signal_handler
 
     @property
     def uptime(self):
@@ -41,6 +61,10 @@ class Task(Model):
     @property
     def nicknames(self):
         return [self.cmdline, ]
+
+    def signal(self, name):
+        if self.signal_handler:
+            self.signal_handler(name)
 
 
 class Proc(ReadonlyContainer):
@@ -61,7 +85,7 @@ class Proc(ReadonlyContainer):
             self.spawn(i)
 
     def spawn(self, process):
-        self._register(process.run(), process.__name__)
+        self._register(process.run(), process.__name__, signal_handler=process.signal_handler)
 
     def __str__(self):
         return 'Tasks'
@@ -75,12 +99,12 @@ class Proc(ReadonlyContainer):
     def register(cls, deferred, cmdline=None, ptid='1'):
         return Proc()._register(deferred, cmdline, ptid)
 
-    def _register(self, deferred, cmdline=None, ptid='1'):
+    def _register(self, deferred, cmdline=None, ptid='1', signal_handler=None):
 
         self.next_id += 1
         new_id = str(self.next_id)
 
-        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid)
+        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid, signal_handler)
 
         if deferred:
             deferred.addBoth(self._unregister, new_id)

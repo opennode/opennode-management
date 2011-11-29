@@ -680,6 +680,38 @@ class TaskListCmd(Cmd):
                                          task.cmdline))
 
 
+class KillTaskCmd(Cmd):
+    """Implement the kill command which can send signals to tasks."""
+
+    command('kill')
+
+    implements(ICmdArgumentsSyntax)
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('tid', nargs='*',
+                            help="Task id")
+        parser.add_argument('-STOP', action='store_true',
+                            help="Pauses the task")
+        parser.add_argument('-CONT', action='store_true',
+                            help="Unpauses the task")
+        return parser
+
+    def execute(self, args):
+        tasks = Proc().tasks
+        for tid in args.tid:
+            task = tasks[tid]
+
+            if args.STOP:
+                action = "STOP"
+            elif args.CONT:
+                action = "CONT"
+            else:
+                action = "TERM"
+
+            task.signal(action)
+
+
 class OmsShellCmd(Cmd):
     """This command represents the oms shell. Currently it cannot run a nested shell."""
 
