@@ -1,7 +1,8 @@
-import ConfigParser
+from ConfigParser import ConfigParser, Error as ConfigKeyError
 import os
 
 _config = None
+
 
 def get_config():
     global _config
@@ -9,20 +10,28 @@ def get_config():
         _config = OmsConfig()
     return _config
 
-class OmsConfig(ConfigParser.ConfigParser):
-    def __init__(self, config_name='opennode-oms.conf', config_path='/etc/opennode'):
-        ConfigParser.ConfigParser.__init__(self)
-        self.config_path = config_path
-        self.config_name = config_name
-        # read in OMS configuration values
-        self.read(self.detect_configuration_fnm())
 
-    def detect_configuration_fnm(self):
-        """ Return a filename of the configuration file. Local file has a higher
-        priority than what's defined in config_path. """
-        if os.path.isfile(self.config_name):
-            return self.config_name
-        elif os.path.isfile(os.path.join([self.config_path, self.config_name])):
-            return os.path.join([self.config_path, self.config_name])
-        else:
-            raise RuntimeError, "Couldn't find OMS configuration file."
+class OmsConfig(ConfigParser):
+    __default_files__ = ['/usr/lib/opennode/opennode-oms-defaults.conf', './opennode-oms.conf', '/etc/opennode/opennode-oms.conf', '~/.opennode-oms.conf']
+
+    def __init__(self, config_filenames=__default_files__):
+        ConfigParser.__init__(self)
+        self.read([os.path.expanduser(i) for i in config_filenames])
+
+    def getboolean(self, section, option, default=False):
+        try:
+            return ConfigParser.getboolean(self, section, option)
+        except ConfigKeyError:
+            return default
+
+    def getint(self, section, option, default=False):
+        try:
+            return ConfigParser.getint(self, section, option)
+        except ConfigKeyError:
+            return default
+
+    def getfloat(self, section, option, default=False):
+        try:
+            return ConfigParser.getfloat(self, section, option)
+        except ConfigKeyError:
+            return default
