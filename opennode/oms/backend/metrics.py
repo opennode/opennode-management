@@ -16,7 +16,7 @@ class IMetricsGatherer(Interface):
 class MetricsDaemonProcess(DaemonProcess):
     implements(IProcess)
 
-    __name__ = "[metrics]"
+    __name__ = "metrics"
 
     @defer.inlineCallbacks
     def run(self):

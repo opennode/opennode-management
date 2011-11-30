@@ -9,6 +9,7 @@ from zope.interface import Interface, implements
 
 from .base import Model, ReadonlyContainer
 from opennode.oms.util import Singleton
+from opennode.oms.config import get_config
 
 
 class ITask(Interface):
@@ -31,7 +32,8 @@ class IProcess(Interface):
 
 class DaemonProcess(object):
     def __init__(self):
-        self.paused = False
+        config = get_config()
+        self.paused = not config.getboolean('daemons', self.__name__, True)
 
     def signal_handler(self, name):
         if name == 'STOP':
@@ -85,7 +87,7 @@ class Proc(ReadonlyContainer):
             self.spawn(i)
 
     def spawn(self, process):
-        self._register(process.run(), process.__name__, signal_handler=process.signal_handler)
+        self._register(process.run(), '[%s]' % process.__name__, signal_handler=process.signal_handler)
 
     def __str__(self):
         return 'Tasks'

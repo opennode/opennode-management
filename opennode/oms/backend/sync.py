@@ -13,7 +13,7 @@ from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 class SyncDaemonProcess(DaemonProcess):
     implements(IProcess)
 
-    __name__ = "[sync]"
+    __name__ = "sync"
 
     @defer.inlineCallbacks
     def run(self):
