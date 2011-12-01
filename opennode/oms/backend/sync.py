@@ -19,9 +19,6 @@ class SyncDaemonProcess(DaemonProcess):
     def run(self):
         while True:
             try:
-                # Currently we have special codes for gathering info about machines
-                # hostinginv VM, in future here we'll traverse the whole zodb and search for gatherers
-                # and maintain the gatherers via add/remove events.
                 if not self.paused:
                     yield self.sync()
             except Exception:
