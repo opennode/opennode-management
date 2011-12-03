@@ -197,57 +197,15 @@ class SearchResult(ReadonlyContainer):
 
 
 @subscribe(Model, IModelModifiedEvent)
-def reindex_modified_model(model, event):
-    # break import cycle
-    from opennode.oms.zodb import db
-
-    search = db.get_root()['oms_root']['search']
-    search.index_object(model)
-
-
 @subscribe(Model, IModelCreatedEvent)
-def reindex_created_model(model, event):
-    # break import cycle
-    from opennode.oms.zodb import db
-    from opennode.oms.model.traversal import canonical_path, traverse_path
-
-    @db.transact
-    def get_and_reindex(retry, path):
-        # we have to retrieve and index the object within this transaction
-        # otherwise intid mapping won't be correct.
-        objs, unresolved_path = traverse_path(db.get_root()['oms_root'], path)
-        if unresolved_path:
-            if retry < 10:
-                reactor.callLater(0.2 * retry, get_and_reindex, retry + 1, path)
-            return
-
-        search = db.get_root()['oms_root']['search']
-        search._index_object(objs[-1])
-
-    def get_and_reindex_retry(retry, path):
-        deferred = get_and_reindex(retry, path)
-        @deferred
-        def on_error(*args):
-            if retry < 10:
-                import time
-                time.sleep(0.2)
-                get_and_reindex_retry(retry + 1, path)
-            else:
-                log.msg("Indexing of new object %s failed during commit after %s attempts (%s)" % (path, retry, args))
-
-    # we cannot use the object in this transaction since it's not yet committed,
-    # we'll retry to index it later, once the transaction is committed
-    reactor.callLater(0.1, get_and_reindex_retry, 0, canonical_path(model))
-
-
 @subscribe(Model, IModelDeletedEvent)
-def unindex_deleted_model(model, event):
+def enqueue_for_indexing(model, event):
+    from opennode.oms.backend.indexer import IndexerDaemonProcess
+
     if isinstance(model, Symlink):
         return
 
-    from opennode.oms.zodb import db
-    search = db.get_root()['oms_root']['search']
-    search.unindex_object(model)
+    IndexerDaemonProcess.enqueue(model, event)
 
 
 class ReindexAction(Action):
