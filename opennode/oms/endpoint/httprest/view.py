@@ -174,7 +174,7 @@ class StreamView(HttpRestView):
         timestamp = int(time.time() * 1000)
         oms_root = db.get_root()['oms_root']
 
-        limit = int(request.args.get('limit', ['1'])[0])
+        limit = int(request.args.get('limit', ['100'])[0])
         after = int(request.args.get('after', ['0'])[0])
 
         data = json.load(request.content)
