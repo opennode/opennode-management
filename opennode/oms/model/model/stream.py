@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from grokcore.component import Subscription, baseclass
+from grokcore.component import Subscription, baseclass, Adapter, context
 from zope.component import queryAdapter
 from zope.interface import implements
 
@@ -20,10 +20,19 @@ class IMetrics(IModel):
     pass
 
 
-class TransientStream(Model):
+class TransientStreamModel(Model):
+    """A model which represents a a transient stream"""
+
+    def __init__(self, parent, name):
+        self.__parent__ = parent
+        self.__name__ = name
+
+
+class TransientStream(Adapter):
     """A stream which stores the data in memory in a capped collection"""
 
     implements(IStream)
+    baseclass()
 
     MAX_LEN = 100
 
@@ -33,14 +42,10 @@ class TransientStream(Model):
     # key (parent model + metric name)
     transient_store = defaultdict(list)
 
-    def __init__(self, parent, name):
-        self.__parent__ = parent
-        self.__name__ = name
-
     @property
     def data(self):
         from opennode.oms.model.traversal import canonical_path
-        return self.transient_store[canonical_path(self)]
+        return self.transient_store[canonical_path(self.context)]
 
     def events(self, after, limit = None):
         # XXX: if nobody fills the data (func issues) then we return fake data
@@ -66,7 +71,8 @@ class TransientStream(Model):
         timestamp = int(time.time() * 1000)
 
         def fake_data():
-            r = self.__name__
+            from opennode.oms.model.traversal import canonical_path
+            r = canonical_path(self.context)
             if r.endswith('cpu_usage'):
                 return random.random()
             if r.endswith('memory_usage'):
@@ -96,7 +102,7 @@ class Metrics(ReadonlyContainer):
     @property
     def _items(self):
         metrics = queryAdapter(self.__parent__, IMetrics)
-        return dict((i, TransientStream(self, i)) for i in metrics)
+        return dict((i, TransientStreamModel(self, i)) for i in metrics)
 
 
 class MetricsContainerExtension(Subscription):
@@ -105,3 +111,7 @@ class MetricsContainerExtension(Subscription):
 
     def extend(self):
         return {'metrics': Metrics(self.context)}
+
+
+class ModelStream(TransientStream):
+    context(Model)
