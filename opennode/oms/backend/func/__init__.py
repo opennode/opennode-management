@@ -11,13 +11,16 @@ from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
 
 
-class FuncBase(Adapter):
-    """Base class for all Func method calls."""
-    context(IFuncInstalled)
-    baseclass()
+class FuncExecutor(object):
+    pass
 
-    func_action = None
+
+class AsyncFuncExecutor(FuncExecutor):
     interval = 0.1
+
+    def __init__(self, hostname, func_action):
+        self.hostname = hostname
+        self.func_action = func_action
 
     def run(self, *args, **kwargs):
         self.deferred = defer.Deferred()
@@ -32,7 +35,7 @@ class FuncBase(Adapter):
 
             self.job_id = action(*args, **kwargs)
 
-            Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+            Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
 
             self.start_polling()
 
@@ -56,7 +59,7 @@ class FuncBase(Adapter):
         # see http://goo.gl/UgrZu
         # thus we need a robust way to get the result for this host,
         # even when the host names don't match (e.g. localhost vs real host name).
-        hostkey = self.context.hostname
+        hostkey = self.hostname
         if len(data.keys()) == 1:
             hostkey = data.keys()[0]
         res = data[hostkey]
@@ -71,9 +74,22 @@ class FuncBase(Adapter):
     @db.assert_transact
     def _get_client(self):
         """Returns an instance of the Overlord."""
-        if self.context.hostname not in self.overlords:
-            self.overlords[self.context.hostname] = Overlord(self.context.hostname, async=True)
-        return self.overlords[self.context.hostname]
+        if self.hostname not in self.overlords:
+            self.overlords[self.hostname] = Overlord(self.hostname, async=True)
+        return self.overlords[self.hostname]
+
+
+class FuncBase(Adapter):
+    """Base class for all Func method calls."""
+    context(IFuncInstalled)
+    baseclass()
+
+    func_action = None
+
+    executor_cls = AsyncFuncExecutor
+
+    def run(self, *args, **kwargs):
+        return self.executor_cls(self.context.hostname, self.func_action).run(*args, **kwargs)
 
 
 FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
