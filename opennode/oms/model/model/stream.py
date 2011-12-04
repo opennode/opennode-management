@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 
-from grokcore.component import Subscription, baseclass, Adapter, context
+from grokcore.component import Subscription, baseclass, Adapter, context, subscribe
 from zope.component import queryAdapter
 from zope.interface import implements
 
 from .base import ReadonlyContainer, Model, IModel, IContainerExtender
+from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from collections import defaultdict
 
 
@@ -120,3 +121,12 @@ class MetricsContainerExtension(Subscription):
 
 class ModelStream(TransientStream):
     context(Model)
+
+
+@subscribe(IModel, IModelModifiedEvent)
+def model_modified(model, event):
+    if IStream.providedBy(model) or queryAdapter(model, IStream):
+        import time
+        timestamp = int(time.time() * 1000)
+        for k in event.modified:
+            IStream(model).add((timestamp, dict(type='change', name=k, value=event.modified[k], old_value=event.original[k])))
