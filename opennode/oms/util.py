@@ -1,3 +1,5 @@
+import functools
+import threading
 import zope.interface
 from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
@@ -131,3 +133,16 @@ def blocking_yield(deferred):
         import traceback
         print traceback.print_tb(res.getTracebackObject())
         raise res.value
+
+
+def threaded(fun):
+    """Helper decorator to quickly turn a function in a threaded function using a newly allocated thread,
+    mostly useful during debugging/profiling in order to see if there are any queuing issues in the threadpools.
+
+    """
+
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fun, args=args, kwargs=kwargs)
+        thread.start()
+    return wrapper
