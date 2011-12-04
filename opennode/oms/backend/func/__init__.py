@@ -7,6 +7,7 @@ from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
 from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetLocalTemplates
+from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
 
@@ -79,6 +80,47 @@ class AsyncFuncExecutor(FuncExecutor):
         return self.overlords[self.hostname]
 
 
+class SyncFuncExecutor(FuncExecutor):
+
+    def __init__(self, hostname, func_action):
+        self.hostname = hostname
+        self.func_action = func_action
+
+
+    def run(self, *args, **kwargs):
+        @db.ro_transact
+        def spawn_func():
+            client = self._get_client()
+            # we assume that all of the func actions are in the form of 'module.action'
+            module_action, action_name = self.func_action.rsplit('.', 1)
+            module = getattr(client, module_action)
+            action = getattr(module, action_name)
+
+            data = action(*args, **kwargs)
+            # noglobs=True and async=True cannot live together
+            # see http://goo.gl/UgrZu
+            # thus we need a robust way to get the result for this host,
+            # even when the host names don't match (e.g. localhost vs real host name).
+            hostkey = self.hostname
+            if len(data.keys()) == 1:
+                hostkey = data.keys()[0]
+            return data[hostkey]
+
+        self.deferred = spawn_func()
+        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+
+        return self.deferred
+
+    overlords = {}
+
+    @db.assert_transact
+    def _get_client(self):
+        """Returns an instance of the Overlord."""
+        if self.hostname not in self.overlords:
+            self.overlords[self.hostname] = Overlord(self.hostname, async=False)
+        return self.overlords[self.hostname]
+
+
 class FuncBase(Adapter):
     """Base class for all Func method calls."""
     context(IFuncInstalled)
@@ -86,10 +128,12 @@ class FuncBase(Adapter):
 
     func_action = None
 
-    executor_cls = AsyncFuncExecutor
+    executor_classes = {'sync': SyncFuncExecutor,
+                        'async': AsyncFuncExecutor,
+                        }
 
     def run(self, *args, **kwargs):
-        return self.executor_cls(self.context.hostname, self.func_action).run(*args, **kwargs)
+        return self.executor_classes[get_config().get('func', 'executor_class')](self.context.hostname, self.func_action).run(*args, **kwargs)
 
 
 FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
