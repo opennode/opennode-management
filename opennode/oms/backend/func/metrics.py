@@ -4,6 +4,7 @@ from twisted.internet import defer
 from .virtualizationcontainer import IVirtualizationContainerSubmitter
 from opennode.oms.backend.metrics import IMetricsGatherer
 from opennode.oms.backend.operation import IFuncInstalled, IGetGuestMetrics
+from opennode.oms.model.model.stream import IStream
 from opennode.oms.zodb import db
 import time
 
@@ -40,7 +41,7 @@ class VirtualComputeMetricGatherer(Adapter):
                     if vm_metrics:
                         for k in data:
                             if vm_metrics[k]:
-                                streams.append((vm_metrics[k], (timestamp, data[k])))
+                                streams.append((IStream(vm_metrics[k]), (timestamp, data[k])))
             return streams
 
         # streams could defer the data appending but we don't care

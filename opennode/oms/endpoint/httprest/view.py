@@ -14,7 +14,7 @@ from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.hangar import Hangar
 from opennode.oms.model.model.search import SearchContainer, SearchResult
-from opennode.oms.model.model.stream import StreamSubscriber
+from opennode.oms.model.model.stream import IStream, StreamSubscriber
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import VirtualizationContainer
 from opennode.oms.model.schema import model_to_dict
@@ -178,7 +178,7 @@ class StreamView(HttpRestView):
         data = json.load(request.content)
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
-            return objs[-1].events(0, limit=1)
+            return IStream(objs[-1]).events(0, limit=1)
 
         # ONC wants it in ascending time order
         # while internally we prefer to keep it newest first to
