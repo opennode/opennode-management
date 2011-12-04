@@ -35,7 +35,7 @@ class MetricsDaemonProcess(DaemonProcess):
 
     @defer.inlineCallbacks
     def gather_machines(self):
-        @db.transact
+        @db.ro_transact
         def get_gatherers():
             res = []
 

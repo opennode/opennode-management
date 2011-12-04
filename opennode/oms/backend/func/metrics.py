@@ -17,7 +17,7 @@ class VirtualComputeMetricGatherer(Adapter):
     @defer.inlineCallbacks
     def gather(self):
 
-        @db.transact
+        @db.ro_transact
         def get_vms():
             return self.context['vms']
         vms = yield get_vms()
@@ -30,7 +30,7 @@ class VirtualComputeMetricGatherer(Adapter):
         timestamp = int(time.time() * 1000)
 
         # db transact is needed only to traverse the zodb.
-        @db.transact
+        @db.ro_transact
         def get_streams():
             streams = []
             for uuid, data in metrics.items():
