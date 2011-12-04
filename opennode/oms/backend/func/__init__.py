@@ -8,6 +8,7 @@ from zope.interface import classImplements
 
 from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetLocalTemplates
 from opennode.oms.model.model.proc import Proc
+from opennode.oms.zodb import db
 
 
 class FuncBase(Adapter):
@@ -19,21 +20,26 @@ class FuncBase(Adapter):
     interval = 0.1
 
     def run(self, *args, **kwargs):
-        client = self._get_client()
-        # we assume that all of the func actions are in the form of 'module.action'
-        module_action, action_name = self.func_action.rsplit('.', 1)
-        module = getattr(client, module_action)
-        action = getattr(module, action_name)
-
-        self.job_id = action(*args, **kwargs)
-
         self.deferred = defer.Deferred()
-        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
 
-        self.start_polling()
+        @db.ro_transact
+        def spawn_func():
+            client = self._get_client()
+            # we assume that all of the func actions are in the form of 'module.action'
+            module_action, action_name = self.func_action.rsplit('.', 1)
+            module = getattr(client, module_action)
+            action = getattr(module, action_name)
 
+            self.job_id = action(*args, **kwargs)
+
+            Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.context.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+
+            self.start_polling()
+
+        spawn_func()
         return self.deferred
 
+    @db.ro_transact
     def start_polling(self):
         return_code, results = self._get_client().job_status(self.job_id)
 
@@ -62,6 +68,7 @@ class FuncBase(Adapter):
 
     overlords = {}
 
+    @db.assert_transact
     def _get_client(self):
         """Returns an instance of the Overlord."""
         if self.context.hostname not in self.overlords:
