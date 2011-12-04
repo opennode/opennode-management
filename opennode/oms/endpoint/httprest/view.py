@@ -174,11 +174,13 @@ class StreamView(HttpRestView):
         timestamp = int(time.time() * 1000)
         oms_root = db.get_root()['oms_root']
 
+        limit = int(request.args.get('limit', ['1'])[0])
+        after = int(request.args.get('after', ['0'])[0])
 
         data = json.load(request.content)
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
-            return IStream(objs[-1]).events(0, limit=1)
+            return IStream(objs[-1]).events(after, limit=limit)
 
         # ONC wants it in ascending time order
         # while internally we prefer to keep it newest first to
