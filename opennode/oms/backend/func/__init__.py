@@ -60,9 +60,13 @@ class FuncBase(Adapter):
         else:
             self.deferred.callback(res)
 
+    overlords = {}
+
     def _get_client(self):
         """Returns an instance of the Overlord."""
-        return Overlord(self.context.hostname, async=True)
+        if self.context.hostname not in self.overlords:
+            self.overlords[self.context.hostname] = Overlord(self.context.hostname, async=True)
+        return self.overlords[self.context.hostname]
 
 
 FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
