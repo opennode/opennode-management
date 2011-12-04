@@ -5,7 +5,6 @@ from zope.component import queryAdapter
 from zope.interface import implements
 
 from .base import ReadonlyContainer, Model, IModel, IContainerExtender
-from zope.keyreference.persistent import KeyReferenceToPersistent
 from collections import defaultdict
 
 
@@ -32,7 +31,7 @@ class TransientStream(Model):
     # execution, but reinstantiated at each traversal, we have to keepp
     # the actual data somewhere. A two level dictionary structure serves the purpose
     # key (parent model + metric name)
-    transient_store = defaultdict(lambda: defaultdict(list))
+    transient_store = defaultdict(list)
 
     def __init__(self, parent, name):
         self.__parent__ = parent
@@ -40,7 +39,8 @@ class TransientStream(Model):
 
     @property
     def data(self):
-        return self.transient_store[KeyReferenceToPersistent(self.__parent__.__parent__)][self.__name__]
+        from opennode.oms.model.traversal import canonical_path
+        return self.transient_store[canonical_path(self)]
 
     def events(self, after, limit = None):
         # XXX: if nobody fills the data (func issues) then we return fake data
