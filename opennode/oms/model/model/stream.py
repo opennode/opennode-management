@@ -75,14 +75,19 @@ class TransientStream(Adapter):
             r = canonical_path(self.context)
             if r.endswith('cpu_usage'):
                 return random.random()
-            if r.endswith('memory_usage'):
+            elif r.endswith('memory_usage'):
                 return random.randint(0, 100)
-            if r.endswith('network_usage'):
+            elif r.endswith('network_usage'):
                 return random.randint(0, 100)
-            if r.endswith('diskspace_usage'):
+            elif r.endswith('diskspace_usage'):
                 return random.random() * 0.5 + 600  # useful
+            else:
+                raise Exception('cannot fake')
 
-        return [[timestamp, fake_data()]]
+        try:
+            return [[timestamp, fake_data()]]
+        except:
+            return []
 
 
 class StreamSubscriber(ReadonlyContainer):
