@@ -125,8 +125,6 @@ class Proc(ReadonlyContainer):
         return res
 
 
-
-
 class CompletedProc(ReadonlyContainer):
     __name__ = 'completed'
 

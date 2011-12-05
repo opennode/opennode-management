@@ -55,7 +55,6 @@ class AssertMockTestCase(unittest.TestCase):
                 m.foo()
         assert cm.exception.args == ("Expected a foo() call but found foo('bar') instead", )
 
-
         self.mock.reset_mock()
         self.mock.foo()
 
@@ -71,7 +70,6 @@ class AssertMockTestCase(unittest.TestCase):
             with assert_mock(self.mock) as m:
                 m.foo()
         assert cm.exception.args == ("Expected a foo() call but found foo(arg='bar') instead", )
-
 
         self.mock.reset_mock()
         self.mock.foo()

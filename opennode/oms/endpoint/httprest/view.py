@@ -122,10 +122,10 @@ class VirtualizationContainerView(ContainerView):
         try:
             data = json.load(request.content)
         except ValueError:
-            raise BadRequest, "Input data could not be parsed"
+            raise BadRequest("Input data could not be parsed")
 
         if not isinstance(data, dict):
-            raise BadRequest, "Input data must be a dictionary"
+            raise BadRequest("Input data must be a dictionary")
 
         # cleanup hacks
         data['state'] = 'active' if data['start_on_boot'] else 'inactive'
@@ -141,7 +141,7 @@ class VirtualizationContainerView(ContainerView):
             template_error = [dict(id='template', msg="missing value")] if not data.get('template') else []
             return {
                 'success': False,
-                'errors': [dict(id=k, msg=v) for k,v in form.error_dict().items()] + template_error
+                'errors': [dict(id=k, msg=v) for k, v in form.error_dict().items()] + template_error
                 }
 
         compute = form.create()
@@ -179,6 +179,7 @@ class StreamView(HttpRestView):
         after = int(request.args.get('after', ['0'])[0])
 
         data = json.load(request.content)
+
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
             if unresolved_path:
@@ -190,5 +191,5 @@ class StreamView(HttpRestView):
         # speed up filtering.
         # Reversed is not json serializable so we have to reify to list.
         res = [list(reversed(val(resource))) for resource in data]
-        res = [(i,v) for i,v in enumerate(res) if v]
+        res = [(i, v) for i, v in enumerate(res) if v]
         return [timestamp, dict(res)]

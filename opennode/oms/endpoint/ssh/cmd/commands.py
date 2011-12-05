@@ -71,12 +71,12 @@ class ChangeDirCmd(Cmd):
         # Only handles trailing '..'s for now.
         if not args.P:
             import itertools
-            ups = len(list(itertools.takewhile(lambda i: i=='..', args.path.split('/'))))
+            ups = len(list(itertools.takewhile(lambda i: i == '..', args.path.split('/'))))
             ups = min(ups, len(self.path) - 1)
             if ups:
                 self.path = self.path[0:-ups]
                 self.obj_path = self.obj_path[0:-ups]
-                args.path = args.path[ups*len('../'):]
+                args.path = args.path[ups * len('../'):]
 
         # Delegate path traversal to physical traversal.
         # It's possible that we emptied the path by removing all '..'s.
@@ -483,6 +483,7 @@ class FileCmd(Cmd):
     implements(ICmdArgumentsSyntax)
 
     command('file')
+
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
@@ -505,7 +506,7 @@ class FileCmd(Cmd):
 
     def _do_file(self, path, obj):
         ifaces = ', '.join([i.__name__ for i in obj.implemented_interfaces()])
-        return (path+":", "%s%s %s\n" % (type(obj).__name__, ':' if ifaces else '', ifaces))
+        return (path + ":", "%s%s %s\n" % (type(obj).__name__, ':' if ifaces else '', ifaces))
 
 
 class EchoCmd(Cmd):
@@ -549,6 +550,7 @@ class HelpCmd(Cmd):
         # for some reason I wasn't able to use inlineCallbacks here
         # the ArgumentParsing exception is normal and expected
         deferred = self.protocol.get_command_class(name)(self.protocol).parse_args(['-h'])
+
         @deferred
         def on_error(*args):
             pass

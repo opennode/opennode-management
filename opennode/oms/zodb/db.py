@@ -62,7 +62,8 @@ def init_schema():
 
 
 def get_db():
-    if not _db: init()
+    if not _db:
+        init()
     if isInIOThread() and not _testing:
         raise Exception('The ZODB should not be accessed from the main thread')
     return _db
@@ -105,7 +106,8 @@ def transact(fun):
         init_threadpool()
 
     def run_in_tx(fun, *args, **kwargs):
-        if not _db: init()
+        if not _db:
+            init()
 
         try:
             transaction.begin()
@@ -140,7 +142,8 @@ def ro_transact(fun):
         init_threadpool()
 
     def run_in_tx(fun, *args, **kwargs):
-        if not _db: init()
+        if not _db:
+            init()
 
         try:
             transaction.begin()

@@ -32,7 +32,6 @@ def test_apply_and_create_preconditions():
         a.create()  # should not be able to call `create` with validation errors
     assert cm.exception.args == ("There should be no validation errors", )
 
-
     a = ApplyRawData({'bar': 'bad int'}, obj=Foo())
     with assert_raises(AssertionError) as cm:
         a.create()
@@ -50,7 +49,8 @@ def test_create_with_missing_required_field():
 
 
 def test_apply_with_no_new_value():
-    foo = Foo(); foo.bar = 1
+    foo = Foo()
+    foo.bar = 1
     a = ApplyRawData({}, obj=foo)
     assert not a.errors
     a.apply()
@@ -80,6 +80,7 @@ def test_apply_with_valid_new_value():
     a = ApplyRawData({'bar': '2'}, obj=foo)
     a.apply()
     assert foo.bar == 2
+
 
 def test_handler():
     modified = []

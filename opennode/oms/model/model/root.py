@@ -87,6 +87,5 @@ class OmsRoot(ReadonlyContainer):
         res.__parent__ = self
         return res
 
-
     def __str__(self):
         return 'OMS root'

@@ -45,20 +45,26 @@ class IUndeployVM(IJob):
 class IListVMS(IJob):
     """List vms"""
 
+
 class IStartVM(IJob):
     """Starts a vm."""
+
 
 class IShutdownVM(IJob):
     """Shuts down a vm."""
 
+
 class IDestroyVM(IJob):
     """Destroys a vm."""
+
 
 class ISuspendVM(IJob):
     """Suspends a vm."""
 
+
 class IResumeVM(IJob):
     """Resumes a vm."""
+
 
 class IRebootVM(IJob):
     """Reboots a vm."""

@@ -43,7 +43,7 @@ class TemplateTags(ModelTags):
     context(Template)
 
     def auto_tags(self):
-        return [u'virt_type:'+self.context.base_type]
+        return [u'virt_type:' + self.context.base_type]
 
 
 class Templates(Container):

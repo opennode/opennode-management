@@ -76,7 +76,7 @@ class TtyTerminalProtocol(HypervisorSshTerminalProtocol):
 
     @property
     def command(self):
-        return 'screen -xRR %s %s' % (self.console.pty.replace('/',''), self.console.pty)
+        return 'screen -xRR %s %s' % (self.console.pty.replace('/', ''), self.console.pty)
 
 
 class OpenVzTerminalProtocol(HypervisorSshTerminalProtocol):
@@ -182,7 +182,6 @@ class TerminalSession(object):
         return 'TerminalSession(%s, %s, %s, %s)' % (self.id, self.queue, self.buffer, self.timestamp)
 
 
-
 class TerminalServerMixin(object):
     """Common code for view-based and twisted-resource based rendering of ShellInABox protocol."""
 
@@ -215,7 +214,7 @@ class TerminalServerMixin(object):
         keys = request.args.get('keys', None)
         if keys:
             session.handle_keys(keys[0])
-            return "" # responsed to this kind of requests are ignored
+            return ""  # responsed to this kind of requests are ignored
         else:
             session.enqueue(request)
 

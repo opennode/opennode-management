@@ -88,9 +88,9 @@ class SyncAction(Action):
 
         for idx, console in enumerate(vm['consoles']):
             if console['type'] == 'pty':
-                self.context.consoles.add(TtyConsole('tty%s'% idx, console['pty']))
+                self.context.consoles.add(TtyConsole('tty%s' % idx, console['pty']))
             if console['type'] == 'openvz':
-                self.context.consoles.add(OpenVzConsole('tty%s'% idx, console['cid']))
+                self.context.consoles.add(OpenVzConsole('tty%s' % idx, console['cid']))
             if console['type'] == 'vnc':
                 self.context.consoles.add(VncConsole(self.context.__parent__.__parent__.hostname, int(console['port'])))
 
@@ -150,7 +150,7 @@ class DeployAction(Action):
     @defer.inlineCallbacks
     def execute(self, cmd, args):
         submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
-        vm_parameters = dict(template_name = self.context.template,
+        vm_parameters = dict(template_name=self.context.template,
                              hostname=self.context.hostname,
                              vm_type='openvz',
                              uuid=self.context.__name__,

@@ -53,7 +53,8 @@ def traverse_path(obj, path):
 
         next_obj = follow_symlinks(traverser.traverse(name))
 
-        if not next_obj: break
+        if not next_obj:
+            break
 
         ret.append(next_obj)
         path = path[1:]
@@ -76,6 +77,7 @@ def traverse1(path):
         return objs[-1]
     else:
         return None
+
 
 def canonical_path(item):
     path = []

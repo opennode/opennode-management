@@ -103,6 +103,7 @@ class IInCompute(Interface):
 class IDeployed(Interface):
     """Marker interface implemented when the compute has been deployed."""
 
+
 class IUndeployed(Interface):
     """Marker interface implemented when the compute has not been deployed yet."""
 
@@ -136,7 +137,6 @@ class Compute(Container):
         u'storage': 1000.0,
     }
     swap_size = 4192
-
 
     cpu_usage = (0.1, 0.11, 0.14)
     memory_usage = 773.2
@@ -215,6 +215,7 @@ class Compute(Container):
     @property
     def templates(self):
         from opennode.oms.zodb import db
+
         @db.assert_transact
         def do_it():
             if not self['templates']:
@@ -250,14 +251,14 @@ class ComputeTags(ModelTags):
     context(Compute)
 
     def auto_tags(self):
-        res =  [u'state:'+self.context.state]
+        res = [u'state:' + self.context.state]
         if self.context.architecture:
             for i in self.context.architecture:
-                res.append(u'arch:'+i)
+                res.append(u'arch:' + i)
 
         from .virtualizationcontainer import IVirtualizationContainer
         if IVirtualCompute.providedBy(self.context) and IVirtualizationContainer.providedBy(self.context.__parent__):
-            res.append(u'virt_type:'+self.context.__parent__.backend)
+            res.append(u'virt_type:' + self.context.__parent__.backend)
 
         return res
 

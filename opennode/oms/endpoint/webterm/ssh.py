@@ -63,13 +63,12 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
         """Return the public key unless we already failed our previous publickey auth attempt."""
         if self.lastAuth == 'publickey':
             return None
-        return keys.Key.fromString(data = self.publicKey).blob()
+        return keys.Key.fromString(data=self.publicKey).blob()
 
     def getPrivateKey(self):
-        return defer.succeed(keys.Key.fromString(data = self.privateKey).keyObject)
+        return defer.succeed(keys.Key.fromString(data=self.privateKey).keyObject)
 
-
-    def getPassword(self, prompt = None):
+    def getPassword(self, prompt=None):
         """Conch expects a deferred which will yield a password to try.
         Writes a prompt and redirect the terminal input to a password reader which will
         callback a deferred and thus yield a password to conch.
@@ -114,7 +113,7 @@ class SSHShellConnection(connection.SSHConnection):
         self.command = command
 
     def serviceStarted(self):
-        self.openChannel(ShellChannel(conn = self))
+        self.openChannel(ShellChannel(conn=self))
 
 
 class ShellChannel(channel.SSHChannel):
@@ -132,14 +131,14 @@ class ShellChannel(channel.SSHChannel):
         self.conn.set_channel(self)
 
         data = session.packRequest_pty_req('xterm-color', (self.conn.terminal_size[1], self.conn.terminal_size[0], 0, 0), '')
-        deferred = self.conn.sendRequest(self, 'pty-req', data, wantReply = 1)
+        deferred = self.conn.sendRequest(self, 'pty-req', data, wantReply=1)
 
         @deferred
         def on_success(ignored):
             if self.conn.command:
-                self.conn.sendRequest(self, 'exec', common.NS(self.conn.command), wantReply = 1)
+                self.conn.sendRequest(self, 'exec', common.NS(self.conn.command), wantReply=1)
             else:
-                self.conn.sendRequest(self, 'shell', '', wantReply = 1)
+                self.conn.sendRequest(self, 'shell', '', wantReply=1)
 
     def dataReceived(self, data):
         if self.terminal_transport:
@@ -151,4 +150,4 @@ class ShellChannel(channel.SSHChannel):
 
     def terminalSize(self, width, height):
         data = session.packRequest_window_change((height, width, 0, 0))
-        self.conn.sendRequest(self, 'window-change', data, wantReply = 0)
+        self.conn.sendRequest(self, 'window-change', data, wantReply=0)

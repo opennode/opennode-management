@@ -39,4 +39,3 @@ class ByNameContainerExtension(Subscription):
 
     def extend(self):
         return {'by-name': ByNameContainer(self.context)}
-

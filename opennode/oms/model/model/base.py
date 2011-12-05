@@ -147,7 +147,7 @@ class Container(AddingContainer):
             item.__parent__.remove(item)
         item.__parent__ = self
 
-        id = getattr(item, '__name__' , None)
+        id = getattr(item, '__name__', None)
         if not id:
             id = self._new_id()
 

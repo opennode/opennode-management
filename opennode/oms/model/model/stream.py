@@ -50,7 +50,7 @@ class TransientStream(Adapter):
         from opennode.oms.model.traversal import canonical_path
         return self.transient_store[canonical_path(self.context)]
 
-    def events(self, after, limit = None):
+    def events(self, after, limit=None):
         # XXX: if nobody fills the data (func issues) then we return fake data
         if not self.data:
             return self._fake_events(after, limit)
@@ -69,7 +69,7 @@ class TransientStream(Adapter):
         if len(self.data) > self.MAX_LEN:
             self.data.pop()
 
-    def _fake_events(self, after, limit = None):
+    def _fake_events(self, after, limit=None):
         import random
         timestamp = int(time.time() * 1000)
 

@@ -31,7 +31,7 @@ class OmsShellProtocol(InteractiveTerminal):
         super(OmsShellProtocol, self).__init__()
         self.path = ['']
         self.last_error = None
-        self.environment={'PATH': '.:./actions:/bin'}
+        self.environment = {'PATH': '.:./actions:/bin'}
         self.path_stack = []
         self.sub_protocol = None
         self.tid = Proc.register(None, '/bin/omsh')

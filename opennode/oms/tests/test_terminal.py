@@ -65,7 +65,6 @@ class TerminalTestCase(unittest.TestCase):
         self.shell.keystrokeReceived(CTRL_T, None)
         eq_(''.join(self.shell.lineBuffer), "ic")
 
-
         self.shell.keystrokeReceived(ServerProtocol.LEFT_ARROW, None)
         self.shell.keystrokeReceived(ServerProtocol.LEFT_ARROW, None)
         self.shell.keystrokeReceived(CTRL_T, None)
@@ -100,7 +99,6 @@ class TerminalTestCase(unittest.TestCase):
 
         self.terminal.reset_mock()
         self.shell.keystrokeReceived(CTRL_Y, None)
-
 
         eq_(self.terminal.method_calls, [('write', (' world',), {})])
         eq_(''.join(self.shell.lineBuffer), " worldhello")

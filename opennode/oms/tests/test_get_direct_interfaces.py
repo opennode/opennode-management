@@ -4,21 +4,27 @@ from zope.interface import Interface, classImplements
 from opennode.oms.util import get_direct_interfaces, get_direct_interface
 
 
-class IDirect(Interface): pass
-class IDirect2(IDirect): pass
+class IDirect(Interface):
+    pass
+
+
+class IDirect2(IDirect):
+    pass
 
 
 def test_basic():
     assert_direct_interfaces(type(None), [], instance=None)
     assert_direct_interfaces(object, [])
 
-    class Foo(object): pass
+    class Foo(object):
+        pass
     assert_direct_interfaces(Foo, [])
 
     classImplements(Foo, IDirect)
     assert_direct_interfaces(Foo, [IDirect])
 
-    class Bar(Foo): pass
+    class Bar(Foo):
+        pass
     assert_direct_interfaces(Bar, [])
 
     classImplements(Foo, IDirect2)

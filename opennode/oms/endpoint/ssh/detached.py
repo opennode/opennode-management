@@ -5,4 +5,3 @@ class DetachedProtocol(object):
     def write(self, *args):
         """Currently nop"""
         print "SYSLOG:", args
-

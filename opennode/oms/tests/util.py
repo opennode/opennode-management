@@ -28,6 +28,7 @@ def run_in_reactor(fun):
 
     if not inspect.isfunction(fun):
         delay = fun
+
         def recorded_execution(f):
             """Marks the execution of a delay triggering test case
             so that later we can decide whether to sleep or not.
@@ -37,6 +38,7 @@ def run_in_reactor(fun):
             """
 
             reactor_wrapped_fun = run_in_reactor(f)
+
             @wraps(reactor_wrapped_fun)
             def mark(*args, **kwargs):
                 _delay_segments.append((time.time(), delay))
@@ -52,6 +54,7 @@ def run_in_reactor(fun):
         if reactor is None:
             raise ImportError("twisted is not available or could not be imported")
         q = Queue()
+
         def g():
             try:
                 fun(*args, **kwargs)
@@ -67,7 +70,7 @@ def run_in_reactor(fun):
 
         if error is not None:
             exc_type, exc_value, tb = error
-            raise exc_type, exc_value, tb
+            raise (exc_type, exc_value, tb)
 
     return wrapper
 

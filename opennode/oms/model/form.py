@@ -172,7 +172,7 @@ class TmpObj(object):
 
     def __getattr__(self, name):
         if name.startswith('__'):
-            raise AttributeError, name
+            raise AttributeError(name)
         if name in self.__dict__['modified_attrs']:
             return self.__dict__['modified_attrs'][name]
         else:

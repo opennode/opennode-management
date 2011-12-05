@@ -28,6 +28,7 @@ class CmdCompletionTestCase(unittest.TestCase):
         # to the model just for testing completion, so we have monkey patch
         # the commands() function and add a command 'hello'.
         self.orig_commands = registry.commands
+
         class HelloCmd(Cmd):
             name = 'hello'
         registry.commands = lambda: dict(hello=HelloCmd, **self.orig_commands())
@@ -224,7 +225,6 @@ class CmdCompletionTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             t.write('itecture=')
             no_more_calls(t)
-
 
     @run_in_reactor
     def test_complete_mk_legal_types_interface(self):

@@ -14,7 +14,6 @@ from opennode.oms.model.traversal import canonical_path, traverse_path
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 
 
-
 class IndexerDaemonProcess(DaemonProcess):
     implements(IProcess)
 

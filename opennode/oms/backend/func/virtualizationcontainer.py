@@ -57,10 +57,10 @@ class ListVirtualizationContainerAction(Action):
             cmd.write("%(name)s:  state=%(state)s, run_state=%(run_state)s, uuid=%(uuid)s\n" % vm)
 
             if vm['consoles']:
-                cmd.write(" %s    consoles:\n" % (' '*max_key_len))
+                cmd.write(" %s    consoles:\n" % (' ' * max_key_len))
             for console in vm['consoles']:
                 attrs = " ".join(["%s=%s" % pair for pair in console.items()])
-                cmd.write(" %s      %s\n" % (' '*max_key_len, attrs))
+                cmd.write(" %s      %s\n" % (' ' * max_key_len, attrs))
 
 
 class SyncVmsAction(Action):
@@ -148,4 +148,3 @@ class SyncVmsAction(Action):
                 iface_node.members = interface['members']
 
             host_compute.interfaces.add(iface_node)
-

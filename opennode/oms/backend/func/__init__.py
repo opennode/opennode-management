@@ -86,7 +86,6 @@ class SyncFuncExecutor(FuncExecutor):
         self.hostname = hostname
         self.func_action = func_action
 
-
     def run(self, *args, **kwargs):
         @db.ro_transact
         def spawn_func():

@@ -36,7 +36,7 @@ class VirtualizationContainerTags(ModelTags):
     context(VirtualizationContainer)
 
     def auto_tags(self):
-        return [u'virt:'+self.context.backend]
+        return [u'virt:' + self.context.backend]
 
 
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(VirtualizationContainer, ))

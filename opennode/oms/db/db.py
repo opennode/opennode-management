@@ -60,7 +60,8 @@ def transact(fun):
         raise TypeError("Only instance methods can be wrapped")
 
     global transactor
-    if not transactor: init()
+    if not transactor:
+        init()
 
     @wraps(fun)
     def wrapper(self, *args, **kwargs):
@@ -82,7 +83,8 @@ def ensure_transaction(fun):
 
 def get_store():
     """An convenience alias for zope.component.getUtility(IZStorm).get('main')."""
-    if not transactor: init()
+    if not transactor:
+        init()
     return getUtility(IZStorm).get('main')
 
 

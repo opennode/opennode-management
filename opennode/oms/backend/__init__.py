@@ -1,3 +1,3 @@
 """
-Connections to the back-ends, managed by OMS. 
+Connections to the back-ends, managed by OMS.
 """

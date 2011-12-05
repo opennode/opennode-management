@@ -100,6 +100,7 @@ class Cmd(object):
     @property
     def path(self):
         return self.protocol.path
+
     @path.setter
     def path(self, path):
         self.protocol.path = path
@@ -107,6 +108,7 @@ class Cmd(object):
     @property
     def obj_path(self):
         return self.protocol.obj_path
+
     @obj_path.setter
     def obj_path(self, path):
         self.protocol.obj_path = path

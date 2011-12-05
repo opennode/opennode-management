@@ -25,7 +25,7 @@ def get_direct_interfaces(obj):
     """
     cls = obj if isinstance(obj, type) else type(obj)
 
-    if not isinstance(obj, type) and hasattr(obj, 'implemented_interfaces') :
+    if not isinstance(obj, type) and hasattr(obj, 'implemented_interfaces'):
         interfaces = obj.implemented_interfaces()
     else:
         interfaces = list(zope.interface.implementedBy(cls).interfaces())
@@ -60,7 +60,7 @@ class Singleton(type):
         super(Singleton, cls).__init__(name, bases, dict)
         cls.instance = None
 
-    def __call__(cls,*args,**kw):
+    def __call__(cls, *args, **kw):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance

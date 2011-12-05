@@ -195,7 +195,7 @@ class TtyAttachAction(HypervisorSshAttachAction):
 
     @property
     def command(self):
-        return 'screen -xRR %s %s' % (self.context.pty.replace('/',''), self.context.pty)
+        return 'screen -xRR %s %s' % (self.context.pty.replace('/', ''), self.context.pty)
 
     @property
     def name(self):

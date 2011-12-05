@@ -117,11 +117,11 @@ class SshTestCase(unittest.TestCase):
     def test_ls(self):
         self._cmd('ls')
         with assert_mock(self.terminal) as t:
-            t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
+            t.write('%s\n' % ('  '.join([i + '/' for i in self.tlds])))
 
         self._cmd('ls /')
         with assert_mock(self.terminal) as t:
-            t.write('%s\n' % ('  '.join([i+'/' for i in self.tlds])))
+            t.write('%s\n' % ('  '.join([i + '/' for i in self.tlds])))
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(self.make_compute())
@@ -332,7 +332,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_modify_compute_tags(self):
         computes = db.get_root()['oms_root']['computes']
-        cmpt=self.make_compute()
+        cmpt = self.make_compute()
         cid = computes.add(cmpt)
         transaction.commit()
 
@@ -355,7 +355,7 @@ class SshTestCase(unittest.TestCase):
     @run_in_reactor
     def test_special_compute_tags(self):
         computes = db.get_root()['oms_root']['computes']
-        cmpt=self.make_compute()
+        cmpt = self.make_compute()
         cid = computes.add(cmpt)
         transaction.commit()
 
@@ -367,7 +367,6 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
 
-
         self._cmd('set computes/%s tags=label:foo' % cid)
         self.terminal.reset_mock()
 
@@ -375,7 +374,6 @@ class SshTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
-
 
         self._cmd('set computes/%s tags=+type:foo' % cid)
         self.terminal.reset_mock()
@@ -385,7 +383,6 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, state:active, type:compute\n')
 
-
         self._cmd('set computes/%s tags="+space: ship"' % cid)
         self.terminal.reset_mock()
 
@@ -393,7 +390,6 @@ class SshTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, label:foo, space:ship, state:active, type:compute\n')
-
 
         self._cmd('set computes/%s tags=stuff:' % cid)
         self.terminal.reset_mock()
@@ -403,7 +399,6 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
 
-
         self._cmd('set computes/%s tags=:stuff' % cid)
         self.terminal.reset_mock()
 
@@ -412,7 +407,6 @@ class SshTestCase(unittest.TestCase):
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
 
-
         self._cmd('set computes/%s tags=,,' % cid)
         self.terminal.reset_mock()
 
@@ -420,7 +414,6 @@ class SshTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             whatever(t)
             t.write('Tags:                \tarch:centos, arch:linux, arch:x86_64, state:active, type:compute\n')
-
 
     @run_in_reactor
     def test_create_compute(self):

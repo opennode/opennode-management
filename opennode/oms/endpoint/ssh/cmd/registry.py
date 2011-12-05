@@ -3,6 +3,7 @@ from .base import Cmd
 
 _commands = {}
 
+
 def commands():
     """A map of command names to command objects."""
     return _commands

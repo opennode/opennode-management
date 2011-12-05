@@ -20,6 +20,7 @@ class INetworkInterface(Interface):
     rx = schema.TextLine(title=u"RX bytes")
     tx = schema.TextLine(title=u"TX bytes")
 
+
 class IBridgeInterface(INetworkInterface):
     members = schema.List(title=u"Bridge members", required=False, readonly=True)
 
@@ -62,7 +63,7 @@ class NetworkInterface(ReadonlyContainer):
             mask = mask >> 1
         l = l | mask
         o = []
-        for i in xrange(0,4):
+        for i in xrange(0, 4):
             o.insert(0, l & 0xff)
             l = l >> 8
         return '.'.join(str(i) for i in o)

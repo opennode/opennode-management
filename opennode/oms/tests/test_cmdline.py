@@ -38,8 +38,8 @@ class CmdLineParserTestCase(unittest.TestCase):
         self.parser.add_argument('--three', type=int, action=GroupDictAction, group='other')
 
         res = self.parser.parse_args('--one 1 --two 2 --three 3'.split())
-        eq_(res.group, dict(one = 1, two = 2))
-        eq_(res.other, dict(three = 3))
+        eq_(res.group, dict(one=1, two=2))
+        eq_(res.other, dict(three=3))
 
     def test_declaration(self):
         some_default = object()
@@ -47,6 +47,7 @@ class CmdLineParserTestCase(unittest.TestCase):
         res = self.parser.parse_args([])
 
         eq_(res.group, some_default)
+
 
 class PartialCmdLineParserTestCase(unittest.TestCase):
 
@@ -63,6 +64,7 @@ class PartialCmdLineParserTestCase(unittest.TestCase):
         assert args.bar == None
 
         eq_(len(self.terminal.method_calls), 0)
+
 
 class CmdLineTestCase(unittest.TestCase):
 

@@ -187,7 +187,7 @@ class SearchResult(ReadonlyContainer):
             def find_free_name(tentative_name, idx):
                 next_name = '%s_%s' % (name, idx)
                 if res.has_key(tentative_name):
-                    return find_free_name(next_name, idx+1)
+                    return find_free_name(next_name, idx + 1)
                 return tentative_name
 
             name = find_free_name(name, 0)
@@ -217,12 +217,14 @@ class ReindexAction(Action):
 
         # TODO: break this import cycle by moving this action somewhere else
         from opennode.oms.zodb import db
+
         @db.transact
         def doit():
             search = db.get_root()['oms_root']['search']
             search.clear()
 
             objs = set()
+
             def collect(container):
                 for item in container.listcontent():
                     # HACK, handle non indexable stuff:
@@ -288,7 +290,7 @@ class TagItems(ReadonlyContainer):
             def find_free_name(tentative_name, idx):
                 next_name = '%s_%s' % (name, idx)
                 if res.has_key(tentative_name):
-                    return find_free_name(next_name, idx+1)
+                    return find_free_name(next_name, idx + 1)
                 return tentative_name
 
             name = find_free_name(name, 0)

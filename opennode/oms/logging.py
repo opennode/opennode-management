@@ -12,11 +12,10 @@ class FilteredLogFileObserver(FileLogObserver):
 
     def emit(self, eventDict):
 
-        system = eventDict.get('system','')
-        message = eventDict.get('message','')
+        system = eventDict.get('system', '')
+        message = eventDict.get('message', '')
         if message:
             message = message[0]
-
 
         for msg in self.ignored_messages:
             if msg in message:

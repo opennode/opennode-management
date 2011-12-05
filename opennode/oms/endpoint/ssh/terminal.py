@@ -171,8 +171,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.terminal.deleteCharacter(back_positions)
 
         # XXX: The index value should be extracted to a local variable for readability and DRY
-        self.kill_ring = self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
-        del self.lineBuffer[self.lineBufferIndex - back_positions : self.lineBufferIndex]
+        self.kill_ring = self.lineBuffer[self.lineBufferIndex - back_positions: self.lineBufferIndex]
+        del self.lineBuffer[self.lineBufferIndex - back_positions: self.lineBufferIndex]
         self.lineBufferIndex -= back_positions
 
     def handle_TRANSPOSE(self):
