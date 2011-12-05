@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from BTrees.OOBTree import OOTreeSet, difference
 from grokcore.component import context, subscribe, Adapter, baseclass
-from twisted.internet import reactor
 from twisted.python import log
 from zope import schema
 from zope.app.catalog.catalog import Catalog
