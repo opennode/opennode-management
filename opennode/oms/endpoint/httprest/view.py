@@ -180,6 +180,8 @@ class StreamView(HttpRestView):
         data = json.load(request.content)
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
+            if unresolved_path:
+                return []
             return IStream(objs[-1]).events(after, limit=limit)
 
         # ONC wants it in ascending time order
