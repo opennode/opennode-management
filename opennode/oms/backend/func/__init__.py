@@ -104,7 +104,11 @@ class SyncFuncExecutor(FuncExecutor):
             hostkey = self.hostname
             if len(data.keys()) == 1:
                 hostkey = data.keys()[0]
-            return data[hostkey]
+            res = data[hostkey]
+            if res and isinstance(res, list) and res[0] == 'REMOTE_ERROR':
+                raise Exception(*res[1:])
+            else:
+                return res
 
         self.deferred = spawn_func()
         Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
