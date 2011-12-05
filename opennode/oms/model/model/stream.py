@@ -70,7 +70,7 @@ class TransientStream(Adapter):
             self.data.pop()
 
     def _fake_events(self, after, limit = None):
-        import random, time
+        import random
         timestamp = int(time.time() * 1000)
 
         def fake_data():
