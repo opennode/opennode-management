@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import time
+
 from grokcore.component import Subscription, baseclass, Adapter, context, subscribe
 from zope.component import queryAdapter
 from zope.interface import implements
@@ -126,7 +128,29 @@ class ModelStream(TransientStream):
 @subscribe(IModel, IModelModifiedEvent)
 def model_modified(model, event):
     if IStream.providedBy(model) or queryAdapter(model, IStream):
-        import time
         timestamp = int(time.time() * 1000)
         for k in event.modified:
             IStream(model).add((timestamp, dict(type='change', name=k, value=event.modified[k], old_value=event.original[k])))
+
+
+@subscribe(IModel, IModelCreatedEvent)
+def model_created(model, event):
+    from opennode.oms.model.traversal import canonical_path
+    timestamp = int(time.time() * 1000)
+
+    parent = event.container
+    if IStream.providedBy(parent) or queryAdapter(parent, IStream):
+        IStream(parent).add((timestamp, dict(type='add', name=model.__name__, url=canonical_path(model))))
+
+
+@subscribe(IModel, IModelDeletedEvent)
+def model_deleted(model, event):
+    from opennode.oms.model.traversal import canonical_path
+    timestamp = int(time.time() * 1000)
+
+    parent = event.container
+    if IStream.providedBy(parent) or queryAdapter(parent, IStream):
+        IStream(parent).add((timestamp, dict(type='remove', name=model.__name__, url=canonical_path(model))))
+
+    if IStream.providedBy(model) or queryAdapter(model, IStream):
+        IStream(model).add((timestamp, dict(type='delete', name=model.__name__, url=canonical_path(model))))
