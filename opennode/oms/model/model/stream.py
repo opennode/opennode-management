@@ -130,7 +130,7 @@ def model_modified(model, event):
     if IStream.providedBy(model) or queryAdapter(model, IStream):
         timestamp = int(time.time() * 1000)
         for k in event.modified:
-            IStream(model).add((timestamp, dict(type='change', name=k, value=event.modified[k], old_value=event.original[k])))
+            IStream(model).add((timestamp, dict(event='change', name=k, value=event.modified[k], old_value=event.original[k])))
 
 
 @subscribe(IModel, IModelCreatedEvent)
@@ -140,7 +140,7 @@ def model_created(model, event):
 
     parent = event.container
     if IStream.providedBy(parent) or queryAdapter(parent, IStream):
-        IStream(parent).add((timestamp, dict(type='add', name=model.__name__, url=canonical_path(model))))
+        IStream(parent).add((timestamp, dict(event='add', name=model.__name__, url=canonical_path(model))))
 
 
 @subscribe(IModel, IModelDeletedEvent)
@@ -150,7 +150,7 @@ def model_deleted(model, event):
 
     parent = event.container
     if IStream.providedBy(parent) or queryAdapter(parent, IStream):
-        IStream(parent).add((timestamp, dict(type='remove', name=model.__name__, url=canonical_path(model))))
+        IStream(parent).add((timestamp, dict(event='remove', name=model.__name__, url=canonical_path(model))))
 
     if IStream.providedBy(model) or queryAdapter(model, IStream):
-        IStream(model).add((timestamp, dict(type='delete', name=model.__name__, url=canonical_path(model))))
+        IStream(model).add((timestamp, dict(event='delete', name=model.__name__, url=canonical_path(model))))

@@ -182,7 +182,7 @@ class StreamView(HttpRestView):
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
             if unresolved_path:
-                return [(timestamp, dict(type='delete', name=os.path.basename(r), url=r))]
+                return [(timestamp, dict(event='delete', name=os.path.basename(r), url=r))]
             return IStream(objs[-1]).events(after, limit=limit)
 
         # ONC wants it in ascending time order
