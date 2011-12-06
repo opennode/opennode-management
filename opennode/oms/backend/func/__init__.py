@@ -110,7 +110,7 @@ class SyncFuncExecutor(FuncExecutor):
                 return res
 
         self.deferred = spawn_func()
-        Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+        # Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
 
         return self.deferred
 
