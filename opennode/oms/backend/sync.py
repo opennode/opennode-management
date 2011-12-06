@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from uuid import uuid5, NAMESPACE_DNS
 from zope.component import provideSubscriptionAdapter
 from zope.interface import implements
 
@@ -47,6 +48,7 @@ class SyncDaemonProcess(DaemonProcess):
             existing_machine = follow_symlinks(machines['by-name'][host])
             if not existing_machine:
                 machine = Compute(unicode(host), u'active')
+                machine.__name__ = str(uuid5(NAMESPACE_DNS, host))
                 machines.add(machine)
 
         @defer.inlineCallbacks
