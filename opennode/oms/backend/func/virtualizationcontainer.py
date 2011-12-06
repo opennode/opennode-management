@@ -55,7 +55,7 @@ class ListVirtualizationContainerAction(Action):
 
         for vm in vms:
             vm['name'] = vm['name'].ljust(max_key_len)
-            cmd.write("%(name)s:  state=%(state)s, run_state=%(run_state)s, uuid=%(uuid)s\n" % vm)
+            cmd.write("%(name)s:  state=%(state)s, run_state=%(run_state)s, uuid=%(uuid)s, template=%(template)s\n" % vm)
 
             if vm['consoles']:
                 cmd.write(" %s    consoles:\n" % (' ' * max_key_len))
