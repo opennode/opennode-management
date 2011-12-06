@@ -14,6 +14,11 @@ class IFuncInstalled(Interface):
     """Marker for FUNC-controlled Computes."""
 
 
+class IFuncMinion(Interface):
+    def hostname():
+        """Return the hostname of the minion"""
+
+
 class IBotoManageable(Interface):
     """Marker for Computes controlled through the boto library."""
 

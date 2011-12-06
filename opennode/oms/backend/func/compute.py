@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
 from .virtualizationcontainer import IVirtualizationContainerSubmitter
-from grokcore.component import context, subscribe, baseclass
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates
+from grokcore.component import context, subscribe, baseclass, Adapter
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
@@ -15,7 +15,15 @@ from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
 from twisted.internet import defer
-from zope.interface import alsoProvides, noLongerProvides
+from zope.interface import alsoProvides, noLongerProvides, implements
+
+
+class ComputeMinion(Adapter):
+    implements(IFuncMinion)
+    context(ICompute)
+
+    def hostname(self):
+        return self.context.hostname
 
 
 class SyncAction(Action):
