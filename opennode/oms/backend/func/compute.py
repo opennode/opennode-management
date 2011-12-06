@@ -183,6 +183,10 @@ class DeployAction(Action):
     @defer.inlineCallbacks
     def execute(self, cmd, args):
         submitter = IVirtualizationContainerSubmitter(self.context.__parent__)
+        if not self.context.template:
+            cmd.write("Cannot deploy %s because no template was specified\n" % self.context.hostname)
+            return
+
         vm_parameters = dict(template_name=self.context.template,
                              hostname=self.context.hostname,
                              vm_type='openvz',
