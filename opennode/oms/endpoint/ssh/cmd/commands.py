@@ -168,11 +168,11 @@ class ListDirContentsCmd(Cmd):
     def _do_ls(self, obj, path=None):
         def pretty_name(item):
             if IContainer.providedBy(item):
-                return self.protocol.colorize(BLUE, item.__name__ + '/')
+                return self.protocol.colorize(BLUE, '%s/' % (item.__name__,))
             elif ICommand.providedBy(item):
-                return self.protocol.colorize(GREEN, item.__name__ + '*')
+                return self.protocol.colorize(GREEN, '%s*' % (item.__name__,))
             elif isinstance(item, Symlink):
-                return self.protocol.colorize(CYAN, item.__name__ + '@')
+                return self.protocol.colorize(CYAN, '%s@' % (item.__name__,))
             else:
                 return item.__name__
 
