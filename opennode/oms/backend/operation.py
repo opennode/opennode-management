@@ -39,6 +39,10 @@ class IGetLocalTemplates(IJob):
     """Get local templates"""
 
 
+class IGetVirtualizationContainers(IJob):
+    """Get virtualization container provided by a compute"""
+
+
 class IDeployVM(IJob):
     """Deploys a vm."""
 

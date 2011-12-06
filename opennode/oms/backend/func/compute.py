@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 
-from .virtualizationcontainer import IVirtualizationContainerSubmitter
+from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends
 from grokcore.component import context, subscribe, baseclass, Adapter
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeployed, IDeployed
 from opennode.oms.model.model.template import Template
-from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
+from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer, VirtualizationContainer
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
@@ -44,7 +44,8 @@ class SyncAction(Action):
             self.sync_consoles()
             self.sync_hw()
             if IFuncInstalled.providedBy(self.context):
-                self.sync_templates()
+                yield self.ensure_vms()
+                yield self.sync_templates()
 
             if IVirtualCompute.providedBy(self.context):
                 yield self._sync_virtual()
@@ -133,7 +134,26 @@ class SyncAction(Action):
         return unicode(info['os'].split()[0])
 
     @defer.inlineCallbacks
+    def ensure_vms(self):
+        if not self.context['vms'] and IFuncInstalled.providedBy(self.context):
+            vms_types = yield IGetVirtualizationContainers(self.context).run()
+            if vms_types:
+                url_to_backend_type = dict((v, k) for k, v in backends.items())
+                backend_type = url_to_backend_type[vms_types[0]]
+
+                # XXX: this should work but it doesn't, please check
+                #yield db.transact(lambda: self.context.add(VirtualizationContainer(backend_type)))
+
+                @db.transact
+                def create_vms():
+                    self.context.add(VirtualizationContainer(backend_type))
+                yield create_vms()
+
+    @defer.inlineCallbacks
     def sync_templates(self):
+        if not self.context['vms']:
+            return
+
         print "SYNCING TEMPLATES"
         submitter = IVirtualizationContainerSubmitter(self.context['vms'])
         templates = yield submitter.submit(IGetLocalTemplates)
