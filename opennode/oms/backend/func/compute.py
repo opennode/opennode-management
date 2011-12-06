@@ -154,17 +154,14 @@ class SyncAction(Action):
         if not self.context['vms']:
             return
 
-        print "SYNCING TEMPLATES"
         submitter = IVirtualizationContainerSubmitter(self.context['vms'])
         templates = yield submitter.submit(IGetLocalTemplates)
-        print "GOT TEMPLATES", templates
 
         @db.transact
         def update_templates():
             template_container = self.context.templates
             for i in templates:
                 if not template_container['by-name'][i]:
-                    print "ADDING TEMPLATE", i
                     template_container.add(Template(i, 'openvz'))
 
         yield update_templates()
