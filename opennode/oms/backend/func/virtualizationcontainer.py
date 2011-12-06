@@ -113,6 +113,7 @@ class SyncVmsAction(Action):
             else:
                 new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
                 new_compute.__name__ = vm_uuid
+                new_compute.template = remote_vm['template']
                 alsoProvides(new_compute, IVirtualCompute)
                 alsoProvides(new_compute, IDeployed)
                 self.context.add(new_compute)
