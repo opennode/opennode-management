@@ -6,7 +6,7 @@ from grokcore.component import Adapter, context, baseclass
 from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetLocalTemplates, IFuncMinion
+from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetLocalTemplates, IFuncMinion, IGetSignedCertificateNames
 from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
@@ -146,6 +146,7 @@ FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
                 IDeployVM: 'onode.vm.deploy_vm', IUndeployVM: 'onode.vm.undeploy_vm',
                 IGetGuestMetrics: 'onode.vm.metrics',
                 IGetLocalTemplates: 'onode.vm.get_local_templates',
+                IGetSignedCertificateNames: 'certmastermod.get_signed_certs',
                 IHostInterfaces: 'onode.host.interfaces'}
 
 

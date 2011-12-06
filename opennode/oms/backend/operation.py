@@ -73,3 +73,7 @@ class IResumeVM(IJob):
 
 class IRebootVM(IJob):
     """Reboots a vm."""
+
+
+class IGetSignedCertificateNames(IJob):
+    """Contact certmaster."""
