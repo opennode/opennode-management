@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends
+from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends, SyncVmsAction
 from grokcore.component import context, subscribe, baseclass, Adapter
 from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
@@ -51,6 +51,8 @@ class SyncAction(Action):
                 yield self._sync_virtual()
 
             yield self._create_default_console(default)
+
+            yield self.sync_vms()
 
         except Exception as e:
             cmd.write("%s\n" % (": ".join(msg for msg in e.args if isinstance(msg, str) and not msg.startswith('  File "/'))))
@@ -148,6 +150,12 @@ class SyncAction(Action):
                 def create_vms():
                     self.context.add(VirtualizationContainer(backend_type))
                 yield create_vms()
+
+    @defer.inlineCallbacks
+    def sync_vms(self):
+        vms = self.context['vms']
+        if vms:
+            yield SyncVmsAction(vms).execute(DetachedProtocol(), object())
 
     @defer.inlineCallbacks
     def sync_templates(self):
