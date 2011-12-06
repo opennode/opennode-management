@@ -6,6 +6,7 @@ from opennode.oms.backend.operation import IListVMS, IHostInterfaces
 from opennode.oms.model.model.actions import Action, action
 from opennode.oms.model.model.compute import IVirtualCompute, Compute, IDeployed, IUndeployed
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, BridgeInterface
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer
 from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
@@ -99,13 +100,22 @@ class SyncVmsAction(Action):
         remote_uuids = set(i['uuid'] for i in remote_vms)
         local_uuids = set(i.__name__ for i in local_vms)
 
+        machines = db.get_root()['oms_root'].machines
+
         for vm_uuid in remote_uuids.difference(local_uuids):
             remote_vm = [i for i in remote_vms if i['uuid'] == vm_uuid][0]
-            new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
-            new_compute.__name__ = vm_uuid
-            alsoProvides(new_compute, IVirtualCompute)
-            alsoProvides(new_compute, IDeployed)
-            self.context.add(new_compute)
+
+            existing_machine = follow_symlinks(machines['by-name'][remote_vm['name']])
+            if existing_machine:
+                # XXX: this VM is a nested VM, for now let's hack it this way
+                new_compute = Symlink(existing_machine.__name__, existing_machine)
+                self.context._add(new_compute)
+            else:
+                new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
+                new_compute.__name__ = vm_uuid
+                alsoProvides(new_compute, IVirtualCompute)
+                alsoProvides(new_compute, IDeployed)
+                self.context.add(new_compute)
 
         for vm_uuid in remote_uuids.intersection(local_uuids):
             noLongerProvides(self.context[vm_uuid], IUndeployed)
