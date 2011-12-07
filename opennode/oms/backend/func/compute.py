@@ -76,7 +76,13 @@ class SyncAction(Action):
     @db.assert_transact
     def sync_consoles(self):
         self.context.consoles = Consoles()
-        ssh_console = SshConsole('ssh', 'root', self.context.hostname, 22)
+        address = self.context.hostname
+        try:
+            if self.context.ipv4_address:
+                address = self.context.ipv4_address.split('/')[0]
+        except:
+            pass
+        ssh_console = SshConsole('ssh', 'root', address, 22)
         self.context.consoles.add(ssh_console)
 
     @db.assert_transact
