@@ -58,7 +58,6 @@ class SyncDaemonProcess(DaemonProcess):
 
         yield import_machines()
 
-    def disabled():
         @db.transact
         def get_machines():
             res = []
