@@ -119,6 +119,11 @@ class SyncAction(Action):
             if interface.has_key('ipv4_address'):
                 iface.ipv4_address = interface['ipv4_address']
             self.context.interfaces.add(iface)
+            
+        # XXX hack, openvz specific
+        self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
+        if self.context.effective_state != 'active':
+            self.context.startup_timestamp = None
 
     @defer.inlineCallbacks
     def sync_hw(self):
@@ -137,6 +142,10 @@ class SyncAction(Action):
 
         self.context.architecture = (unicode(info['platform']), u'linux', self.distro(info))
         self.context.kernel = unicode(info['kernelVersion'])
+        self.context.memory = float(info['systemMemory'])
+        self.context.num_cores = int(info['numCpus'])
+        self.context.os_release = unicode(info['os'])
+        self.context.swap_size = float(info['systemSwap'])
 
     def distro(self, info):
         return unicode(info['os'].split()[0])
