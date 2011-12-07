@@ -218,6 +218,7 @@ class CatObjectCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
         parser.add_argument('-o', action='append')
+        parser.add_argument('-H', action='store_true')
         return parser
 
     @db.transact
@@ -232,10 +233,12 @@ class CatObjectCmd(Cmd):
             if not obj:
                 self.write("No such object: %s\n" % path)
             else:
-                self._do_cat(obj, attrs)
+                self._do_cat(obj, attrs, path if args.H else None)
 
-    def _do_cat(self, obj, attrs):
-        data = [(key, value, title)
+    def _do_cat(self, obj, attrs, filename=None):
+        name = '%s: ' % filename if filename else ''
+
+        data = [(key, value, name + title)
                 for (key, value), title
                 in zip(model_to_dict(obj).items(), model_to_dict(obj, use_titles=True).keys())
                 if key in attrs or not attrs]
