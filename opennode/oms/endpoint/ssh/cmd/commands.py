@@ -217,23 +217,32 @@ class CatObjectCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
+        parser.add_argument('-o', action='append')
         return parser
 
     @db.transact
     def execute(self, args):
+        attrs = []
+        for i in args.o or []:
+            for attr in i.split(','):
+                attrs.append(attr.strip())
+
         for path in args.paths:
             obj = self.traverse(path)
             if not obj:
                 self.write("No such object: %s\n" % path)
             else:
-                self._do_cat(obj)
+                self._do_cat(obj, attrs)
 
-    def _do_cat(self, obj):
-        data = model_to_dict(obj, use_titles=True)
+    def _do_cat(self, obj, attrs):
+        data = [(key, value, title)
+                for (key, value), title
+                in zip(model_to_dict(obj).items(), model_to_dict(obj, use_titles=True).keys())
+                if key in attrs or not attrs]
 
         if data:
-            max_key_len = max(len(key) for key in data)
-            for key, value in data.items():
+            max_title_len = max(len(title) for key, _, title in data)
+            for key, value, title in data:
                 if isinstance(value, dict):
                     pretty_value = ', '.join(['%s:%s' % i for i in value.items()])
                 elif hasattr(value, '__iter__'):
@@ -243,10 +252,10 @@ class CatObjectCmd(Cmd):
                     pretty_value = ', '.join(strings)
                 else:
                     pretty_value = value
-                self.write("%s\t%s\n" % ((key.encode('utf8') + ':').ljust(max_key_len),
+                self.write("%s\t%s\n" % ((title.encode('utf8') + ':').ljust(max_title_len),
                                          str(pretty_value).encode('utf8')))
 
-        if IIncomplete.providedBy(obj):
+        if not attrs and IIncomplete.providedBy(obj):
             self.write("-----------------\n")
             self.write("This %s is incomplete.\n" % (type(obj).__name__))
 
