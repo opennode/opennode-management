@@ -309,6 +309,9 @@ def delete_virtual_compute(model, event):
 def create_virtual_compute(model, event):
     if not IVirtualizationContainer.providedBy(model.__parent__):
         return
+    if IDeployed.providedBy(model):
+        return
+
     DeployAction(model).execute(DetachedProtocol(), object())
 
 
