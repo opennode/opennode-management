@@ -170,6 +170,8 @@ class Compute(Container):
         alsoProvides(self, IIncomplete)
         alsoProvides(self, IUndeployed)
 
+        assert self.hostname
+
     def display_name(self):
         return self.hostname.encode('utf-8')
 
