@@ -163,7 +163,7 @@ class SyncAction(Action):
 
                 @db.transact
                 def create_vms():
-                    self.context.add(VirtualizationContainer(backend_type))
+                    self.context.add(VirtualizationContainer(unicode(backend_type)))
                 yield create_vms()
 
     @defer.inlineCallbacks

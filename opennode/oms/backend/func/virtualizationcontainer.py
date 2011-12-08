@@ -111,9 +111,9 @@ class SyncVmsAction(Action):
                 new_compute = Symlink(existing_machine.__name__, existing_machine)
                 self.context._add(new_compute)
             else:
-                new_compute = Compute(remote_vm['name'], remote_vm['state'], 'linux')
+                new_compute = Compute(unicode(remote_vm['name']), unicode(remote_vm['state']))
                 new_compute.__name__ = vm_uuid
-                new_compute.template = remote_vm['template']
+                new_compute.template = unicode(remote_vm['template'])
                 alsoProvides(new_compute, IVirtualCompute)
                 alsoProvides(new_compute, IDeployed)
                 self.context.add(new_compute)
