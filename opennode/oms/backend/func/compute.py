@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
 from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends, SyncVmsAction
+
 from grokcore.component import context, subscribe, baseclass, Adapter
+
 from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
@@ -12,9 +14,11 @@ from opennode.oms.model.model.virtualizationcontainer import IVirtualizationCont
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
 from opennode.oms.model.model.symlink import Symlink
-from opennode.oms.util import blocking_yield
+from opennode.oms.util import blocking_yield, get_u
 from opennode.oms.zodb import db
+
 from twisted.internet import defer
+
 from zope.interface import alsoProvides, noLongerProvides, implements
 
 
@@ -189,9 +193,25 @@ class SyncAction(Action):
             for i in templates:
                 name = i['template_name']
                 if not template_container['by-name'][name]:
-                    template = Template(unicode(name), u'openvz')
-                    # XXX: add other fields
-                    template_container.add(template)
+                    template_container.add(Template(unicode(name), get_u(i, 'domain_type')))
+                
+                template = template_container['by-name'][name].target
+                template.cores = (get_u(i, 'vcpu_min'), 
+                                  get_u(i, 'vcpu_normal'), 
+                                  get_u(i, 'vcpu'))
+                template.memory = (get_u(i, 'memory_min'), 
+                                   get_u(i, 'memory_normal'), 
+                                   get_u(i, 'memory'))
+                template.swap = (get_u(i, 'swap_min'), 
+                                 get_u(i, 'swap_normal'), 
+                                 get_u(i, 'swap'))
+                template.disk = (get_u(i, 'disk_min'), 
+                                 get_u(i, 'disk'))
+                template.nameserver = get_u(i, 'nameserver')
+                template.password = get_u(i, 'passwd')
+                template.cpu_limit = (get_u(i, 'vcpulimit_min'), 
+                                      get_u(i, 'vcpulimit'))
+                template.ip = get_u(i, 'ip_address')
 
         yield update_templates()
 

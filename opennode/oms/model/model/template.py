@@ -13,23 +13,38 @@ from .search import ModelTags
 class ITemplate(Interface):
     name = schema.TextLine(title=u"Template name", min_length=2)
     base_type = schema.Choice(title=u"Template type", values=(u'xen', u'kvm', u'openvz'))
-    min_cores = schema.Int(title=u"Min cores", description=u"Minimum number of cores", required=False)
-    max_cores = schema.Int(title=u"Max cores", description=u"Maximum number of cores", required=False)
-    min_memory = schema.Int(title=u"Min memory", description=u"Minimum amount of memory", required=False)
-    max_memory = schema.Int(title=u"Max memory", description=u"Maximum amount of memory", required=False)
-
-
+    
+    cores = schema.Tuple(
+        title=u"Number of virtual cores", description=u"Minimal, suggested and maximal number of cores",
+        value_type=schema.Int(),
+        required=False)
+    memory = schema.Tuple(
+        title=u"Memory size", description=u"Minimal, suggested and maximal memory size (in GB)",
+        value_type=schema.Float(),
+        required=False)
+    swap = schema.Tuple(
+        title=u"Memory size", description=u"Minimal, suggested and maximal memory size (in GB)",
+        value_type=schema.Float(),
+        required=False)
+    disk = schema.Tuple(
+        title=u"Disk size", description=u"Minimal, suggested and maximal disk size",
+        value_type=schema.Float(),
+        required=False)
+    cpu_limit = schema.Tuple(
+        title=u"CPU usage limits", description=u"Minimal, suggested and maximal cpu_limit",
+        value_type=schema.Int(),
+        required=False)
+    
+    password = schema.TextLine(title=u"Default password", required=False)
+    ip = schema.TextLine(title=u"Default password", required=False)
+    nameserver = schema.TextLine(title=u"Default password", required=False)
+    
 class Template(Model):
     implements(ITemplate, IDisplayName)
 
-    def __init__(self, name, base_type, min_cores=0, max_cores=float('inf'), min_memory=0, max_memory=float('inf')):
+    def __init__(self, name, base_type):
         self.name = name
         self.base_type = base_type
-        self.min_cores = min_cores
-        self.max_cores = max_cores
-        self.min_memory = min_memory
-        self.max_memory = max_memory
-        self.computes = []
 
     def display_name(self):
         return self.name
