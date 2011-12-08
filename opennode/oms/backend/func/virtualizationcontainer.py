@@ -100,7 +100,10 @@ class SyncVmsAction(Action):
         remote_uuids = set(i['uuid'] for i in remote_vms)
         local_uuids = set(i.__name__ for i in local_vms)
 
-        machines = db.get_root()['oms_root'].machines
+        if not self.context._p_jar:
+            return
+
+        machines = self.context._p_jar.root()['oms_root'].machines
 
         for vm_uuid in remote_uuids.difference(local_uuids):
             remote_vm = [i for i in remote_vms if i['uuid'] == vm_uuid][0]
