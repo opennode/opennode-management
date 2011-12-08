@@ -27,6 +27,12 @@ class ICompute(Interface):
         title=u"IPv4 address", min_length=7, required=False)
     ipv6_address = schema.TextLine(
         title=u"IPv6 address", min_length=6, required=False)
+    nameservers = schema.List(
+        title=u"Nameservers", description=u"IPs of DNS servers",
+        value_type=schema.TextLine(), required=False)
+    dns_domains = schema.List(
+        title=u"DNS Domains", description=u"Domain names used for DNS host name lookup",
+        value_type=schema.TextLine(), required=False)
 
     # Hardware/platform info
     architecture = schema.Tuple(
@@ -117,6 +123,9 @@ class Compute(Container):
 
     _ipv4_address = u'0.0.0.0/32'
     ipv6_address = u'::/128'
+    nameservers = []
+    dns_domains = []
+
     type = 'unknown'  # XXX: how should this be determined?
                       # and how do we differentiate for ONC physical and virtual computes?
     architecture = (u'x86_64', u'linux', u'centos')
