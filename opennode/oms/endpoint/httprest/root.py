@@ -96,7 +96,11 @@ class HttpRestServer(resource.Resource):
         else:
             # allow views to take full control of output streaming
             if ret != NOT_DONE_YET:
-                request.write(json.dumps(ret, indent=2) + '\n')
+                def render(obj):
+                    print "RENDERING ERROR, cannot json serialize", obj
+                    raise TypeError
+
+                request.write(json.dumps(ret, indent=2, default=render) + '\n')
         finally:
             if ret != NOT_DONE_YET:
                 request.finish()
