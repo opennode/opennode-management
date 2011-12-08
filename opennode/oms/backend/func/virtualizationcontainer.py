@@ -91,7 +91,7 @@ class SyncVmsAction(Action):
         submitter = IVirtualizationContainerSubmitter(self.context)
 
         remote_vms = yield submitter.submit(IListVMS)
-        self._sync_vms_2(remote_vms)
+        yield self._sync_vms_2(remote_vms)
 
     @db.transact
     def _sync_vms_2(self, remote_vms):
