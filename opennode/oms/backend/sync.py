@@ -71,10 +71,9 @@ class SyncDaemonProcess(DaemonProcess):
         from opennode.oms.backend.func.compute import SyncAction
         for i in (yield get_machines()):
             if ICompute.providedBy(i):
-                print "[sync] syncing", i
                 action = SyncAction(i)
                 action.execute(DetachedProtocol(), object())
 
-        print "[sync] syncing"
+        print "[sync] synced"
 
 provideSubscriptionAdapter(subscription_factory(SyncDaemonProcess), adapts=(Proc,))
