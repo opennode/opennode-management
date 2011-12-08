@@ -59,25 +59,22 @@ class SyncDaemonProcess(DaemonProcess):
         yield import_machines()
 
         @db.transact
-        def do_sync():
-            def get_machines():
-                res = []
+        def get_machines():
+            res = []
 
-                oms_root = db.get_root()['oms_root']
-                for i in [follow_symlinks(i) for i in oms_root.machines.listcontent()]:
-                    res.append(i)
+            oms_root = db.get_root()['oms_root']
+            for i in [follow_symlinks(i) for i in oms_root.machines.listcontent()]:
+                res.append(i)
 
-                return res
+            return res
 
-            from opennode.oms.backend.func.compute import SyncAction
-            for i in (yield get_machines()):
-                if ICompute.providedBy(i):
-                    print "[sync] syncing", i
-                    action = SyncAction(i)
-                    yield action._execute(DetachedProtocol(), object())
+        from opennode.oms.backend.func.compute import SyncAction
+        for i in (yield get_machines()):
+            if ICompute.providedBy(i):
+                print "[sync] syncing", i
+                action = SyncAction(i)
+                action.execute(DetachedProtocol(), object())
 
-        yield do_sync()
-
-        print "[sync] synced"
+        print "[sync] syncing"
 
 provideSubscriptionAdapter(subscription_factory(SyncDaemonProcess), adapts=(Proc,))
