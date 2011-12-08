@@ -165,3 +165,8 @@ def trace_methods(cls):
 
     for name in cls.__dict__:
         trace_method(name)
+
+
+def get_u(obj, key):
+    val = obj.get(key)
+    return None if val is None else unicode(val)
