@@ -187,8 +187,11 @@ class SyncAction(Action):
         def update_templates():
             template_container = self.context.templates
             for i in templates:
-                if not template_container['by-name'][i]:
-                    template_container.add(Template(i, 'openvz'))
+                name = i['template_name']
+                if not template_container['by-name'][name]:
+                    template = Template(unicode(name), u'openvz')
+                    # XXX: add other fields
+                    template_container.add(template)
 
         yield update_templates()
 
