@@ -136,7 +136,7 @@ class VirtualizationContainerView(ContainerView):
         nameservers = []
         for k in ['dns1', 'dns2']:
             if k in data:
-                nameservers.add(data[k])
+                nameservers.append(data[k])
         data['nameservers'] = nameservers
 
         for k in ['dns1', 'dns2', 'root_password', 'root_password_repeat', 'network-type', 'start_on_boot']:
