@@ -119,7 +119,7 @@ class SyncAction(Action):
             if interface.has_key('ipv4_address'):
                 iface.ipv4_address = interface['ipv4_address']
             self.context.interfaces.add(iface)
-            
+
         # XXX hack, openvz specific
         self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
         if self.context.effective_state != 'active':
