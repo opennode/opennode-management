@@ -1,4 +1,5 @@
 import functools
+import inspect
 import threading
 import zope.interface
 from zope.component import getSiteManager, implementedBy
@@ -146,3 +147,21 @@ def threaded(fun):
         thread = threading.Thread(target=fun, args=args, kwargs=kwargs)
         thread.start()
     return wrapper
+
+
+def trace(fun):
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        print "[trace]", fun, args, kwargs
+        return fun(*args, **kwargs)
+    return wrapper
+
+
+def trace_methods(cls):
+    def trace_method(name):
+        fun = getattr(cls, name)
+        if inspect.ismethod(fun):
+            setattr(cls, name, trace(fun))
+
+    for name in cls.__dict__:
+        trace_method(name)
