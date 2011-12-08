@@ -7,6 +7,7 @@ from zope.component import queryAdapter
 from zope.interface import implements
 
 from .base import ReadonlyContainer, Model, IModel, IContainerExtender
+from opennode.oms.config import get_config
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from collections import defaultdict
 
@@ -52,7 +53,7 @@ class TransientStream(Adapter):
 
     def events(self, after, limit=None):
         # XXX: if nobody fills the data (func issues) then we return fake data
-        if not self.data:
+        if not self.data and get_config().getboolean('metrics', 'fake_metrics', False):
             return self._fake_events(after, limit)
 
         res = []
