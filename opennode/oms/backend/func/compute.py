@@ -70,7 +70,10 @@ class SyncAction(Action):
     @db.assert_transact
     def create_default_console(self, default):
         if not default or not self.context.consoles[default]:
-            default = 'ssh'
+            if IVirtualizationContainer.providedBy(self.context.__parent__) and self.context.__parent__.backend == 'openvz' and self.context.consoles['tty0']:
+                default = 'tty0'
+            else:
+                default = 'ssh'
         self.context.consoles.add(Symlink('default', self.context.consoles[default]))
 
     @db.assert_transact
