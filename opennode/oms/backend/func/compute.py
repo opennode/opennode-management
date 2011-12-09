@@ -129,6 +129,7 @@ class SyncAction(Action):
 
         # XXX hack, openvz specific
         self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
+        self.context.memory = vm['memory']
         if self.context.effective_state != 'active':
             self.context.startup_timestamp = None
 
