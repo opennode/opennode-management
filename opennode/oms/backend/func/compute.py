@@ -197,22 +197,22 @@ class SyncAction(Action):
                 name = i['template_name']
                 if not template_container['by-name'][name]:
                     template_container.add(Template(unicode(name), get_u(i, 'domain_type')))
-                
+
                 template = template_container['by-name'][name].target
-                template.cores = (get_u(i, 'vcpu_min'), 
-                                  get_u(i, 'vcpu_normal'), 
+                template.cores = (get_u(i, 'vcpu_min'),
+                                  get_u(i, 'vcpu_normal'),
                                   get_u(i, 'vcpu'))
-                template.memory = (get_u(i, 'memory_min'), 
-                                   get_u(i, 'memory_normal'), 
+                template.memory = (get_u(i, 'memory_min'),
+                                   get_u(i, 'memory_normal'),
                                    get_u(i, 'memory'))
-                template.swap = (get_u(i, 'swap_min'), 
-                                 get_u(i, 'swap_normal'), 
+                template.swap = (get_u(i, 'swap_min'),
+                                 get_u(i, 'swap_normal'),
                                  get_u(i, 'swap'))
-                template.disk = (get_u(i, 'disk_min'), 
+                template.disk = (get_u(i, 'disk_min'),
                                  get_u(i, 'disk'))
                 template.nameserver = get_u(i, 'nameserver')
                 template.password = get_u(i, 'passwd')
-                template.cpu_limit = (get_u(i, 'vcpulimit_min'), 
+                template.cpu_limit = (get_u(i, 'vcpulimit_min'),
                                       get_u(i, 'vcpulimit'))
                 template.ip = get_u(i, 'ip_address')
 

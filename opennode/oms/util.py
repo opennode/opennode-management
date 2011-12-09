@@ -1,6 +1,7 @@
 import functools
 import inspect
 import threading
+
 import zope.interface
 from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
@@ -169,4 +170,4 @@ def trace_methods(cls):
 
 def get_u(obj, key):
     val = obj.get(key)
-    return None if val is None else unicode(val)
+    return unicode(val) if val is not None else None
