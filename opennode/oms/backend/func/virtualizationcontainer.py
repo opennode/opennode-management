@@ -57,6 +57,11 @@ class ListVirtualizationContainerAction(Action):
             vm['name'] = vm['name'].ljust(max_key_len)
             cmd.write("%(name)s:  state=%(state)s, run_state=%(run_state)s, uuid=%(uuid)s, memory=%(memory)s, template=%(template)s\n" % vm)
 
+            if vm['diskspace']:
+                cmd.write(" %s    storage:\n" % (' ' * max_key_len))
+                for storage in vm['diskspace']:
+                    cmd.write(" %s      %s = %s\n" % (' ' * max_key_len, storage, vm['diskspace'][storage]))
+
             if vm['consoles']:
                 cmd.write(" %s    consoles:\n" % (' ' * max_key_len))
             for console in vm['consoles']:
