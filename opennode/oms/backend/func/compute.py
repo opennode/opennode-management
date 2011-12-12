@@ -13,7 +13,7 @@ from opennode.oms.model.model.template import Template
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer, VirtualizationContainer
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
 from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
-from opennode.oms.model.model.symlink import Symlink
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import blocking_yield, get_u
 from opennode.oms.zodb import db
 
@@ -219,6 +219,10 @@ class SyncAction(Action):
                 template.cpu_limit = (get_u(i, 'vcpulimit_min'),
                                       get_u(i, 'vcpulimit'))
                 template.ip = get_u(i, 'ip_address')
+
+            # delete templates no more offered upstream
+            for i in set(template_container['by-name'].listnames()).difference(i['template_name'] for i in templates):
+                template_container.remove(follow_symlinks(template_container['by-name'][i]))
 
         yield update_templates()
 
