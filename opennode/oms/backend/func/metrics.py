@@ -57,7 +57,6 @@ class VirtualComputeMetricGatherer(Adapter):
     def gather_phy(self):
         try:
             data = yield IGetHostMetrics(self.context).run()
-            print "[metrics] got phy metrics:", data
 
             timestamp = int(time.time() * 1000)
 
