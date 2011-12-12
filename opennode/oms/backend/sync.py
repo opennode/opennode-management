@@ -1,3 +1,4 @@
+from certmaster import certmaster
 from twisted.internet import defer
 from uuid import uuid5, NAMESPACE_DNS
 from zope.component import provideSubscriptionAdapter
@@ -10,14 +11,6 @@ from opennode.oms.zodb import db
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.model.compute import Compute
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
-from opennode.oms.backend.operation import IGetSignedCertificateNames, IFuncMinion, IFuncInstalled
-
-
-class CertmasterMinion(object):
-    implements(IFuncInstalled, IFuncMinion)
-
-    def hostname(self):
-        return 'localhost'
 
 
 class SyncDaemonProcess(DaemonProcess):
@@ -53,7 +46,8 @@ class SyncDaemonProcess(DaemonProcess):
 
         @defer.inlineCallbacks
         def import_machines():
-            for host in (yield IGetSignedCertificateNames(CertmasterMinion()).run()):
+            cm = certmaster.CertMaster()
+            for host in cm.get_signed_certs():
                 yield ensure_machine(host)
 
         yield import_machines()
