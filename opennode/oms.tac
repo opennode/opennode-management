@@ -4,8 +4,8 @@ from zope.interface import implements
 from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
-from twisted.cred import checkers, portal
-from twisted.cred.checkers import AllowAnonymousAccess
+from twisted.cred import portal
+from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse, AllowAnonymousAccess
 from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
@@ -29,7 +29,8 @@ class OMSRealm(object):
             return resource.IResource, rest_server, lambda: None
         raise NotImplementedError()
 
-checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")
+
+checker = InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")
 pubkey_checker = InMemoryPublicKeyCheckerDontUse()
 checkers = [checker, pubkey_checker]
 
