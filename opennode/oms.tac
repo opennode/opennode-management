@@ -39,8 +39,8 @@ if get_config().getboolean('auth', 'enable_anonymous'):
 
 
 def create_http_server():
-    wrapper = guard.HTTPAuthSessionWrapper( Portal(OMSRealm(), checkers), 
-                                    [guard.BasicCredentialFactory('localhost')])
+    wrapper = guard.HTTPAuthSessionWrapper(Portal(OMSRealm(), checkers),
+                                           [guard.BasicCredentialFactory('localhost')])
 
     site = server.Site(resource=wrapper)
     tcp_server = internet.TCPServer(8080, site)
