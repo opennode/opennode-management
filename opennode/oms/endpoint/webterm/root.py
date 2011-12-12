@@ -7,7 +7,7 @@ from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import reactor
 from twisted.web.server import NOT_DONE_YET
 
-from opennode.oms.endpoint.httprest.base import IHttpRestView
+from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 from opennode.oms.model.model.bin import Command
@@ -224,11 +224,8 @@ class TerminalServerMixin(object):
         return self.terminal_protocol
 
 
-class ConsoleView(Adapter, TerminalServerMixin):
-    implements(IHttpRestView)
+class ConsoleView(HttpRestView, TerminalServerMixin):
     baseclass()
-
-    mixin = TerminalServerMixin()
 
 
 class SshConsoleView(ConsoleView):
