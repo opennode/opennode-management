@@ -132,6 +132,10 @@ class SyncAction(Action):
         self.context.memory = vm['memory']
         self.context.diskspace = vm['diskspace']
         self.context.diskspace['total'] = sum([0] + vm['diskspace'].values())
+        # round diskspace values
+        for i in self.context.diskspace:
+            self.context.diskspace[i] = round(self.context.diskspace[i], 2)
+
         if self.context.effective_state != 'active':
             self.context.startup_timestamp = None
 
