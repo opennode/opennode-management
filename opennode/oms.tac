@@ -1,10 +1,13 @@
 #!/usr/bin/env twistd -ny
+from zope.interface import implements
+
 from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
 from twisted.cred import checkers, portal
+from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
-from twisted.web import server
+from twisted.web import server, guard, resource
 
 from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
@@ -14,12 +17,25 @@ from opennode.oms.endpoint.webterm.compat import WebTerminalServer
 from opennode.oms.logging import setup_logging
 
 
-def create_http_server():
-    # TODO: put a root resources and mount rest and terminal (and others) below.
-    rest_server = HttpRestServer(avatar=None)
-    rest_server.putChild('terminal', WebTerminalServer(avatar=None))
-    site = server.Site(resource=rest_server)
+class OMSRealm(object):
+    implements(IRealm)
 
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        if resource.IResource in interfaces:
+            rest_server = HttpRestServer(avatar=avatarId)
+            rest_server.putChild('terminal', WebTerminalServer(avatar=None))
+            return resource.IResource, rest_server, lambda: None
+        raise NotImplementedError()
+
+checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")
+pubkey_checker = InMemoryPublicKeyCheckerDontUse()
+checkers = [checker, pubkey_checker]
+
+def create_http_server():
+    wrapper = guard.HTTPAuthSessionWrapper( Portal(OMSRealm(), checkers), 
+                                    [guard.BasicCredentialFactory('localhost')])
+
+    site = server.Site(resource=wrapper)
     tcp_server = internet.TCPServer(8080, site)
 
     return tcp_server
@@ -29,14 +45,12 @@ def create_ssh_server():
     def chainProtocolFactory():
         return insults.ServerProtocol(OmsShellProtocol)
 
-    checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(erik="1")
-    pubkey_checker = InMemoryPublicKeyCheckerDontUse()
     rlm = TerminalRealm()
     rlm.chainedProtocolFactory = chainProtocolFactory
 
     the_portal = portal.Portal(rlm)
-    the_portal.registerChecker(checker)
-    the_portal.registerChecker(pubkey_checker)
+    for ch in checkers:
+        the_portal.registerChecker(ch)
 
     conch_factory = ConchFactory(the_portal)
     ssh_server = internet.TCPServer(6022, conch_factory)
