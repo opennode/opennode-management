@@ -62,3 +62,16 @@ class AuthView(HttpRestView):
     def generate_token(self, credentials):
         # XXX: todo real cryptographic token
         return 'fake_token_%s' % credentials.username
+
+
+class LogoutView(HttpRestView):
+    context(OmsRoot)
+    name('logout')
+
+    checkers = [InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")]
+
+    realm = 'OMS'
+
+    def render_GET(self, request):
+        request.addCookie('oms_auth_token', '', expires='Wed, 01 Jan 2000 00:00:00 GMT')
+        return {'status': 'success'}
