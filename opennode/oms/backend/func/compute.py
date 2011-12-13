@@ -130,8 +130,8 @@ class SyncAction(Action):
         # XXX hack, openvz specific
         self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
         self.context.memory = vm['memory']
-        self.context.diskspace = vm['diskspace']
-        self.context.diskspace['total'] = sum([0] + vm['diskspace'].values())
+        self.context.diskspace = dict((unicode(k), v) for k, v in vm['diskspace'].items())
+        self.context.diskspace[u'total'] = sum([0] + vm['diskspace'].values())
         # round diskspace values
         for i in self.context.diskspace:
             self.context.diskspace[i] = round(self.context.diskspace[i], 2)
@@ -148,8 +148,8 @@ class SyncAction(Action):
         disk_usage = yield IGetDiskUsage(self.context).run()
 
         def disk_info(aspect):
-            res = dict((k,round(float(v[aspect])/1024, 2)) for k,v in disk_usage.items() if v['device'].startswith('/dev/'))
-            res['total'] = sum([0] + res.values())
+            res = dict((unicode(k), round(float(v[aspect])/1024, 2)) for k, v in disk_usage.items() if v['device'].startswith('/dev/'))
+            res[u'total'] = sum([0] + res.values())
             return res
 
         self._sync_hw(info, disk_info('total'), disk_info('used'))
