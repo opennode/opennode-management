@@ -2,7 +2,7 @@ import json
 import time
 import uuid
 
-from grokcore.component import Adapter, baseclass, context, implements, name
+from grokcore.component import baseclass, context, name
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import reactor
 from twisted.web.server import NOT_DONE_YET
