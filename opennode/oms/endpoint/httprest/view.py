@@ -135,7 +135,7 @@ class VirtualizationContainerView(ContainerView):
         # XXX: ONC should send us a 'nameserver' list instead of this hackish dns1,dns2
         nameservers = []
         for k in ['dns1', 'dns2']:
-            if k in data:
+            if data.get(k, None):
                 nameservers.append(data[k])
         data['nameservers'] = nameservers
 
