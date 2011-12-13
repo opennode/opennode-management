@@ -114,17 +114,18 @@ class HttpRestServer(resource.Resource):
         """
         oms_root = db.get_root()['oms_root']
         objs, unresolved_path = traverse_path(oms_root, request.path[1:])
-        if not objs:
+
+        if not objs and unresolved_path:
+            objs = [oms_root]
+
+        obj = objs[-1]
+
+        view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+        if not view:
             raise NotFound
-        else:
-            obj = objs[-1]
 
-            view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
-            if not view:
-                raise NotFound
+        for method in ('render_' + request.method, 'render'):
+            if hasattr(view, method):
+                return getattr(view, method)(request)
 
-            for method in ('render_' + request.method, 'render'):
-                if hasattr(view, method):
-                    return getattr(view, method)(request)
-
-            raise NotImplemented("method %s not implemented\n" % request.method)
+        raise NotImplemented("method %s not implemented\n" % request.method)
