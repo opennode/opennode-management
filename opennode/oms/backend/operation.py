@@ -39,6 +39,10 @@ class IGetHostMetrics(IJob):
     """Returns host (PHY) metrics."""
 
 
+class IGetDiskUsage(IJob):
+    """Returns func disk usage."""
+
+
 class IGetLocalTemplates(IJob):
     """Get local templates"""
 

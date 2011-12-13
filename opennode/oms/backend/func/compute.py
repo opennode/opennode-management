@@ -4,7 +4,7 @@ from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends
 
 from grokcore.component import context, subscribe, baseclass, Adapter
 
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers, IGetDiskUsage
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
@@ -145,10 +145,17 @@ class SyncAction(Action):
             return
 
         info = yield IGetComputeInfo(self.context).run()
-        self._sync_hw(info)
+        disk_usage = yield IGetDiskUsage(self.context).run()
+
+        def disk_info(aspect):
+            res = dict((k,round(float(v[aspect])/1024, 2)) for k,v in disk_usage.items() if v['device'].startswith('/dev/'))
+            res['total'] = sum([0] + res.values())
+            return res
+
+        self._sync_hw(info, disk_info('total'), disk_info('used'))
 
     @db.transact
-    def _sync_hw(self, info):
+    def _sync_hw(self, info, disk_space, disk_usage):
         if IVirtualCompute.providedBy(self.context):
             self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
         else:
@@ -160,6 +167,8 @@ class SyncAction(Action):
         self.context.num_cores = int(info['numCpus'])
         self.context.os_release = unicode(info['os'])
         self.context.swap_size = float(info['systemSwap'])
+        self.context.diskspace = disk_space
+        self.context.diskspace_usage = disk_usage
 
     def distro(self, info):
         return unicode(info['os'].split()[0])
