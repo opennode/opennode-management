@@ -139,6 +139,9 @@ class VirtualizationContainerView(ContainerView):
                 nameservers.append(data[k])
         data['nameservers'] = nameservers
 
+        # XXX: ONC should send 'autostart'
+        data['autostart'] = data['start_on_boot'] == 'true'
+
         for k in ['dns1', 'dns2', 'root_password', 'root_password_repeat', 'network-type', 'start_on_boot']:
              if data.has_key(k):
                  del data[k]
