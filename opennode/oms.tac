@@ -15,19 +15,7 @@ from opennode.oms.config import get_config
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
-from opennode.oms.endpoint.webterm.compat import WebTerminalServer
 from opennode.oms.logging import setup_logging
-
-
-class OMSRealm(object):
-    implements(IRealm)
-
-    def requestAvatar(self, avatarId, mind, *interfaces):
-        if resource.IResource in interfaces:
-            rest_server = HttpRestServer(avatar=avatarId)
-            rest_server.putChild('terminal', WebTerminalServer(avatar=None))
-            return resource.IResource, rest_server, lambda: None
-        raise NotImplementedError()
 
 
 checker = InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")
@@ -39,10 +27,8 @@ if get_config().getboolean('auth', 'enable_anonymous'):
 
 
 def create_http_server():
-    wrapper = guard.HTTPAuthSessionWrapper(Portal(OMSRealm(), checkers),
-                                           [guard.BasicCredentialFactory('localhost')])
-
-    site = server.Site(resource=wrapper)
+    rest_server = HttpRestServer(avatar=None)
+    site = server.Site(resource=rest_server)
     tcp_server = internet.TCPServer(8080, site)
 
     return tcp_server
