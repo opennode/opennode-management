@@ -140,7 +140,10 @@ class VirtualizationContainerView(ContainerView):
         data['nameservers'] = nameservers
 
         # XXX: ONC should send 'autostart'
-        data['autostart'] = data['start_on_boot'] == 'true'
+        # XXX: since it's a IVirtualCompute specific field it cannot be entered during object creation
+        #      because `form` doesn't support yet optionl interfaces.
+        # data['autostart'] = data['start_on_boot']
+        autostart = data['start_on_boot']
 
         for k in ['dns1', 'dns2', 'root_password', 'root_password_repeat', 'network-type', 'start_on_boot']:
              if data.has_key(k):
@@ -155,6 +158,9 @@ class VirtualizationContainerView(ContainerView):
                 }
 
         compute = form.create()
+
+        compute.autostart = autostart
+
         self.context.add(compute)
 
         data['id'] = compute.__name__

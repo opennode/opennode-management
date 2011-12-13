@@ -253,6 +253,7 @@ class DeployAction(Action):
                              vm_type='openvz',
                              uuid=self.context.__name__,
                              nameservers=self.context.nameservers,
+                             autostart=self.context.autostart,
                              ip_address=self.context.ipv4_address.split('/')[0],)
         res = yield submitter.submit(IDeployVM, vm_parameters)
         cmd.write('%s\n' % (res,))
