@@ -22,7 +22,8 @@ class AuthView(HttpRestView):
 
     realm = 'OMS'
 
-    def render_GET(self, request):
+    # Should be render_GET but ONC (i.e. ExtJS) cannot attach a request body to GET requests
+    def render(self, request):
         body = request.content.getvalue()
         credentials = None
 
