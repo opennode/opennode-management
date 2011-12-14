@@ -25,7 +25,6 @@ class AuthView(HttpRestView):
     # Should be render_GET but ONC (i.e. ExtJS) cannot attach a request body to GET requests
     def render(self, request):
         body = request.content.getvalue()
-        credentials = None
 
         if body:
             try:
@@ -46,6 +45,8 @@ class AuthView(HttpRestView):
                     credentials = bc.decode(basic_auth.split(' ')[1], None)
                 except:
                     raise BadRequest, "The Authorization header was not parsable"
+            else:
+                raise BadRequest, "No credentials sent with request"
 
         @defer.inlineCallbacks
         def authenticate():
