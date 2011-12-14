@@ -39,18 +39,15 @@ class AuthView(HttpRestView):
             try:
                 credentials = bc.decode(basic_auth.split(' ')[1], None)
             except:
-                pass
+                raise BadRequest, "The Authorization header was not parsable"
 
         @defer.inlineCallbacks
         def authenticate():
             avatar = None
             for i in self.checkers:
-                try:
-                    avatar = yield i.requestAvatarId(credentials)
-                    if avatar:
-                        break
-                except:
-                    pass
+                avatar = yield i.requestAvatarId(credentials)
+                if avatar:
+                    break
 
             if avatar:
                 token = self.generate_token(credentials)
