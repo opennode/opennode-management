@@ -9,6 +9,9 @@ from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenA
 
 def _select_checker(value, interaction):
     checker = getCheckerForInstancesOf(type(value))
+    if not checker:
+        # XXX: create an exception for that
+        raise Exception('cannot build security proxy for %s' % value)
     # handle checkers for "primitive" types like str
     if type(checker) is object:
         return checker

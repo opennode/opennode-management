@@ -1,4 +1,5 @@
 import json
+import zope.security.interfaces
 
 from twisted.internet import defer
 from twisted.python.failure import Failure
@@ -8,6 +9,8 @@ from zope.component import queryAdapter
 
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.traversal import traverse_path
+from opennode.oms.security.checker import proxy_factory
+from opennode.oms.security.interaction import new_interaction
 from opennode.oms.zodb import db
 
 
@@ -24,6 +27,7 @@ class HttpStatus(Exception):
     def status_description(self):
         raise NotImplementedError
 
+    headers = {}
 
 class NotFound(HttpStatus):
     status_code = 404
@@ -42,6 +46,18 @@ class SeeCanonical(HttpStatus):
     def __init__(self, url, *args, **kwargs):
         super(SeeCanonical, self).__init__(*args, **kwargs)
         self.url = url
+
+
+class Unauthorized(HttpStatus):
+    status_code = 401
+    status_description = "Authorization Required"
+
+    headers = {'WWW-Authenticate': 'Basic realm=OMS'}
+
+
+class Forbidden(HttpStatus):
+    status_code = 403
+    status_description = "Forbidden"
 
 
 class BadRequest(HttpStatus):
@@ -90,6 +106,8 @@ class HttpRestServer(resource.Resource):
             pass
         except HttpStatus as exc:
             request.setResponseCode(exc.status_code, exc.status_description)
+            for name, value in exc.headers.items():
+                request.responseHeaders.addRawHeader(name, value)
             request.write("%s %s\n" % (exc.status_code, exc.status_description))
             if exc.message:
                 request.write("%s\n" % exc.message)
@@ -129,8 +147,51 @@ class HttpRestServer(resource.Resource):
         if not view:
             raise NotFound
 
+        interaction = self.get_interaction(request)
+        # create a security proxy if we have a secured interaction
+        if interaction:
+            try:
+                view = proxy_factory(view, interaction)
+            except:
+                # XXX: TODO: define a real exception for this proxy creation error
+                # right now we want to ignore security when there are no declared rules
+                # on how to secure a view
+                pass
+
+        def get_renderer(view, method):
+            try:
+                return getattr(view, method, None)
+            except zope.security.interfaces.Unauthorized:
+                if self.get_security_token(request):
+                    raise Forbidden()
+                raise Unauthorized()
+
         for method in ('render_' + request.method, 'render'):
-            if hasattr(view, method):
-                return getattr(view, method)(request)
+            # hasattr will return false on unauthorized fields
+            renderer = get_renderer(view, method)
+            if renderer:
+                return renderer(request)
+
 
         raise NotImplemented("method %s not implemented\n" % request.method)
+
+    def get_interaction(self, request):
+        # TODO: we can quickly disable rest auth
+        # if get_config().getboolean('auth', 'enable_anonymous'):
+        #     return None
+
+        token = self.get_security_token(request)
+
+        principal = self.get_principal(token)
+
+        return new_interaction(principal)
+
+    def get_principal(self, token):
+        if not token:
+            return 'oms.anonymous'
+        else:
+            # XXX: use real token format
+            return token.split('_')[-1]
+
+    def get_security_token(self, request):
+        return request.getCookie('oms_auth_token')

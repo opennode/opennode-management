@@ -1,4 +1,5 @@
 from grokcore.component import Adapter, implements, baseclass
+from grokcore.security import require
 from zope.interface import Interface
 
 
@@ -13,6 +14,7 @@ class IHttpRestView(Interface):
 class HttpRestView(Adapter):
     implements(IHttpRestView)
     baseclass()
+    require('rest')
 
     def render_recursive(self, request, depth):
         return self.render_GET(request)

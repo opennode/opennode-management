@@ -1,6 +1,7 @@
 import json
 
 from grokcore.component import context, name
+from grokcore.security import require
 from twisted.internet import defer
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 from twisted.cred.credentials import UsernamePassword
@@ -17,6 +18,7 @@ from twisted.web.server import NOT_DONE_YET
 class AuthView(HttpRestView):
     context(OmsRoot)
     name('auth')
+    require('oms.nothing')
 
     checkers = [InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")]
 
