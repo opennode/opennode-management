@@ -8,6 +8,7 @@ from twisted.web.guard import BasicCredentialFactory
 
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
+from opennode.oms.endpoint.httprest.root import BadRequest
 
 from twisted.web.server import NOT_DONE_YET
 
@@ -21,18 +22,24 @@ class AuthView(HttpRestView):
     realm = 'OMS'
 
     def render_GET(self, request):
-        username = request.args.get('user', [None])[0]
-        password = request.args.get('pass', [None])[0]
+        body = request.content.getvalue()
+        if body:
+            try:
+                params = json.loads(body)
+            except ValueError:
+                raise BadRequest, "The request body not JSON-parsable"
 
-        if not username:
+            username = params['username']
+            password = params['password']
+
+            credentials = UsernamePassword(username, password)
+        else:
             basic_auth = request.requestHeaders.getRawHeaders('Authorization', ['Basic =='])[0]
             bc = BasicCredentialFactory(self.realm)
             try:
                 credentials = bc.decode(basic_auth.split(' ')[1], None)
             except:
                 pass
-        else:
-            credentials = UsernamePassword(username, password)
 
         @defer.inlineCallbacks
         def authenticate():
