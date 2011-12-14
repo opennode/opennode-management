@@ -4,6 +4,7 @@ from grokcore.component import context, name
 from twisted.internet import defer
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 from twisted.cred.credentials import UsernamePassword
+from twisted.cred.error import UnauthorizedLogin
 from twisted.web.guard import BasicCredentialFactory
 
 from opennode.oms.model.model.root import OmsRoot
@@ -23,31 +24,37 @@ class AuthView(HttpRestView):
 
     def render_GET(self, request):
         body = request.content.getvalue()
+        credentials = None
+
         if body:
             try:
                 params = json.loads(body)
             except ValueError:
                 raise BadRequest, "The request body not JSON-parsable"
 
-            username = params['username']
-            password = params['password']
+            # cannot be unicode
+            username = str(params['username'])
+            password = str(params['password'])
 
             credentials = UsernamePassword(username, password)
         else:
-            basic_auth = request.requestHeaders.getRawHeaders('Authorization', ['Basic =='])[0]
-            bc = BasicCredentialFactory(self.realm)
-            try:
-                credentials = bc.decode(basic_auth.split(' ')[1], None)
-            except:
-                raise BadRequest, "The Authorization header was not parsable"
+            basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
+            if basic_auth:
+                bc = BasicCredentialFactory(self.realm)
+                try:
+                    credentials = bc.decode(basic_auth.split(' ')[1], None)
+                except:
+                    raise BadRequest, "The Authorization header was not parsable"
 
         @defer.inlineCallbacks
         def authenticate():
             avatar = None
             for i in self.checkers:
-                avatar = yield i.requestAvatarId(credentials)
-                if avatar:
+                try:
+                    avatar = yield i.requestAvatarId(credentials)
                     break
+                except UnauthorizedLogin:
+                    continue
 
             if avatar:
                 token = self.generate_token(credentials)
