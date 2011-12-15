@@ -72,7 +72,12 @@ class HttpRestServer(resource.Resource):
     @defer.inlineCallbacks
     def _render(self, request):
         request.setHeader('Content-type', 'application/json')
-        request.setHeader('Access-Control-Allow-Origin', '*')
+        origin = request.getHeader('Origin')
+        if origin:
+            request.setHeader('Access-Control-Allow-Origin', origin)
+            request.setHeader('Access-Control-Allow-Credentials', 'true')
+        else:
+            request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS, HEAD')
         request.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
 

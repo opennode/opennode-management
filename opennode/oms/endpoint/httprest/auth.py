@@ -60,7 +60,7 @@ class AuthView(HttpRestView):
 
             if avatar:
                 token = self.generate_token(credentials)
-                request.addCookie('oms_auth_token', token)
+                request.addCookie('oms_auth_token', token, path='/')
                 request.write(json.dumps({'status': 'success', 'token': token}))
             else:
                 request.setResponseCode(401)
