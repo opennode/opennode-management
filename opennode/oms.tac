@@ -5,25 +5,15 @@ from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
 from twisted.cred import portal
-from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse, AllowAnonymousAccess
 from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
 
 from opennode.oms import setup_environ
-from opennode.oms.config import get_config
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 from opennode.oms.logging import setup_logging
-
-
-checker = InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")
-pubkey_checker = InMemoryPublicKeyCheckerDontUse()
-checkers = [checker, pubkey_checker]
-
-if get_config().getboolean('auth', 'enable_anonymous'):
-    checkers.append(AllowAnonymousAccess())
+from opennode.oms.security.authentication import checkers
 
 
 def create_http_server():

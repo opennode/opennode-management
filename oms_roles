@@ -1,0 +1,3 @@
+oms.unauthenticated:oms.nothing
+admin:oms.nothing,rest,read,modify,add
+user:oms.nothing,rest

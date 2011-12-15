@@ -36,7 +36,9 @@ running `brew install python`.
 
 5. install certmaster (`yum install certmaster` or from sources at `git://git.fedorahosted.org/certmaster.git` or use `https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz`)
 
-6. Start the Twisted twistd server on port 8080 by executing
+6. Setup user accounts in the `oms_passwd` file. It contains SSHA password hashes; an easy way to create them is: `echo username:$(slappasswd -s <your_password>):role1,role2 >>oms_passwd`
+
+7. Start the Twisted twistd server on port 8080 by executing
    `./start-oms.sh` on Unix systems and `start-oms.bat` on Windows.
 
 === Testing ===

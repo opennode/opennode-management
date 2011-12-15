@@ -3,24 +3,21 @@ import json
 from grokcore.component import context, name
 from grokcore.security import require
 from twisted.internet import defer
-from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 from twisted.cred.credentials import UsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.web.guard import BasicCredentialFactory
+from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
-
-from twisted.web.server import NOT_DONE_YET
+from opennode.oms.security.authentication import checkers
 
 
 class AuthView(HttpRestView):
     context(OmsRoot)
     name('auth')
     require('oms.nothing')
-
-    checkers = [InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")]
 
     realm = 'OMS'
 
@@ -53,7 +50,7 @@ class AuthView(HttpRestView):
         def authenticate():
             avatar = None
             if credentials:
-                for i in self.checkers:
+                for i in checkers:
                     try:
                         avatar = yield i.requestAvatarId(credentials)
                         break
@@ -82,8 +79,6 @@ class AuthView(HttpRestView):
 class LogoutView(HttpRestView):
     context(OmsRoot)
     name('logout')
-
-    checkers = [InMemoryUsernamePasswordDatabaseDontUse(user="supersecret")]
 
     realm = 'OMS'
 

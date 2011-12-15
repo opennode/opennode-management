@@ -25,9 +25,9 @@ class DummyAuthenticationUtility:
     implements(IAuthentication)
 
     def getPrincipal(self, id):
-         if id == 'marko':
+         if id == 'user1':
              return User(id)
-         elif id == 'erik':
+         elif id == 'user2':
              return User(id)
          raise PrincipalLookupError(id)
 
@@ -52,30 +52,30 @@ class SecurityTestCase(unittest.TestCase):
     @run_in_reactor
     def test_test(self):
         # setup some fake permissions to the test principals
-        prinperG.grantPermissionToPrincipal('read', 'marko')
-        prinperG.grantPermissionToPrincipal('zope.Nothing', 'erik')
+        prinperG.grantPermissionToPrincipal('read', 'user1')
+        prinperG.grantPermissionToPrincipal('zope.Nothing', 'user2')
 
         # set up interactions
-        interaction_marko = self._get_interaction('marko')
-        interaction_erik = self._get_interaction('erik')
+        interaction_user1 = self._get_interaction('user1')
+        interaction_user2 = self._get_interaction('user2')
 
         # get the object being secured
         compute = self.make_compute()
         eq_(compute.architecture, 'linux')
 
         # get the proxies for the corresponding interactions
-        compute_proxy_marko = proxy_factory(compute, interaction_marko)
-        compute_proxy_erik = proxy_factory(compute, interaction_erik)
+        compute_proxy_user1 = proxy_factory(compute, interaction_user1)
+        compute_proxy_user2 = proxy_factory(compute, interaction_user2)
 
 
         # check an authorized access
-        eq_(compute_proxy_marko.architecture, 'linux')
+        eq_(compute_proxy_user1.architecture, 'linux')
 
         # check an unauthorized access
         with assert_raises(Unauthorized):
-            eq_(compute_proxy_erik.architecture, 'linux')
+            eq_(compute_proxy_user2.architecture, 'linux')
 
 
         # check a default unauthorized access
         with assert_raises(ForbiddenAttribute):
-            eq_(compute_proxy_marko.state, 'active')
+            eq_(compute_proxy_user1.state, 'active')

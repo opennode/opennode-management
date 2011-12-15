@@ -1,11 +1,21 @@
+import hashlib
+
+from base64 import encodestring as encode
+from base64 import decodestring as decode
+from grokcore.component import subscribe
 from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
 from zope.component import provideUtility
 from zope.interface import implements
-from zope.securitypolicy.principalpermission import principalPermissionManager
+from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalrole import principalRoleManager
+from zope.securitypolicy.rolepermission import rolePermissionManager
+from zope.securitypolicy.role import Role
+from twisted.cred.checkers import FilePasswordDB
+from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
+from opennode.oms import IApplicationInitializedEvent
+from opennode.oms.config import get_config
 from opennode.oms.security.principals import User
-from opennode.oms.security.roles import admin
 
 
 class AuthenticationUtility:
@@ -22,9 +32,35 @@ class AuthenticationUtility:
 
 provideUtility(AuthenticationUtility())
 
-# some fake users
-principalPermissionManager.grantPermissionToPrincipal('oms.nothing', 'oms.anonymous')
 
-for i in ['user', 'marko', 'erik', 'ilja']:
-    principalRoleManager.assignRoleToPrincipal('admin', i)
+# checkers
 
+def ssha_hash(user, password, encoded_password):
+    salt = decode(encoded_password[6:])[-4:]
+
+    h = hashlib.sha1(password)
+    h.update(salt)
+    return "{SSHA}" + encode(h.digest() + salt).rstrip()
+
+password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
+pubkey_checker = InMemoryPublicKeyCheckerDontUse()
+checkers = [password_checker, pubkey_checker]
+
+
+@subscribe(IApplicationInitializedEvent)
+def setup_roles(event):
+    for i in file(get_config().get('auth', 'roles_file')):
+        role, permissions = i.split(':', 3)
+        provideUtility(Role(role, role), IRole, role)
+        for perm in permissions.split(','):
+            if perm.strip():
+                rolePermissionManager.grantPermissionToRole(perm.strip(), role.strip())
+
+
+@subscribe(IApplicationInitializedEvent)
+def setup_permissions(event):
+    for i in file(get_config().get('auth', 'passwd_file')):
+        user, _, roles = i.split(':', 3)
+        for role in roles.split(','):
+            if role.strip():
+                principalRoleManager.assignRoleToPrincipal(role.strip(), user.strip())
