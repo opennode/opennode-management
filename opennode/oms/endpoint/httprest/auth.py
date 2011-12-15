@@ -50,12 +50,13 @@ class AuthView(HttpRestView):
         @defer.inlineCallbacks
         def authenticate():
             avatar = None
-            for i in self.checkers:
-                try:
-                    avatar = yield i.requestAvatarId(credentials)
-                    break
-                except UnauthorizedLogin:
-                    continue
+            if credentials:
+                for i in self.checkers:
+                    try:
+                        avatar = yield i.requestAvatarId(credentials)
+                        break
+                    except UnauthorizedLogin:
+                        continue
 
             if avatar:
                 token = self.generate_token(credentials)
