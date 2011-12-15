@@ -147,6 +147,7 @@ class ListDirContentsCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-l', action='store_true')
+        parser.add_argument('-R', action='store_true', help="recursive")
         parser.add_argument('-d', help="dummy param which takes a value")
         parser.add_argument('paths', nargs='*')
         return parser
@@ -154,6 +155,7 @@ class ListDirContentsCmd(Cmd):
     @db.transact
     def execute(self, args):
         self.opts_long = args.l
+        self.visited = []
 
         if args.paths:
             for path in args.paths:
@@ -161,11 +163,14 @@ class ListDirContentsCmd(Cmd):
                 if not obj:
                     self.write('No such object: %s\n' % path)
                 else:
-                    self._do_ls(obj, path)
+                    self._do_ls(obj, path, args.R)
         else:
-            self._do_ls(self.current_obj)
+            self._do_ls(self.current_obj, args.R)
 
-    def _do_ls(self, obj, path=None):
+    def _do_ls(self, obj, path=None, recursive=False):
+        assert obj not in self.visited
+        self.visited.append(obj)
+
         def pretty_name(item):
             if IContainer.providedBy(item):
                 return self.protocol.colorize(BLUE, '%s/' % (item.__name__,))
@@ -188,6 +193,8 @@ class ListDirContentsCmd(Cmd):
             if IContainer.providedBy(obj):
                 for subobj in sorted_obj_list():
                     self.write(('%s\t%s\n' % (pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
+                if recursive:
+                    self.ls_recursive(path, obj, sorted_obj_list())
             else:
                 self.write(('%s\t%s\n' % (pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
         else:
@@ -196,8 +203,19 @@ class ListDirContentsCmd(Cmd):
                 if items:
                     output = columnize(items, displaywidth=self.protocol.width)
                     self.write(output)
+                if recursive:
+                    self.ls_recursive(path, obj, sorted_obj_list())
             else:
                 self.write('%s\n' % path)
+
+    def ls_recursive(self, path, obj, children):
+        for i in children:
+            child_obj = obj[i.__name__]
+            if IContainer.providedBy(child_obj) and not isinstance(child_obj, Symlink):
+                self.write("\n%s:\n" % os.path.join(path, i.__name__.encode('utf8')))
+
+                self._do_ls(child_obj, os.path.join(path, i.__name__), recursive=True)
+
 
 provideSubscriptionAdapter(CommonArgs, adapts=(ListDirContentsCmd, ))
 
