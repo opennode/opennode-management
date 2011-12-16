@@ -156,7 +156,7 @@ class HttpRestServer(resource.Resource):
             blocking_yield(authentication_utility.authenticate(request, credentials, basic_auth=True))
             return authentication_utility.generate_token(credentials)
         else:
-            return request.getCookie('oms_auth_token')
+            return authentication_utility.get_token(request)
 
     @db.transact
     def handle_request(self, request):

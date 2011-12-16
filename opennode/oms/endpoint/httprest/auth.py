@@ -45,6 +45,23 @@ class HttpRestAuthenticationUtility(GlobalUtility):
 
     token_key = get_config().get('auth', 'token_key')
 
+    def get_token(self, request):
+        cookie = request.getCookie('oms_auth_token')
+        if cookie:
+            return cookie
+
+        header = request.getHeader('X-OMS-Security-Token')
+        if header:
+            return header
+
+        param = request.args.get('security_token', [None])[0]
+        if param:
+            return param
+
+    def emit_token(self, request, token):
+        request.addCookie('oms_auth_token', token, path='/')
+        request.responseHeaders.addRawHeader('X-OMS-Security-Token', token)
+
     def get_basic_auth_credentials(self, request):
         basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
         if basic_auth:
@@ -67,7 +84,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
 
         if avatar:
             token = self.generate_token(credentials)
-            request.addCookie('oms_auth_token', token, path='/')
+            self.emit_token(request, token)
             defer.returnValue({'status': 'success', 'token': token})
         else:
             if basic_auth:
@@ -100,7 +117,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
 
     def renew_token(self, request, token):
         new_token = self._generate_token(self.get_principal(token))
-        request.addCookie('oms_auth_token', new_token, path='/')
+        self.emit_token(request, new_token)
 
 
 class AuthView(HttpRestView):
