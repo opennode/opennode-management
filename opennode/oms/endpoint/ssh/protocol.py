@@ -71,7 +71,13 @@ class OmsShellProtocol(InteractiveTerminal):
 
     @defer.inlineCallbacks
     def lineReceived(self, line):
+        try:
+            yield self.spawn_command(line)
+        finally:
+            self._command_completed()
 
+    @defer.inlineCallbacks
+    def spawn_command(self, line):
         line = line.strip()
 
         try:
@@ -85,16 +91,15 @@ class OmsShellProtocol(InteractiveTerminal):
         deferred = defer.maybeDeferred(command, *cmd_args)
         Proc.register(deferred, line, self.tid)
 
-        @deferred
-        def on_error(f):
-            if not f.check(cmdline.ArgumentParsingError):
-                self.terminal.write("Command returned an unhandled error: %s\n" % f.getErrorMessage())
-                self.last_error = (line, f)
-                log.msg("Got exception executing '%s': %s" % self.last_error)
-                self.terminal.write("type last_error for more details\n")
-
-        #deferred.addBoth(lambda *_: self.print_prompt())
-        deferred.addBoth(self._command_completed)
+        try:
+            yield deferred
+        except cmdline.ArgumentParsingError:
+            pass
+        except Exception as e:
+            self.terminal.write("Command returned an unhandled error: %s\n" % e)
+            self.last_error = (line, e)
+            log.msg("Got exception executing '%s': %s" % self.last_error)
+            self.terminal.write("type last_error for more details\n")
 
     def _command_completed(self, *args):
         self.print_prompt()

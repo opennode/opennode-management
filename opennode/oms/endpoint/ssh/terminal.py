@@ -32,6 +32,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
     """
 
+    batch = False
+
     def connectionMade(self):
         super(InteractiveTerminal, self).connectionMade()
 
@@ -66,7 +68,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
         self.width = width
         self.height = height
-        self.drawInputLine()
+        if not self.batch:
+            self.drawInputLine()
 
     def set_terminal(self, terminal):
         self.terminal = terminal

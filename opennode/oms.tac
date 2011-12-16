@@ -12,6 +12,7 @@ from twisted.web import server, guard, resource
 from opennode.oms import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+from opennode.oms.endpoint.ssh.session import OmsTerminalSession
 from opennode.oms.logging import setup_logging
 from opennode.oms.security.authentication import checkers
 
@@ -30,6 +31,7 @@ def create_ssh_server():
 
     rlm = TerminalRealm()
     rlm.chainedProtocolFactory = chainProtocolFactory
+    rlm.sessionFactory = OmsTerminalSession
 
     the_portal = portal.Portal(rlm)
     for ch in checkers:
