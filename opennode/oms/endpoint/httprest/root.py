@@ -4,9 +4,8 @@ import zope.security.interfaces
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.web import resource
-from twisted.web.guard import BasicCredentialFactory
 from twisted.web.server import NOT_DONE_YET
-from zope.component import queryAdapter
+from zope.component import queryAdapter, getUtility
 
 from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.traversal import traverse_path
@@ -77,8 +76,6 @@ class HttpRestServer(resource.Resource):
 
     """
 
-    realm = 'OMS'
-
     def getChild(self, name, request):
         """We are the handler for anything below this base url, except what explicitly added in oms.tac."""
         return self
@@ -138,15 +135,6 @@ class HttpRestServer(resource.Resource):
             if ret != NOT_DONE_YET:
                 request.finish()
 
-    def get_basic_auth_credentials(self, request):
-        basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
-        if basic_auth:
-            bc = BasicCredentialFactory(self.realm)
-            try:
-                return bc.decode(basic_auth.split(' ')[1], None)
-            except:
-                raise BadRequest, "The Authorization header was not parsable"
-
     @db.transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
@@ -182,7 +170,9 @@ class HttpRestServer(resource.Resource):
             try:
                 return getattr(view, method, None)
             except zope.security.interfaces.Unauthorized:
-                if self.get_security_token(request) or not self.get_basic_auth_credentials(request):
+                from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
+
+                if self.get_security_token(request) or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
                     raise Forbidden()
                 raise Unauthorized()
 
