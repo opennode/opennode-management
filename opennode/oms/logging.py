@@ -1,3 +1,4 @@
+import re
 import sys
 
 from twisted.python.log import FileLogObserver
@@ -6,7 +7,7 @@ from twisted.python.log import FileLogObserver
 class FilteredLogFileObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""
 
-    ignored_messages = ['keepalive@openssh.com', 'POST /terminal/', 'GET /favicon.ico', 'POST /stream', 'OPTIONS ']
+    ignored_messages = ['.*keepalive@openssh.com', '.*POST /terminal/', '.*GET /favicon.ico', '.*POST /+stream', '.*OPTIONS ']
     #ignored_systems = ['SSHServerTransport', 'SSHChannel']
     ignored_systems = ['SSHServerTransport']
 
@@ -18,7 +19,7 @@ class FilteredLogFileObserver(FileLogObserver):
             message = message[0]
 
         for msg in self.ignored_messages:
-            if msg in message:
+            if re.match(msg, message):
                 return
 
         for s in self.ignored_systems:
