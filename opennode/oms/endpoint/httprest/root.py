@@ -217,13 +217,11 @@ class HttpRestServer(resource.Resource):
         # if get_config().getboolean('auth', 'enable_anonymous'):
         #     return None
 
-        principal = self.get_principal(token)
+        from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
+
+        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
+        principal = authentication_utility.get_principal(token)
+        if principal != 'oms.anonymous':
+            authentication_utility.renew_token(request, token)
 
         return new_interaction(principal)
-
-    def get_principal(self, token):
-        if not token:
-            return 'oms.anonymous'
-        else:
-            # XXX: use real token format
-            return token.split('_')[-1]

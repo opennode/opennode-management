@@ -1,5 +1,8 @@
 import json
+import hmac
+import time
 
+from base64 import urlsafe_b64encode as encodestring, urlsafe_b64decode as decodestring
 from grokcore.component import GlobalUtility, context, name
 from grokcore.security import require
 from twisted.internet import defer
@@ -9,6 +12,7 @@ from twisted.web.guard import BasicCredentialFactory
 from zope.component import getUtility
 from zope.interface import Interface, implements
 
+from opennode.oms.config import get_config
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest, Unauthorized, Forbidden
@@ -30,11 +34,16 @@ class IHttpRestAuthenticationUtility(Interface):
     def generate_token(self, credentials):
         """Generate a secure token for the given credentials"""
 
+    def get_principal(self, token):
+        """Retrieves a principal for a token"""
+
 
 class HttpRestAuthenticationUtility(GlobalUtility):
     implements(IHttpRestAuthenticationUtility)
 
     realm = 'OMS'
+
+    token_key = get_config().get('auth', 'token_key')
 
     def get_basic_auth_credentials(self, request):
         basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
@@ -67,8 +76,31 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                 raise Forbidden({'status': 'failed'})
 
     def generate_token(self, credentials):
+        return self._generate_token(credentials.username)
+
+    def _generate_token(self, username):
         # XXX: todo real cryptographic token
-        return 'fake_token_%s' % credentials.username
+        head = '%s:%s' % (username, int(time.time() * 1000))
+        signature = hmac.new(self.token_key, head).digest()
+        return encodestring('%s;%s' % (head, signature)).strip()
+
+    def get_principal(self, token):
+        if not token:
+            return 'oms.anonymous'
+
+        head, signature = decodestring(token).split(';', 1)
+        if signature != hmac.new(self.token_key, head).digest():
+            raise Forbidden("Invalid authentication token")
+
+        user, timestamp = head.split(':')
+        if int(timestamp)/1000.0 + get_config().getint('auth', 'token_ttl') < time.time():
+            raise Forbidden("Expired authentication token (%s s ago)" % (time.time() - int(timestamp)/1000.0))
+
+        return user
+
+    def renew_token(self, request, token):
+        new_token = self._generate_token(self.get_principal(token))
+        request.addCookie('oms_auth_token', new_token, path='/')
 
 
 class AuthView(HttpRestView):
