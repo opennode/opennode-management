@@ -11,6 +11,7 @@ from opennode.oms.endpoint.httprest.base import IHttpRestView
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
+from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
 
 
@@ -43,21 +44,32 @@ class NotImplemented(HttpStatus):
     status_description = "Not Implemented"
 
 
-class SeeCanonical(HttpStatus):
+class AbstractRedirect(HttpStatus):
+    def __init__(self, url, *args, **kwargs):
+        super(AbstractRedirect, self).__init__(*args, **kwargs)
+        self.url = url
+
+    @property
+    def headers(self):
+        return {'Location': self.url}
+
+
+class SeeCanonical(AbstractRedirect):
     status_code = 301
     status_description = "Moved Permanently"
 
-    def __init__(self, url, *args, **kwargs):
-        super(SeeCanonical, self).__init__(*args, **kwargs)
-        self.url = url
+
+class SeeOther(AbstractRedirect):
+    status_code = 303
+    status_description = "Moved Temporarily"
 
 
 class Unauthorized(HttpStatus):
     status_code = 401
     status_description = "Authorization Required"
 
-    headers = {'WWW-Authenticate': 'Basic realm=OMS'}
-
+    headers = {'WWW-Authenticate': 'Basic realm=OMS',
+               'Set-Cookie': 'oms_auth_token=;expires=Wed, 01 Jan 2000 00:00:00 GMT'}
 
 class Forbidden(HttpStatus):
     status_code = 403
@@ -135,6 +147,17 @@ class HttpRestServer(resource.Resource):
             if ret != NOT_DONE_YET:
                 request.finish()
 
+    def check_auth(self, request):
+        from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
+
+        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
+        credentials = authentication_utility.get_basic_auth_credentials(request)
+        if credentials:
+            blocking_yield(authentication_utility.authenticate(request, credentials, basic_auth=True))
+            return authentication_utility.generate_token(credentials)
+        else:
+            return request.getCookie('oms_auth_token')
+
     @db.transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
@@ -142,6 +165,8 @@ class HttpRestServer(resource.Resource):
         of that view.
 
         """
+
+        token = self.check_auth(request)
 
         oms_root = db.get_root()['oms_root']
         objs, unresolved_path = traverse_path(oms_root, request.path[1:])
@@ -155,7 +180,9 @@ class HttpRestServer(resource.Resource):
         if not view:
             raise NotFound
 
-        interaction = self.get_interaction(request)
+        interaction = self.get_interaction(request, token)
+        request.interaction = interaction
+
         # create a security proxy if we have a secured interaction
         if interaction:
             try:
@@ -172,7 +199,7 @@ class HttpRestServer(resource.Resource):
             except zope.security.interfaces.Unauthorized:
                 from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
-                if self.get_security_token(request) or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
+                if token or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
                     raise Forbidden()
                 raise Unauthorized()
 
@@ -185,12 +212,10 @@ class HttpRestServer(resource.Resource):
 
         raise NotImplemented("method %s not implemented\n" % request.method)
 
-    def get_interaction(self, request):
+    def get_interaction(self, request, token):
         # TODO: we can quickly disable rest auth
         # if get_config().getboolean('auth', 'enable_anonymous'):
         #     return None
-
-        token = self.get_security_token(request)
 
         principal = self.get_principal(token)
 
@@ -202,6 +227,3 @@ class HttpRestServer(resource.Resource):
         else:
             # XXX: use real token format
             return token.split('_')[-1]
-
-    def get_security_token(self, request):
-        return request.getCookie('oms_auth_token')

@@ -78,13 +78,16 @@ class AuthView(HttpRestView):
 
     realm = 'OMS'
 
+    basic_auth = 'false'
+
     # Should be render_GET but ONC (i.e. ExtJS) cannot attach a request body to GET requests
     def render(self, request):
         authentication_utility = getUtility(IHttpRestAuthenticationUtility)
 
+        # enable basic auth only if explicitly requested
+        basic_auth = request.args.get('basic_auth', [self.basic_auth])[0] != 'false'
+
         body = request.content.getvalue()
-        credentials = None
-        basic_auth = False
 
         if body:
             try:
@@ -99,7 +102,10 @@ class AuthView(HttpRestView):
             credentials = UsernamePassword(username, password)
         else:
             credentials = authentication_utility.get_basic_auth_credentials(request)
-            basic_auth = True
+
+        # if already authenticated, return success even if the request didn't provide auth credentials
+        if not credentials and request.interaction.checkPermission('rest', object):
+            return {'status': 'success'}
 
         # XXX: refactor HttpRestServer.handle_request so that it's not a db.transact
         # so that we can use a defer.inlineCallback here
@@ -115,3 +121,21 @@ class LogoutView(HttpRestView):
     def render_GET(self, request):
         request.addCookie('oms_auth_token', '', expires='Wed, 01 Jan 2000 00:00:00 GMT')
         return {'status': 'success'}
+
+
+class BasicAuthView(AuthView):
+    context(OmsRoot)
+    name('basicauth')
+    require('oms.nothing')
+
+    basic_auth = 'true'
+
+
+class BasicAuthLogoutView(LogoutView):
+    context(OmsRoot)
+    name('basicauthlogout')
+    require('oms.nothing')
+
+    def render_GET(self, request):
+        super(BasicAuthLogoutView, self).render_GET(request)
+        raise Unauthorized()
