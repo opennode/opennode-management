@@ -57,8 +57,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.found_index = -1
         self.search_skip = 0
 
-        self.terminal.reset()
-        self.terminal.setModes((modes.IRM, ))
+    def initializeScreen(self):
+        self.setInsertMode()
 
     def set_terminal(self, terminal):
         self.terminal = terminal
