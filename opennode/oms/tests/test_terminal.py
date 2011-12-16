@@ -38,7 +38,7 @@ class TerminalTestCase(unittest.TestCase):
         self.terminal.reset_mock()
 
         self.shell.keystrokeReceived(CTRL_D, None)
-        eq_(self.terminal.method_calls, [('loseConnection', (), {})])
+        eq_(self.terminal.transport.method_calls, [('loseConnection', (), {})])
 
     def test_FF(self):
         self.shell.keystrokeReceived(CTRL_L, None)

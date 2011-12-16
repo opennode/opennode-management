@@ -57,7 +57,7 @@ class SshTestCase(unittest.TestCase):
     def test_quit(self):
         self._cmd('quit')
         with assert_mock(self.terminal) as t:
-            t.loseConnection()
+            whatever(t)
             t.write('user@oms:/# ')
 
     def test_non_existent_cmd(self):
