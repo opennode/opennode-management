@@ -6,12 +6,12 @@ from twisted.internet import defer
 from twisted.cred.credentials import UsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.web.guard import BasicCredentialFactory
-from twisted.web.server import NOT_DONE_YET
 
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
-from opennode.oms.endpoint.httprest.root import BadRequest
+from opennode.oms.endpoint.httprest.root import BadRequest, Unauthorized, Forbidden
 from opennode.oms.security.authentication import checkers
+from opennode.oms.util import blocking_yield
 
 
 class AuthView(HttpRestView):
@@ -25,6 +25,7 @@ class AuthView(HttpRestView):
     def render(self, request):
         body = request.content.getvalue()
         credentials = None
+        basic_auth = None
 
         if body:
             try:
@@ -60,16 +61,16 @@ class AuthView(HttpRestView):
             if avatar:
                 token = self.generate_token(credentials)
                 request.addCookie('oms_auth_token', token, path='/')
-                request.write(json.dumps({'status': 'success', 'token': token}))
+                defer.returnValue({'status': 'success', 'token': token})
             else:
-                request.setResponseCode(401)
-                request.responseHeaders.addRawHeader('WWW-Authenticate', 'Basic realm="%s"' % self.realm)
-                request.write(json.dumps({'status': 'failure'}))
+                if basic_auth:
+                    raise Unauthorized({'status': 'failed'})
+                else:
+                    raise Forbidden({'status': 'failed'})
 
-            request.finish()
-
-        authenticate()
-        return NOT_DONE_YET
+        # XXX: refactor HttpRestServer.handle_request so that it's not a db.transact
+        # so that we can use a defer.inlineCallback here
+        return blocking_yield(authenticate())
 
     def generate_token(self, credentials):
         # XXX: todo real cryptographic token

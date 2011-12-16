@@ -4,6 +4,7 @@ import zope.security.interfaces
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.web import resource
+from twisted.web.guard import BasicCredentialFactory
 from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter
 
@@ -19,6 +20,10 @@ class EmptyResponse(Exception):
 
 
 class HttpStatus(Exception):
+    def __init__(self, body=None, *args, **kwargs):
+        super(HttpStatus, self).__init__(*args, **kwargs)
+        self.body = body
+
     @property
     def status_code(self):
         raise NotImplementedError
@@ -72,6 +77,8 @@ class HttpRestServer(resource.Resource):
 
     """
 
+    realm = 'OMS'
+
     def getChild(self, name, request):
         """We are the handler for anything below this base url, except what explicitly added in oms.tac."""
         return self
@@ -108,7 +115,10 @@ class HttpRestServer(resource.Resource):
             request.setResponseCode(exc.status_code, exc.status_description)
             for name, value in exc.headers.items():
                 request.responseHeaders.addRawHeader(name, value)
-            request.write("%s %s\n" % (exc.status_code, exc.status_description))
+            if exc.body:
+                request.write(json.dumps(exc.body))
+            else:
+                request.write("%s %s\n" % (exc.status_code, exc.status_description))
             if exc.message:
                 request.write("%s\n" % exc.message)
         except Exception:
@@ -128,6 +138,15 @@ class HttpRestServer(resource.Resource):
             if ret != NOT_DONE_YET:
                 request.finish()
 
+    def get_basic_auth_credentials(self, request):
+        basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
+        if basic_auth:
+            bc = BasicCredentialFactory(self.realm)
+            try:
+                return bc.decode(basic_auth.split(' ')[1], None)
+            except:
+                raise BadRequest, "The Authorization header was not parsable"
+
     @db.transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
@@ -135,6 +154,7 @@ class HttpRestServer(resource.Resource):
         of that view.
 
         """
+
         oms_root = db.get_root()['oms_root']
         objs, unresolved_path = traverse_path(oms_root, request.path[1:])
 
@@ -162,7 +182,7 @@ class HttpRestServer(resource.Resource):
             try:
                 return getattr(view, method, None)
             except zope.security.interfaces.Unauthorized:
-                if self.get_security_token(request):
+                if self.get_security_token(request) or not self.get_basic_auth_credentials(request):
                     raise Forbidden()
                 raise Unauthorized()
 
