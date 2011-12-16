@@ -2,6 +2,16 @@
 OpenNode Management Service.
 """
 from twisted.internet.defer import Deferred
+from zope.component import handle
+from zope.interface import Interface,implements
+
+
+class IApplicationInitializedEvent(Interface):
+    """Emitted when application is initialized"""
+
+
+class ApplicationInitalizedEvent(object):
+    implements(IApplicationInitializedEvent)
 
 
 def deferred_call(self, fun):
@@ -19,3 +29,5 @@ def setup_environ():
     grok('opennode.oms.endpoint.ssh.cmd.grokkers')  # XXX: Not sure why this needs to be explicit--an ordering issue?
     grok('opennode.oms.model.model.actions')
     grok('opennode.oms')
+
+    handle(ApplicationInitalizedEvent())
