@@ -58,7 +58,15 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.search_skip = 0
 
     def initializeScreen(self):
-        self.setInsertMode()
+        # don't output wrong "insert mode" escape chars, as superclass does
+        self.mode = 'insert'
+
+    def terminalSize(self, width, height):
+        """Avoid clearing the whole screen"""
+
+        self.width = width
+        self.height = height
+        self.drawInputLine()
 
     def set_terminal(self, terminal):
         self.terminal = terminal
@@ -307,4 +315,6 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         """Closes the connection and saves history."""
 
         self.save_history()
-        self.terminal.loseConnection()
+
+        # avoid performing a terminal reset
+        self.terminal.transport.loseConnection()
