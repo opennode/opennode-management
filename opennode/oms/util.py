@@ -125,16 +125,19 @@ def blocking_yield(deferred):
     """
 
     import time
-    from twisted.python.failure import Failure
+
+    # install a failure handler, otherwise an unhandled deferred error will be logged
+    failure = [None]
+    @deferred
+    def on_error(error):
+        failure[0] = error
 
     while not deferred.called:
         time.sleep(0.1)
 
-    res = deferred.result
-    if isinstance(res, Failure):
-        import traceback
-        print traceback.print_tb(res.getTracebackObject())
-        raise res.value
+    if failure[0]:
+        raise failure[0].value
+    return deferred.result
 
 
 def threaded(fun):
