@@ -6,7 +6,10 @@ from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends
 
 from grokcore.component import context, subscribe, baseclass, Adapter
 
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers, IGetDiskUsage, IGetRoutes
+from opennode.oms.backend.operation import (IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS,
+                                            IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM,
+                                            IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers,
+                                            IGetDiskUsage, IGetRoutes)
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action

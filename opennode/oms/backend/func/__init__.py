@@ -6,7 +6,11 @@ from grokcore.component import Adapter, context, baseclass
 from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetHostMetrics, IGetLocalTemplates, IFuncMinion, IGetSignedCertificateNames, IGetVirtualizationContainers, IGetDiskUsage, IGetRoutes
+from opennode.oms.backend.operation import (IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM,
+                                            ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,
+                                            IUndeployVM, IGetGuestMetrics, IGetHostMetrics, IGetLocalTemplates,
+                                            IFuncMinion, IGetSignedCertificateNames, IGetVirtualizationContainers,
+                                            IGetDiskUsage, IGetRoutes)
 from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
@@ -36,7 +40,9 @@ class AsyncFuncExecutor(FuncExecutor):
 
             self.job_id = action(*args, **kwargs)
 
-            Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+            Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'),
+                                                                        self.func_action,
+                                                                        ' '.join(str(i) for i in args)))
 
             self.start_polling()
 
@@ -110,7 +116,9 @@ class SyncFuncExecutor(FuncExecutor):
                 return res
 
         self.deferred = spawn_func()
-        # Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'), self.func_action, ' '.join(map(str, args))))
+        # Proc.register(self.deferred, "/bin/func '%s' call %s %s" % (self.hostname.encode('utf-8'),
+        #                                                             self.func_action,
+        #                                                             ' '.join(str(i) for i in args)))
 
         return self.deferred
 
@@ -136,7 +144,9 @@ class FuncBase(Adapter):
                         }
 
     def run(self, *args, **kwargs):
-        return self.executor_classes[get_config().get('func', 'executor_class')](IFuncMinion(self.context).hostname(), self.func_action).run(*args, **kwargs)
+        executor_class = self.executor_classes[get_config().get('func', 'executor_class')]
+        executor = executor_class(IFuncMinion(self.context).hostname(), self.func_action)
+        return executor.run(*args, **kwargs)
 
 
 FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
