@@ -11,6 +11,7 @@ from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 from zope.securitypolicy.role import Role
 from twisted.cred.checkers import FilePasswordDB
+from twisted.python import log
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
 from opennode.oms import IApplicationInitializedEvent
@@ -60,7 +61,11 @@ def setup_roles(event):
 @subscribe(IApplicationInitializedEvent)
 def setup_permissions(event):
     for i in file(get_config().get('auth', 'passwd_file')):
-        user, _, roles = i.split(':', 3)
-        for role in roles.split(','):
-            if role.strip():
-                principalRoleManager.assignRoleToPrincipal(role.strip(), user.strip())
+        try:
+            user, _, roles = i.split(':', 3)
+        except ValueError:
+            log.err("Invalid password file format")
+        else:
+            for role in roles.split(','):
+                if role.strip():
+                    principalRoleManager.assignRoleToPrincipal(role.strip(), user.strip())
