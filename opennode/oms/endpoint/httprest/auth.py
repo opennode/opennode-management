@@ -127,14 +127,14 @@ class AuthView(HttpRestView):
 
     realm = 'OMS'
 
-    basic_auth = 'false'
+    BASIC_AUTH_DEFAULT = 'false'
 
     # Should be render_GET but ONC (i.e. ExtJS) cannot attach a request body to GET requests
     def render(self, request):
         authentication_utility = getUtility(IHttpRestAuthenticationUtility)
 
         # enable basic auth only if explicitly requested
-        basic_auth = request.args.get('basic_auth', [self.basic_auth])[0] != 'false'
+        basic_auth = request.args.get('basic_auth', [self.BASIC_AUTH_DEFAULT])[0] != 'false'
 
         body = request.content.getvalue()
 
@@ -177,7 +177,7 @@ class BasicAuthView(AuthView):
     name('basicauth')
     require('oms.nothing')
 
-    basic_auth = 'true'
+    BASIC_AUTH_DEFAULT = 'true'
 
 
 class BasicAuthLogoutView(LogoutView):
