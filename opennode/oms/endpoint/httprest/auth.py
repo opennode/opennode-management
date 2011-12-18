@@ -21,18 +21,19 @@ from opennode.oms.util import blocking_yield
 
 
 class IHttpRestAuthenticationUtility(Interface):
+
     def get_basic_auth_credentials(request):
-        """Return basic auth credentials object for a given request, or None"""
+        """Returns basic auth credentials object for a given request, or None"""
 
     def authenticate(request, credentials, basic_auth=False):
-        """Perform authentication, adds response headers in case of success,
+        """Performs authentication, adds response headers in case of success,
         throws HttpStatus exceptions in case of failure. Returns a deferred.
 
         """
 
     # XXX: use a principal instead of the credentials
     def generate_token(self, credentials):
-        """Generate a secure token for the given credentials"""
+        """Generates a secure token for the given credentials"""
 
     def get_principal(self, token):
         """Retrieves a principal for a token"""
