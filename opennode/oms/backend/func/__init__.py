@@ -6,7 +6,7 @@ from grokcore.component import Adapter, context, baseclass
 from twisted.internet import defer, reactor
 from zope.interface import classImplements
 
-from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetHostMetrics, IGetLocalTemplates, IFuncMinion, IGetSignedCertificateNames, IGetVirtualizationContainers, IGetDiskUsage
+from opennode.oms.backend.operation import IFuncInstalled, IGetComputeInfo, IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IRebootVM, IListVMS, IHostInterfaces, IDeployVM,  IUndeployVM, IGetGuestMetrics, IGetHostMetrics, IGetLocalTemplates, IFuncMinion, IGetSignedCertificateNames, IGetVirtualizationContainers, IGetDiskUsage, IGetRoutes
 from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.zodb import db
@@ -148,7 +148,7 @@ FUNC_ACTIONS = {IGetComputeInfo: 'hardware.info', IStartVM: 'onode.vm.start_vm',
                 IGetGuestMetrics: 'onode.vm.metrics', IGetHostMetrics: 'onode.metrics',
                 IGetLocalTemplates: 'onode.vm.get_local_templates',
                 IGetSignedCertificateNames: 'certmastermod.get_signed_certs',
-                IGetDiskUsage: 'disk.usage',
+                IGetDiskUsage: 'disk.usage', IGetRoutes: 'onode.network.show_routing_table',
                 IHostInterfaces: 'onode.host.interfaces'}
 
 

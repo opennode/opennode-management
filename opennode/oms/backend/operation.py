@@ -31,6 +31,10 @@ class IHostInterfaces(IJob):
     """Returns detailed info about host interfaces. hardware.info doesn't work on all archs."""
 
 
+class IGetRoutes(IJob):
+    """Returns route info"""
+
+
 class IGetGuestMetrics(IJob):
     """Returns guest VM metrics."""
 

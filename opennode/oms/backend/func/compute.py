@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
+import netaddr
+
 from .virtualizationcontainer import IVirtualizationContainerSubmitter, backends, SyncVmsAction
 
 from grokcore.component import context, subscribe, baseclass, Adapter
 
-from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers, IGetDiskUsage
+from opennode.oms.backend.operation import IStartVM, IShutdownVM, IDestroyVM, ISuspendVM, IResumeVM, IListVMS, IRebootVM, IGetComputeInfo, IFuncInstalled, IDeployVM, IUndeployVM, IGetLocalTemplates, IFuncMinion, IGetVirtualizationContainers, IGetDiskUsage, IGetRoutes
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
 from opennode.oms.model.model.actions import Action, action
@@ -12,7 +14,7 @@ from opennode.oms.model.model.compute import ICompute, IVirtualCompute, IUndeplo
 from opennode.oms.model.model.template import Template
 from opennode.oms.model.model.virtualizationcontainer import IVirtualizationContainer, VirtualizationContainer
 from opennode.oms.model.model.console import Consoles, TtyConsole, SshConsole, OpenVzConsole, VncConsole
-from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface
+from opennode.oms.model.model.network import NetworkInterfaces, NetworkInterface, NetworkRoutes, NetworkRoute
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.util import blocking_yield, get_u
 from opennode.oms.zodb import db
@@ -152,10 +154,12 @@ class SyncAction(Action):
             res[u'total'] = sum([0] + res.values())
             return res
 
-        self._sync_hw(info, disk_info('total'), disk_info('used'))
+        routes = yield IGetRoutes(self.context).run()
+
+        self._sync_hw(info, disk_info('total'), disk_info('used'), routes)
 
     @db.transact
-    def _sync_hw(self, info, disk_space, disk_usage):
+    def _sync_hw(self, info, disk_space, disk_usage, routes):
         if IVirtualCompute.providedBy(self.context):
             self.context.cpu_info = self.context.__parent__.__parent__.cpu_info
         else:
@@ -169,6 +173,26 @@ class SyncAction(Action):
         self.context.swap_size = float(info['systemSwap'])
         self.context.diskspace = disk_space
         self.context.diskspace_usage = disk_usage
+
+        # routes
+
+        self.context.routes = NetworkRoutes()
+        for i in routes:
+            destination = netaddr.IPNetwork('%s/%s' % (i['destination'], i['netmask']))
+            gateway = netaddr.IPAddress(i['router'])
+
+            route = NetworkRoute()
+            route.destination = str(destination.cidr)
+            route.gateway = str(gateway)
+            route.flags = i['flags']
+            route.metrics = int(i['metrics'])
+            route.__name__ = route.destination.replace('/', '_')
+
+            interface = self.context['interfaces'][i['interface']]
+            if interface:
+                route.add(Symlink('interface', interface))
+
+            self.context.routes.add(route)
 
     def distro(self, info):
         return unicode(info['os'].split()[0])

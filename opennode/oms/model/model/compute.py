@@ -10,7 +10,7 @@ from .actions import ActionsContainerExtension
 from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
 from .byname import ByNameContainerExtension
 from .console import Consoles
-from .network import NetworkInterfaces
+from .network import NetworkInterfaces, NetworkRoutes
 from .search import ModelTags
 from .template import Templates
 from .stream import MetricsContainerExtension, IMetrics
@@ -249,6 +249,18 @@ class Compute(Container):
         self._add(value)
 
     interfaces = property(get_interfaces, set_interfaces)
+
+    def get_routes(self):
+        if not self._items.has_key('routes'):
+            self._add(NetworkRoutes())
+        return self._items['routes']
+
+    def set_routes(self, value):
+        if self._items.has_key('routes'):
+            del self._items['routes']
+        self._add(value)
+
+    routes = property(get_routes, set_routes)
 
     @property
     def ipv4_address(self):

@@ -90,6 +90,27 @@ class NetworkInterfaces(Container):
     __name__ = 'interfaces'
 
 
+class INetworkRoute(Interface):
+    destination = schema.TextLine(title=u"Destination", min_length=7, required=True)
+    gateway = schema.TextLine(title=u"Gateway", min_length=7, required=True)
+    flags = schema.TextLine(title=u"Flags", required=True)
+    metrics = schema.Int(title=u"Metrics", required=True)
+
+
+class NetworkRoute(Container):
+    implements(INetworkRoute)
+
+    @property
+    def nicknames(self):
+        return [self.destination, self.gateway, self.flags, str(self.metrics)]
+
+
+class NetworkRoutes(Container):
+    __contains__ = INetworkRoute
+
+    __name__ = 'routes'
+
+
 class INetwork(Interface):
     state = schema.Choice(title=u"State", values=(u'active', u'inactive'))
     ipv4_address = schema.TextLine(title=u"IPv4 network address", min_length=7)
