@@ -5,4 +5,4 @@ oms.db
 /db/
 .DS_Store
 /db_*
-opennode.oms.core.egg-info/
+*.egg-info

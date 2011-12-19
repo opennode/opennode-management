@@ -10,6 +10,7 @@ from .proc import Proc
 from .search import SearchContainer
 from .stream import StreamSubscriber
 from .template import Templates
+from .plugins import Plugins
 
 
 class OmsRoot(ReadonlyContainer):
@@ -31,6 +32,7 @@ class OmsRoot(ReadonlyContainer):
         'networks': self.networks,
         'bin': self.bin,
         'proc': self.proc,
+        'plugins': self.plugins,
         'log': self.log,
         'stream': self.stream,
     })
@@ -84,6 +86,12 @@ class OmsRoot(ReadonlyContainer):
     @property
     def stream(self):
         res = StreamSubscriber()
+        res.__parent__ = self
+        return res
+
+    @property
+    def plugins(self):
+        res = Plugins()
         res.__parent__ = self
         return res
 
