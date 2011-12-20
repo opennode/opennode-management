@@ -7,6 +7,7 @@ setup(
     description = """OpenNode OMS""",
     author = "OpenNode Developers <developers@opennodecloud.com>",
     packages = find_packages(),
+    namespace_packages = ['opennode'],
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
                                         'omspy = opennode.oms.pyshell:run']}
 )

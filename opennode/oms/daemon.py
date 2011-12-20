@@ -10,7 +10,14 @@ from twisted.runner.procmon import ProcessMonitor
 def run():
     """Starts the child zeo process and then starts the twisted reactor."""
 
-    basedir = os.path.dirname(os.path.dirname(opennode.__file__))
+    def get_base_dir():
+        for i in opennode.__path__:
+            base_dir = os.path.dirname(i)
+            if os.path.exists(os.path.join(base_dir, 'opennode/oms.tac')):
+                return base_dir
+        raise Exception("cannot find base_dir")
+
+    basedir = get_base_dir()
     os.chdir(basedir)
 
     db = 'db'
