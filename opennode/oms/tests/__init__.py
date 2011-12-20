@@ -1,5 +1,5 @@
 from opennode.oms.zodb.db import init
-from opennode.oms import setup_environ
+from opennode.oms.core import setup_environ
 from opennode.oms.tests.util import teardown_reactor
 
 

@@ -4,7 +4,7 @@ import IPython
 import transaction
 import logging
 
-from opennode.oms import setup_environ
+from opennode.oms.init import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model import OmsRoot, Computes, Compute, Templates, Template

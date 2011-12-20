@@ -14,7 +14,7 @@ from twisted.cred.checkers import FilePasswordDB
 from twisted.python import log
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
-from opennode.oms import IApplicationInitializedEvent
+from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
 from opennode.oms.security.principals import User
 

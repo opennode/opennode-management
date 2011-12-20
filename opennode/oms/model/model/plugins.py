@@ -10,7 +10,7 @@ from zope.interface import Interface, implements
 
 from .base import ReadonlyContainer, Model
 from opennode.oms.util import Singleton
-from opennode.oms import IApplicationInitializedEvent
+from opennode.oms.core import IApplicationInitializedEvent
 
 
 class IPluginInfo(Interface):

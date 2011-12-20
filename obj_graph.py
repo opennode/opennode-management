@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from opennode.oms import setup_environ
+from opennode.oms.core import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.model import stream, symlink
 

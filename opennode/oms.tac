@@ -9,7 +9,7 @@ from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
 
-from opennode.oms import setup_environ
+from opennode.oms.core import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.ssh.session import OmsTerminalSession
