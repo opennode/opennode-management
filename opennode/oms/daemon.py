@@ -1,14 +1,28 @@
+import argparse
 import commands
 import sys
 import os
 import opennode
 
+from pyutils import autoreload
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
 
 
 def run():
     """Starts the child zeo process and then starts the twisted reactor."""
+
+    # HACK:autoreload will rerun this executable
+    # we have to avoid reparsing the omsd commandlines
+    # since we patched sys.argv for hooking into twistd.run
+    args = None
+    if sys.argv[1:] != ['-ny', 'opennode/oms.tac']:
+        parser = argparse.ArgumentParser(description='Start OMS')
+        parser.add_argument('-d', action='store_true',
+                            help='start in development mode with autorestart')
+
+        args = parser.parse_args()
+
 
     def get_base_dir():
         for i in opennode.__path__:
@@ -32,4 +46,7 @@ def run():
 
     sys.argv=[sys.argv[0], '-ny', 'opennode/oms.tac']
 
-    twistd.run()
+    if args and args.d:
+        autoreload.main(twistd.run)
+    else:
+        twistd.run()
