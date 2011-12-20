@@ -115,13 +115,6 @@ class SshTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_ls(self):
-        self._cmd('ls')
-        with assert_mock(self.terminal) as t:
-            t.write('%s\n' % ('  '.join([i + '/' for i in self.tlds])))
-
-        self._cmd('ls /')
-        with assert_mock(self.terminal) as t:
-            t.write('%s\n' % ('  '.join([i + '/' for i in self.tlds])))
 
         computes = db.get_root()['oms_root']['computes']
         computes.add(self.make_compute())
