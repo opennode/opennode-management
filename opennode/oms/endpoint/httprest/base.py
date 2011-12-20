@@ -11,6 +11,11 @@ class IHttpRestView(Interface):
         pass
 
 
+class IHttpRestSubViewFactory(Interface):
+    def resolve(path):
+        """Resolve a view for a given sub path"""
+
+
 class HttpRestView(Adapter):
     implements(IHttpRestView)
     baseclass()

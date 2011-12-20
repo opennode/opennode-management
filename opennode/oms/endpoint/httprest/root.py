@@ -7,7 +7,7 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter, getUtility
 
-from opennode.oms.endpoint.httprest.base import IHttpRestView
+from opennode.oms.endpoint.httprest.base import IHttpRestView, IHttpRestSubViewFactory
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
@@ -177,6 +177,11 @@ class HttpRestServer(resource.Resource):
         obj = objs[-1]
 
         view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+
+        sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
+        if sub_view_factory:
+            view = sub_view_factory.resolve(unresolved_path[1:])
+
         if not view:
             raise NotFound
 
