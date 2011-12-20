@@ -29,7 +29,7 @@ running `brew install python`.
        `mkvirtualenv --no-site-packages --python=python2.7 opennode-management`
        `workon opennode-management`
 
-3. Install dependencies by running `pip install -r requirements.txt`
+3. Install dependencies by running `python setup.py develop`
    in the repository root.
 
 4. install func (`yum install func` or from sources at `git://git.fedorahosted.org/func.git` or use `https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz`)
@@ -39,7 +39,7 @@ running `brew install python`.
 6. Setup user accounts in the `oms_passwd` file. It contains SSHA password hashes; an easy way to create them is: `echo username:$(slappasswd -s <your_password>):role1,role2 >>oms_passwd`
 
 7. Start the Twisted twistd server on port 8080 by executing
-   `./start-oms.sh` on Unix systems and `start-oms.bat` on Windows.
+   `omsd -d` on Unix systems and `start-oms.bat` on Windows.
 
 === Testing ===
 

@@ -5,7 +5,7 @@ import sys
 import os
 import opennode
 
-from pyutils import autoreload
+from opennode.utils import autoreload
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
 
