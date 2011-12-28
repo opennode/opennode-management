@@ -20,6 +20,9 @@ from opennode.oms.model.schema import Path
 from opennode.oms.util import adapter_value
 
 
+M = 10**6
+
+
 class ICompute(Interface):
     # Network parameters
     hostname = schema.TextLine(
@@ -75,7 +78,7 @@ class ICompute(Interface):
         key_type=schema.TextLine(), value_type=schema.Float(),
         required=False)
     network = schema.Float(
-        title=u"Network", description=u"Network bandwidth in Mbps",
+        title=u"Network", description=u"Network bandwidth in Bps",
         required=False)
     swap_size = schema.Int(
         title=u"Swap Size", description=u"Swap size",
@@ -94,7 +97,7 @@ class ICompute(Interface):
         key_type=schema.TextLine(), value_type=schema.Float(),
         required=False)
     network_usage = schema.Tuple(
-        title=u"Network Load", description=u"Network load in Mb/s (incoming and outgoing)",
+        title=u"Network Load", description=u"Network load in B/s (incoming and outgoing)",
         value_type=schema.Float(),
         required=False)
 
@@ -140,7 +143,7 @@ class Compute(Container):
 
     num_cores = 1
     memory = 2048,
-    network = 100.0
+    network = 12.5 * M  # bytes
     diskspace = {
         u'total': 2000.0,
         u'root': 500.0,
@@ -151,7 +154,7 @@ class Compute(Container):
 
     cpu_usage = (0.1, 0.11, 0.14)
     memory_usage = 773.2
-    network_usage = (55.2, 21.9)
+    network_usage = (5.2 * M, 1.9 * M)
     diskspace_usage = {
         u'root': 249.0,
         u'boot': 49.3,
