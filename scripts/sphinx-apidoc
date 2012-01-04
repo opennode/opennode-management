@@ -1,4 +1,4 @@
-#!/home/marko/.virtualenvs/opennode-management/bin/python
+#!/usr/bin/env python
 # EASY-INSTALL-ENTRY-SCRIPT: 'Sphinx==1.1.2','console_scripts','sphinx-apidoc'
 __requires__ = 'Sphinx==1.1.2'
 import sys

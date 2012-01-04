@@ -1,4 +1,4 @@
-#!/home/marko/.virtualenvs/opennode-management/bin/python
+#!/usr/bin/env python
 # EASY-INSTALL-ENTRY-SCRIPT: 'nose==1.1.2','console_scripts','nosetests'
 __requires__ = 'nose==1.1.2'
 import sys
