@@ -34,6 +34,7 @@ setup(
         "nose",
         "mock",
         "coverage",
+        "sphinx",
         ],
 
 )
