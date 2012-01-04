@@ -28,5 +28,12 @@ setup(
         "pyOpenSSL",
         "pyasn1",
         "netaddr",
-        ]
+        ],
+
+    setup_requires = [
+        "nose",
+        "mock",
+        "coverage",
+        ],
+
 )

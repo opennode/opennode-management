@@ -6,3 +6,4 @@ oms.db
 .DS_Store
 /db_*
 *.egg-info
+*.egg
