@@ -13,37 +13,35 @@ running `brew install python`.
 
 1. `git clone git@github.com:opennode/opennode-management.git`.
 
-2. Create a Python virtualenv either by using the `virtualenv` command,
-   or `mkvirtualenv` bundled with virtualenvwrapper.
+2. Boostrap buildout:
+       python boostrap.py
 
-   It is recommended to use the `--no-site-packages` option for an
-   isolated and clean environment, especially in production deployments.
+3. Run buildout:
+       bin/buildout
 
-   More info about virtualenvwrapper usage:
-       http://www.doughellmann.com/articles/pythonmagazine/completely-different/2008-05-virtualenvwrapper/index.html
+4. Setup user accounts in the `oms_passwd` file. It contains SSHA password hashes; an easy way to create them is: `echo username:$(slappasswd -s <your_password>):role1,role2 >>oms_passwd`
 
-   Example using the virtualenv-burrito package:
-
-       `curl -s https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh | bash`
-       `source ~/.venvburrito/startup.sh`
-       `mkvirtualenv --no-site-packages --python=python2.7 opennode-management`
-       `workon opennode-management`
-
-3. Install dependencies by running `python setup.py develop`
-   in the repository root.
-
-4. install func (`yum install func` or from sources at `git://git.fedorahosted.org/func.git` or use `https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz`)
-
-5. install certmaster (`yum install certmaster` or from sources at `git://git.fedorahosted.org/certmaster.git` or use `https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz`)
-
-6. Setup user accounts in the `oms_passwd` file. It contains SSHA password hashes; an easy way to create them is: `echo username:$(slappasswd -s <your_password>):role1,role2 >>oms_passwd`
-
-7. Start the Twisted twistd server on port 8080 by executing
-   `omsd -d` on Unix systems and `start-oms.bat` on Windows.
+5. Start the Twisted twistd server on port 8080 by executing
+   `bin/omsd`
 
 === Testing ===
 
 1. `./test.sh`
+
+=== Plugins ===
+
+During development you can quickly enable plugins by adding the plugin buildout snippet to the `eggnest` dir, e.g:
+
+   cd eggnest
+   ln -s ../available-eggnest/onc.cfg
+
+=== Development ===
+
+During development, you can use the autoreload mode with `bin/omsd -d`.
+If you make changes in the dependencies, just rerun `bin/buildout`.
+You can use `bin/buildout -N` to avoid waiting for the network, if you already have the eggs in the cache.
+
+You can get a python prompt with the correct python path with `bin/python`.
 
 === High level architecture ===
 

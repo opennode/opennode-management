@@ -8,3 +8,9 @@ oms.db
 *.egg-info
 *.egg
 RELEASE-VERSION
+eggs
+develop-eggs
+eggnest/*.cfg
+parts
+bin
+.installed.cfg
