@@ -7,3 +7,4 @@ oms.db
 /db_*
 *.egg-info
 *.egg
+RELEASE-VERSION

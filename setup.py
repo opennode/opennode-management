@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 from setuptools import setup, find_packages
+from version import get_git_version
 
 
 setup(
     name = "opennode.oms.core",
-    version = "0.0",
+    version = get_git_version(),
     description = """OpenNode OMS""",
     author = "OpenNode Developers",
     author_email = "developers@opennodecloud.com",
