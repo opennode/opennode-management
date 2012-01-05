@@ -49,11 +49,11 @@ class Plugins(ReadonlyContainer):
                 working_set.add(dist)
 
         def _log_error(item, e):
-            print "[plugins] GOT ERROR", item, e
+            print "[plugins] error loading", item, e
 
         for dist, e in errors.iteritems():
-            # ignore version conflict of the 'distribute' distribution
-            if dist.project_name != 'distribute':
+            # ignore version conflict of modules which are not OMS plugins
+            if self.ENTRY_POINT_NAME in dist.get_entry_map():
                 _log_error(dist, e)
 
         for entry in sorted(working_set.iter_entry_points(self.ENTRY_POINT_NAME),
