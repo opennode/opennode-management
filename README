@@ -43,9 +43,7 @@ running `brew install python`.
 
 === Testing ===
 
-1. Dependencies for testing:  `pip install -r test-requirements.txt`
-
-2. `./test.sh`
+1. `./test.sh`
 
 === High level architecture ===
 
