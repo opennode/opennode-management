@@ -27,10 +27,16 @@ Deferred.__call__ = deferred_call
 
 def setup_environ():
     from grokcore.component.testing import grok
-    grok('opennode.oms.endpoint.ssh.cmd.grokkers')  # XXX: Not sure why this needs to be explicit--an ordering issue?
-    grok('opennode.oms.model.model.actions')
-    grok('opennode.oms.security.grokkers')  # XXX: Not sure why this needs to be explicit--an ordering issue?
-    grok('grokcore.security.meta') # invoke the PermissionGrokker which will register groksecurity permissions.
+
+    # we have first to load grokkers
+    # and then regrok the whole package
+
+    grok('grokcore.security.meta')
+
+    grok('opennode.oms.security.grokkers')
+    grok('opennode.oms.endpoint.ssh.cmd.grokkers')
+    grok('opennode.oms.endpoint.httprest.grokkers')
+
     grok('opennode.oms')
 
     handle(ApplicationInitalizedEvent())
