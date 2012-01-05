@@ -15,7 +15,6 @@ setup(
                                         'omspy = opennode.oms.pyshell:run']},
     install_requires = [
         "Twisted",
-        "storm",
         "transaction",
         "zope.component",
         "zope.app.catalog",
