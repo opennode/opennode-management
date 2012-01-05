@@ -23,7 +23,6 @@ setup(
         "grokcore.component",
         "grokcore.security",
         "zope.securitypolicy",
-        "columnize",
         "ipython>=0.11",
         "ZODB3",
         "pycrypto",
