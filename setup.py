@@ -29,6 +29,8 @@ setup(
         "pyOpenSSL",
         "pyasn1",
         "netaddr",
+        "certmaster",
+        "func",
         ],
 
     setup_requires = [
