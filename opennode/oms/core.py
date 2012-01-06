@@ -36,6 +36,7 @@ def setup_environ():
     grok('opennode.oms.security.grokkers')
     grok('opennode.oms.endpoint.ssh.cmd.grokkers')
     grok('opennode.oms.endpoint.httprest.grokkers')
+    grok('opennode.oms.model.model.actions')
 
     grok('opennode.oms')
 
