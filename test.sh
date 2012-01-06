@@ -12,4 +12,10 @@ if [ ! -z "$3" ] ; then
     tests="$tests,opennode.oms.tests.test_$3"
 fi
 
-PATH=scripts:$PATH python setup.py nosetests --nologcapture --detailed-errors --nocapture $tests
+NOSE=bin/nosetests
+
+if [ ! -x "$NOSE" ]; then
+    PATH=scripts:$PATH python setup.py nosetests --nologcapture --detailed-errors --nocapture $tests
+else
+    $NOSE --nologcapture --detailed-errors --nocapture $tests
+fi
