@@ -39,7 +39,7 @@ During development you can quickly enable plugins by adding the plugin buildout 
 
 During development, you can use the autoreload mode with `bin/omsd -d`.
 If you make changes in the dependencies, just rerun `bin/buildout`.
-You can use `bin/buildout -N` to avoid waiting for the network, if you already have the eggs in the cache.
+You can use `bin/buildout -o` to avoid waiting for the network, if you already have the eggs in the cache.
 
 You can get a python prompt with the correct python path with `bin/python`.
 
