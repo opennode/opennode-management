@@ -16,3 +16,5 @@ bin
 .installed.cfg
 docs/Makefile
 docs/make.bat
+docs/html
+docs/doctrees
