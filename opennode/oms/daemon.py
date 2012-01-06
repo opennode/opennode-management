@@ -47,8 +47,13 @@ def run():
     if os.path.exists('current_db_dir.sh'):
         db = commands.getoutput('./current_db_dir.sh')
 
+    runzeo = 'bin/runzeo'
+    # XXX: compat mode for buildout-less runs
+    if not os.path.exists('bin/runzeo'):
+        runzeo = 'runzeo'
+
     pm = ProcessMonitor()
-    pm.addProcess('zeo', ['/bin/sh', '-c', 'runzeo -f %s/data.fs -a %s/socket >%s/zeo.log 2>&1' % (db, db, db)], env=os.environ)
+    pm.addProcess('zeo', ['/bin/sh', '-c', '%s -f %s/data.fs -a %s/socket >%s/zeo.log 2>&1' % (runzeo, db, db, db)], env=os.environ)
     pm.startService()
 
     sys.argv=[sys.argv[0], '-ny', 'opennode/oms.tac']

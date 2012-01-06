@@ -16,7 +16,7 @@ setup(
     install_requires = [
         "setuptools", # Redundant but removes a warning
         "Twisted==11.1.0",
-        "transaction==1.1.1",
+        "transaction==1.2.0",
         "zope.component==3.12",
         "zope.app.catalog==3.8.1",
         "zope.app.intid==3.7.1",
