@@ -32,12 +32,4 @@ setup(
         "certmaster",
         "func",
         ],
-
-    setup_requires = [
-        "nose",
-        "mock",
-        "coverage",
-        "sphinx",
-        ],
-
 )
