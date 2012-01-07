@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OMS'
-copyright = u'2011, Erik Allik, Ilja Livenson, Marko Mikulicic'
+copyright = u'2011, Opennode Ltd'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -191,7 +191,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'OMS.tex', u'OMS Documentation',
-   u'Erik Allik, Ilja Livenson, Marko Mikulicic', 'manual'),
+   u'Opennode Ltd', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -221,7 +221,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'oms', u'OMS Documentation',
-     [u'Erik Allik, Ilja Livenson, Marko Mikulicic'], 1)
+     [u'Opennode Ltd'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -235,7 +235,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'OMS', u'OMS Documentation',
-   u'Erik Allik, Ilja Livenson, Marko Mikulicic', 'OMS', 'One line description of project.',
+   u'Opennode Ltd', 'OMS', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -253,9 +253,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'OMS'
-epub_author = u'Erik Allik, Ilja Livenson, Marko Mikulicic'
-epub_publisher = u'Erik Allik, Ilja Livenson, Marko Mikulicic'
-epub_copyright = u'2011, Erik Allik, Ilja Livenson, Marko Mikulicic'
+epub_author = u'Opennode Ltd'
+epub_publisher = u'Opennode Ltd'
+epub_copyright = u'2011, Opennode Ltd'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
