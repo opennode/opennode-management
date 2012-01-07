@@ -23,4 +23,7 @@ EOF
 
 cat >>$INSTALLER $TMP
 
+# take care of the extra headers for pipelined installation
+sed -i 's/head -n 403/head -n 415/' $INSTALLER
+
 rm $TMP
