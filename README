@@ -30,10 +30,14 @@ running `brew install python`.
 
 === Plugins ===
 
-During development you can quickly enable plugins by adding the plugin buildout snippet to the `eggnest` dir, e.g:
+You can quickly enable plugins by adding the plugin buildout snippet to the `eggnest` dir, e.g:
 
-   cd eggnest
-   ln -s ../available-eggnest/onc.cfg
+   bin/plugin install opennode.core.onc
+
+This will download the published egg for the plugin.
+If you want to use a development plugin you have to specify the plugin checkout:
+
+   bin/plugin install opennode.oms.knot -d ../opennode-knot
 
 === Development ===
 

@@ -12,7 +12,8 @@ setup(
     packages = find_packages(),
     namespace_packages = ['opennode'],
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
-                                        'omspy = opennode.oms.pyshell:run']},
+                                        'omspy = opennode.oms.pyshell:run',
+                                        'plugin = opennode.oms.plugin:run']},
     install_requires = [
         "setuptools", # Redundant but removes a warning
         "Twisted==11.1.0",
@@ -29,6 +30,7 @@ setup(
         "pyOpenSSL==0.13",
         "pyasn1==0.1.2",
         "netaddr==0.7.6",
+        "BeautifulSoup==3.2.0",
         "certmaster==0.28",
         "func==0.28",
         ],
