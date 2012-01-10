@@ -18,6 +18,12 @@ Quick installation of OMS core on Linux:
 This will create an 'oms' subdirectory in the current directory.
 If you move/rename that directory, please make sure you run the `update.sh` script.
 
+If you prefer you can specify the target directory with:
+
+.. code-block:: sh
+
+  $ curl http://opennodecloud.com/download/oms-core-installer.sh | sh -s --target /opt/oms
+
 Starting up
 -----------
 

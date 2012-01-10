@@ -14,9 +14,9 @@ if [ "x\$0" = "xsh" ]; then
   # which is a bit cuter.  But on others, &1 is already closed,
   # so catting to another script file won't do anything.
   curl -s http://opennodecloud.com/download/oms-core-installer.sh > oms-installer-\$\$.sh
-  sh oms-installer-\$\$.sh
+  sh oms-installer-\$\$.sh "\$@"
   ret=\$?
-  #rm oms-installer-\$\$.sh
+  rm oms-installer-\$\$.sh
   exit \$ret
 fi
 EOF
