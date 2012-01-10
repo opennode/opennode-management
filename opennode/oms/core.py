@@ -25,7 +25,7 @@ def deferred_call(self, fun):
 Deferred.__call__ = deferred_call
 
 
-def setup_environ():
+def grok_all():
     from grokcore.component.testing import grok
 
     # we have first to load grokkers
@@ -40,4 +40,6 @@ def setup_environ():
 
     grok('opennode.oms')
 
+def setup_environ():
+    grok_all()
     handle(ApplicationInitalizedEvent())

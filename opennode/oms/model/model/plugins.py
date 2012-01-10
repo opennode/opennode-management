@@ -9,6 +9,7 @@ from zope import schema
 from zope.interface import Interface, implements
 
 from .base import ReadonlyContainer, Model
+from opennode.oms import config
 from opennode.oms.util import Singleton
 from opennode.oms.core import IApplicationInitializedEvent
 
@@ -87,6 +88,8 @@ class Plugins(ReadonlyContainer):
         for entrypoint in self.load_eggs(sys.path):
             plugin = self.load_plugin(entrypoint)
             self._items[entrypoint.name] = plugin if IPluginInfo.providedBy(plugin) else PluginInfo(self, entrypoint.name)
+
+        config.update()
 
 
 @subscribe(IApplicationInitializedEvent)
