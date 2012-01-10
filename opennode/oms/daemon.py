@@ -39,7 +39,6 @@ def run():
         raise Exception("cannot find base_dir")
 
     basedir = get_base_dir()
-    os.chdir(basedir)
 
     db = 'db'
 
@@ -56,7 +55,7 @@ def run():
     pm.addProcess('zeo', ['/bin/sh', '-c', '%s -f %s/data.fs -a %s/socket >%s/zeo.log 2>&1' % (runzeo, db, db, db)], env=os.environ)
     pm.startService()
 
-    sys.argv=[sys.argv[0], '-ny', 'opennode/oms.tac']
+    sys.argv=[sys.argv[0], '-ny', '%s/opennode/oms.tac' % (basedir,)]
 
     if args and args.d:
         # HACK, this code is invoked a second time by autoreload.main
