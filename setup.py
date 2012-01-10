@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-from version import get_git_version
+from opennode.utils.version import get_git_version
 
 
 setup(
