@@ -7,7 +7,7 @@ import sys
 import urllib2
 
 from BeautifulSoup import BeautifulSoup
-from ConfigParser import ConfigParser, NoOptionError
+from ConfigParser import ConfigParser
 from pkg_resources import working_set
 
 __all__ = 'run'
@@ -17,7 +17,7 @@ ENTRY_POINT_NAME = 'oms.plugins'
 def run():
     """bin/plugin allows to add/remove plugins to the eggnest"""
 
-    parser = argparse.ArgumentParser(description='Start OMS')
+    parser = argparse.ArgumentParser(description='Manage OMS plugins')
     subparsers = parser.add_subparsers(title='subcommands',
                                        description='valid subcommands',
                                        help='additional help')
