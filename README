@@ -19,7 +19,7 @@ running `brew install python`.
 3. Run buildout:
        bin/buildout
 
-4. Setup user accounts in the `oms_passwd` file. It contains SSHA password hashes; an easy way to create them is: `echo username:$(slappasswd -s <your_password>):role1,role2 >>oms_passwd`
+4. Setup user accounts with the `bin/passwd` utility
 
 5. Start the Twisted twistd server on port 8080 by executing
    `bin/omsd`

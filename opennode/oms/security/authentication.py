@@ -1,4 +1,6 @@
 import hashlib
+import os
+import sys
 
 from base64 import encodestring as encode
 from base64 import decodestring as decode
@@ -68,7 +70,12 @@ def setup_roles(event):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_permissions(event):
-    for i in file(get_config().get('auth', 'passwd_file')):
+    passwd_file = get_config().get('auth', 'passwd_file')
+    if not os.path.exists(passwd_file):
+        print "User account and password file doesn't exist, please set up accounts with `bin/passwd`"
+        sys.exit(1)
+    
+    for i in file(passwd_file):
         try:
             user, _, roles = i.split(':', 3)
         except ValueError:

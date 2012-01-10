@@ -32,6 +32,17 @@ If you prefer you can force the usage (and installation) of a fresh pythonbrew b
 
   $ curl http://opennodecloud.com/download/oms-core-installer.sh | sh -s --target /opt/oms -- --brew
 
+User accounts
+-------------
+
+Before starting we need at least an admin user account:
+
+.. code-block:: sh
+
+  $ bin/passwd -a john -r admin
+
+You can change the password later on with the same `bin/passwd` utility, see `bin/passwd --help` for additional info.
+
 Starting up
 -----------
 
