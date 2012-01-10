@@ -18,6 +18,7 @@ setup(
     install_requires = [
         "setuptools", # Redundant but removes a warning
         "Twisted==11.1.0",
+        "pyasn1==0.1.2", # required by Twisted conch
         "transaction==1.2.0",
         "zope.component==3.12",
         "zope.app.catalog==3.8.1",
