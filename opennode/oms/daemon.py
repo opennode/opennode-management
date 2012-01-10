@@ -13,12 +13,21 @@ from twisted.runner.procmon import ProcessMonitor
 def run():
     """Starts the child zeo process and then starts the twisted reactor."""
 
+    def get_base_dir():
+        for i in opennode.__path__:
+            base_dir = os.path.dirname(i)
+            if os.path.exists(os.path.join(base_dir, 'opennode/oms.tac')):
+                return base_dir
+        raise Exception("cannot find base_dir")
+
+    basedir = get_base_dir()
+
     # HACK:autoreload will rerun this executable
     # we have to avoid reparsing the omsd commandlines
     # since we patched sys.argv for hooking into twistd.run
     args = None
     development = False
-    if sys.argv[1:3] != ['-ny', 'opennode/oms.tac']:
+    if sys.argv[1:3] != ['-ny', '%s/opennode/oms.tac' % basedir]:
         parser = argparse.ArgumentParser(description='Start OMS')
         parser.add_argument('-d', action='store_true',
                             help='start in development mode with autorestart')
@@ -30,15 +39,6 @@ def run():
             sys.argv.remove('-d')
 
         args = collections.namedtuple('args', ['d'])(development)
-
-    def get_base_dir():
-        for i in opennode.__path__:
-            base_dir = os.path.dirname(i)
-            if os.path.exists(os.path.join(base_dir, 'opennode/oms.tac')):
-                return base_dir
-        raise Exception("cannot find base_dir")
-
-    basedir = get_base_dir()
 
     db = 'db'
 
