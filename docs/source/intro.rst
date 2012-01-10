@@ -53,8 +53,8 @@ Then you can start oms daemon with:
   $ cd oms
   $ bin/omsd
 
-Connect
--------
+Connecting
+----------
 
 You can connect to the OMS console via ssh:
 
