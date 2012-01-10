@@ -14,6 +14,7 @@ setup(
     namespace_packages = ['opennode'],
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
                                         'omspy = opennode.oms.pyshell:run',
+                                        'passwd = opennode.oms.security.passwd:run',
                                         'plugin = opennode.oms.plugin:run']},
     install_requires = [
         "setuptools", # Redundant but removes a warning
