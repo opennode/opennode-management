@@ -1,11 +1,10 @@
 import argparse
-import commands
 import collections
 import sys
 import os
 import opennode
 
-from opennode.oms.config import get_config
+from opennode.oms.zodb.db import get_db_dir
 from opennode.utils import autoreload
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
@@ -41,14 +40,7 @@ def run():
 
         args = collections.namedtuple('args', ['d'])(development)
 
-    db = 'db'
-
-    # useful during development
-    if os.path.exists('scripts/current_db_dir.sh'):
-        db = commands.getoutput('scripts/current_db_dir.sh')
-
-    if db == 'db':
-        db = get_config().get('db', 'path')
+    db = get_db_dir()
 
     runzeo = 'bin/runzeo'
     # XXX: compat mode for buildout-less runs

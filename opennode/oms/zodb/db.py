@@ -10,6 +10,7 @@ from twisted.python import log
 from twisted.python.threadable import isInIOThread
 from twisted.python.threadpool import ThreadPool
 
+from opennode.oms.config import get_config
 from opennode.oms.model.model import OmsRoot
 
 
@@ -31,19 +32,27 @@ def init_threadpool():
     reactor.addSystemEventTrigger('during', 'shutdown', _threadpool.stop)
 
 
+def get_db_dir():
+    db_dir = 'db'
+    try:
+        # useful during development
+        db_dir = subprocess.check_output('scripts/current_db_dir.sh').strip()
+    except:
+        pass
+
+    if db_dir == 'db':
+        db_dir = get_config().get('db', 'path')
+
+    return db_dir
+
+
 def init(test=False):
     global _db, _testing
 
     if not test:
         from ZODB import DB
 
-        db_dir = 'db'
-        try:
-            db_dir = subprocess.check_output('./current_db_dir.sh').strip()
-        except:
-            pass
-
-        storage = ClientStorage('%s/socket' % db_dir)
+        storage = ClientStorage('%s/socket' % get_db_dir())
         _db = DB(storage)
     else:
         from ZODB.tests.util import DB
