@@ -43,9 +43,11 @@ def ssha_hash(user, password, encoded_password):
     h.update(salt)
     return "{SSHA}" + encode(h.digest() + salt).rstrip()
 
-password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
-pubkey_checker = InMemoryPublicKeyCheckerDontUse()
-checkers = [password_checker, pubkey_checker]
+
+def checkers():
+    password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
+    pubkey_checker = InMemoryPublicKeyCheckerDontUse()
+    return [password_checker, pubkey_checker]
 
 
 @subscribe(IApplicationInitializedEvent)

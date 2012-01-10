@@ -34,7 +34,8 @@ def create_ssh_server():
     rlm.sessionFactory = OmsTerminalSession
 
     the_portal = portal.Portal(rlm)
-    for ch in checkers:
+
+    for ch in checkers():
         the_portal.registerChecker(ch)
 
     conch_factory = ConchFactory(the_portal)
