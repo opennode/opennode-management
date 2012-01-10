@@ -10,6 +10,7 @@ setup(
     author = "OpenNode Developers",
     author_email = "developers@opennodecloud.com",
     packages = find_packages(),
+    package_data={'opennode.oms': ['../oms.tac']},
     namespace_packages = ['opennode'],
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
                                         'omspy = opennode.oms.pyshell:run',
