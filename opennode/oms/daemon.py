@@ -5,6 +5,7 @@ import sys
 import os
 import opennode
 
+from opennode.oms.config import get_config
 from opennode.utils import autoreload
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
@@ -43,8 +44,11 @@ def run():
     db = 'db'
 
     # useful during development
-    if os.path.exists('current_db_dir.sh'):
-        db = commands.getoutput('./current_db_dir.sh')
+    if os.path.exists('scripts/current_db_dir.sh'):
+        db = commands.getoutput('scripts/current_db_dir.sh')
+
+    if db == 'db':
+        db = get_config().get('db', 'path')
 
     runzeo = 'bin/runzeo'
     # XXX: compat mode for buildout-less runs
