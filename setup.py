@@ -15,7 +15,9 @@ setup(
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
                                         'omspy = opennode.oms.pyshell:run',
                                         'passwd = opennode.oms.security.passwd:run',
-                                        'plugin = opennode.oms.plugin:run']},
+                                        'plugin = opennode.oms.plugin:run',
+                                        'obj_graph = opennode.oms.tools.obj_graph:run',
+                                        ]},
     install_requires = [
         "setuptools", # Redundant but removes a warning
         "Twisted==11.1.0",

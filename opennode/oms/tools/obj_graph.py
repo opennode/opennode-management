@@ -3,8 +3,6 @@ from opennode.oms.core import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.model import stream, symlink
 
-setup_environ()
-
 dbroot = db.get_root()
 oms_root = dbroot['oms_root']
 
@@ -34,10 +32,15 @@ def build_chart(start, chart_fnm='/tmp/oms-chart.dot'):
         chart.write("}\n")
     return path
 
-if __name__ == "__main__":
+def run():
     import sys
     if len(sys.argv) < 2:
         print "Usage: %s output_file_name" % sys.argv[0]
     else:
+        setup_environ()
+
         output_file = sys.argv[1]
         build_chart(oms_root, output_file)
+
+if __name__ == "__main__":
+    run()
