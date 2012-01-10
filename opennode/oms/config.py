@@ -71,7 +71,8 @@ class OmsConfig(ConfigParser):
             # user override must be last
             config_filenames.append('~/.opennode-oms.conf')
 
-        print "Reading config files", ', '.join(config_filenames)
+        # XXX: it would be nice to be able to print out these via some cmdline switch to omsd
+        # print "Reading config files", ', '.join(config_filenames)
         self.read([os.path.expanduser(i) for i in config_filenames])
 
     def getboolean(self, section, option, default=False):
