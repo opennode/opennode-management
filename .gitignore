@@ -18,3 +18,5 @@ docs/Makefile
 docs/make.bat
 docs/html
 docs/doctrees
+installer/oms_roles
+installer/oms_passwd

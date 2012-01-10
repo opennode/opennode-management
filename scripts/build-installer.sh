@@ -1,6 +1,9 @@
 #!/bin/sh
 INSTALLER=parts/oms-core-installer.sh
 
+cp oms_roles installer
+echo "user:{SSHA}ayCSd/ySYv9BANmqW8JfpxucvaTlS9J9:user" >installer/oms_passwd
+
 TMP=$(mktemp /tmp/oms-installer-XXXXXX)
 
 makeself --nox11 --notemp installer $TMP oms-core ./update.sh
