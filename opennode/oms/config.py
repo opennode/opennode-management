@@ -43,8 +43,11 @@ class OMSRequiredConfigurationFiles(Subscription):
 
 
 def gen_config_file_names(module, name):
+    """Generate a list of standard configuration files for a given software package:
+    defaults contained in egg, configuration file in current directory (usually installation dir), and user override"""
+
     base_dir = os.path.dirname(os.path.dirname(module.__path__[0]))
-    return [i % name for i in ['/usr/lib/opennode/opennode-%s-defaults.conf', '%s/opennode-%%s.conf' % base_dir, '/etc/opennode/opennode-%s.conf']]
+    return [i % name for i in ['%s/opennode-%%s.conf' % base_dir, './opennode-%s.conf', '/etc/opennode/opennode-%s.conf']]
 
 
 class OmsConfig(ConfigParser):
