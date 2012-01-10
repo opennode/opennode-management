@@ -28,7 +28,6 @@ setup(
         "ZODB3==3.10.5",
         "pycrypto==2.4.1",
         "pyOpenSSL==0.13",
-        "pyasn1==0.1.2",
         "netaddr==0.7.6",
         "BeautifulSoup==3.2.0",
         "certmaster==0.28",
