@@ -76,7 +76,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
     def authenticate(self, request, credentials, basic_auth=False):
         avatar = None
         if credentials:
-            for i in checkers:
+            for i in checkers():
                 try:
                     avatar = yield i.requestAvatarId(credentials)
                     break

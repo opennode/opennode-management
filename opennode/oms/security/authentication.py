@@ -19,6 +19,9 @@ from opennode.oms.config import get_config
 from opennode.oms.security.principals import User
 
 
+_checkers = None
+
+
 class AuthenticationUtility:
     implements(IAuthentication)
 
@@ -45,9 +48,12 @@ def ssha_hash(user, password, encoded_password):
 
 
 def checkers():
-    password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
-    pubkey_checker = InMemoryPublicKeyCheckerDontUse()
-    return [password_checker, pubkey_checker]
+    global _checkers
+    if _checkers == None:
+        password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
+        pubkey_checker = InMemoryPublicKeyCheckerDontUse()
+        _checkers = [password_checker, pubkey_checker]
+    return _checkers
 
 
 @subscribe(IApplicationInitializedEvent)
