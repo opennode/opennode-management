@@ -8,7 +8,7 @@ from zope.security.interfaces import Unauthorized, ForbiddenAttribute
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
-from opennode.oms.model.model.compute import Compute
+from opennode.oms.tests.test_compute import Compute
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.principals import User
 from opennode.oms.tests.util import run_in_reactor

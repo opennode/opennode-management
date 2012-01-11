@@ -11,8 +11,6 @@ from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 from opennode.oms.model.model.bin import Command
-from opennode.oms.model.model.compute import Computes
-from opennode.oms.model.model.console import ISshConsole, ITtyConsole, IOpenVzConsole
 
 
 class OmsShellTerminalProtocol(object):
@@ -36,7 +34,8 @@ class OmsShellTerminalProtocol(object):
 
 
 class SSHClientTerminalProtocol(object):
-    """Connect a ssh client session to a web terminal session."""
+    """Connect a ssh client session to a web terminal session.
+    Can be used to connect to hosts or to services and guis exposed via ssh interfaces, tunnels etc"""
 
     def __init__(self, user, host, port=22):
         self.user = user
@@ -57,34 +56,6 @@ class SSHClientTerminalProtocol(object):
     def terminalSize(self, width, height):
         self.channel.terminalSize(width, height)
 
-
-class HypervisorSshTerminalProtocol(SSHClientTerminalProtocol):
-    """Connect to a console via ssh on phy + some command"""
-
-    def __init__(self, console):
-        phy = console.__parent__.__parent__.__parent__.__parent__
-        super(HypervisorSshTerminalProtocol, self).__init__('root', phy.hostname, port=22)
-        self.console = console
-
-    def connection_made(self, terminal, size):
-        self.transport = terminal.transport
-        ssh_connect_interactive_shell(self.user, self.host, self.port, self.transport, self.set_channel, size, self.command)
-
-
-class TtyTerminalProtocol(HypervisorSshTerminalProtocol):
-    """Connect to a tty via ssh on phy + screen."""
-
-    @property
-    def command(self):
-        return 'screen -xRR %s %s' % (self.console.pty.replace('/', ''), self.console.pty)
-
-
-class OpenVzTerminalProtocol(HypervisorSshTerminalProtocol):
-    """Connect to a openvz console via ssh on phy + vzctl."""
-
-    @property
-    def command(self):
-        return 'vzctl enter %s' % (self.console.cid)
 
 
 class WebTransport(object):
@@ -228,15 +199,6 @@ class ConsoleView(HttpRestView, TerminalServerMixin):
     baseclass()
 
 
-class SshConsoleView(ConsoleView):
-    context(ISshConsole)
-    name('webterm')
-
-    @property
-    def terminal_protocol(self):
-        return SSHClientTerminalProtocol(self.context.user, self.context.hostname)
-
-
 class OmsShellConsoleView(ConsoleView):
     context(Command)
     name('webterm')
@@ -246,32 +208,3 @@ class OmsShellConsoleView(ConsoleView):
         # TODO: pass the self.context.cmd so that we can execute this particular command
         # instead of hardcoding the oms shell.
         return OmsShellTerminalProtocol()
-
-
-class ArbitraryHostConsoleView(ConsoleView):
-    context(Computes)
-    name('webterm')
-
-    def get_terminal_protocol(self, request):
-        user = request.args['user'][0]
-        host = request.args['host'][0]
-
-        return SSHClientTerminalProtocol(user, host)
-
-
-class TtyConsoleView(ConsoleView):
-    context(ITtyConsole)
-    name('webterm')
-
-    @property
-    def terminal_protocol(self):
-        return TtyTerminalProtocol(self.context)
-
-
-class OpenVzConsoleView(ConsoleView):
-    context(IOpenVzConsole)
-    name('webterm')
-
-    @property
-    def terminal_protocol(self):
-        return OpenVzTerminalProtocol(self.context)

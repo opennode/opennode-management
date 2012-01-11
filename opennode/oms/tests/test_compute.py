@@ -1,23 +1,27 @@
+"""The Compute schema belongs to the knot plugin, but here we have to repeat it because of old unit tests"""
+
+# XXX: this can be removed when parts of test_ssh will be rewritten using another model
+# currently it cannot be done because we don't have a builtin OMS core model as complex as Compute
+
 from __future__ import absolute_import
 
 from grokcore.component import context
 from zope import schema
-from zope.component import provideSubscriptionAdapter, provideAdapter
+from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
 from opennode.oms.security.directives import permissions
 
-from .actions import ActionsContainerExtension
-from .base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName
-from .byname import ByNameContainerExtension
-from .console import Consoles
-from .network import NetworkInterfaces, NetworkRoutes
-from .search import ModelTags
-from .template import Templates
-from .stream import MetricsContainerExtension, IMetrics
-from .symlink import Symlink
-from opennode.oms.backend.operation import IFuncInstalled
+from opennode.oms.model.model.actions import ActionsContainerExtension
+from opennode.oms.model.model.base import IContainer, Container, AddingContainer, IIncomplete, IDisplayName, ContainerInjector
+from opennode.oms.model.model.root import OmsRoot
+from opennode.oms.model.model.byname import ByNameContainerExtension
+#from opennode.oms.model.model.console import Consoles
+#from opennode.oms.model.model.network import NetworkInterfaces, NetworkRoutes
+from opennode.oms.model.model.search import ModelTags
+#from opennode.oms.model.model.template import Templates
+from opennode.oms.model.model.symlink import Symlink
+#from opennode.oms.backend.operation import IFuncInstalled
 from opennode.oms.model.schema import Path
-from opennode.oms.util import adapter_value
 
 
 M = 10**6
@@ -176,10 +180,10 @@ class Compute(Container):
         if ipv4_address:
             self._ipv4_address = ipv4_address
 
-        if self.template:
-            alsoProvides(self, IVirtualCompute)
-        else:
-            alsoProvides(self, IFuncInstalled)
+        #if self.template:
+        #    alsoProvides(self, IVirtualCompute)
+        #else:
+        #    alsoProvides(self, IFuncInstalled)
 
         alsoProvides(self, IIncomplete)
         alsoProvides(self, IUndeployed)
@@ -217,51 +221,30 @@ class Compute(Container):
         return 'compute%s' % self.__name__
 
     def get_consoles(self):
-        if not self._items.has_key('consoles'):
-            self._add(Consoles())
-        return self._items['consoles']
+        return None
 
     def set_consoles(self, value):
-        if self._items.has_key('consoles'):
-            del self._items['consoles']
-        self._add(value)
+        pass
 
     consoles = property(get_consoles, set_consoles)
 
     @property
     def templates(self):
-        from opennode.oms.zodb import db
-
-        @db.assert_transact
-        def do_it():
-            if not self['templates']:
-                templates = Templates()
-                templates.__name__ = 'templates'
-                self._add(templates)
-            return self['templates']
-        return do_it()
+        return None
 
     def get_interfaces(self):
-        if not self._items.has_key('interfaces'):
-            self._add(NetworkInterfaces())
-        return self._items['interfaces']
+        return None
 
     def set_interfaces(self, value):
-        if self._items.has_key('interfaces'):
-            del self._items['interfaces']
-        self._add(value)
+        pass
 
     interfaces = property(get_interfaces, set_interfaces)
 
     def get_routes(self):
-        if not self._items.has_key('routes'):
-            self._add(NetworkRoutes())
-        return self._items['routes']
+        return None
 
     def set_routes(self, value):
-        if self._items.has_key('routes'):
-            del self._items['routes']
-        self._add(value)
+        pass
 
     routes = property(get_routes, set_routes)
 
@@ -284,9 +267,9 @@ class ComputeTags(ModelTags):
             for i in self.context.architecture:
                 res.append(u'arch:' + i)
 
-        from .virtualizationcontainer import IVirtualizationContainer
-        if IVirtualCompute.providedBy(self.context) and IVirtualizationContainer.providedBy(self.context.__parent__):
-            res.append(u'virt_type:' + self.context.__parent__.backend)
+        #from .virtualizationcontainer import IVirtualizationContainer
+        #if IVirtualCompute.providedBy(self.context) and IVirtualizationContainer.providedBy(self.context.__parent__):
+        #    res.append(u'virt_type:' + self.context.__parent__.backend)
 
         return res
 
@@ -298,6 +281,7 @@ class IVirtualCompute(Interface):
 
 
 class Computes(AddingContainer):
+    __name__ = 'computes'
     __contains__ = Compute
 
     def __str__(self):
@@ -307,7 +291,7 @@ class Computes(AddingContainer):
     def _items(self):
         # break an import cycle
         from opennode.oms.zodb import db
-        machines = db.get_root()['oms_root'].machines
+        machines = db.get_root()['oms_root']['machines']
 
         computes = {}
 
@@ -324,7 +308,7 @@ class Computes(AddingContainer):
     def _add(self, item):
         # break an import cycle
         from opennode.oms.zodb import db
-        machines = db.get_root()['oms_root'].machines
+        machines = db.get_root()['oms_root']['machines']
         return (machines.hangar if IVirtualCompute.providedBy(item) else machines).add(item)
 
     def __delitem__(self, key):
@@ -333,9 +317,43 @@ class Computes(AddingContainer):
             del item.target.__parent__[item.target.__name__]
 
 
-provideAdapter(adapter_value(['cpu_usage', 'memory_usage', 'network_usage', 'diskspace_usage']), adapts=(Compute,), provides=(IMetrics))
-
-
 provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Compute, ))
 provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Computes, ))
-provideSubscriptionAdapter(MetricsContainerExtension, adapts=(Compute, ))
+
+
+class ComputesRootInjector(ContainerInjector):
+    context(OmsRoot)
+    __class__ = Computes
+
+###############
+
+from zope.component import provideSubscriptionAdapter
+
+#from .base import Container
+#from .byname import ByNameContainerExtension
+#from .compute import Compute
+#from .hangar import Hangar
+
+
+class Machines(Container):
+    __contains__ = Compute
+    __name__ = 'machines'
+
+    def __init__(self):
+        super(Machines, self).__init__()
+ 
+    def __str__(self):
+        return 'Machines list'
+
+
+#provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Machines, ))
+
+class MachinesRootInjector(ContainerInjector):
+    context(OmsRoot)
+    __class__ = Machines
+
+###
+from opennode.oms.model.model import creatable_models
+compute_creatable_models = dict((cls.__name__.lower(), cls)
+                        for cls in [Compute])
+creatable_models.update(compute_creatable_models)

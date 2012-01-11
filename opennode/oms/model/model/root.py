@@ -2,14 +2,10 @@ from __future__ import absolute_import
 
 from .base import ReadonlyContainer
 from .bin import Bin
-from .compute import Computes
 from .log import Log
-from .machines import Machines
-from .network import Networks
 from .proc import Proc
 from .search import SearchContainer
 from .stream import StreamSubscriber
-from .template import Templates
 from .plugins import Plugins
 
 
@@ -25,11 +21,7 @@ class OmsRoot(ReadonlyContainer):
     __name__ = ''
 
     _items = property(lambda self: {
-        'computes': self.computes,
-        'templates': self.templates,
-        'machines': self.machines,
         'search': self.search,
-        'networks': self.networks,
         'bin': self.bin,
         'proc': self.proc,
         'plugins': self.plugins,
@@ -38,17 +30,7 @@ class OmsRoot(ReadonlyContainer):
     })
 
     def __init__(self):
-        self.computes = Computes()
-        self.computes.__parent__ = self
-        self.computes.__name__ = 'computes'
-
-        self.templates = Templates()
-        self.templates.__parent__ = self
-        self.templates.__name__ = 'templates'
-
-        self.machines = Machines()
-        self.machines.__parent__ = self
-        self.machines.__name__ = 'machines'
+        pass
 
     @property
     def bin(self):
@@ -68,13 +50,6 @@ class OmsRoot(ReadonlyContainer):
             self._log = Log()
             self._log.__parent__ = self
         return self._log
-
-    @property
-    def networks(self):
-        if not getattr(self, '_networks', None):
-            self._networks = Networks()
-            self._networks.__parent__ = self
-        return self._networks
 
     @property
     def search(self):

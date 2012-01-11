@@ -5,13 +5,10 @@ from zope.interface import implements
 from zope.keyreference.interfaces import NotYet
 
 from opennode.oms.model.model.proc import IProcess, Proc, DaemonProcess
-from opennode.oms.model.model.compute import ICompute
 from opennode.oms.util import subscription_factory, async_sleep
 from opennode.oms.zodb import db
 from opennode.oms.model.form import IModelDeletedEvent
-from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.traversal import canonical_path, traverse_path
-from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 
 
 class IndexerDaemonProcess(DaemonProcess):
