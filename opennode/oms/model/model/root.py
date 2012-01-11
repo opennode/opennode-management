@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 
-from .base import ReadonlyContainer
+from BTrees.OOBTree import OOBTree
+from grokcore.component import Subscription, context, implements
+
+from .base import ReadonlyContainer, IContainerInjector, IContainerExtender
+
 from .bin import Bin
 from .log import Log
 from .proc import Proc
@@ -20,55 +24,30 @@ class OmsRoot(ReadonlyContainer):
 
     __name__ = ''
 
-    _items = property(lambda self: {
-        'search': self.search,
-        'bin': self.bin,
-        'proc': self.proc,
-        'plugins': self.plugins,
-        'log': self.log,
-        'stream': self.stream,
-    })
-
     def __init__(self):
-        pass
-
-    @property
-    def bin(self):
-        bin = Bin()
-        bin.__parent__ = self
-        return bin
-
-    @property
-    def proc(self):
-        proc = Proc()
-        proc.__parent__ = self
-        return proc
-
-    @property
-    def log(self):
-        if not getattr(self, '_log', None):
-            self._log = Log()
-            self._log.__parent__ = self
-        return self._log
-
-    @property
-    def search(self):
-        if not getattr(self, '_search', None):
-            self._search = SearchContainer()
-            self._search.__parent__ = self
-        return self._search
-
-    @property
-    def stream(self):
-        res = StreamSubscriber()
-        res.__parent__ = self
-        return res
-
-    @property
-    def plugins(self):
-        res = Plugins()
-        res.__parent__ = self
-        return res
+        self._items = OOBTree()
 
     def __str__(self):
         return 'OMS root'
+
+
+class RootContainerInjector(Subscription):
+    implements(IContainerInjector)
+    context(OmsRoot)
+
+    def inject(self):
+        return {'log': Log(),
+                'search': SearchContainer(),
+                }
+
+
+class RootContainerExtension(Subscription):
+    implements(IContainerExtender)
+    context(OmsRoot)
+
+    def extend(self):
+        return {'bin': Bin(),
+                'proc': Proc(),
+                'plugins': Plugins(),
+                'stream': StreamSubscriber(),
+                }

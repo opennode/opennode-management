@@ -65,6 +65,11 @@ class IContainerExtender(Interface):
         """Extend the container contents with new elements."""
 
 
+class IContainerInjector(Interface):
+    def inject(self):
+        """Injects models into the container. The injected models are persisted in the container."""
+
+
 class ContainerExtension(Subscription):
     implements(IContainerExtender)
     baseclass()
@@ -72,7 +77,19 @@ class ContainerExtension(Subscription):
     __class__ = None
 
     def extend(self):
-        return {self.__class__.__name__: self.__class__(self.context)}
+        # XXX: currently models designed for container extension expect the parent
+        # as constructor argument, but it's not needed anymore
+        return {self.__class__.__dict__['__name__']: self.__class__(self.context)}
+
+
+class ContainerInjector(Subscription):
+    implements(IContainerInjector)
+    baseclass()
+
+    __class__ = None
+
+    def inject(self):
+        return {self.__class__.__dict__['__name__']: self.__class__()}
 
 
 class ReadonlyContainer(Model):
@@ -92,11 +109,21 @@ class ReadonlyContainer(Model):
         return iter(self.listcontent())
 
     def content(self):
+        injectors = querySubscriptions(self, IContainerInjector)
+        for injector in injectors:
+            for k, v in injector.inject().items():
+                if k not in self._items:
+                    v.__parent__ = self
+                    self._items[k] = v
+
         items = dict(**self._items)
 
         extenders = querySubscriptions(self, IContainerExtender)
         for extender in extenders:
-            items.update(extender.extend())
+            children = extender.extend()
+            for v in children.values():
+                v.__parent__ = self
+            items.update(children)
 
         return items
 
