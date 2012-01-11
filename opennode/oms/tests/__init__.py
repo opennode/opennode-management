@@ -4,8 +4,8 @@ from opennode.oms.tests.util import teardown_reactor
 
 
 def setup_package():
-    setup_environ()
     init(test=True)
+    setup_environ()
 
 
 def teardown_package():
