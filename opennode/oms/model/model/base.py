@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import persistent
 from BTrees.OOBTree import OOBTree
-from grokcore.component import querySubscriptions
+from grokcore.component import Subscription, querySubscriptions, baseclass
 from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
@@ -63,6 +63,16 @@ class Model(persistent.Persistent):
 class IContainerExtender(Interface):
     def extend(self):
         """Extend the container contents with new elements."""
+
+
+class ContainerExtension(Subscription):
+    implements(IContainerExtender)
+    baseclass()
+
+    __class__ = None
+
+    def extend(self):
+        return {self.__class__.__name__: self.__class__(self.context)}
 
 
 class ReadonlyContainer(Model):
