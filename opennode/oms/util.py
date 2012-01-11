@@ -174,3 +174,15 @@ def trace_methods(cls):
 def get_u(obj, key):
     val = obj.get(key)
     return unicode(val) if val is not None else None
+
+
+def exception_logger(fun):
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise e
+    return wrapper

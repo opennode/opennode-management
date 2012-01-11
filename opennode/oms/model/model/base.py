@@ -6,7 +6,7 @@ from grokcore.component import Subscription, querySubscriptions, baseclass
 from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
-from opennode.oms.util import get_direct_interfaces
+from opennode.oms.util import get_direct_interfaces, exception_logger
 from opennode.oms.model.form import ModelCreatedEvent
 from zope.component import handle
 
@@ -108,6 +108,7 @@ class ReadonlyContainer(Model):
     def __iter__(self):
         return iter(self.listcontent())
 
+    @exception_logger
     def content(self):
         injectors = querySubscriptions(self, IContainerInjector)
         for injector in injectors:
