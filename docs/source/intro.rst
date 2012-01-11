@@ -60,7 +60,7 @@ You can connect to the OMS console via ssh:
 
 .. code-block:: sh
 
-  $ ssh root@localhost -l 6022
+  $ ssh root@localhost -p 6022
 
 
 Plugins
