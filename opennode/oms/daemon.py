@@ -2,6 +2,7 @@ import argparse
 import os
 import opennode
 
+from opennode.oms.config import get_config_cmdline
 from opennode.oms.zodb.db import get_db_dir
 from opennode.utils import autoreload
 from twisted.scripts import twistd
@@ -37,13 +38,20 @@ def run_app():
 
 
 def run():
-    """Starts the child zeo process and then starts the twisted reactor."""
+    """Starts the child zeo process and then starts the twisted reactor running OMS"""
 
     parser = argparse.ArgumentParser(description='Start OMS')
     parser.add_argument('-d', action='store_true',
                         help='start in development mode with autorestart')
+    parser.add_argument('--db', help='overrides db directory')
 
     args = parser.parse_args()
+
+    conf = get_config_cmdline()
+    if args.db:
+        if not conf.has_section('db'):
+            conf.add_section('db')
+        conf.set('db', 'path', args.db)
 
     run_zeo(get_db_dir())
 

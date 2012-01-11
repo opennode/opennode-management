@@ -1,6 +1,8 @@
 import os
 
 from ConfigParser import ConfigParser, Error as ConfigKeyError
+from contextlib import closing
+from cStringIO import StringIO
 from grokcore.component import Subscription, implements, context, querySubscriptions
 from grokcore.component.testing import grok
 from zope.interface import Interface
@@ -9,6 +11,7 @@ import opennode.oms
 
 _config = None
 _loaded_config_requirements = []
+_cmdline_override = ConfigParser()
 
 
 def get_config():
@@ -22,6 +25,11 @@ def get_config():
 
         _config = OmsConfig()
     return _config
+
+
+def get_config_cmdline():
+    """Special config parser for options overridden from command line"""
+    return _cmdline_override
 
 
 def update():
@@ -74,6 +82,10 @@ class OmsConfig(ConfigParser):
         # XXX: it would be nice to be able to print out these via some cmdline switch to omsd
         # print "Reading config files", ', '.join(config_filenames)
         self.read([os.path.expanduser(i) for i in config_filenames])
+
+        with closing(StringIO()) as s:
+            _cmdline_override.write(s)
+            self.readfp(StringIO(s.getvalue()))
 
     def getboolean(self, section, option, default=False):
         try:
