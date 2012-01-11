@@ -70,6 +70,8 @@ def run_in_reactor(fun):
 
         if error is not None:
             exc_type, exc_value, tb = error
+            import traceback
+            traceback.print_exception(exc_type, exc_value, tb)
             raise (exc_type, exc_value, tb)
 
     return wrapper
