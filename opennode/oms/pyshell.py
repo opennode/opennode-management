@@ -10,7 +10,13 @@ import logging
 from opennode.oms.core import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.location import ILocation
-from opennode.oms.model.model import OmsRoot, Computes, Compute, Templates, Template
+from opennode.oms.model.model import OmsRoot
+try:
+    from opennode.oms.model.model import Computes, Compute, Templates, Template
+except:
+    # ignore, the knot plugin is not installed
+    pass
+
 from opennode.oms.model.traversal import traverse_path, traverse1
 from opennode.oms.endpoint.httprest.view import IHttpRestView
 
