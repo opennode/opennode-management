@@ -13,7 +13,7 @@
 
 import sys, os
 import opennode
-from version import get_git_version
+from opennode.utils.version import get_git_version
 
 import sphinx.apidoc
 import shutil

@@ -3,10 +3,9 @@ from opennode.oms.core import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.model import stream, symlink
 
-dbroot = db.get_root()
-oms_root = dbroot['oms_root']
 
 ignored_classes = [stream.TransientStreamModel]
+
 
 def build_chart(start, chart_fnm='/tmp/oms-chart.dot'):
     '''iterative breadth first search from start'''
@@ -33,6 +32,10 @@ def build_chart(start, chart_fnm='/tmp/oms-chart.dot'):
     return path
 
 def run():
+    dbroot = db.get_root()
+    oms_root = dbroot['oms_root']
+
+
     import sys
     if len(sys.argv) < 2:
         print "Usage: %s output_file_name" % sys.argv[0]
