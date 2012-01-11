@@ -35,7 +35,5 @@ setup(
         "pyOpenSSL==0.13",
         "netaddr==0.7.6",
         "BeautifulSoup==3.2.0",
-        "certmaster==0.28",
-        "func==0.28",
         ],
 )
