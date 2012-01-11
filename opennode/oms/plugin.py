@@ -56,6 +56,10 @@ def run():
 def install_plugin(args):
     """Install an oms plugin and rerun `buildout` to update the omsd python path"""
 
+    if args.d and not os.path.exists(args.d):
+        print "The provided plugin source checkout directory '%s' doesn't exist" % args.d
+        sys.exit(1)
+
     eggnest_file = os.path.join('eggnest', args.plugin) + '.cfg'
     with file(eggnest_file, 'w') as f:
         print >>f, '[eggnest]\negg = %s' % args.plugin

@@ -107,7 +107,10 @@ Installing a plugin which depends on another plugin(s) will automatically instal
 Development
 ~~~~~~~~~~~
 
-You can also install a plugin under development with:
+If you are developing a plugin you'll want to install the plugin in "Development mode". This means
+that the OMS core daemon will run using your plugin *from a source checkout*.
+
+You have to pass the directory containing the plugin sources checkout:
 
 .. code-block:: sh
 
@@ -115,6 +118,8 @@ You can also install a plugin under development with:
 
 
 Installing a development plugin which depends on another plugin will fetch the dependency as egg:
+
+.. code-block:: sh
 
   $ bin/plugin list
   $ bin/plugin install opennode.oms.onc -d ../opennode-console-exp
