@@ -2,7 +2,6 @@ import os
 import string
 
 from twisted.conch import recvline
-from twisted.conch.insults.insults import modes
 from twisted.python import log
 
 
@@ -60,8 +59,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.search_skip = 0
 
     def initializeScreen(self):
-        # don't output wrong "insert mode" escape chars, as superclass does
-        self.mode = 'insert'
+        # don't output "insert mode" escape chars if not in interactive mode
+        if not self.batch:
+            self.setInsertMode()
 
     def terminalSize(self, width, height):
         """Avoid clearing the whole screen"""
@@ -316,6 +316,10 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
     def close_connection(self):
         """Closes the connection and saves history."""
+
+        # we have to disable insert mode, because bash etc don't use
+        # the terminal builtin insert mode but they emulate it
+        self.setTypeoverMode()
 
         self.save_history()
 
