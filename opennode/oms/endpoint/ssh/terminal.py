@@ -63,6 +63,14 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         if not self.batch:
             self.setInsertMode()
 
+    def enter_full_screen(self):
+        """Switch to the full screen plane, used for editors."""
+        self.terminal.write('\x1b[?1049h')
+
+    def exit_full_screen(self):
+        """Switch back to the normal plane."""
+        self.terminal.write('\x1b[?1049l')
+
     def terminalSize(self, width, height):
         """Avoid clearing the whole screen"""
 

@@ -9,6 +9,7 @@ from twisted.conch.insults.insults import modes
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 
+from opennode.oms.util import async_sleep
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
@@ -770,3 +771,26 @@ class TerminalResetCmd(Cmd):
             return
         self.protocol.terminal.reset()
         self.terminal.setModes((modes.IRM, ))
+
+
+class EditCmd(Cmd):
+    command("edit")
+
+    @defer.inlineCallbacks
+    def execute(self, args):
+        self.protocol.enter_full_screen()
+        self.draw_modeline('--:-- test     0 % (0,0) (Fundamental)')
+
+        self.protocol.terminal.cursorHome()
+        self.write("wow, I'm an editor")
+
+        yield async_sleep(10)
+        self.protocol.exit_full_screen()
+
+    def draw_modeline(self, text):
+        from twisted.conch.insults import insults
+
+        self.protocol.terminal.cursorPosition(0, self.protocol.height - 2)
+        self.protocol.terminal.selectGraphicRendition(str(insults.REVERSE_VIDEO))
+        self.write(text.ljust(self.protocol.width))
+        self.protocol.terminal.selectGraphicRendition()
