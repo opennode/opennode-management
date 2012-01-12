@@ -13,7 +13,7 @@ Quick installation of OMS core on Linux:
 
 .. code-block:: sh
 
-  $ curl http://opennodecloud.com/download/oms-core-installer.sh | sh
+  $ curl -s http://opennodecloud.com/download/oms-core-installer.sh | sh
 
 This will create an 'oms' subdirectory in the current directory.
 If you move/rename that directory, please make sure you run the `update.sh` script.
@@ -22,7 +22,7 @@ If you prefer you can specify the target directory with:
 
 .. code-block:: sh
 
-  $ curl http://opennodecloud.com/download/oms-core-installer.sh | sh -s -- --target /opt/oms
+  $ curl -s http://opennodecloud.com/download/oms-core-installer.sh | sh -s -- --target /opt/oms
 
 The installer will check if you have `python2.7`, otherwise it will tell you how to proceed by automatically installing a fresh python 2.7 with pythonbrew (https://github.com/utahta/pythonbrew).
 
@@ -30,7 +30,7 @@ If you prefer you can force the usage (and installation) of a fresh pythonbrew b
 
 .. code-block:: sh
 
-  $ curl http://opennodecloud.com/download/oms-core-installer.sh | sh -s -- --target /opt/oms -- --brew
+  $ curl -s http://opennodecloud.com/download/oms-core-installer.sh | sh -s -- --target /opt/oms -- --brew
 
 User accounts
 -------------
