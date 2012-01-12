@@ -784,6 +784,35 @@ class EditCmd(Cmd):
         self.protocol.terminal.cursorHome()
         self.write("wow, I'm an editor")
 
+        class EditSubProtocol(object):
+            def __init__(self, parent):
+                self.parent = parent
+                self.buffer = []
+
+            def handle_EOF(self):
+                pass
+
+            def _echo(self, keyID, mod):
+                """Echoes characters on terminal like on unix (special chars etc)"""
+                ch = keyID
+                if isinstance(keyID, str):
+                    if ord(keyID) == 127:
+                        ch = '^H'
+                    if ord(keyID) < 32 and keyID != '\r':
+                        ch = '^' + chr(ord('A') + ord(keyID) - 1)
+                    self.parent.terminal.write(ch)
+                    if keyID in ('\r', self.protocol.CTRL_C):
+                        self.parent.terminal.write('\n')
+
+            def keystrokeReceived(self, keyID, mod):
+                self._echo(keyID, mod)
+
+                # HACK: poor man's interrupt
+                if keyID == self.protocolCTRL_C:
+                    return self.parent.exit_sub_protocol()
+
+        self.protocol.sub_protocol = EditSubProtocol(self.protocol)
+
         yield async_sleep(10)
         self.protocol.exit_full_screen()
 
