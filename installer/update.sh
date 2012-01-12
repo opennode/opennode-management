@@ -78,4 +78,5 @@ else
 fi
 
 $PYTHON bootstrap.py --setup-source=$DIR/download-cache/ez_setup.py --download-base=$DIR/download-cache
-bin/buildout
+rm -rf eggs/opennode*.egg
+bin/buildout -N
