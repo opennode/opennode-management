@@ -74,7 +74,7 @@ def setup_permissions(event):
     if not os.path.exists(passwd_file):
         print "User account and password file doesn't exist, please set up accounts with `bin/passwd`"
         sys.exit(1)
-    
+
     for i in file(passwd_file):
         try:
             user, _, roles = i.split(':', 3)

@@ -18,7 +18,7 @@ class HttpRestViewSecurityGrokker(martian.ClassGrokker):
     def execute(self, factory, config, permission, **kw):
         # mandatory, otherwise zope's default Checker impl will be used
         # which doesn't play well in async frameworks like twisted.
-        defineChecker(factory, Checker({},{}))
+        defineChecker(factory, Checker({}, {}))
 
         for method_name in [i for i in dir(factory) if i.startswith('render')]:
             config.action(

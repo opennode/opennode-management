@@ -4,7 +4,7 @@ OpenNode Management Service.
 
 from twisted.internet.defer import Deferred
 from zope.component import handle
-from zope.interface import Interface,implements
+from zope.interface import Interface, implements
 
 
 class IApplicationInitializedEvent(Interface):
@@ -39,6 +39,7 @@ def grok_all():
     grok('opennode.oms.model.model.actions')
 
     grok('opennode.oms')
+
 
 def setup_environ():
     grok_all()

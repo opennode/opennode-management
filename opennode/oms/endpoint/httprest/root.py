@@ -34,6 +34,7 @@ class HttpStatus(Exception):
 
     headers = {}
 
+
 class NotFound(HttpStatus):
     status_code = 404
     status_description = "Not Found"
@@ -70,6 +71,7 @@ class Unauthorized(HttpStatus):
 
     headers = {'WWW-Authenticate': 'Basic realm=OMS',
                'Set-Cookie': 'oms_auth_token=;expires=Wed, 01 Jan 2000 00:00:00 GMT'}
+
 
 class Forbidden(HttpStatus):
     status_code = 403
@@ -213,7 +215,6 @@ class HttpRestServer(resource.Resource):
             renderer = get_renderer(view, method)
             if renderer:
                 return renderer(request)
-
 
         raise NotImplemented("method %s not implemented\n" % request.method)
 

@@ -186,7 +186,7 @@ class SearchResult(ReadonlyContainer):
 
             def find_free_name(tentative_name, idx):
                 next_name = '%s_%s' % (name, idx)
-                if res.has_key(tentative_name):
+                if tentative_name in res:
                     return find_free_name(next_name, idx + 1)
                 return tentative_name
 
@@ -289,7 +289,7 @@ class TagItems(ReadonlyContainer):
 
             def find_free_name(tentative_name, idx):
                 next_name = '%s_%s' % (name, idx)
-                if res.has_key(tentative_name):
+                if tentative_name in res:
                     return find_free_name(next_name, idx + 1)
                 return tentative_name
 

@@ -18,8 +18,8 @@ def get_config():
     global _config
     if not _config:
         # ensure that our config file subscription adapter has been grokked
-        # this is tricky because we need a configuration object at the very beginning of 
-        # the startup sequence
+        # this is tricky because we need a configuration object at the very
+        # beginning of the startup sequence
         if not querySubscriptions(object(), IRequiredConfigurationFiles):
             grok('opennode.oms.config')
 
@@ -39,7 +39,10 @@ def update():
 
 class IRequiredConfigurationFiles(Interface):
     def config_file_names():
-        """Used by plugins to define which are the required configuration files"""
+        """Used by plugins to define which are the required
+        configuration files
+
+        """
 
 
 class OMSRequiredConfigurationFiles(Subscription):
@@ -51,8 +54,11 @@ class OMSRequiredConfigurationFiles(Subscription):
 
 
 def gen_config_file_names(module, name):
-    """Generate a list of standard configuration files for a given software package:
-    defaults contained in egg, configuration file in current directory (usually installation dir), and user override"""
+    """Generate a list of standard configuration files for a given
+    software package: defaults contained in egg, configuration file
+    in current directory (usually installation dir), and user override
+
+    """
 
     base_dir = os.path.dirname(os.path.dirname(module.__path__[0]))
     return [i % name for i in ['%s/opennode-%%s.conf' % base_dir, './opennode-%s.conf', '/etc/opennode/opennode-%s.conf']]

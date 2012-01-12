@@ -28,7 +28,7 @@ def color_rjust(text, size):
     return text.rjust(size + len(text) - len(bw(text)))
 
 
-def columnize(array, displaywidth=80, colsep = '  ',
+def columnize(array, displaywidth=80, colsep='  ',
               arrange_vertical=True, ljust=True, lineprefix=''):
     """Return a list of strings as a compact set of columns arranged
     horizontally or vertically.
@@ -49,7 +49,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
     set false, consecutive items will go across, left to right, top to
     bottom."""
     if not isinstance(array, list) and not isinstance(array, tuple):
-        raise TypeError, (
+        raise TypeError(
             'array needs to be an instance of a list or a tuple')
 
     array = [str(i) for i in array]
@@ -63,10 +63,10 @@ def columnize(array, displaywidth=80, colsep = '  ',
 
     displaywidth = max(4, displaywidth - len(lineprefix))
     if arrange_vertical:
-        array_index = lambda nrows, row, col: nrows*col + row
+        array_index = lambda nrows, row, col: nrows * col + row
         # Try every row count from 1 upwards
         for nrows in range(1, size):
-            ncols = (size+nrows-1) // nrows
+            ncols = (size + nrows - 1) // nrows
             colwidths = []
             totwidth = -len(colsep)
             for col in range(ncols):
@@ -74,7 +74,8 @@ def columnize(array, displaywidth=80, colsep = '  ',
                 colwidth = 0
                 for row in range(nrows):
                     i = array_index(nrows, row, col)
-                    if i >= size: break
+                    if i >= size:
+                        break
                     x = array[i]
                     colwidth = max(colwidth, len(bw(x)))
                     pass
@@ -94,7 +95,7 @@ def columnize(array, displaywidth=80, colsep = '  ',
         for row in range(nrows):
             texts = []
             for col in range(ncols):
-                i = row + nrows*col
+                i = row + nrows * col
                 if i >= size:
                     x = ""
                 else:
@@ -113,25 +114,26 @@ def columnize(array, displaywidth=80, colsep = '  ',
             pass
         return s
     else:
-        array_index = lambda nrows, row, col: ncols*(row-1) + col
+        array_index = lambda nrows, row, col: ncols * (row - 1) + col
         # Try every column count from size downwards
         colwidths = []
         for ncols in range(size, 0, -1):
             # Try every row count from 1 upwards
-            min_rows = (size+ncols-1) // ncols
+            min_rows = (size + ncols - 1) // ncols
             for nrows in range(min_rows, size):
                 rounded_size = nrows * ncols
                 colwidths = []
-                totwidth  = -len(colsep)
+                totwidth = -len(colsep)
                 for col in range(ncols):
                     # get max column width for this column
-                    colwidth  = 0
-                    for row in range(1, nrows+1):
+                    colwidth = 0
+                    for row in range(1, nrows + 1):
                         i = array_index(nrows, row, col)
-                        if i >= rounded_size: break
+                        if i >= rounded_size:
+                            break
                         elif i < size:
                             x = array[i]
-                            colwidth = max(colwidth, len(bw(x)) )
+                            colwidth = max(colwidth, len(bw(x)))
                             pass
                         pass
                     colwidths.append(colwidth)
@@ -139,15 +141,15 @@ def columnize(array, displaywidth=80, colsep = '  ',
                     if totwidth >= displaywidth:
                         break
                     pass
-                if totwidth <= displaywidth and i >= rounded_size-1:
+                if totwidth <= displaywidth and i >= rounded_size - 1:
                     # Found the right nrows and ncols
-                    nrows  = row
+                    nrows = row
                     break
                 elif totwidth >= displaywidth:
                     # Need to reduce ncols
                     break
                 pass
-            if totwidth <= displaywidth and i >= rounded_size-1:
+            if totwidth <= displaywidth and i >= rounded_size - 1:
                 break
             pass
         # The smallest number of rows computed and the
@@ -155,13 +157,14 @@ def columnize(array, displaywidth=80, colsep = '  ',
         # Now we just have to format each of the
         # rows.
         s = ''
-        for row in range(1, nrows+1):
+        for row in range(1, nrows + 1):
             texts = []
             for col in range(ncols):
                 i = array_index(nrows, row, col)
                 if i >= size:
                     break
-                else: x = array[i]
+                else:
+                    x = array[i]
                 texts.append(x)
                 pass
             for col in range(len(texts)):

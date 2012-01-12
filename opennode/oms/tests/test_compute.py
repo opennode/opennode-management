@@ -24,7 +24,7 @@ from opennode.oms.model.model.symlink import Symlink
 from opennode.oms.model.schema import Path
 
 
-M = 10**6
+M = 10 ** 6
 
 
 class ICompute(Interface):
@@ -250,7 +250,7 @@ class Compute(Container):
 
     @property
     def ipv4_address(self):
-        if not self._items.has_key('interfaces'):
+        if 'interfaces' not in self._items:
             return self._ipv4_address
         addresses = [i.ipv4_address for i in self._items['interfaces'] if i.ipv4_address]
         if not addresses:
@@ -341,7 +341,7 @@ class Machines(Container):
 
     def __init__(self):
         super(Machines, self).__init__()
- 
+
     def __str__(self):
         return 'Machines list'
 

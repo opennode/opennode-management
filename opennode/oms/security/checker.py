@@ -21,6 +21,7 @@ def _select_checker(value, interaction):
     bound_checker.interaction = interaction
     return bound_checker
 
+
 def proxy_factory(value, interaction):
     return Proxy(value, _select_checker(value, interaction))
 
@@ -72,9 +73,9 @@ class Checker(object):
 
         if permission is not None:
             if permission is CheckerPublic:
-                return # Public
-            if self.interaction.checkPermission(permission, object): # use local interaction
-                return # allowed
+                return  # Public
+            if self.interaction.checkPermission(permission, object):  # use local interaction
+                return  # allowed
             else:
                 __traceback_supplement__ = (TracebackSupplement, object)
                 raise Unauthorized(object, name, permission)
@@ -87,8 +88,8 @@ class Checker(object):
         permission = self.get_permissions.get(name)
         if permission is not None:
             if permission is CheckerPublic:
-                return # Public
-            if self.interaction.checkPermission(permission, object): # use local interaction
+                return  # Public
+            if self.interaction.checkPermission(permission, object):  # use local interaction
                 return
             else:
                 __traceback_supplement__ = (TracebackSupplement, object)
@@ -108,9 +109,8 @@ class Checker(object):
             return value
         checker = getattr(value, '__Security_checker__', None)
         if checker is None:
-            checker = _select_checker(value, self.interaction) # pass interaction
+            checker = _select_checker(value, self.interaction)  # pass interaction
             if checker is None:
                 return value
 
         return Proxy(value, checker)
-

@@ -21,6 +21,7 @@ from opennode.oms.zodb import db
 from opennode.oms.tests.util import whatever
 from opennode.oms.tests.test_compute import Compute
 
+
 class SshTestCase(unittest.TestCase):
 
     tlds = ['bin', 'computes', 'log', 'machines', 'proc', 'search', 'stream']

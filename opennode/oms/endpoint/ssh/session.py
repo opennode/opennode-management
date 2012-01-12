@@ -15,22 +15,22 @@ class BatchOmsShellProtocol(OmsShellProtocol):
 
 
 class OmsTerminalSession(TerminalSession):
-     def execCommand(self, proto, cmd):
-         try:
-             chained_protocol = insults.ServerProtocol(BatchOmsShellProtocol)
+    def execCommand(self, proto, cmd):
+        try:
+            chained_protocol = insults.ServerProtocol(BatchOmsShellProtocol)
 
-             self.transportFactory(
-                 proto, chained_protocol,
-                 iconch.IConchUser(self.original),
-                 80, 25)
-         except Exception as e:
-             print e
+            self.transportFactory(
+                proto, chained_protocol,
+                iconch.IConchUser(self.original),
+                80, 25)
+        except Exception as e:
+            print e
 
-         oms_protocol = chained_protocol.terminalProtocol
+        oms_protocol = chained_protocol.terminalProtocol
 
-         @defer.inlineCallbacks
-         def spawn_command():
-             yield oms_protocol.spawn_command(cmd)
-             proto.processEnded()
+        @defer.inlineCallbacks
+        def spawn_command():
+            yield oms_protocol.spawn_command(cmd)
+            proto.processEnded()
 
-         spawn_command()
+        spawn_command()

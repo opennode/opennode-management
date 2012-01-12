@@ -57,7 +57,6 @@ class SSHClientTerminalProtocol(object):
         self.channel.terminalSize(width, height)
 
 
-
 class WebTransport(object):
     """Used by WebTerminal to actually send the data through the http transport."""
 
@@ -169,7 +168,7 @@ class TerminalServerMixin(object):
             session_id = session.id
             self.sessions[session.id] = session
 
-        if not self.sessions.has_key(session_id):
+        if session_id not in self.sessions:
             # Session interruption is defined using a success status
             # but with empty session (that's the protocol, I didn't design it).
             request.setResponseCode(200)

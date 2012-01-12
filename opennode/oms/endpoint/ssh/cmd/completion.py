@@ -37,7 +37,7 @@ def complete(protocol, buf, pos, **kwargs):
     # TODO: This isn't enough. We need a relaxed tokenizer.
     # Ignore leading quote when searching for completions.
     if partial.startswith('"'):
-       partial = partial[1:]
+        partial = partial[1:]
 
     completers = querySubscriptions(context, ICompleter)
 

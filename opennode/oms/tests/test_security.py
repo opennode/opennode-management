@@ -25,11 +25,11 @@ class DummyAuthenticationUtility:
     implements(IAuthentication)
 
     def getPrincipal(self, id):
-         if id == 'user1':
-             return User(id)
-         elif id == 'user2':
-             return User(id)
-         raise PrincipalLookupError(id)
+        if id == 'user1':
+            return User(id)
+        elif id == 'user2':
+            return User(id)
+        raise PrincipalLookupError(id)
 
 provideUtility(DummyAuthenticationUtility())
 
@@ -67,14 +67,12 @@ class SecurityTestCase(unittest.TestCase):
         compute_proxy_user1 = proxy_factory(compute, interaction_user1)
         compute_proxy_user2 = proxy_factory(compute, interaction_user2)
 
-
         # check an authorized access
         eq_(compute_proxy_user1.architecture, 'linux')
 
         # check an unauthorized access
         with assert_raises(Unauthorized):
             eq_(compute_proxy_user2.architecture, 'linux')
-
 
         # check a default unauthorized access
         with assert_raises(ForbiddenAttribute):

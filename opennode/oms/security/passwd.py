@@ -58,14 +58,14 @@ def run():
             lines = f.readlines()
         with open(passwd_file, 'w') as f:
             for line in lines:
-                if line.startswith(args.user+':'):
+                if line.startswith(args.user + ':'):
                     continue
                 print >>f, line,
     elif args.a:
         # check if user exists
         with open(passwd_file) as f:
             for line in f:
-                if line.startswith(args.user+':'):
+                if line.startswith(args.user + ':'):
                     print "User %s already exists" % args.user
                     sys.exit(1)
 
@@ -88,7 +88,7 @@ def run():
 
         found = False
         for line in lines:
-            if line.startswith(args.user+':'):
+            if line.startswith(args.user + ':'):
                 found = True
         if not found:
             print "User %s doesn't exists" % args.user
@@ -100,7 +100,7 @@ def run():
 
         with open(passwd_file, 'w') as f:
             for line in lines:
-                if line.startswith(args.user+':'):
+                if line.startswith(args.user + ':'):
                     user, old_pw, role = line.split(':')
                     if args.r:
                         role = args.r

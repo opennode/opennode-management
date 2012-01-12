@@ -16,7 +16,7 @@ class SecurityGrokker(martian.ClassGrokker):
 
         # mandatory, otherwise zope's default Checker impl will be used
         # which doesn't play well in async frameworks like twisted.
-        defineChecker(factory, Checker({},{}))
+        defineChecker(factory, Checker({}, {}))
 
         for name, permission in permissions.items():
             config.action(

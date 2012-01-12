@@ -128,6 +128,7 @@ def blocking_yield(deferred):
 
     # install a failure handler, otherwise an unhandled deferred error will be logged
     failure = [None]
+
     @deferred
     def on_error(error):
         failure[0] = error

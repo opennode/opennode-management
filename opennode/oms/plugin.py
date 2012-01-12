@@ -14,6 +14,7 @@ __all__ = 'run'
 
 ENTRY_POINT_NAME = 'oms.plugins'
 
+
 def run():
     """bin/plugin allows to add/remove plugins to the eggnest"""
 

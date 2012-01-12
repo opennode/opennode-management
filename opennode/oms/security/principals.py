@@ -6,7 +6,6 @@ from zope.interface import implements
 class User(object):
     implements(IPrincipal)
 
-
     def __init__(self, id):
         self.id = id
         self.groups = []

@@ -70,7 +70,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             try:
                 return bc.decode(basic_auth.split(' ')[1], None)
             except:
-                raise BadRequest, "The Authorization header was not parsable"
+                raise BadRequest("The Authorization header was not parsable")
 
     @defer.inlineCallbacks
     def authenticate(self, request, credentials, basic_auth=False):
@@ -111,8 +111,8 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             raise Forbidden("Invalid authentication token")
 
         user, timestamp = head.split(':')
-        if int(timestamp)/1000.0 + get_config().getint('auth', 'token_ttl') < time.time():
-            raise Forbidden("Expired authentication token (%s s ago)" % (time.time() - int(timestamp)/1000.0))
+        if int(timestamp) / 1000.0 + get_config().getint('auth', 'token_ttl') < time.time():
+            raise Forbidden("Expired authentication token (%s s ago)" % (time.time() - int(timestamp) / 1000.0))
 
         return user
 
@@ -143,7 +143,7 @@ class AuthView(HttpRestView):
             try:
                 params = json.loads(body)
             except ValueError:
-                raise BadRequest, "The request body not JSON-parsable"
+                raise BadRequest("The request body not JSON-parsable")
 
             # cannot be unicode
             username = str(params['username'])

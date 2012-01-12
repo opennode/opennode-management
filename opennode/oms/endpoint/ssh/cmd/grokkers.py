@@ -6,30 +6,28 @@ from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 
 
 class CmdGrokker(martian.ClassGrokker):
-     martian.component(Cmd)
-     martian.directive(command)
+    martian.component(Cmd)
+    martian.directive(command)
 
-     def execute(self, class_, command, **kw):
+    def execute(self, class_, command, **kw):
+        if command is None:
+            return False
 
-         if command is None:
-             return False
-
-         registry.commands()[command] = class_
-         class_.name = command
-         return True
+        registry.commands()[command] = class_
+        class_.name = command
+        return True
 
 
 class AliasGrokker(martian.ClassGrokker):
-     martian.component(Cmd)
-     martian.directive(alias)
+    martian.component(Cmd)
+    martian.directive(alias)
 
-     def execute(self, class_, alias, **kwargs):
+    def execute(self, class_, alias, **kwargs):
+        if not getattr(class_, 'aliases', None):
+            class_.aliases = []
 
-         if not getattr(class_, 'aliases', None):
-             class_.aliases = []
+        if alias:
+            class_.aliases.append(alias)
+            registry.commands()[alias] = class_
 
-         if alias:
-             class_.aliases.append(alias)
-             registry.commands()[alias] = class_
-
-         return False
+        return False
