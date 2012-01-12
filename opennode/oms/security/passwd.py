@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import os
 import random
 import string
 import sys
@@ -47,6 +48,10 @@ def run():
 
     conf = get_config()
     passwd_file = conf.get('auth', 'passwd_file')
+
+    if not os.path.exists(passwd_file):
+        with open(passwd_file, 'w') as f:
+            pass
 
     if args.d:
         with open(passwd_file) as f:
