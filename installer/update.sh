@@ -21,6 +21,31 @@ function install_pythonbrew() {
         echo "Python2.7 python brew already installed, using it"
     else
         echo "Checking required libraries"
+        if [ ! -e '/usr/bin/gcc' ]; then
+            echo "Missing required gcc compiler"
+            DEB_REQ="$DEB_REQ build-essential"
+            RPM_REQ="$RPM_REQ gcc gcc-c++ make"
+        fi
+        if [ ! -e '/usr/include/sqlite3.h' ]; then
+            echo "Missing required sqlite development libraries"
+            DEB_REQ="$DEB_REQ libsqlite3-dev"
+            RPM_REQ="$RPM_REQ sqlite-devel"
+        fi
+        if [ ! -e '/usr/include/openssl/opensslconf.h' ]; then
+            echo "Missing required ssl development libraries"
+            DEB_REQ="$DEB_REQ libssl-dev"
+            RPM_REQ="$RPM_REQ openssl-devel"
+        fi
+        if [ ! -e '/usr/include/readline/readline.h' ]; then
+            echo "Missing required readline development libraries"
+            DEB_REQ="$DEB_REQ libreadline6-dev"
+            RPM_REQ="$RPM_REQ readline-devel"
+        fi
+        if [ ! -e '/usr/include/zlib.h' ]; then
+            echo "Missing required zlib development libraries"
+            DEB_REQ="$DEB_REQ zlib1g-dev"
+            RPM_REQ="$RPM_REQ zlib-devel"
+        fi
         if [ ! -e '/usr/include/bzlib.h' ]; then
             echo "Missing required bzip2 development libraries"
             DEB_REQ="$DEB_REQ libbz2-dev"
