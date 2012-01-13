@@ -166,6 +166,9 @@ class Editor(object):
             self.pos -= 1
 
     def handle_RIGHT(self):
+        if self.pos >= len(self.buffer):
+            return
+
         if self.char_at(self.pos) == '\n':
             go_back = self.pos - self.bol_pos()
             self.goto_next_line()
