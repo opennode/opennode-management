@@ -781,4 +781,5 @@ class EditCmd(Cmd):
     @defer.inlineCallbacks
     def execute(self, args):
         editor = Editor(self.protocol)
-        yield editor.start(self.sample)
+        new_text = yield editor.start(self.sample)
+        self.__class__.sample = new_text

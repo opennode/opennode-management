@@ -53,6 +53,8 @@ class Editor(object):
             self.terminal.write('\x1b[?7h') # re-enable auto wrap
             self.parent.exit_full_screen()
 
+        defer.returnValue(self.buffer)
+
     def wait_for_exit(self):
         self.exit = defer.Deferred()
         return self.exit
