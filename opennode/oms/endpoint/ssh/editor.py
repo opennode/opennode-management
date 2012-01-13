@@ -3,7 +3,7 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from opennode.oms.util import exception_logger
-from opennode.oms.endpoint.ssh.terminal import CTRL_C, CTRL_D, CTRL_X, CTRL_S, CTRL_G, CTRL_L
+from opennode.oms.endpoint.ssh.terminal import CTRL_C, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L
 
 
 class Editor(object):
@@ -18,7 +18,7 @@ class Editor(object):
         self.key_handlers = {(CTRL_X, CTRL_S): self.handle_SAVE,
                              (CTRL_X, CTRL_C): self.handle_EXIT,
                              (CTRL_X, '='): self.handle_WHAT_CURSOR_POSITION,
-                             CTRL_D: self.terminal.deleteCharacter,
+                             CTRL_K: self.handle_KILL_LINE,
                              CTRL_L: self.handle_REDRAW,
                              self.terminal.LEFT_ARROW: self.handle_LEFT,
                              self.terminal.RIGHT_ARROW: self.handle_RIGHT,
@@ -130,8 +130,28 @@ class Editor(object):
                          ))
 
     def handle_BACKSPACE(self):
+        if not self.pos:
+            return
+
+        # currently hitting backspace at the beginning of a line is not implemented
+        if self.pos == self.bol_pos():
+            return
+
         self.terminal.cursorBackward()
         self.terminal.deleteCharacter()
+        self.pos -= 1
+        self.delete_character()
+
+    def handle_KILL_LINE(self):
+        line_length = max(0, self.eol_pos() - self.bol_pos())
+        if line_length:
+            self.terminal.eraseToLineEnd()
+
+            eol = self.eol_pos()
+            self.buffer = self.buffer[:self.pos] + self.buffer[eol:]
+        else:
+            log.msg("Not implemented")
+            # XXX: todo, delete a line and scroll up the lines below
 
     def _rfind(self, string, sub, start=None, end=None):
         """Behaves like str.find, but returns 0 instead of -1"""
@@ -254,15 +274,30 @@ class Editor(object):
             return key
         return "-".join(show_key(key) for key in keys)
 
+    def insert_character(self, ch):
+        if ch == '\n':
+            self.lines = self.lines + 1
+            self.current_line = self.current_line + 1
+
+        self.buffer = self.buffer[:self.pos] + ch + self.buffer[self.pos:]
+
+        self.pos += 1
+
+    def delete_character(self):
+        self.buffer = self.buffer[:self.pos] + self.buffer[self.pos+1:]
+
     def _echo(self, keyID, mod):
         """Echoes characters on terminal like on unix (special chars etc)"""
         if isinstance(keyID, str):
-            self.terminal.write(self.show_keys((keyID, ), prefix='^'))
-
+            import string
             if keyID in ('\r'):
-                self.terminal.write('\n')
-                self.lines = self.lines + 1
-                self.current_line = self.current_line + 1
+                keyID = '\n'
+
+            if keyID in string.printable:
+                self.terminal.write(keyID)
+
+            self.insert_character(keyID)
+
         else:
             log.msg("GOT Special char '%s' (%s)" % (keyID, type(keyID)))
 
