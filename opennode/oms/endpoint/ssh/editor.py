@@ -180,7 +180,8 @@ class Editor(object):
     def handle_UP(self):
         go_forward = self.pos - self.bol_pos()
         self.goto_prev_line()
-        self.pos += go_forward
+
+        self.fixup_for_shorter_line(go_forward)
 
     def goto_prev_line(self):
         # reached the top of the file
@@ -207,7 +208,17 @@ class Editor(object):
     def handle_DOWN(self):
         go_forward = self.pos - self.bol_pos()
         self.goto_next_line()
-        self.pos += go_forward
+
+        self.fixup_for_shorter_line(go_forward)
+
+    def fixup_for_shorter_line(self, go_forward):
+        line_length = max(0, self.eol_pos() - self.bol_pos())
+        self.pos += min(go_forward, line_length)
+
+        # fixup screen cursor position in case of out of range
+        move_backward = go_forward - min(go_forward, line_length)
+        if move_backward:
+            self.terminal.cursorBackward(move_backward)
 
     def goto_next_line(self):
         # reached the end of the file
