@@ -76,6 +76,8 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
 
         self.width = width
         self.height = height
+        self.terminal.termSize.x = width
+        self.terminal.termSize.y = height
         if not self.batch:
             self.drawInputLine()
 
