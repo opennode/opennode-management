@@ -41,6 +41,7 @@ class Editor(object):
         self.parent.enter_full_screen()
         self.terminal.write('\x1b[?7l')  # disable auto wrap
         self.terminal.write('\x1b[0;%sr' % (self.parent.height - 2,))  # setup scrolling region
+        self.parent.setInsertMode()
         self.terminal.termSize.y -= 2
 
         try:
