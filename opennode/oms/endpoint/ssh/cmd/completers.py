@@ -219,7 +219,7 @@ class EnvironmentCompleter(Completer):
 
 
 # TODO: move to handler
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd, commands.LinkCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd, commands.LinkCmd, commands.EditCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
 for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd, commands.LinkCmd, commands.KillTaskCmd]:

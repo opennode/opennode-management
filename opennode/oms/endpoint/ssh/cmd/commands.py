@@ -10,6 +10,7 @@ from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 
 from opennode.oms.endpoint.ssh.editor import Editor
+from opennode.oms.endpoint.ssh.editable import IEditable
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
@@ -774,12 +775,31 @@ class TerminalResetCmd(Cmd):
 
 
 class EditCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
     command("edit")
 
-    sample = open('lorem.txt').read()
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('path')
+        return parser
 
     @defer.inlineCallbacks
     def execute(self, args):
+        obj = yield db.ro_transact(self.traverse)(args.path)
+        if not obj:
+            self.write("No such object: %s\n" % args.path)
+            return
+
         editor = Editor(self.protocol)
-        new_text = yield editor.start(self.sample)
-        self.__class__.sample = new_text
+
+        old = IEditable(obj).toEditableString()
+        updated = yield editor.start(old)
+
+        yield self._save(old, updated)
+
+    def _save(self, old, updated):
+        if old == updated:
+            self.write("No changes\n")
+        else:
+            self.write("Object changed, modify operation not implemented yet :-(\n")
