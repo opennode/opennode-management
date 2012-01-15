@@ -218,8 +218,7 @@ class Editor(object):
         if self.char_at(self.pos - 1) == '\n':
             self.pos = self.bol_pos(self.pos - 1)
         else:
-            self.pos = self.bol_pos(self.bol_pos() - 2)
-
+            self.pos = self.bol_pos(self.bol_pos() - 1)
 
         should_fill = self.terminal.cursorPos.y == 0
 
@@ -228,6 +227,7 @@ class Editor(object):
 
         if should_fill:
             self.terminal.saveCursor()
+            self.terminal.cursorHome()
             self.terminal.write(self.buffer[self.pos:self.eol_pos()])
             self.terminal.restoreCursor()
 
@@ -260,6 +260,8 @@ class Editor(object):
 
         if should_fill:
             self.terminal.saveCursor()
+            if self.terminal.cursorPos.x:
+                self.terminal.cursorBackward(self.terminal.cursorPos.x)
             self.terminal.write(self.buffer[self.pos:self.eol_pos()])
             self.terminal.restoreCursor()
 
