@@ -32,7 +32,7 @@ running `brew install python`.
 
 You can quickly enable plugins by adding the plugin buildout snippet to the `eggnest` dir, e.g:
 
-   bin/plugin install opennode.core.onc
+   bin/plugin install opennode.oms.onc
 
 This will download the published egg for the plugin.
 If you want to use a development plugin you have to specify the plugin checkout:
