@@ -261,15 +261,16 @@ class Editor(object):
             self.current_column += 1
 
     def handle_UP(self):
+        # reached the top of the file
+        if self.current_line == 0:
+            return
+
         go_forward = self.pos - self.bol_pos()
         self.goto_prev_line()
 
         self.fixup_for_shorter_line(go_forward)
 
     def goto_prev_line(self):
-        # reached the top of the file
-        if self.current_line == 0:
-            return
         self.current_line = self.current_line - 1
 
         if self.char_at(self.pos - 1) == '\n':
