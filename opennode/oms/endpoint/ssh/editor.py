@@ -328,6 +328,8 @@ class Editor(object):
 
     def show_keys(self, keys, prefix='C-'):
         def show_key(key):
+            if not isinstance(key, str):
+                return str(key)
             if ord(key) == 127:
                 return '^H'
             if ord(key) < 32 and key != '\r':
