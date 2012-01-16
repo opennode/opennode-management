@@ -796,10 +796,25 @@ class EditCmd(Cmd):
         old = IEditable(obj).toEditableString()
         updated = yield editor.start(old)
 
-        yield self._save(old, updated)
+        yield self._save(args, old, updated)
 
-    def _save(self, old, updated):
+    @db.transact
+    def _save(self, args, old, updated):
+        obj = self.traverse(args.path)
+
         if old == updated:
             self.write("No changes\n")
         else:
-            self.write("Object changed, modify operation not implemented yet :-(\n")
+            raw_data = {}
+            for line in updated.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    raw_data[key.strip()] = value.strip()
+            form = ApplyRawData(raw_data, obj)
+            if not form.errors:
+                form.apply()
+            else:
+                form.write_errors(to=self)
+
+            transaction.commit()

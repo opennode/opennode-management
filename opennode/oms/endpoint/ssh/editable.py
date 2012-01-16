@@ -19,6 +19,8 @@ class EditableModelAdapter(Adapter):
     implements(IEditable)
     context(IModel)
 
+    transient = []
+
     def toEditableString(self):
         obj = self.context
 
@@ -37,6 +39,10 @@ class EditableModelAdapter(Adapter):
                     pretty_value = ', '.join(strings)
                 else:
                     pretty_value = value
+
+                if key in self.transient:
+                    print >>s, '# ',
+
                 print >>s, "%s = %s" % (key.encode('utf8'), str(pretty_value).encode('utf8'))
 
             return s.getvalue()
