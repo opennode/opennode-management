@@ -1,3 +1,4 @@
+from copy import copy
 from twisted.internet import defer
 from twisted.conch.insults import insults
 from twisted.python import log
@@ -11,7 +12,10 @@ class Editor(object):
         self.parent = parent
         self.terminal = parent.terminal
         self.buffer = ""
+        self.old_dirty = False
+        self.dirty = False
         self.status_line = ""
+        self.has_quit = False
 
         self.prefix = None
         self.prefixes = [CTRL_X]
@@ -31,11 +35,13 @@ class Editor(object):
     @defer.inlineCallbacks
     def start(self, file):
         self.buffer = file
+        self.saved = copy(self.buffer)
 
         # position in buffer
         self.pos = 0
         # current line in buffer
         self.current_line = 0
+        self.current_column = 0
         self.lines = self.buffer.count('\n') + 1
 
         self.parent.sub_protocol = self
@@ -56,7 +62,7 @@ class Editor(object):
             self.terminal.write('\x1b[?7h') # re-enable auto wrap
             self.parent.exit_full_screen()
 
-        defer.returnValue(self.buffer)
+        defer.returnValue(self.saved)
 
     def wait_for_exit(self):
         self.exit = defer.Deferred()
@@ -66,7 +72,7 @@ class Editor(object):
         self.terminal.saveCursor()
 
         self.terminal.eraseDisplay()
-        self.draw_modeline('--:-- test     0 % (0,0) (Fundamental)')
+        self.draw_modeline('--:-- test     0 %  (0,0)      (Fundamental)')
         self.terminal.cursorHome()
 
         self.terminal.write('\n'.join(self.buffer.split('\n')[0:self.parent.height-2]))
@@ -78,6 +84,29 @@ class Editor(object):
         self.terminal.selectGraphicRendition(str(insults.REVERSE_VIDEO))
         self.terminal.write(text.ljust(self.parent.width))
         self.terminal.selectGraphicRendition()
+
+    def refresh_modline(self):
+        if self.has_quit:
+            return
+
+        self.terminal.saveCursor()
+        self.terminal.selectGraphicRendition(str(insults.REVERSE_VIDEO))
+        self.parent.setTypeoverMode()
+
+        if self.dirty != self.old_dirty:
+            self.old_dirty = self.dirty
+            self.terminal.cursorPosition(3, self.parent.height - 2)
+            if self.dirty:
+                self.terminal.write('**')
+            else:
+                self.terminal.write('--')
+
+        self.terminal.cursorPosition(20, self.parent.height - 2)
+        self.terminal.write('(%s,%s)   ' % (self.current_line, self.current_column))
+
+        self.parent.setInsertMode()
+        self.terminal.selectGraphicRendition()
+        self.terminal.restoreCursor()
 
     def draw_status(self, text):
         if text == self.status_line:
@@ -101,10 +130,13 @@ class Editor(object):
         pass
 
     def handle_EXIT(self):
+        self.has_quit = True
         self.exit.callback(None)
 
     def handle_SAVE(self):
         self.draw_status("Object saved")
+        self.saved = copy(self.buffer)
+        self.dirty = False
 
     def handle_WHAT_CURSOR_POSITION(self):
         ch = self.char_at(self.pos)
@@ -140,19 +172,24 @@ class Editor(object):
         if self.pos == self.bol_pos():
             return
 
+        self.dirty = True
+
         self.terminal.cursorBackward()
         self.terminal.deleteCharacter()
         self.pos -= 1
+        self.current_column -= 1
         self.delete_character()
 
     def handle_BEGIN_LINE(self):
         move_backward = self.pos - self.bol_pos()
+        self.current_column = 0
         if move_backward:
             self.pos = self.bol_pos()
             self.terminal.cursorBackward(move_backward)
 
     def handle_END_LINE(self):
         move_forward = self.eol_pos() - self.pos
+        self.current_column = max(0, self.eol_pos() - self.bol_pos())
         if move_forward:
             self.pos = self.eol_pos()
             self.terminal.cursorForward(move_forward)
@@ -194,6 +231,8 @@ class Editor(object):
             self.goto_prev_line()
             go_forward = self.eol_pos() - self.pos
 
+            self.current_column = go_forward
+
             # twisted insults cannot move by 0 amount
             if go_forward:
                 self.terminal.cursorForward(go_forward)
@@ -201,6 +240,7 @@ class Editor(object):
         else:
             self.terminal.cursorBackward()
             self.pos -= 1
+            self.current_column -= 1
 
     def handle_RIGHT(self):
         if self.pos >= len(self.buffer):
@@ -210,12 +250,15 @@ class Editor(object):
             go_back = self.pos - self.bol_pos()
             self.goto_next_line()
 
+            self.current_column = 0
+
             # twisted insults cannot move by 0 amount
             if go_back:
                 self.terminal.cursorBackward(go_back)
         else:
             self.pos += 1
             self.terminal.cursorForward()
+            self.current_column += 1
 
     def handle_UP(self):
         go_forward = self.pos - self.bol_pos()
@@ -292,6 +335,8 @@ class Editor(object):
         return "-".join(show_key(key) for key in keys)
 
     def insert_character(self, ch):
+        self.dirty = True
+
         if ch == '\n':
             self.lines = self.lines + 1
             self.current_line = self.current_line + 1
@@ -299,6 +344,7 @@ class Editor(object):
         self.buffer = self.buffer[:self.pos] + ch + self.buffer[self.pos:]
 
         self.pos += 1
+        self.current_column += 1
 
     def delete_character(self):
         self.buffer = self.buffer[:self.pos] + self.buffer[self.pos+1:]
@@ -340,3 +386,5 @@ class Editor(object):
         else:
             self.draw_status("")
             self._echo(keyID, mod)
+
+        self.refresh_modline()
