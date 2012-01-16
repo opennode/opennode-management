@@ -3,7 +3,7 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from opennode.oms.util import exception_logger
-from opennode.oms.endpoint.ssh.terminal import CTRL_C, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L
+from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L
 
 
 class Editor(object):
@@ -18,6 +18,8 @@ class Editor(object):
         self.key_handlers = {(CTRL_X, CTRL_S): self.handle_SAVE,
                              (CTRL_X, CTRL_C): self.handle_EXIT,
                              (CTRL_X, '='): self.handle_WHAT_CURSOR_POSITION,
+                             CTRL_A: self.handle_BEGIN_LINE,
+                             CTRL_E: self.handle_END_LINE,
                              CTRL_K: self.handle_KILL_LINE,
                              CTRL_L: self.handle_REDRAW,
                              self.terminal.LEFT_ARROW: self.handle_LEFT,
@@ -142,6 +144,18 @@ class Editor(object):
         self.terminal.deleteCharacter()
         self.pos -= 1
         self.delete_character()
+
+    def handle_BEGIN_LINE(self):
+        move_backward = self.pos - self.bol_pos()
+        if move_backward:
+            self.pos = self.bol_pos()
+            self.terminal.cursorBackward(move_backward)
+
+    def handle_END_LINE(self):
+        move_forward = self.eol_pos() - self.pos
+        if move_forward:
+            self.pos = self.eol_pos()
+            self.terminal.cursorForward(move_forward)
 
     def handle_KILL_LINE(self):
         line_length = max(0, self.eol_pos() - self.bol_pos())
