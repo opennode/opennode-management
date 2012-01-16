@@ -1,3 +1,5 @@
+import os
+
 from copy import copy
 from twisted.internet import defer
 from twisted.conch.insults import insults
@@ -34,6 +36,8 @@ class Editor(object):
 
     @defer.inlineCallbacks
     def start(self, file):
+        self.tracing = False
+
         self.buffer = file
         self.saved = copy(self.buffer)
 
@@ -52,9 +56,15 @@ class Editor(object):
         self.parent.setInsertMode()
         self.terminal.termSize.y -= 2
 
+        if self.tracing:
+            self.enable_tracing()
+
         try:
             self.redraw_buffer()
             self.terminal.cursorHome()
+
+            if self.tracing:
+                self.replay_recorded()
 
             yield self.wait_for_exit()
         finally:
@@ -62,7 +72,35 @@ class Editor(object):
             self.terminal.write('\x1b[?7h') # re-enable auto wrap
             self.parent.exit_full_screen()
 
+            if self.tracing:
+                self.finalize_tracing()
+
         defer.returnValue(self.saved)
+
+    def replay_recorded(self):
+        """Debug utility useful for repeating difficult to reproduce sessions that show some bug"""
+        replay_file = '/tmp/key.sim'
+        if os.path.exists(replay_file):
+            arrows = {'[UP_ARROW]': self.terminal.UP_ARROW,
+                      '[DOWN_ARROW]': self.terminal.DOWN_ARROW,
+                      '[LEFT_ARROW]': self.terminal.LEFT_ARROW,
+                      '[RIGHT_ARROW]': self.terminal.RIGHT_ARROW,
+                      }
+            for i in open(replay_file):
+                if '#' not in i:
+                    self.keystrokeReceived(arrows[i.strip()], None)
+
+    def enable_tracing(self):
+        self.tracing = True
+        self.key_log = open('/tmp/key.log', 'w')
+
+    def finalize_tracing(self):
+        self.key_log.close()
+
+    def trace_keystroke(self, keyID, mod):
+        if self.tracing:
+            print >>self.key_log, keyID
+            self.key_log.flush()
 
     def wait_for_exit(self):
         self.exit = defer.Deferred()
@@ -369,6 +407,8 @@ class Editor(object):
 
     @exception_logger
     def keystrokeReceived(self, keyID, mod):
+        self.trace_keystroke(keyID, mod)
+
         if keyID == CTRL_G:
             self.abort()
         elif self.prefix:
@@ -391,3 +431,6 @@ class Editor(object):
             self._echo(keyID, mod)
 
         self.refresh_modline()
+
+        if self.tracing and not self.has_quit:
+            self.handle_WHAT_CURSOR_POSITION()
