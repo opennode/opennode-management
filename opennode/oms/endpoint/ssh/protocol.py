@@ -34,7 +34,6 @@ class OmsShellProtocol(InteractiveTerminal):
         self.environment = {'PATH': '.:./actions:/bin'}
         self.path_stack = []
         self.sub_protocol = None
-        self.tid = Proc.register(None, '/bin/omsh')
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -49,6 +48,15 @@ class OmsShellProtocol(InteractiveTerminal):
         _get_obj_path()
 
         self.tokenizer = CommandLineTokenizer()
+
+    def logged_in(self, principal):
+        """Invoked when the principal which opened this session is known"""
+
+        self.principal = principal
+        self.tid = Proc.register(None, '/bin/omsh', principal=principal)
+
+    def connectionMade(self):
+        super(OmsShellProtocol, self).connectionMade()
 
     def close_connection(self):
         Proc.unregister(self.tid)

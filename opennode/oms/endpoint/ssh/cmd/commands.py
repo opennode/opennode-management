@@ -702,14 +702,17 @@ class TaskListCmd(Cmd):
             tasks = Proc().dead_tasks
 
         max_key_len = max(3, *[len(i) for i in Proc().content().keys()])
+        max_user_len = max(3, *[len(i.principal.id) for i in Proc().content().values() if getattr(i, 'principal', None)])
 
-        self.write("%s    %sTIME CMD\n" % ("TID".rjust(max_key_len),
-                                           "PTID    ".rjust(max_key_len) if args.l else ''))
+        self.write("%s    %s%s TIME CMD\n" % ("TID".rjust(max_key_len),
+                                           "PTID    ".rjust(max_key_len) if args.l else '',
+                                           "USER   ".ljust(max_user_len)))
 
         for tid, task in tasks.items():
             ptid = task.ptid
-            self.write("%s %s%s %s\n" % (tid.rjust(max_key_len),
+            self.write("%s %s   %s %s %s\n" % (tid.rjust(max_key_len),
                                          (ptid + ' ').rjust(max_key_len) if args.l else '',
+                                         (task.principal.id if task.principal else '-').ljust(max_user_len),
                                          datetime.timedelta(0, int(task.uptime)),
                                          task.cmdline))
 

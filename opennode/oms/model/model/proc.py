@@ -47,7 +47,7 @@ class DaemonProcess(object):
 class Task(Model):
     implements(ITask)
 
-    def __init__(self, name, parent, deferred, cmdline, ptid, signal_handler=None):
+    def __init__(self, name, parent, deferred, cmdline, ptid, signal_handler=None, principal=None):
         self.__name__ = name
         self.__parent__ = parent
         self.deferred = deferred
@@ -55,6 +55,7 @@ class Task(Model):
         self.timestamp = time.time()
         self.ptid = ptid
         self.signal_handler = signal_handler
+        self.principal = principal
 
     @property
     def uptime(self):
@@ -98,15 +99,15 @@ class Proc(ReadonlyContainer):
         return res
 
     @classmethod
-    def register(cls, deferred, cmdline=None, ptid='1'):
-        return Proc()._register(deferred, cmdline, ptid)
+    def register(cls, deferred, cmdline=None, ptid='1', principal=None):
+        return Proc()._register(deferred, cmdline, ptid, principal=principal)
 
-    def _register(self, deferred, cmdline=None, ptid='1', signal_handler=None):
+    def _register(self, deferred, cmdline=None, ptid='1', signal_handler=None, principal=None):
 
         self.next_id += 1
         new_id = str(self.next_id)
 
-        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid, signal_handler)
+        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid, signal_handler, principal)
 
         if deferred:
             deferred.addBoth(self._unregister, new_id)

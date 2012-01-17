@@ -30,6 +30,7 @@ class SshTestCase(unittest.TestCase):
     @clean_db
     def setUp(self):
         self.oms_ssh = OmsShellProtocol()
+        self.oms_ssh.logged_in(None)
         self.oms_ssh.history_save_enabled = False
 
         self.terminal = mock.Mock()

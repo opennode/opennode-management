@@ -18,6 +18,7 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.oms_ssh = OmsShellProtocol()
+        self.oms_ssh.logged_in(None)
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 

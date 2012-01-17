@@ -1,9 +1,10 @@
 from twisted.conch import interfaces as iconch
-from twisted.conch.manhole_ssh import TerminalSession, TerminalRealm
+from twisted.conch.manhole_ssh import TerminalSession, TerminalSessionTransport, TerminalRealm, TerminalUser
 from twisted.conch.insults import insults
 from twisted.internet import defer
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+from opennode.oms.security.principals import User
 
 
 class BatchOmsShellProtocol(OmsShellProtocol):
@@ -35,6 +36,13 @@ class OmsTerminalSession(TerminalSession):
         spawn_command()
 
 
+class OmsTerminalSessionTransport(TerminalSessionTransport):
+    def __init__(self, proto, chainedProtocol, avatar, width, height):
+        TerminalSessionTransport.__init__(self, proto, chainedProtocol, avatar, width, height)
+
+        chainedProtocol.terminalProtocol.logged_in(avatar.principal)
+
+
 class OmsTerminalRealm(TerminalRealm):
     def __init__(self):
         TerminalRealm.__init__(self)
@@ -42,5 +50,12 @@ class OmsTerminalRealm(TerminalRealm):
         def chainProtocolFactory():
             return insults.ServerProtocol(OmsShellProtocol)
 
+        def userFactory(original, avatarId):
+            user = TerminalUser(original, avatarId)
+            user.principal = User(avatarId)
+            return user
+
         self.chainedProtocolFactory = chainProtocolFactory
         self.sessionFactory = OmsTerminalSession
+        self.userFactory = userFactory
+        self.transportFactory = OmsTerminalSessionTransport
