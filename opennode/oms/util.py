@@ -1,5 +1,7 @@
 import functools
 import inspect
+import itertools
+import re
 import threading
 
 import zope.interface
@@ -187,3 +189,11 @@ def exception_logger(fun):
             traceback.print_exc()
             raise e
     return wrapper
+
+
+def find_nth(haystack, needle, n, start_boundary=None):
+    start = haystack.find(needle, start_boundary)
+    while start >= 0 and n > 1:
+        start = haystack.find(needle, start+len(needle))
+        n -= 1
+    return start

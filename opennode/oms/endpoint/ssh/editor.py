@@ -5,11 +5,14 @@ from twisted.internet import defer
 from twisted.conch.insults import insults
 from twisted.python import log
 
-from opennode.oms.util import exception_logger
+from opennode.oms.util import exception_logger, find_nth
 from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L
 
 
 class Editor(object):
+
+    MODELINE_HEIGHT = 2
+
     def __init__(self, parent):
         self.parent = parent
         self.terminal = parent.terminal
@@ -34,6 +37,9 @@ class Editor(object):
                              self.terminal.DOWN_ARROW: self.handle_DOWN,
                              self.terminal.BACKSPACE: self.handle_BACKSPACE}
 
+    def reset_scrolling_region(self):
+        self.terminal.setScrollRegion(last=self.parent.height - self.MODELINE_HEIGHT)
+
     @defer.inlineCallbacks
     def start(self, file):
         self.tracing = False
@@ -52,7 +58,7 @@ class Editor(object):
 
         self.parent.enter_full_screen()
         self.terminal.write('\x1b[?7l')  # disable auto wrap
-        self.terminal.write('\x1b[0;%sr' % (self.parent.height - 2,))  # setup scrolling region
+        self.reset_scrolling_region()
         self.parent.setInsertMode()
         self.terminal.termSize.y -= 2
 
@@ -196,23 +202,68 @@ class Editor(object):
 
         next_line = self.eol_pos() + 1
 
-        self.draw_status('Char: %s (%s %s) point=%s of %s line=%s; Prev: %s (%s %s), Next: %s (%s %s) bol=%s eol=%s prev_line=%s next_line=%s' %
+        self.draw_status('Char: %s (%s %s) point=%s of %s line=%s; Prev: %s (%s %s), Next: %s (%s %s) bol=%s eol=%s prev_line=%s next_line=%s cursor=(%s, %s)' %
                          (self.show_keys((ch,)), ord(ch), hex(ord(ch)),
                           self.pos, len(self.buffer), self.current_line,
                           self.show_keys(pch,), ord(pch), hex(ord(pch)),
                           self.show_keys(nch,), ord(nch), hex(ord(nch)),
-                          bol_pos, eol_pos, prev_line, next_line
+                          bol_pos, eol_pos, prev_line, next_line,
+                          self.terminal.cursorPos.y, self.terminal.cursorPos.x
                          ))
 
     def handle_BACKSPACE(self):
         if not self.pos:
             return
-
-        # currently hitting backspace at the beginning of a line is not implemented
-        if self.pos == self.bol_pos():
+        # currently we have to have a trailing newline
+        if self.pos == len(self.buffer):
             return
 
         self.dirty = True
+
+        # currently hitting backspace at the beginning of a line is not implemented
+        if self.pos == self.bol_pos():
+            self.terminal.eraseToLineEnd()
+            self.terminal.saveCursor()
+
+            # scroll up part below deleted line
+            # XXX: consider using termSize.y instead of computing view size using MODELINE_HEIGHT
+            current_screen_line = self.terminal.cursorPos.y
+            self.terminal.setScrollRegion(current_screen_line + 1, self.parent.height - self.MODELINE_HEIGHT)
+            self.terminal.cursorPosition(0, self.parent.height - self.MODELINE_HEIGHT - 1)
+            self.terminal.index()
+
+            # redraw revealed line
+            self.terminal.cursorPosition(0, self.parent.height - self.MODELINE_HEIGHT - 1)
+
+            last_line_delta = self.terminal.termSize.y - self.terminal.cursorPos.y +  1
+            last_line_pos = find_nth(self.buffer, '\n', last_line_delta, self.pos)
+
+            if last_line_pos > 0:
+                last_line_end = self.buffer.find('\n', last_line_pos + 1)
+                self.terminal.write(self.buffer[last_line_pos+1:last_line_end])
+
+            self.reset_scrolling_region()
+            self.terminal.restoreCursor()
+
+            old_bol, old_eol = self.bol_pos(), self.eol_pos()
+            self.goto_prev_line()
+
+            go_forward = self.eol_pos() - self.bol_pos()
+            if go_forward:
+                self.terminal.cursorForward(go_forward)
+            self.terminal.write(self.buffer[old_bol:old_eol])
+            self.terminal.cursorPos.x += old_eol - old_bol
+
+            go_backward = old_eol - old_bol
+            if go_backward:
+                self.terminal.cursorBackward(go_backward)
+            self.buffer = self.buffer[:old_bol - 1] + self.buffer[old_bol:]
+
+            self.current_column += go_forward
+            self.pos += go_forward
+            self.lines -= 1
+
+            return
 
         self.terminal.cursorBackward()
         self.terminal.deleteCharacter()
@@ -242,8 +293,12 @@ class Editor(object):
             eol = self.eol_pos()
             self.buffer = self.buffer[:self.pos] + self.buffer[eol:]
         else:
-            log.msg("Not implemented")
-            # XXX: todo, delete a line and scroll up the lines below
+            # it's equivalent as handling backspace
+            self.handle_BACKSPACE()
+            # except that we remain at the beginning
+            self.handle_BEGIN_LINE()
+            # of on this line
+            self.goto_next_line()
 
     def _rfind(self, string, sub, start=None, end=None):
         """Behaves like str.find, but returns 0 instead of -1"""
