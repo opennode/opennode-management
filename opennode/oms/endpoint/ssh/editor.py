@@ -441,17 +441,44 @@ class Editor(object):
         self.dirty = True
 
         if ch == '\n':
-            self.lines = self.lines + 1
-            self.current_line = self.current_line + 1
+            self.terminal.eraseToLineEnd()
+            self.terminal.saveCursor()
+
+            if self.terminal.cursorPos.y < self.terminal.termSize.y - 1:
+                # scroll up part below deleted line
+                # XXX: consider using termSize.y instead of computing view size using MODELINE_HEIGHT
+                current_screen_line = self.terminal.cursorPos.y
+                self.terminal.setScrollRegion(current_screen_line + 2, self.parent.height - self.MODELINE_HEIGHT)
+                self.terminal.cursorPosition(0, current_screen_line +  1)
+                self.terminal.reverseIndex()
+
+                self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+                self.reset_scrolling_region()
+                self.terminal.restoreCursor()
+
+                self.terminal.cursorPosition(0, current_screen_line +  1)
+            else:
+                self.terminal.saveCursor()
+                self.terminal.index()
+                self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+                self.terminal.restoreCursor()
+
+            self.lines += 1
+            self.current_line += 1
+            self.current_column = 0
+            self.terminal.cursorPos.y += 1
+            self.terminal.cursorPos.y = min(self.terminal.cursorPos.y, self.terminal.termSize.y - 1)
+        else:
+            self.current_column += 1
+
+            self.terminal.write(ch)
+            # insults doesn't keep track of cursor movement made by write
+            self.terminal.cursorPos.x += 1
 
         self.buffer = self.buffer[:self.pos] + ch + self.buffer[self.pos:]
 
         self.pos += 1
-        self.current_column += 1
 
-        self.terminal.write(ch)
-        # insults doesn't keep track of cursor movement made by write
-        self.terminal.cursorPos.x += 1
 
     def delete_character(self):
         self.buffer = self.buffer[:self.pos] + self.buffer[self.pos+1:]
