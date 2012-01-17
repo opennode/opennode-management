@@ -7,12 +7,13 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from opennode.oms.util import exception_logger, find_nth
-from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_Y, CTRL_S, CTRL_G, CTRL_L, CTRL_W
+from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_Y, CTRL_S, CTRL_G, CTRL_L, CTRL_W, DARK_RED, RESET_COLOR
 
 
 class Editor(object):
 
     MODELINE_HEIGHT = 2
+    COMMENT_COLOR = DARK_RED
 
     def __init__(self, parent):
         self.parent = parent
@@ -124,7 +125,7 @@ class Editor(object):
         self.draw_modeline('--:-- test     0 %  (0,0)      (Fundamental)')
         self.terminal.cursorHome()
 
-        self.terminal.write('\n'.join(self.buffer.split('\n')[0:self.parent.height-2]))
+        self.write('\n'.join(self.buffer.split('\n')[0:self.parent.height-2]))
 
         self.terminal.restoreCursor()
 
@@ -176,6 +177,14 @@ class Editor(object):
 
     def char_at(self, pos):
         return self.buffer[pos] if pos < len(self.buffer) else '\x00'
+
+    def write(self, text):
+        for line in text.splitlines(True):
+            if line.startswith('#'):
+                self.terminal.write(self.COMMENT_COLOR)
+            self.terminal.write(line)
+            if line.startswith('#'):
+                self.terminal.write(RESET_COLOR)
 
     def handle_EOF(self):
         pass
@@ -262,7 +271,7 @@ class Editor(object):
 
             if last_line_pos > 0:
                 last_line_end = self.buffer.find('\n', last_line_pos + 1)
-                self.terminal.write(self.buffer[last_line_pos+1:last_line_end])
+                self.write(self.buffer[last_line_pos+1:last_line_end])
 
             if scroll_region:
                 self.reset_scrolling_region()
@@ -275,7 +284,7 @@ class Editor(object):
             go_forward = self.eol_pos() - self.bol_pos()
             if go_forward:
                 self.terminal.cursorForward(go_forward)
-            self.terminal.write(self.buffer[old_bol:old_eol])
+            self.write(self.buffer[old_bol:old_eol])
             self.terminal.cursorPos.x += old_eol - old_bol
 
             go_backward = old_eol - old_bol
@@ -416,7 +425,7 @@ class Editor(object):
         if should_fill:
             self.terminal.saveCursor()
             self.terminal.cursorHome()
-            self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+            self.write(self.buffer[self.pos:self.eol_pos()])
             self.terminal.restoreCursor()
 
     def handle_DOWN(self):
@@ -451,7 +460,7 @@ class Editor(object):
             self.terminal.saveCursor()
             if self.terminal.cursorPos.x:
                 self.terminal.cursorBackward(self.terminal.cursorPos.x)
-            self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+            self.write(self.buffer[self.pos:self.eol_pos()])
             self.terminal.restoreCursor()
 
     def handle_REDRAW(self):
@@ -496,7 +505,7 @@ class Editor(object):
                     self.terminal.cursorPosition(0, current_screen_line +  1)
                     self.terminal.eraseToLineEnd()
 
-                self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+                self.write(self.buffer[self.pos:self.eol_pos()])
 
                 if scroll_region:
                     self.reset_scrolling_region()
@@ -506,7 +515,7 @@ class Editor(object):
             else:
                 self.terminal.saveCursor()
                 self.terminal.index()
-                self.terminal.write(self.buffer[self.pos:self.eol_pos()])
+                self.write(self.buffer[self.pos:self.eol_pos()])
                 self.terminal.restoreCursor()
 
             self.lines += 1
@@ -517,7 +526,16 @@ class Editor(object):
         else:
             self.current_column += 1
 
+            highlight = '#' in self.buffer[self.bol_pos():self.pos]
+
+            if highlight:
+                self.terminal.write(self.COMMENT_COLOR)
+
             self.terminal.write(ch)
+
+            if highlight:
+                self.terminal.write(RESET_COLOR)
+
             # insults doesn't keep track of cursor movement made by write
             self.terminal.cursorPos.x += 1
 
