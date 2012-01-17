@@ -81,7 +81,7 @@ class Editor(object):
             yield self.wait_for_exit()
         finally:
             self.terminal.termSize.y += 2
-            self.terminal.write('\x1b[?7h') # re-enable auto wrap
+            self.terminal.write('\x1b[?7h')  # re-enable auto wrap
             self.parent.exit_full_screen()
 
             if self.tracing:
@@ -125,7 +125,7 @@ class Editor(object):
         self.draw_modeline('--:-- test     0 %  (0,0)      (Fundamental)')
         self.terminal.cursorHome()
 
-        self.write('\n'.join(self.buffer.split('\n')[0:self.parent.height-2]))
+        self.write('\n'.join(self.buffer.split('\n')[0:self.parent.height - 2]))
 
         self.terminal.restoreCursor()
 
@@ -238,7 +238,6 @@ class Editor(object):
         if self.pos == len(self.buffer):
             return
 
-
         self.dirty = True
 
         # currently hitting backspace at the beginning of a line is not implemented
@@ -271,7 +270,7 @@ class Editor(object):
 
             if last_line_pos > 0:
                 last_line_end = self.buffer.find('\n', last_line_pos + 1)
-                self.write(self.buffer[last_line_pos+1:last_line_end])
+                self.write(self.buffer[last_line_pos + 1:last_line_end])
 
             if scroll_region:
                 self.reset_scrolling_region()
@@ -499,10 +498,10 @@ class Editor(object):
 
                 if scroll_region:
                     self.terminal.setScrollRegion(current_screen_line + 2, self.parent.height - self.MODELINE_HEIGHT)
-                    self.terminal.cursorPosition(0, current_screen_line +  1)
+                    self.terminal.cursorPosition(0, current_screen_line + 1)
                     self.terminal.reverseIndex()
                 else:
-                    self.terminal.cursorPosition(0, current_screen_line +  1)
+                    self.terminal.cursorPosition(0, current_screen_line + 1)
                     self.terminal.eraseToLineEnd()
 
                 self.write(self.buffer[self.pos:self.eol_pos()])
@@ -511,7 +510,7 @@ class Editor(object):
                     self.reset_scrolling_region()
                 self.terminal.restoreCursor()
 
-                self.terminal.cursorPosition(0, current_screen_line +  1)
+                self.terminal.cursorPosition(0, current_screen_line + 1)
             else:
                 self.terminal.saveCursor()
                 self.terminal.index()
@@ -543,9 +542,8 @@ class Editor(object):
 
         self.pos += 1
 
-
     def delete_character(self):
-        self.buffer = self.buffer[:self.pos] + self.buffer[self.pos+1:]
+        self.buffer = self.buffer[:self.pos] + self.buffer[self.pos + 1:]
 
     def _echo(self, keyID, mod):
         """Echoes characters on terminal like on unix (special chars etc)"""
