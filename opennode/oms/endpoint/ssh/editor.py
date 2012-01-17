@@ -147,6 +147,8 @@ class Editor(object):
         self.terminal.restoreCursor()
 
     def draw_status(self, text):
+        text = text.replace('\n', '^J')
+
         if text == self.status_line:
             return
         self.status_line = text
