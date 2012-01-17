@@ -782,6 +782,7 @@ class EditCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('path')
+        parser.add_argument('-n', action='store_true', help="No descriptions")
         return parser
 
     @defer.inlineCallbacks
@@ -793,7 +794,7 @@ class EditCmd(Cmd):
 
         editor = Editor(self.protocol)
 
-        old = IEditable(obj).toEditableString()
+        old = IEditable(obj).toEditableString(descriptions=not args.n)
         updated = yield editor.start(old)
 
         yield self._save(args, old, updated)

@@ -70,10 +70,12 @@ class DictFromUnicode(Adapter):
 
 # XXX: Might not be the best place nor name for it, but at least the
 # duplication has been eliminated for now.
-def model_to_dict(obj, use_titles=False):
+def model_to_dict(obj, use_titles=False, use_fields=False):
     data = OrderedDict()
     for key, field, schema in get_schema_fields(obj):
-        if not use_titles:
+        if use_fields:
+            key = field
+        elif not use_titles:
             key = key.encode('utf8')
         else:
             key = field.title
