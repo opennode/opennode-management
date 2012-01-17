@@ -3,7 +3,7 @@ from zope.interface import implements
 
 from twisted.application import service, internet
 from twisted.conch.insults import insults
-from twisted.conch.manhole_ssh import ConchFactory, TerminalRealm
+from twisted.conch.manhole_ssh import ConchFactory
 from twisted.cred import portal
 from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
@@ -12,7 +12,7 @@ from twisted.web import server, guard, resource
 from opennode.oms.core import setup_environ
 from opennode.oms.endpoint.httprest.root import HttpRestServer
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-from opennode.oms.endpoint.ssh.session import OmsTerminalSession
+from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
 from opennode.oms.logging import setup_logging
 from opennode.oms.security.authentication import checkers
 
@@ -29,11 +29,7 @@ def create_ssh_server():
     def chainProtocolFactory():
         return insults.ServerProtocol(OmsShellProtocol)
 
-    rlm = TerminalRealm()
-    rlm.chainedProtocolFactory = chainProtocolFactory
-    rlm.sessionFactory = OmsTerminalSession
-
-    the_portal = portal.Portal(rlm)
+    the_portal = portal.Portal(OmsTerminalRealm())
 
     for ch in checkers():
         the_portal.registerChecker(ch)

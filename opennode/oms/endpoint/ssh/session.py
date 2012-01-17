@@ -1,5 +1,5 @@
 from twisted.conch import interfaces as iconch
-from twisted.conch.manhole_ssh import TerminalSession
+from twisted.conch.manhole_ssh import TerminalSession, TerminalRealm
 from twisted.conch.insults import insults
 from twisted.internet import defer
 
@@ -18,7 +18,6 @@ class OmsTerminalSession(TerminalSession):
     def execCommand(self, proto, cmd):
         try:
             chained_protocol = insults.ServerProtocol(BatchOmsShellProtocol)
-
             self.transportFactory(
                 proto, chained_protocol,
                 iconch.IConchUser(self.original),
@@ -34,3 +33,14 @@ class OmsTerminalSession(TerminalSession):
             proto.processEnded()
 
         spawn_command()
+
+
+class OmsTerminalRealm(TerminalRealm):
+    def __init__(self):
+        TerminalRealm.__init__(self)
+
+        def chainProtocolFactory():
+            return insults.ServerProtocol(OmsShellProtocol)
+
+        self.chainedProtocolFactory = chainProtocolFactory
+        self.sessionFactory = OmsTerminalSession
