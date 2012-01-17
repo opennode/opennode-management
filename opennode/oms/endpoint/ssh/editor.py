@@ -225,31 +225,44 @@ class Editor(object):
         if self.pos == len(self.buffer):
             return
 
+
         self.dirty = True
 
         # currently hitting backspace at the beginning of a line is not implemented
         if self.pos == self.bol_pos():
+            current_screen_line = self.terminal.cursorPos.y
+
+            # special handling for last line, because some terminal (xterm and gnome term) don't support
+            # correctly a scroll region of height 1
+            scroll_region = self.terminal.cursorPos.y + 1 != self.parent.height - self.MODELINE_HEIGHT
+
             self.terminal.eraseToLineEnd()
             self.terminal.saveCursor()
 
             # scroll up part below deleted line
             # XXX: consider using termSize.y instead of computing view size using MODELINE_HEIGHT
-            current_screen_line = self.terminal.cursorPos.y
-            self.terminal.setScrollRegion(current_screen_line + 1, self.parent.height - self.MODELINE_HEIGHT)
-            self.terminal.cursorPosition(0, self.parent.height - self.MODELINE_HEIGHT - 1)
-            self.terminal.index()
+            if scroll_region:
+                self.terminal.setScrollRegion(current_screen_line + 1, self.parent.height - self.MODELINE_HEIGHT)
+                self.terminal.cursorPosition(0, self.parent.height - self.MODELINE_HEIGHT - 1)
+                self.terminal.index()
 
             # redraw revealed line
             self.terminal.cursorPosition(0, self.parent.height - self.MODELINE_HEIGHT - 1)
 
-            last_line_delta = self.terminal.termSize.y - self.terminal.cursorPos.y +  1
+            last_line_delta = self.terminal.termSize.y - self.terminal.cursorPos.y
+            # fixup for scrolling with self.terminal.index()
+            if scroll_region:
+                last_line_delta += 1
+
             last_line_pos = find_nth(self.buffer, '\n', last_line_delta, self.pos)
 
             if last_line_pos > 0:
                 last_line_end = self.buffer.find('\n', last_line_pos + 1)
                 self.terminal.write(self.buffer[last_line_pos+1:last_line_end])
 
-            self.reset_scrolling_region()
+            if scroll_region:
+                self.reset_scrolling_region()
+
             self.terminal.restoreCursor()
 
             old_bol, old_eol = self.bol_pos(), self.eol_pos()
@@ -455,12 +468,23 @@ class Editor(object):
                 # scroll up part below deleted line
                 # XXX: consider using termSize.y instead of computing view size using MODELINE_HEIGHT
                 current_screen_line = self.terminal.cursorPos.y
-                self.terminal.setScrollRegion(current_screen_line + 2, self.parent.height - self.MODELINE_HEIGHT)
-                self.terminal.cursorPosition(0, current_screen_line +  1)
-                self.terminal.reverseIndex()
+
+                # special handling for last line, because some terminal (xterm and gnome term) don't support
+                # correctly a scroll region of height 1
+                scroll_region = self.terminal.cursorPos.y + 2 != self.parent.height - self.MODELINE_HEIGHT
+
+                if scroll_region:
+                    self.terminal.setScrollRegion(current_screen_line + 2, self.parent.height - self.MODELINE_HEIGHT)
+                    self.terminal.cursorPosition(0, current_screen_line +  1)
+                    self.terminal.reverseIndex()
+                else:
+                    self.terminal.cursorPosition(0, current_screen_line +  1)
+                    self.terminal.eraseToLineEnd()
 
                 self.terminal.write(self.buffer[self.pos:self.eol_pos()])
-                self.reset_scrolling_region()
+
+                if scroll_region:
+                    self.reset_scrolling_region()
                 self.terminal.restoreCursor()
 
                 self.terminal.cursorPosition(0, current_screen_line +  1)
