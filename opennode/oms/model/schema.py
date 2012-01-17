@@ -37,7 +37,7 @@ class CollectionFromUnicode(Adapter):
 
     def fromUnicode(self, value):
         if isinstance(value, basestring):
-            value = value.split(',')
+            value = [i.strip() for i in value.split(',')]
         return self.context._type(value)
 
 
