@@ -209,13 +209,14 @@ class Editor(object):
 
         next_line = self.eol_pos() + 1
 
-        self.draw_status('Char: %s (%s %s) point=%s of %s line=%s; Prev: %s (%s %s), Next: %s (%s %s) bol=%s eol=%s prev_line=%s next_line=%s cursor=(%s, %s)' %
+        self.draw_status('Char: %s (%s %s) point=%s of %s line=%s; Prev: %s (%s %s), Next: %s (%s %s) bol=%s eol=%s prev_line=%s next_line=%s cursor=(%s, %s) termSize=(%s, %s)' %
                          (self.show_keys((ch,)), ord(ch), hex(ord(ch)),
                           self.pos, len(self.buffer), self.current_line,
                           self.show_keys(pch,), ord(pch), hex(ord(pch)),
                           self.show_keys(nch,), ord(nch), hex(ord(nch)),
                           bol_pos, eol_pos, prev_line, next_line,
-                          self.terminal.cursorPos.y, self.terminal.cursorPos.x
+                          self.terminal.cursorPos.y, self.terminal.cursorPos.x,
+                          self.terminal.termSize.y, self.terminal.termSize.x,
                          ))
 
     def handle_BACKSPACE(self):
