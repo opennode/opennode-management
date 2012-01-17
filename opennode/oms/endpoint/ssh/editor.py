@@ -343,6 +343,7 @@ class Editor(object):
         move_backward = go_forward - min(go_forward, line_length)
         if move_backward:
             self.terminal.cursorBackward(move_backward)
+        self.current_column -= move_backward
 
     def goto_next_line(self):
         # reached the end of the file
@@ -378,6 +379,10 @@ class Editor(object):
         return "-".join(show_key(key) for key in keys)
 
     def insert_character(self, ch):
+        import string
+        if not ch in string.printable:
+            return
+
         self.dirty = True
 
         if ch == '\n':
@@ -389,18 +394,18 @@ class Editor(object):
         self.pos += 1
         self.current_column += 1
 
+        self.terminal.write(ch)
+        # insults doesn't keep track of cursor movement made by write
+        self.terminal.cursorPos.x += 1
+
     def delete_character(self):
         self.buffer = self.buffer[:self.pos] + self.buffer[self.pos+1:]
 
     def _echo(self, keyID, mod):
         """Echoes characters on terminal like on unix (special chars etc)"""
         if isinstance(keyID, str):
-            import string
             if keyID in ('\r'):
                 keyID = '\n'
-
-            if keyID in string.printable:
-                self.terminal.write(keyID)
 
             self.insert_character(keyID)
 
