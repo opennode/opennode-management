@@ -7,7 +7,7 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from opennode.oms.util import exception_logger, find_nth
-from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L, CTRL_W
+from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_Y, CTRL_S, CTRL_G, CTRL_L, CTRL_W
 
 
 class Editor(object):
@@ -22,6 +22,8 @@ class Editor(object):
         self.dirty = False
         self.status_line = ""
         self.has_quit = False
+        self.kill_ring = ""
+        self.last_handler = None
 
         self.prefix = None
         self.prefixes = [CTRL_X]
@@ -33,6 +35,7 @@ class Editor(object):
                              CTRL_E: self.handle_END_LINE,
                              CTRL_K: self.handle_KILL_LINE,
                              CTRL_L: self.handle_REDRAW,
+                             CTRL_Y: self.handle_YANK,
                              self.terminal.LEFT_ARROW: self.handle_LEFT,
                              self.terminal.RIGHT_ARROW: self.handle_RIGHT,
                              self.terminal.UP_ARROW: self.handle_UP,
@@ -307,11 +310,15 @@ class Editor(object):
             self.terminal.cursorForward(move_forward)
 
     def handle_KILL_LINE(self):
+        if self.last_handler != self.handle_KILL_LINE:
+            self.kill_ring = ""
+
         line_length = max(0, self.eol_pos() - self.bol_pos())
         if line_length:
             self.terminal.eraseToLineEnd()
 
             eol = self.eol_pos()
+            self.kill_ring += self.buffer[self.pos:eol]
             self.buffer = self.buffer[:self.pos] + self.buffer[eol:]
         else:
             # it's equivalent as handling backspace
@@ -320,6 +327,13 @@ class Editor(object):
             self.handle_BEGIN_LINE()
             # of on this line
             self.goto_next_line()
+
+            self.kill_ring += '\n'
+
+    def handle_YANK(self):
+        # slow but simple impl
+        for ch in self.kill_ring:
+            self.keystrokeReceived(ch, None)
 
     def _rfind(self, string, sub, start=None, end=None):
         """Behaves like str.find, but returns 0 instead of -1"""
@@ -541,12 +555,17 @@ class Editor(object):
                 else:
                     self.draw_status("%s is undefined" % self.show_keys((self.prefix, keyID)))
             finally:
+                self.last_handler = handler
                 self.prefix = None
         elif keyID in self.prefixes:
             self.prefix = keyID
             self.draw_status(self.show_keys(keyID))
         elif self.key_handlers.get(keyID, None):
-            self.key_handlers.get(keyID, None)()
+            handler = self.key_handlers.get(keyID, None)
+            try:
+                handler()
+            finally:
+                self.last_handler = handler
         else:
             self.draw_status("")
             self._echo(keyID, mod)
