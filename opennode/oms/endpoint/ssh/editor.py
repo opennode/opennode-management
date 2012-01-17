@@ -1,12 +1,13 @@
 import os
 
+from contextlib import closing
 from copy import copy
 from twisted.internet import defer
 from twisted.conch.insults import insults
 from twisted.python import log
 
 from opennode.oms.util import exception_logger, find_nth
-from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L
+from opennode.oms.endpoint.ssh.terminal import CTRL_A, CTRL_C, CTRL_E, CTRL_K, CTRL_X, CTRL_S, CTRL_G, CTRL_L, CTRL_W
 
 
 class Editor(object):
@@ -25,6 +26,7 @@ class Editor(object):
         self.prefix = None
         self.prefixes = [CTRL_X]
         self.key_handlers = {(CTRL_X, CTRL_S): self.handle_SAVE,
+                             (CTRL_X, CTRL_W): self.handle_DUMP_BUFFER,
                              (CTRL_X, CTRL_C): self.handle_EXIT,
                              (CTRL_X, '='): self.handle_WHAT_CURSOR_POSITION,
                              CTRL_A: self.handle_BEGIN_LINE,
@@ -183,6 +185,11 @@ class Editor(object):
         self.draw_status("Object saved")
         self.saved = copy(self.buffer)
         self.dirty = False
+
+    def handle_DUMP_BUFFER(self):
+        self.draw_status("Buffer dumped to /tmp/dump.txt")
+        with closing(open('/tmp/dump.txt', 'w')) as f:
+            print >>f, self.buffer,
 
     def handle_WHAT_CURSOR_POSITION(self):
         ch = self.char_at(self.pos)

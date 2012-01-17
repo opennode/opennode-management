@@ -17,6 +17,7 @@ CTRL_S = '\x13'
 CTRL_T = '\x14'
 CTRL_R = '\x12'
 CTRL_G = '\x07'
+CTRL_W = '\x17'
 CTRL_X = '\x18'
 
 BLUE = '\x1b[1;34m'
