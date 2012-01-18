@@ -34,6 +34,7 @@ class OmsShellProtocol(InteractiveTerminal):
         self.environment = {'PATH': '.:./actions:/bin'}
         self.path_stack = []
         self.sub_protocol = None
+        self.principal = None
 
         @defer.inlineCallbacks
         def _get_obj_path():
@@ -232,7 +233,8 @@ class OmsShellProtocol(InteractiveTerminal):
 
     @property
     def ps(self):
-        ps1 = '%s@%s:%s%s ' % ('user', 'oms', self._cwd(), '#')
+        user = self.principal.id if self.principal else 'user'
+        ps1 = '%s@%s:%s%s ' % (user, 'oms', self._cwd(), '#')
         return [ps1, '... ']
 
     def _cwd(self):
