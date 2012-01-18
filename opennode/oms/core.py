@@ -25,13 +25,28 @@ def deferred_call(self, fun):
 Deferred.__call__ = deferred_call
 
 
+def load_zcml(*args):
+    """We rely on grok to load the configuration for our modules, but we depend on some libraries which
+    have only zcml based configuration, thus we need to load only those we need."""
+
+    from zope.configuration.config import ConfigurationMachine
+    from zope.configuration import xmlconfig
+    context = ConfigurationMachine()
+    xmlconfig.registerCommonDirectives(context)
+
+    for i in args:
+        xmlconfig.include(context, 'configure.zcml', context.resolve(i))
+
+    context.execute_actions()
+
+
 def grok_all():
     from grokcore.component.testing import grok
 
-    # we have first to load grokkers
-    # and then regrok the whole package
+    load_zcml('zope.securitypolicy', 'zope.annotation')
 
     grok('grokcore.security.meta')
+    grok('grokcore.annotation.meta')
 
     grok('opennode.oms.security.grokkers')
     grok('opennode.oms.endpoint.ssh.cmd.grokkers')

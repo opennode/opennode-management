@@ -28,6 +28,7 @@ setup(
         "zope.app.intid==3.7.1",
         "grokcore.component==2.4",
         "grokcore.security==1.5",
+        "grokcore.annotation==1.2",
         "zope.securitypolicy==3.7.0",
         "ipython>=0.11",
         "ZODB3==3.10.5",

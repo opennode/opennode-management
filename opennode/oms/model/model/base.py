@@ -3,6 +3,7 @@ from uuid import uuid4
 import persistent
 from BTrees.OOBTree import OOBTree
 from grokcore.component import Subscription, querySubscriptions, baseclass
+from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 
@@ -51,7 +52,7 @@ class IIncomplete(Interface):
 
 
 class Model(persistent.Persistent):
-    implements(IModel)
+    implements(IModel, IAttributeAnnotatable)
 
     __parent__ = None
     __name__ = None
