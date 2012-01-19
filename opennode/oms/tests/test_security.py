@@ -1,9 +1,8 @@
 import unittest
 
 from nose.tools import eq_, assert_raises
-from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
-from zope.component import provideUtility, getUtility
-from zope.interface import implements
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 from zope.security.interfaces import Unauthorized, ForbiddenAttribute
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
@@ -19,19 +18,6 @@ class SessionStub(object):
     def __init__(self, principal=None):
         self.principal = principal
         self.interaction = None
-
-
-class DummyAuthenticationUtility:
-    implements(IAuthentication)
-
-    def getPrincipal(self, id):
-        if id == 'user1':
-            return User(id)
-        elif id == 'user2':
-            return User(id)
-        raise PrincipalLookupError(id)
-
-provideUtility(DummyAuthenticationUtility())
 
 
 class SecurityTestCase(unittest.TestCase):
@@ -51,6 +37,10 @@ class SecurityTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_test(self):
+        auth = getUtility(IAuthentication, context=None)
+        auth.registerPrincipal(User('user1'))
+        auth.registerPrincipal(User('user2'))
+
         # setup some fake permissions to the test principals
         prinperG.grantPermissionToPrincipal('read', 'user1')
         prinperG.grantPermissionToPrincipal('zope.Nothing', 'user2')

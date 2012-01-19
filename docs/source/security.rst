@@ -29,10 +29,6 @@ The possible permissions are:
 
     #) `admin` (**a**) the principal can do everything on the object
 
-These OMS permissions are mapped to zope security `roles` which in turn are defined as sets of 
-`zope security permissions` which are more fine grained and depend on the actual object being secured.
-The OMS user usually don't have to interact with low-level `zope security permissions`.
-
 The ACL of an object can be viewed with the `getfacl` command:
 
 .. code-block:: sh
@@ -41,7 +37,7 @@ The ACL of an object can be viewed with the `getfacl` command:
   user:john:+vr
   user:john:-wd
 
-This means that the user `john` has two `Allow` ACEs, one granting the `view` permission and the other granting the `read` permission,
+This means that the user `john` has two `Allow` ACEs, one allowing the `view` permission and the other allowing the `read` permission,
 and two `Deny` ACEs, one denying the `write` permission and the other denying the `delete` permission.
 
 `Deny` ACEs take precedence over `Allow` permissions, declared in the object or inherited from the parents.
@@ -61,9 +57,24 @@ The ACL can be manipulated with the `setfacl` command:
   user:john:-r
 
 In order to appreciate the difference between adding a denial with a  `Deny` ACE (with `-d`) 
-vs removing a grant with an `Allow` ACE (with `-x`), we have to take a closer look at permission inheritance.
+vs removing an entry with an `Allow` ACE (with `-x`), we have to take a closer look at permission inheritance.
 
 Permission inheritance
 ----------------------
 
+
+Grants
+------
+
+The OMS permissions define a set of **grants** which are more fine grained and depend on the actual object being secured.
+Examples of OMS permission `grants` are as `@read`, `@rest`, `@poweroff`, ...
+Some grants (like `@read`) might have the same name as the permission, but they are not the same concept.
+
+`Grants` allow us to define the exact meaning of a given permission, and to fine-tune what can be actually done by principals
+having a given permission.
+
+The mapping between a `permission` and it's `grants` is defined globally in the `oms_roles` file and this mapping can be extended on a per-type basis.
+
+You can even override the mapping between a `permission` and it's `grants` for a particular object instance, e.g you can revoke the grant `@shutdown` to
+those who have `write` permission on a given Compute object, while retaining all the existing grants associated with `write` (e.g. access the console etc).
 

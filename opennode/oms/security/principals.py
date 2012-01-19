@@ -12,3 +12,7 @@ class User(object):
 
     def __repr__(self):
         return '%s (%s)' % (type(self), self.id)
+
+
+class Group(User):
+    pass
