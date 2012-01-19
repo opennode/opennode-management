@@ -597,6 +597,37 @@ class SshTestCase(unittest.TestCase):
         with assert_mock(self.terminal) as t:
             t.write('test\n')
 
+    @run_in_reactor
+    def test_acl(self):
+        self._cmd('setfacl / -m u:john:read')
+
+        self.terminal.reset_mock()
+        self._cmd('getfacl /')
+        with assert_mock(self.terminal) as t:
+            t.write('user:john:+read\n')
+
+        self._cmd('setfacl / -m u:john:write')
+
+        self.terminal.reset_mock()
+        self._cmd('getfacl /')
+        with assert_mock(self.terminal) as t:
+            t.write('user:john:+read,write\n')
+
+        self._cmd('setfacl / -d u:john:admin')
+
+        self.terminal.reset_mock()
+        self._cmd('getfacl /')
+        with assert_mock(self.terminal) as t:
+            t.write('user:john:+read,write\n')
+            t.write('user:john:-admin\n')
+
+        self._cmd('setfacl / -d u:john:write')
+        self.terminal.reset_mock()
+        self._cmd('getfacl /')
+        with assert_mock(self.terminal) as t:
+            t.write('user:john:+read\n')
+            t.write('user:john:-admin,write\n')
+
     def test_tokenizer(self):
         arglist = r'set /computes/some\ file\ \ with\ spaces -v --help key=value other_key="quoted value" "lastkey"="escaped \" quotes"'
 
