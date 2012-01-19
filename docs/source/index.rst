@@ -13,6 +13,7 @@ Contents:
 
    intro
    security
+   developers
    gen/modules
 
 
