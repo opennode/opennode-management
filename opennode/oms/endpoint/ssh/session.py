@@ -47,15 +47,12 @@ class OmsTerminalRealm(TerminalRealm):
     def __init__(self):
         TerminalRealm.__init__(self)
 
-        def chainProtocolFactory():
-            return insults.ServerProtocol(OmsShellProtocol)
-
         def userFactory(original, avatarId):
             user = TerminalUser(original, avatarId)
             user.principal = User(avatarId)
             return user
 
-        self.chainedProtocolFactory = chainProtocolFactory
+        self.chainedProtocolFactory = lambda: insults.ServerProtocol(OmsShellProtocol)
         self.sessionFactory = OmsTerminalSession
         self.userFactory = userFactory
         self.transportFactory = OmsTerminalSessionTransport
