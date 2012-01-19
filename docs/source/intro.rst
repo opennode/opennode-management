@@ -70,13 +70,13 @@ You can install plugins with:
 
 .. code-block:: sh
 
-  $ bin/plugin install knot
+  $ bin/plugin install opennode-oms-knot
 
 Uninstall with:
 
 .. code-block:: sh
 
-  $ bin/plugin uninstall knot
+  $ bin/plugin uninstall opennode-oms-knot
 
 See the currently installed plugins:
 
@@ -114,7 +114,7 @@ You have to pass the directory containing the plugin sources checkout:
 
 .. code-block:: sh
 
-  $ bin/plugin install knot -d ../opennode-knot
+  $ bin/plugin install opennode.oms.knot -d ../opennode-knot
 
 
 Installing a development plugin which depends on another plugin will fetch the dependency as egg:
