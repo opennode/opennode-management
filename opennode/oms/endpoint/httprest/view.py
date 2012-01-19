@@ -110,6 +110,9 @@ class StreamView(HttpRestView):
         limit = int(request.args.get('limit', ['100'])[0])
         after = int(request.args.get('after', ['0'])[0])
 
+        if not request.content.getvalue():
+            return {}
+
         data = json.load(request.content)
 
         def val(r):

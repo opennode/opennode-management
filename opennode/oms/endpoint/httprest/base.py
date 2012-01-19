@@ -22,7 +22,10 @@ class HttpRestView(Adapter):
     require('rest')
 
     def render_recursive(self, request, depth):
-        return self.render_GET(request)
+        for method in ('render_' + request.method, 'render'):
+            if hasattr(self, method):
+                return getattr(self, method)(request)
+        raise NotImplemented("method %s not implemented\n" % request.method)
 
     def render_OPTIONS(self, request):
         all_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD']
