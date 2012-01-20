@@ -127,3 +127,14 @@ Installing a development plugin which depends on another plugin will fetch the d
   $ bin/plugin list
   opennode.oms.knot (0.0-5-gd425) [autodep]
   opennode.oms.onc (0.0-320-gc5ca) [dev]
+
+Once a plugin has been installed as egg dependency, you can "upgrade" it to dev mode by simply installing it again with the `-d` switch:
+
+.. code-block:: sh
+
+  $ bin/plugin list
+  $ bin/plugin install opennode.oms.knot -d ../opennode-knot
+  ...
+  $ bin/plugin list
+  opennode.oms.knot (0.0-5-gd425) [dev]
+  opennode.oms.onc (0.0-320-gc5ca) [dev]
