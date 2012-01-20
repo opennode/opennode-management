@@ -70,13 +70,13 @@ You can install plugins with:
 
 .. code-block:: sh
 
-  $ bin/plugin install opennode-oms-knot
+  $ bin/plugin install opennode.oms.knot
 
 Uninstall with:
 
 .. code-block:: sh
 
-  $ bin/plugin uninstall opennode-oms-knot
+  $ bin/plugin uninstall opennode.oms.knot
 
 See the currently installed plugins:
 
