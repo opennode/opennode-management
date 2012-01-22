@@ -1,7 +1,7 @@
 #!/bin/sh
 INSTALLER=parts/oms-core-installer.sh
 
-cp oms_roles installer
+cp oms_permissions installer
 
 TMP=$(mktemp /tmp/oms-installer-XXXXXX)
 
