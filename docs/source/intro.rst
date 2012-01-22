@@ -39,7 +39,7 @@ Before starting we need at least an admin user account:
 
 .. code-block:: sh
 
-  $ bin/passwd -a john -r admin
+  $ bin/passwd -a john -g admins
 
 You can change the password later on with the same `bin/passwd` utility, see `bin/passwd --help` for additional info.
 

@@ -36,8 +36,8 @@ def hash_pw(password):
 def run():
     parser = argparse.ArgumentParser(description='Manage OMS passwords')
     parser.add_argument('user', help="user name")
-    parser.add_argument('-r', help="role", required=False, default=None)
-    parser.add_argument('-s', action='store_true', help="force password prompt even if setting role via -r", required=False, default=None)
+    parser.add_argument('-g', help="group(s): comma separated list of groups the user belongs to", required=False, default=None)
+    parser.add_argument('-s', action='store_true', help="force password prompt even if setting group(s) via -g", required=False, default=None)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-a', action='store_true', help="add user")
@@ -71,7 +71,7 @@ def run():
 
         pw = ask_password()
         with open(passwd_file, 'a') as f:
-            print >>f, '%s:%s:%s' % (args.user, pw, args.r or 'user')
+            print >>f, '%s:%s:%s' % (args.user, pw, args.g or 'user')
     elif args.c:
         password_checker = FilePasswordDB(passwd_file, hash=ssha_hash)
         credentials = UsernamePassword(args.user, getpass("Password: "))
@@ -95,18 +95,18 @@ def run():
             sys.exit(1)
 
         pw = None
-        if args.s or not args.r:
+        if args.s or not args.g:
             pw = ask_password()
 
         with open(passwd_file, 'w') as f:
             for line in lines:
                 if line.startswith(args.user + ':'):
-                    user, old_pw, role = line.split(':')
-                    if args.r:
-                        role = args.r
+                    user, old_pw, groups = line.split(':')
+                    if args.g:
+                        groups = args.g
                     if pw == None:
                         pw = old_pw
 
-                    print >>f, '%s:%s:%s' % (user, pw, role),
+                    print >>f, '%s:%s:%s' % (user, pw, groups),
                 else:
                     print >>f, line,
