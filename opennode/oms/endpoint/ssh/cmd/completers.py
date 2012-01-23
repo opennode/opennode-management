@@ -6,6 +6,7 @@ from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter
 
 from opennode.oms.endpoint.ssh.cmd import commands
+from opennode.oms.endpoint.ssh.cmd import security
 from opennode.oms.endpoint.ssh.cmd.completion import Completer
 from opennode.oms.endpoint.ssh.cmdline import GroupDictAction
 from opennode.oms.model.model.base import IContainer
@@ -219,10 +220,10 @@ class EnvironmentCompleter(Completer):
 
 
 # TODO: move to handler
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd, commands.LinkCmd, commands.EditCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.MoveCmd, commands.FileCmd, commands.EchoCmd, commands.LinkCmd, commands.EditCmd, security.GetAclCmd, security.SetAclCmd, security.PermCheckCmd]:
     provideSubscriptionAdapter(PathCompleter, adapts=(command, ))
 
-for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd, commands.LinkCmd, commands.KillTaskCmd]:
+for command in [commands.ListDirContentsCmd, commands.ChangeDirCmd, commands.CatObjectCmd, commands.SetAttrCmd, commands.RemoveCmd, commands.QuitCmd, commands.FileCmd, commands.LinkCmd, commands.KillTaskCmd, security.GetAclCmd, security.SetAclCmd, security.PermCheckCmd]:
     provideSubscriptionAdapter(ArgSwitchCompleter, adapts=(command, ))
 
 for command in [commands.SetAttrCmd, commands.CreateObjCmd]:
