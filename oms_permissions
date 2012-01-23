@@ -2,8 +2,8 @@
 a:admin:oms.nothing,rest,read,modify,add
 r:read:oms.nothing,read
 w:write:modify,add,create
-x:execute:
-d:delete:
-v:view:
+x:execute:traverse
+d:delete:delete
+v:view:view
 c:create:create
 :rest:rest

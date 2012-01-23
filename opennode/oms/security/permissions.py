@@ -39,8 +39,20 @@ class Add(Permission):
     name('add')
 
 
+class Remove(Permission):
+    name('remove')
+
+
+class Delete(Permission):
+    name('delete')
+
+
 class View(Permission):
     name('view')
+
+
+class Traverse(Permission):
+    name('traverse')
 
 
 class Rest(Permission):
