@@ -2,9 +2,10 @@ from twisted.conch import interfaces as iconch
 from twisted.conch.manhole_ssh import TerminalSession, TerminalSessionTransport, TerminalRealm, TerminalUser
 from twisted.conch.insults import insults
 from twisted.internet import defer
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-from opennode.oms.security.principals import User
 
 
 class BatchOmsShellProtocol(OmsShellProtocol):
@@ -49,7 +50,9 @@ class OmsTerminalRealm(TerminalRealm):
 
         def userFactory(original, avatarId):
             user = TerminalUser(original, avatarId)
-            user.principal = User(avatarId)
+
+            auth = getUtility(IAuthentication, context=None)
+            user.principal = auth.getPrincipal(avatarId)
             return user
 
         self.chainedProtocolFactory = lambda: insults.ServerProtocol(OmsShellProtocol)
