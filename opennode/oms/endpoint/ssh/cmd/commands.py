@@ -196,12 +196,12 @@ class ListDirContentsCmd(Cmd):
 
             if IContainer.providedBy(obj) and not self.opts_dir:
                 for subobj in sorted_obj_list():
-                    perms = effective_perms(self.protocol.interaction, subobj)
+                    perms = effective_perms(self.protocol.interaction, follow_symlinks(subobj))
                     self.write(('%s %s\t%s\n' % (perms, pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
                 if recursive:
                     self.ls_recursive(path, obj, sorted_obj_list())
             else:
-                perms = effective_perms(self.protocol.interaction, obj)
+                perms = effective_perms(self.protocol.interaction, follow_symlinks(obj))
                 self.write(('%s %s\t%s\n' % (perms, pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
         else:
             if IContainer.providedBy(obj) and not self.opts_dir:
