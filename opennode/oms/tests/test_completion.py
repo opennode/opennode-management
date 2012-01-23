@@ -9,6 +9,7 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
+from opennode.oms.security.principals import User
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
@@ -18,7 +19,7 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.oms_ssh = OmsShellProtocol()
-        self.oms_ssh.logged_in(None)
+        self.oms_ssh.logged_in(User('user'))
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 

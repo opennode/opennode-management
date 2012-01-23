@@ -15,6 +15,7 @@ from opennode.oms.endpoint.ssh.tokenizer import CommandLineTokenizer, CommandLin
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.proc import Proc
+from opennode.oms.security.interaction import new_interaction
 from opennode.oms.zodb import db
 
 
@@ -54,6 +55,7 @@ class OmsShellProtocol(InteractiveTerminal):
         """Invoked when the principal which opened this session is known"""
 
         self.principal = principal
+        self.interaction = new_interaction(principal.id)
         self.tid = Proc.register(None, '/bin/omsh', principal=principal)
 
     def connectionMade(self):
