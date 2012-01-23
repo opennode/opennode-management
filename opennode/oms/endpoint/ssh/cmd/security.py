@@ -5,10 +5,13 @@ from grokcore.component import implements
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 
+
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
+from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.permissions import Role
+from opennode.oms.security.principals import effective_principals
 from opennode.oms.zodb import db
 
 
@@ -21,6 +24,71 @@ class WhoAmICmd(Cmd):
 
     def execute(self, args):
         self.write("%s\n" % self.protocol.principal.id)
+
+
+def effective_perms(interaction, obj):
+    def roles_for(obj):
+        prinrole = IPrincipalRoleManager(obj)
+
+        allowed = {}
+        for g in effective_principals(interaction):
+            for role, setting in prinrole.getRolesForPrincipal(g.id):
+                if setting.getName() == 'Allow':
+                    allowed[Role.role_to_nick[role]] = True
+        return allowed
+
+    def parents(o):
+        while o:
+            yield o
+            o = o.__parent__
+
+    effective_allowed = {}
+    for p in parents(obj):
+        effective_allowed.update(roles_for(p))
+
+    return (''.join(i if effective_allowed.get(i, False) else '-' for i in sorted(Role.nick_to_role.keys())))
+
+
+class PermCheckCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
+    command('permcheck')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('path')
+
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-p', action='store_true', help="Show effective permissions for a given object")
+        group.add_argument('-r', action=MergeListAction, nargs='+', help="Check if the user has some rights on a given object")
+        return parser
+
+    @db.ro_transact
+    def execute(self, args):
+        obj = self.traverse(args.path)
+        if not obj:
+            self.write("No such object %s\n" % args.path)
+            return
+
+        if args.p:
+            self.write("Effective permissions: %s\n" % effective_perms(self.protocol.interaction, obj))
+        elif args.r:
+            self.check_rights(obj, args)
+
+    def check_rights(self, obj, args):
+        interaction = self.protocol.interaction
+        obj = proxy_factory(obj, interaction)
+
+        allowed = []
+        denied = []
+        for r in args.r:
+            for i in r.split(','):
+                i = i.strip()
+                if i.startswith('@'):
+                    i = i[1:]
+                (allowed if interaction.checkPermission(i, obj) else denied).append(i)
+
+        self.write("+%s:-%s\n" % (','.join('@' + i for i in allowed), ','.join('@' + i for i in denied)))
 
 
 class GetAclCmd(Cmd):

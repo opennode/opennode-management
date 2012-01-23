@@ -149,6 +149,20 @@ class GroupDictAction(argparse.Action):
         setattr(namespace, self.group, group)
 
 
+class MergeListAction(argparse.Action):
+    """Custom argparse action which allows multiple occurrences of multivalued
+    optional arguments, e.g. `-x a b -x c d` will yield `['a', 'b', 'c', 'd']`.
+
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = getattr(namespace, self.dest, [])
+        if items is None:
+            items = []
+        items.extend(values)
+        setattr(namespace, self.dest, items)
+
+
 class ICmdArgumentsSyntax(Interface):
     def arguments():
         """Defines the command line arguments syntax."""
