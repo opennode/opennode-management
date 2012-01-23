@@ -7,6 +7,7 @@ from opennode.oms.zodb.db import get_db_dir
 from opennode.utils import autoreload
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
+from twisted.internet import defer
 
 
 def get_base_dir():
@@ -44,6 +45,7 @@ def run():
     parser.add_argument('-d', action='store_true',
                         help='start in development mode with autorestart')
     parser.add_argument('--db', help='overrides db directory')
+    parser.add_argument('-v', action='store_true', help='verbose logs')
 
     args = parser.parse_args()
 
@@ -54,6 +56,8 @@ def run():
         conf.set('db', 'path', args.db)
 
     run_zeo(get_db_dir())
+
+    defer.setDebugging(args.v)
 
     if args and args.d:
         autoreload.main(run_app)
