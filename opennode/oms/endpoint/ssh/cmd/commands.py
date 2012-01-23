@@ -12,6 +12,7 @@ from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from opennode.oms.endpoint.ssh.editor import Editor
 from opennode.oms.endpoint.ssh.editable import IEditable
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
                                                GroupDictAction, VirtualConsoleArgumentParser)
@@ -148,15 +149,16 @@ class ListDirContentsCmd(Cmd):
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('-l', action='store_true')
+        parser.add_argument('-l', action='store_true', help="long")
         parser.add_argument('-R', action='store_true', help="recursive")
-        parser.add_argument('-d', help="dummy param which takes a value")
+        parser.add_argument('-d', action='store_true', help="list directory entries instead of contents, and do not dereference symbolic links")
         parser.add_argument('paths', nargs='*')
         return parser
 
     @db.transact
     def execute(self, args):
         self.opts_long = args.l
+        self.opts_dir = args.d
         self.visited = []
 
         if args.paths:
@@ -192,15 +194,17 @@ class ListDirContentsCmd(Cmd):
                     return [canonical_path(item)] + getattr(follow_symlinks(item), 'nicknames', [])
                 return getattr(item, 'nicknames', [])
 
-            if IContainer.providedBy(obj):
+            if IContainer.providedBy(obj) and not self.opts_dir:
                 for subobj in sorted_obj_list():
-                    self.write(('%s\t%s\n' % (pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
+                    perms = effective_perms(self.protocol.interaction, subobj)
+                    self.write(('%s %s\t%s\n' % (perms, pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
                 if recursive:
                     self.ls_recursive(path, obj, sorted_obj_list())
             else:
-                self.write(('%s\t%s\n' % (pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
+                perms = effective_perms(self.protocol.interaction, obj)
+                self.write(('%s %s\t%s\n' % (perms, pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
         else:
-            if IContainer.providedBy(obj):
+            if IContainer.providedBy(obj) and not self.opts_dir:
                 items = [pretty_name(subobj) for subobj in sorted_obj_list()]
                 if items:
                     output = columnize(items, displaywidth=self.protocol.width)

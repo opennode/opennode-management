@@ -138,7 +138,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
-            t.write('by-name/\t\n')
+            t.write('------- by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
@@ -149,8 +149,8 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
-            t.write('%s@\t/machines/%s : tux-for-test\n' % (cid, cid))
-            t.write('by-name/\t\n')
+            t.write('------- %s@\t/machines/%s : tux-for-test\n' % (cid, cid))
+            t.write('------- by-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
