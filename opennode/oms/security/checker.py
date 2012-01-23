@@ -7,11 +7,15 @@ from zope.security.checker import _available_by_default, getCheckerForInstancesO
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 
 
+class NoCheckerException(Exception):
+    pass
+
+
 def _select_checker(value, interaction):
     checker = getCheckerForInstancesOf(type(value))
     if not checker:
         # XXX: create an exception for that
-        raise Exception('cannot build security proxy for %s' % value)
+        raise NoCheckerException('cannot build security proxy for %s' % value)
     # handle checkers for "primitive" types like str
     if type(checker) is object:
         return checker
@@ -23,7 +27,10 @@ def _select_checker(value, interaction):
 
 
 def proxy_factory(value, interaction):
-    return Proxy(value, _select_checker(value, interaction))
+    try:
+        return Proxy(value, _select_checker(value, interaction))
+    except NoCheckerException:
+        return value
 
 
 class Checker(object):
