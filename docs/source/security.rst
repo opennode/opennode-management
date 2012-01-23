@@ -63,18 +63,18 @@ Permission inheritance
 ----------------------
 
 
-Grants
+Rights
 ------
 
-The OMS permissions define a set of **grants** which are more fine grained and depend on the actual object being secured.
-Examples of OMS permission `grants` are as `@read`, `@rest`, `@poweroff`, ...
-Some grants (like `@read`) might have the same name as the permission, but they are not the same concept.
+The OMS permissions define a set of **rights** which are more fine grained and depend on the actual object being secured.
+Examples of OMS permission `rights` are as `@read`, `@rest`, `@poweroff`, ...
+Some rights (like `@read`) might have the same name as the permission, but they are not the same concept.
 
-`Grants` allow us to define the exact meaning of a given permission, and to fine-tune what can be actually done by principals
+`Rights` allow us to define the exact meaning of a given permission, and to fine-tune what can be actually done by principals
 having a given permission.
 
-The mapping between a `permission` and it's `grants` is defined globally in the `oms_roles` file and this mapping can be extended on a per-type basis.
+The mapping between a `permission` and it's `rights` is defined globally in the `oms_roles` file and this mapping can be extended on a per-type basis.
 
-You can even override the mapping between a `permission` and it's `grants` for a particular object instance, e.g you can revoke the grant `@shutdown` to
-those who have `write` permission on a given Compute object, while retaining all the existing grants associated with `write` (e.g. access the console etc).
+You can even override the mapping between a `permission` and it's `rights` for a particular object instance, e.g you can revoke the grant `@shutdown` to
+those who have `write` permission on a given Compute object, while retaining all the existing rights associated with `write` (e.g. access the console etc).
 
