@@ -1,42 +1,47 @@
 import inspect
 
-from copy import copy
+from collections import defaultdict
 from zope.interface import implements
 from zope.security._proxy import _Proxy as Proxy
 from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
+from twisted.internet.defer import Deferred
 
 
-class NoCheckerException(Exception):
-    pass
+class strong_defaultdict(defaultdict):
+    """Python's `defaultdict` type doesn't invoke default factory
+    when called with `get`, we need this subclass to implement a permissive checker."""
+
+    def get(self, name):
+        return self[name]
 
 
 def _select_checker(value, interaction):
     checker = getCheckerForInstancesOf(type(value))
     if not checker:
-        # XXX: create an exception for that
-        raise NoCheckerException('cannot build security proxy for %s' % value)
+        return Checker(strong_defaultdict(lambda: CheckerPublic), interaction=interaction)
+
     # handle checkers for "primitive" types like str
     if type(checker) is object:
         return checker
 
-    # create a custom instance
-    bound_checker = copy(checker)
-    bound_checker.interaction = interaction
-    return bound_checker
+    return Checker(checker.get_permissions, checker.set_permissions, interaction=interaction)
 
 
 def proxy_factory(value, interaction):
-    try:
-        return Proxy(value, _select_checker(value, interaction))
-    except NoCheckerException:
+    if type(value) is Proxy:
         return value
+    # ignore proxies on deferreds
+    if isinstance(value, Deferred):
+        return value
+
+    return Proxy(value, _select_checker(value, interaction))
 
 
 class Checker(object):
     implements(INameBasedChecker)
 
-    def __init__(self, get_permissions, set_permissions=None):
+    def __init__(self, get_permissions, set_permissions=None, interaction=None):
         """Create a checker
 
         A dictionary must be provided for computing permissions for
@@ -56,7 +61,7 @@ class Checker(object):
             assert isinstance(set_permissions, dict)
         self.set_permissions = set_permissions
 
-        self.interaction = None
+        self.interaction = interaction
 
     def permission_id(self, name):
         'See INameBasedChecker'
@@ -93,6 +98,7 @@ class Checker(object):
     def check(self, object, name):
         'See IChecker'
         permission = self.get_permissions.get(name)
+
         if permission is not None:
             if permission is CheckerPublic:
                 return  # Public
@@ -112,12 +118,18 @@ class Checker(object):
         'See IChecker'
         if type(value) is Proxy:
             return value
+        # ignore proxies on deferreds
+        if isinstance(value, Deferred):
+            return value
+        # don't proxy classes
+        if isinstance(value, type):
+            return value
         if inspect.ismethod(value):
             return value
         checker = getattr(value, '__Security_checker__', None)
         if checker is None:
             checker = _select_checker(value, self.interaction)  # pass interaction
-            if checker is None:
+            if checker is None or type(checker) is object:
                 return value
 
         return Proxy(value, checker)

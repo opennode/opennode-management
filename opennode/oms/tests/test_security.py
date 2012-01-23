@@ -7,6 +7,7 @@ from zope.security.interfaces import Unauthorized, ForbiddenAttribute
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
+from opennode.oms.model.model.base import IContainer
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.principals import User
@@ -67,3 +68,15 @@ class SecurityTestCase(unittest.TestCase):
         # check a default unauthorized access
         with assert_raises(ForbiddenAttribute):
             eq_(compute_proxy_user1.state, 'active')
+
+    @run_in_reactor
+    def test_adapt(self):
+        auth = getUtility(IAuthentication, context=None)
+        auth.registerPrincipal(User('user1'))
+        interaction = self._get_interaction('user1')
+
+        # get the object being secured
+        compute = self.make_compute()
+        compute_proxy = proxy_factory(compute, interaction)
+
+        eq_(IContainer(compute), IContainer(compute_proxy))
