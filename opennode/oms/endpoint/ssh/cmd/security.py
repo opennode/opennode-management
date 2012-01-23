@@ -33,8 +33,7 @@ def effective_perms(interaction, obj):
         allowed = {}
         for g in effective_principals(interaction):
             for role, setting in prinrole.getRolesForPrincipal(g.id):
-                if setting.getName() == 'Allow':
-                    allowed[Role.role_to_nick[role]] = True
+                allowed[Role.role_to_nick[role]] = setting.getName() == 'Allow'
         return allowed
 
     def parents(o):
@@ -43,7 +42,7 @@ def effective_perms(interaction, obj):
             o = o.__parent__
 
     effective_allowed = {}
-    for p in parents(obj):
+    for p in reversed(list(parents(obj))):
         effective_allowed.update(roles_for(p))
 
     return (''.join(i if effective_allowed.get(i, False) else '-' for i in sorted(Role.nick_to_role.keys())))
