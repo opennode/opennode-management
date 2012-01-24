@@ -1,5 +1,5 @@
 :zope.Anonymous:oms.nothing
-a:admin:oms.nothing,rest,read,modify,add
+a:admin:oms.nothing,zope.Security,rest,read,modify,add
 r:read:oms.nothing,read
 w:write:modify,add,create
 x:execute:traverse

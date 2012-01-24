@@ -42,8 +42,9 @@ def effective_perms(interaction, obj):
             o = o.__parent__
 
     effective_allowed = {}
-    for p in reversed(list(parents(obj))):
-        effective_allowed.update(roles_for(p))
+    with interaction:
+        for p in reversed(list(parents(obj))):
+            effective_allowed.update(roles_for(p))
 
     return (''.join(i if effective_allowed.get(i, False) else '-' for i in sorted(Role.nick_to_role.keys())))
 
@@ -153,7 +154,8 @@ class SetAclCmd(Cmd):
         try:
             for path in args.paths:
                 obj = self.traverse(path)
-                self._do_set_acl(obj, args.m, args.d, args.x)
+                with self.protocol.interaction:
+                    self._do_set_acl(obj, args.m, args.d, args.x)
         except NoSuchPermission as e:
             self.write("No such permission '%s'\n" % (e.message))
             transaction.abort()

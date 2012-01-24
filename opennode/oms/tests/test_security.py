@@ -5,12 +5,12 @@ from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.security.interfaces import Unauthorized, ForbiddenAttribute
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
-from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.security.checker import proxy_factory
+from opennode.oms.security.interaction import OmsSecurityPolicy
 from opennode.oms.security.principals import User
 from opennode.oms.tests.util import run_in_reactor
 
@@ -27,7 +27,7 @@ class SecurityTestCase(unittest.TestCase):
     def _get_interaction(self, uid):
         auth = getUtility(IAuthentication, context=None)
 
-        interaction = ZopeSecurityPolicy()
+        interaction = OmsSecurityPolicy()
         sess = SessionStub(auth.getPrincipal(uid))
         interaction.add(sess)
         return interaction
@@ -95,3 +95,14 @@ class SecurityTestCase(unittest.TestCase):
         eq_(model_to_dict(compute), model_to_dict(compute_proxy))
         #print model_to_dict(compute)
         #print model_to_dict(compute_proxy)
+
+    def test_with(self):
+        interaction = self._get_interaction('user1')
+
+        def dummy():
+            yield 2
+            with interaction:
+                yield 1
+
+        with assert_raises(Exception):
+            list(dummy())
