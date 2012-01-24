@@ -2,6 +2,7 @@ import fnmatch
 import itertools
 import os
 import re
+import sys
 
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
@@ -108,7 +109,7 @@ class OmsShellProtocol(InteractiveTerminal):
             pass
         except Exception as e:
             self.terminal.write("Command returned an unhandled error: %s\n" % e)
-            self.last_error = (line, e)
+            self.last_error = (line, sys.exc_info())
             log.msg("Got exception executing '%s': %s" % self.last_error)
             self.terminal.write("type last_error for more details\n")
 

@@ -625,7 +625,10 @@ class LastErrorCmd(Cmd):
     def execute(self, args):
         if self.protocol.last_error:
             cmdline, failure = self.protocol.last_error
-            self.write("Error executing '%s': %s" % (cmdline, failure))
+            self.write("Error executing '%s': %s\n" % (cmdline, failure))
+            import traceback
+            self.write("error type %s\n" % (type(failure)))
+            self.write(''.join(traceback.format_exception(*failure)))
 
 
 class HistoryCmd(Cmd):
