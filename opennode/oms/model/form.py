@@ -4,6 +4,7 @@ import zope.schema
 from zope.component import handle
 from zope.interface import Interface, implements
 from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
+from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.model.schema import get_schemas, get_schema_fields
 from opennode.oms.util import query_adapter_for_class
@@ -122,7 +123,7 @@ class ApplyRawData(object):
         return errors
 
     def adapted_tmp_obj(self, tmp_obj, schema):
-        adapter_cls = query_adapter_for_class(self.model or type(self.obj), schema)
+        adapter_cls = query_adapter_for_class(self.model or type(removeSecurityProxy(self.obj)), schema)
         return adapter_cls(tmp_obj) if adapter_cls else tmp_obj
 
     def create(self):
