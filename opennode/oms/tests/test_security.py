@@ -8,6 +8,7 @@ from zope.securitypolicy.principalpermission import principalPermissionManager a
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.schema import model_to_dict
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.principals import User
@@ -80,3 +81,17 @@ class SecurityTestCase(unittest.TestCase):
         compute_proxy = proxy_factory(compute, interaction)
 
         eq_(IContainer(compute), IContainer(compute_proxy))
+
+    @run_in_reactor
+    def test_schema(self):
+        auth = getUtility(IAuthentication, context=None)
+        auth.registerPrincipal(User('user1'))
+        interaction = self._get_interaction('user1')
+
+        # get the object being secured
+        compute = self.make_compute()
+        compute_proxy = proxy_factory(compute, interaction)
+
+        eq_(model_to_dict(compute), model_to_dict(compute_proxy))
+        #print model_to_dict(compute)
+        #print model_to_dict(compute_proxy)

@@ -8,6 +8,7 @@ from grokcore.component import implements, Adapter, Subscription, baseclass, ord
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
+from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.endpoint.ssh.editor import Editor
 from opennode.oms.endpoint.ssh.editable import IEditable
@@ -284,7 +285,7 @@ class CatObjectCmd(Cmd):
 
         if not attrs and IIncomplete.providedBy(obj):
             self.write("-----------------\n")
-            self.write("This %s is incomplete.\n" % (type(obj).__name__))
+            self.write("This %s is incomplete.\n" % (type(removeSecurityProxy(obj)).__name__))
 
 
 class RemoveCmd(Cmd):

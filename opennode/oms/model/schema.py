@@ -5,6 +5,7 @@ from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
 from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
 from zope.schema.interfaces import IFromUnicode
+from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.util import get_direct_interfaces
 
@@ -16,6 +17,8 @@ class Path(TextLine):
 
 
 def get_schemas(model_or_obj):
+    model_or_obj = removeSecurityProxy(model_or_obj)
+
     for schema in get_direct_interfaces(model_or_obj):
         yield schema
 
@@ -71,6 +74,8 @@ class DictFromUnicode(Adapter):
 # XXX: Might not be the best place nor name for it, but at least the
 # duplication has been eliminated for now.
 def model_to_dict(obj, use_titles=False, use_fields=False):
+    obj = removeSecurityProxy(obj)
+
     data = OrderedDict()
     for key, field, schema in get_schema_fields(obj):
         if use_fields:
