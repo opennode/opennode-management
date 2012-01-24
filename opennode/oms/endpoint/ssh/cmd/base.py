@@ -7,6 +7,7 @@ from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualC
                                                VirtualConsoleArgumentParser, ArgumentParsingError,
                                                PartialVirtualConsoleArgumentParser)
 from opennode.oms.model.traversal import traverse_path
+from opennode.oms.security.checker import proxy_factory
 from opennode.oms.zodb import db
 
 
@@ -140,4 +141,4 @@ class Cmd(object):
         if not objs or unresolved_path:
             return None
         else:
-            return objs[-1]
+            return proxy_factory(objs[-1], self.protocol.interaction)
