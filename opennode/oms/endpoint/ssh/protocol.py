@@ -7,6 +7,7 @@ import sys
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
 from twisted.python import log
+from zope.security.interfaces import ForbiddenAttribute
 
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion, commands
@@ -98,6 +99,11 @@ class OmsShellProtocol(InteractiveTerminal):
             self.terminal.write("Syntax error: %s\n" % (e.message))
             self.print_prompt()
             return
+        except Exception as e:
+            log.msg("Got exception parsing '%s': %s" % (line, sys.exc_info()))
+            import traceback
+            self.terminal.write(''.join(traceback.format_exception(*sys.exc_info())))
+            return
 
         self.sub_protocol = CommandExecutionSubProtocol(self)
         deferred = defer.maybeDeferred(command, *cmd_args)
@@ -147,9 +153,13 @@ class OmsShellProtocol(InteractiveTerminal):
             effective_dir = name
             if not os.path.isabs(name):
                 effective_dir = os.path.join(d, name)
-            command = dummy.traverse(effective_dir)
-            if ICommand.providedBy(command):
-                return command.cmd
+            try:
+                command = dummy.traverse(effective_dir)
+                if ICommand.providedBy(command):
+                    return command.cmd
+            except ForbiddenAttribute:
+                # skip command paths where we don't have access
+                pass
 
         # NOTE: retained temporarily because it contains inner class
         return registry.get_command(name)
