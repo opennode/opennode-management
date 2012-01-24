@@ -8,6 +8,9 @@ from martian.testing import FakeModule
 from nose.tools import eq_, assert_raises
 from zope import schema
 from zope.interface import implements, Interface
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
+
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.commands import CreateObjCmd, MoveCmd
@@ -16,7 +19,6 @@ from opennode.oms.endpoint.ssh.cmd.registry import commands
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol, CommandLineSyntaxError
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
-from opennode.oms.security.principals import User
 from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
 from opennode.oms.tests.util import whatever
@@ -31,7 +33,12 @@ class SshTestCase(unittest.TestCase):
     @clean_db
     def setUp(self):
         self.oms_ssh = OmsShellProtocol()
-        self.oms_ssh.logged_in(User('user'))
+
+        auth = getUtility(IAuthentication, context=None)
+        user = auth.getPrincipal('user')
+        user.groups.append('admins')
+        self.oms_ssh.logged_in(user)
+
         self.oms_ssh.history_save_enabled = False
 
         self.terminal = mock.Mock()
