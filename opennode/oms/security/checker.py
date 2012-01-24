@@ -8,6 +8,9 @@ from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenA
 from twisted.internet.defer import Deferred
 
 
+_available_by_default.append('_p_oid')
+
+
 class strong_defaultdict(defaultdict):
     """Python's `defaultdict` type doesn't invoke default factory
     when called with `get`, we need this subclass to implement a permissive checker."""
