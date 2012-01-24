@@ -19,7 +19,8 @@ class strong_defaultdict(defaultdict):
 def _select_checker(value, interaction):
     checker = getCheckerForInstancesOf(type(value))
     if not checker:
-        return Checker(strong_defaultdict(lambda: CheckerPublic), interaction=interaction)
+        perms = strong_defaultdict(lambda: CheckerPublic)
+        return Checker(perms, perms, interaction=interaction)
 
     # handle checkers for "primitive" types like str
     if type(checker) is object:
@@ -78,7 +79,8 @@ class Checker(object):
 
     def check_setattr(self, object, name):
         'See IChecker'
-        if self.set_permissions:
+        # handle defaultdict
+        if self.set_permissions is not None:
             permission = self.set_permissions.get(name)
         else:
             permission = None
