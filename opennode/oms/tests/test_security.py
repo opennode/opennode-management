@@ -3,7 +3,7 @@ import unittest
 from nose.tools import eq_, assert_raises
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
-from zope.security.interfaces import Unauthorized, ForbiddenAttribute
+from zope.security.interfaces import Unauthorized
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
 
 from opennode.oms.model.model.base import IContainer
@@ -67,7 +67,7 @@ class SecurityTestCase(unittest.TestCase):
             eq_(compute_proxy_user2.architecture, 'linux')
 
         # check a default unauthorized access
-        with assert_raises(ForbiddenAttribute):
+        with assert_raises(Unauthorized):
             eq_(compute_proxy_user1.state, 'active')
 
     @run_in_reactor

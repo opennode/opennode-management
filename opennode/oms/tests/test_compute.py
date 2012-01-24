@@ -126,7 +126,7 @@ class Compute(Container):
     """A compute node."""
 
     implements(ICompute, IDisplayName)
-    permissions(dict(architecture='read'))
+    permissions(dict(architecture='read', state='modify'))
 
     __contains__ = IInCompute
 
