@@ -7,6 +7,7 @@ from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter, getUtility
 
+from opennode.oms.config import get_config
 from opennode.oms.endpoint.httprest.base import IHttpRestView, IHttpRestSubViewFactory
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
@@ -99,6 +100,8 @@ class HttpRestServer(resource.Resource):
         resource.Resource.__init__(self)
         self.avatar = avatar
 
+        self.use_security_proxy = get_config().getboolean('auth', 'security_proxy_rest')
+
     def render(self, request):
         self._render(request)
         return NOT_DONE_YET
@@ -178,6 +181,12 @@ class HttpRestServer(resource.Resource):
 
         obj = objs[-1]
 
+        interaction = self.get_interaction(request, token)
+        request.interaction = interaction
+
+        if self.use_security_proxy:
+            obj = proxy_factory(obj, interaction)
+
         view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
 
         sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
@@ -186,9 +195,6 @@ class HttpRestServer(resource.Resource):
 
         if not view:
             raise NotFound
-
-        interaction = self.get_interaction(request, token)
-        request.interaction = interaction
 
         # create a security proxy if we have a secured interaction
         if interaction:
