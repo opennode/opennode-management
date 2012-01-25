@@ -6,6 +6,7 @@ from grokcore.component import Subscription, querySubscriptions, baseclass
 from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
+from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.util import get_direct_interfaces, exception_logger
 from opennode.oms.model.form import ModelCreatedEvent
@@ -180,6 +181,7 @@ class Container(AddingContainer):
         self._items = OOBTree()
 
     def _add(self, item):
+        item = removeSecurityProxy(item)
         if item.__parent__:
             if item.__parent__ is self:
                 return
