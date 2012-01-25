@@ -2,7 +2,6 @@ import argparse
 import os
 import opennode
 import random
-import rpdb2
 import subprocess
 import string
 import sys
@@ -50,6 +49,8 @@ def run_debugger(args):
     if args.debug:
         print "Waiting for debugger connection. Please attach a debugger, e.g.:"
         print "winpdb --attach %s" % (module_file)
+
+        import rpdb2
         rpdb2.start_embedded_debugger(args.debug)
     if args.winpdb:
         rid = random.randint(1, 100000)
@@ -60,6 +61,8 @@ def run_debugger(args):
         print "Spawning winpdb"
         subprocess.Popen(['winpdb', '--rid', str(rid), '--attach', module_file])
         print "Waiting for debugger connection"
+
+        import rpdb2
         rpdb2.start_embedded_debugger(pw)
 
 
