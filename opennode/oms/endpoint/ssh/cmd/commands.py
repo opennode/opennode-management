@@ -545,7 +545,7 @@ class FileCmd(Cmd):
 
     def _do_file(self, path, obj):
         ifaces = ', '.join([i.__name__ for i in obj.implemented_interfaces()])
-        return (path + ":", "%s%s %s\n" % (type(obj).__name__, ':' if ifaces else '', ifaces))
+        return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
 
 
 class EchoCmd(Cmd):

@@ -13,6 +13,7 @@ from zope.component import provideAdapter, provideUtility, provideSubscriptionAd
 from zope.interface import Interface, implements
 from zope.keyreference.interfaces import NotYet
 from zope.keyreference.persistent import KeyReferenceToPersistent
+from zope.security.proxy import removeSecurityProxy
 
 from .actions import ActionsContainerExtension, Action, action
 from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, IContainer, IModel, Container
@@ -76,7 +77,7 @@ class ModelTags(Adapter):
     def get_tags(self):
         return (set(self._get_tags())
                 .union(set(self.auto_tags()))
-                .union(set([u"type:" + type(self.context).__name__.lower()])))
+                .union(set([u"type:" + type(removeSecurityProxy(self.context)).__name__.lower()])))
 
     def set_tags(self, values):
         """If tag names begin with + or - this setter will add or remove tags

@@ -74,8 +74,6 @@ class DictFromUnicode(Adapter):
 # XXX: Might not be the best place nor name for it, but at least the
 # duplication has been eliminated for now.
 def model_to_dict(obj, use_titles=False, use_fields=False):
-    obj = removeSecurityProxy(obj)
-
     data = OrderedDict()
     for key, field, schema in get_schema_fields(obj):
         if use_fields:

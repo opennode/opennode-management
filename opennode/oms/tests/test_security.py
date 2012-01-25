@@ -85,8 +85,11 @@ class SecurityTestCase(unittest.TestCase):
     @run_in_reactor
     def test_schema(self):
         auth = getUtility(IAuthentication, context=None)
-        auth.registerPrincipal(User('user1'))
-        interaction = self._get_interaction('user1')
+        auth.registerPrincipal(User('userSchema'))
+        prinperG.grantPermissionToPrincipal('read', 'userSchema')
+        prinperG.grantPermissionToPrincipal('modify', 'userSchema')
+
+        interaction = self._get_interaction('userSchema')
 
         # get the object being secured
         compute = self.make_compute()

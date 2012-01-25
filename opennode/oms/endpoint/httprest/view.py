@@ -4,6 +4,7 @@ import os
 
 from grokcore.component import context
 from zope.component import queryAdapter
+from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
@@ -26,7 +27,7 @@ class DefaultView(HttpRestView):
         data = model_to_dict(self.context)
 
         data['id'] = self.context.__name__
-        data['__type__'] = type(self.context).__name__
+        data['__type__'] = type(removeSecurityProxy(self.context)).__name__
         data['url'] = ILocation(self.context).get_url()
         # XXX: Temporary hack--simplejson can't serialize sets
         if 'tags' in data:
