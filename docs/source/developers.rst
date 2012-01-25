@@ -1,6 +1,11 @@
 OMS Developers
 ==============
 
+Debugger
+--------
+
+You can starts oms with enabled debugging either using `bin/omsd --debug some-password` or `bin/omsd --winpdb`
+
 Security
 --------
 
