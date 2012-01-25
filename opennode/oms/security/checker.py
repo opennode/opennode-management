@@ -129,8 +129,6 @@ class Checker(object):
         # don't proxy classes
         if isinstance(value, type):
             return value
-        if inspect.ismethod(value):
-            return value
         checker = getattr(value, '__Security_checker__', None)
         if checker is None:
             checker = _select_checker(value, self.interaction)  # pass interaction
