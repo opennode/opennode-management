@@ -208,6 +208,26 @@ def enqueue_for_indexing(model, event):
     IndexerDaemonProcess.enqueue(model, event)
 
 
+class ClearIndexAction(Action):
+    """Clear index"""
+    context(SearchContainer)
+
+    action('clear-index')
+
+    def execute(self, cmd, args):
+
+        # TODO: break this import cycle by moving this action somewhere else
+        from opennode.oms.zodb import db
+
+        @db.transact
+        def doit():
+            search = db.get_root()['oms_root']['search']
+
+            search.clear()
+
+        return doit()
+
+
 class ReindexAction(Action):
     """Force reindex"""
     context(SearchContainer)
