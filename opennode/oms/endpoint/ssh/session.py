@@ -32,6 +32,8 @@ class OmsTerminalSession(TerminalSession):
         @defer.inlineCallbacks
         def spawn_command():
             yield oms_protocol.spawn_command(cmd)
+            if oms_protocol.last_error:
+                yield oms_protocol.spawn_command('last_error')
             proto.processEnded()
 
         spawn_command()
