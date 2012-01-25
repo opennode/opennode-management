@@ -141,4 +141,7 @@ class Cmd(object):
         if not objs or unresolved_path:
             return None
         else:
-            return proxy_factory(objs[-1], self.protocol.interaction)
+            if self.protocol.use_security_proxy:
+                return proxy_factory(objs[-1], self.protocol.interaction)
+            else:
+                return objs[-1]

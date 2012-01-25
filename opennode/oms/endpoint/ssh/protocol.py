@@ -9,6 +9,7 @@ from twisted.internet import defer
 from twisted.python import log
 from zope.security.interfaces import ForbiddenAttribute
 
+from opennode.oms.config import get_config
 from opennode.oms.endpoint.ssh import cmdline
 from opennode.oms.endpoint.ssh.cmd import registry, completion, commands
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
@@ -38,6 +39,7 @@ class OmsShellProtocol(InteractiveTerminal):
         self.path_stack = []
         self.sub_protocol = None
         self.principal = None
+        self.use_security_proxy = get_config().getboolean('auth', 'security_proxy_omsh')
 
         @defer.inlineCallbacks
         def _get_obj_path():
