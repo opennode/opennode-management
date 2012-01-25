@@ -272,7 +272,9 @@ class CatObjectCmd(Cmd):
             max_title_len = max(len(title) for key, _, title in data)
             for key, value, title in data:
                 if isinstance(value, dict):
-                    pretty_value = ', '.join(['%s:%s' % i for i in value.items()])
+                    # security proxies don't mimic tuple() perfectly
+                    # thus cannot be passed to "%" directly
+                    pretty_value = ', '.join(['%s:%s' % tuple(i) for i in value.items()])
                 elif hasattr(value, '__iter__'):
                     strings = [str(i) for i in value]
                     if not isinstance(value, tuple):
