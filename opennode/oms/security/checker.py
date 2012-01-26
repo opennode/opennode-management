@@ -58,7 +58,6 @@ def _select_checker(value, interaction):
             else:
                 perms = strong_defaultdict(lambda: CheckerPublic)
 
-
         return Checker(perms, perms, interaction=interaction)
 
     # handle checkers for "primitive" types like str
