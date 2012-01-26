@@ -106,6 +106,10 @@ class GetAclCmd(Cmd):
     def execute(self, args):
         for path in args.paths:
             obj = self.traverse(path)
+            if not obj:
+                self.write("No such object %s\n" % path)
+                continue
+
             self._do_print_acl(obj, args.v)
 
     def _do_print_acl(self, obj, verbose):
