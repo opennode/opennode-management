@@ -6,9 +6,13 @@ from zope.security._proxy import _Proxy as Proxy
 from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 from twisted.internet.defer import Deferred
+from twisted.python import log
+
+from opennode.oms.config import get_config
+from opennode.oms.security.principals import effective_principals
 
 
-_available_by_default.append('_p_oid')
+_available_by_default.extend(['_p_oid', '__providedBy__', '__conform__'])
 
 
 class strong_defaultdict(defaultdict):
@@ -19,10 +23,42 @@ class strong_defaultdict(defaultdict):
         return self[name]
 
 
+class AuditingPermissionDictionary(dict):
+    marker = object()
+
+    seen = {}
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def get(self, key, default=None):
+        val = super(AuditingPermissionDictionary, self).get(key, self.marker)
+        if val is self.marker:
+            if key not in _available_by_default:
+                checker_locals = inspect.getouterframes(inspect.currentframe())[1][0].f_locals
+                checker = checker_locals['self']
+                principals = effective_principals(checker.interaction)
+
+                seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['object']).__name__)
+                if seen_key not in self.seen:
+                    log.msg("Audit: permissive mode; granting attribute=%s, principals=(%s), object=%s" % seen_key)
+                    self.seen[seen_key] = True
+            return CheckerPublic
+        return val
+
+
 def _select_checker(value, interaction):
     checker = getCheckerForInstancesOf(type(value))
     if not checker:
-        perms = strong_defaultdict(lambda: CheckerPublic)
+        if get_config().getboolean('auth', 'enforce_attribute_rights_definition'):
+            perms = {}
+        else:
+            if get_config().getboolean('auth', 'audit_all_missing_attribute_rights_definitions'):
+                perms = AuditingPermissionDictionary()
+            else:
+                perms = strong_defaultdict(lambda: CheckerPublic)
+
+
         return Checker(perms, perms, interaction=interaction)
 
     # handle checkers for "primitive" types like str

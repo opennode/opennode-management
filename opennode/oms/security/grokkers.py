@@ -1,10 +1,11 @@
 import grokcore.security
 import martian
+
 from zope.security.checker import defineChecker
 
-from opennode.oms.security.checker import Checker, strong_defaultdict
+from opennode.oms.config import get_config
+from opennode.oms.security.checker import Checker, AuditingPermissionDictionary
 from opennode.oms.security.directives import permissions
-from zope.security.checker import CheckerPublic
 
 
 class SecurityGrokker(martian.ClassGrokker):
@@ -15,8 +16,10 @@ class SecurityGrokker(martian.ClassGrokker):
         if not permissions:
             return False
 
-        # unprotected fields are open by default (at least for now)
-        perms = strong_defaultdict(lambda: CheckerPublic)
+        if get_config().getboolean('auth', 'enforce_attribute_rights_definition'):
+            perms = {}
+        else:
+            perms = AuditingPermissionDictionary()
 
         # mandatory, otherwise zope's default Checker impl will be used
         # which doesn't play well in async frameworks like twisted.
