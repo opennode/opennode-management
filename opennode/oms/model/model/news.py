@@ -9,6 +9,8 @@ from zope.interface import Interface, implements
 from .base import Model, Container
 from .log import ILogContainer
 
+from opennode.oms.security.directives import permissions
+
 
 class INewsItem(Interface):
     """A news item in the activity stream"""
@@ -18,6 +20,9 @@ class INewsItem(Interface):
 
 class NewsItem(Model):
     implements(INewsItem)
+    permissions(dict(message=('read', 'modify'),
+                     timestamp='read',
+                     ))
 
     def __init__(self, message):
         self.message = message
