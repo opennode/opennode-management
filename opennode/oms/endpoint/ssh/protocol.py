@@ -7,7 +7,7 @@ import sys
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
 from twisted.python import log
-from zope.security.interfaces import ForbiddenAttribute
+from zope.security.interfaces import ForbiddenAttribute, Unauthorized
 
 from opennode.oms.config import get_config
 from opennode.oms.endpoint.ssh import cmdline
@@ -115,6 +115,11 @@ class OmsShellProtocol(InteractiveTerminal):
             yield deferred
         except cmdline.ArgumentParsingError:
             pass
+        except Unauthorized as e:
+            msg = e
+            if isinstance(e.message, tuple) and len(e.message) == 3:
+                msg = "accessing %s's attribute '%s' requires @%s right" % e.message
+            self.terminal.write("Permission denied: %s\n" % msg)
         except Exception as e:
             self.terminal.write("Command returned an unhandled error: %s\n" % e)
             self.last_error = (line, sys.exc_info())
