@@ -8,6 +8,7 @@ from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 from zope.security.proxy import removeSecurityProxy
 
+from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
 from opennode.oms.model.form import ModelCreatedEvent
 from zope.component import handle
@@ -54,6 +55,7 @@ class IIncomplete(Interface):
 
 class Model(persistent.Persistent):
     implements(IModel, IAttributeAnnotatable)
+    permissions(dict(__name__='view'))
 
     __parent__ = None
     __name__ = None
@@ -97,6 +99,12 @@ class ContainerInjector(Subscription):
 class ReadonlyContainer(Model):
     """A container whose items cannot be modified, i.e. are predefined."""
     implements(IContainer)
+    permissions(dict(listnames='traverse',
+                     listcontent='traverse',
+                     __iter__='traverse',
+                     content='traverse',
+                     add='add',
+                     ))
 
     def __getitem__(self, key):
         return self.content().get(key)
