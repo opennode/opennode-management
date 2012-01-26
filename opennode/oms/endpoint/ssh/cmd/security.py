@@ -2,6 +2,9 @@ import collections
 import transaction
 
 from grokcore.component import implements
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
+from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
@@ -10,8 +13,9 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
 from opennode.oms.security.checker import proxy_factory
+from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
-from opennode.oms.security.principals import effective_principals
+from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
 
 
@@ -121,6 +125,7 @@ class GetAclCmd(Cmd):
 
     def _do_print_acl(self, obj, verbose):
         prinrole = IPrincipalRoleManager(obj)
+        auth = getUtility(IAuthentication, context=None)
 
         user_allow = collections.defaultdict(list)
         user_deny = collections.defaultdict(list)
@@ -134,17 +139,19 @@ class GetAclCmd(Cmd):
 
         for principal in users:
             def formatted_perms(perms):
+                prin = auth.getPrincipal(principal)
+                typ = 'group' if isinstance(prin, Group) else 'user'
                 if verbose:
                     def grants(i):
                         return ','.join('@%s' % i[0] for i in rolePermissionManager.getPermissionsForRole(i) if i[0] != 'oms.nothing')
-                    return (principal, ''.join('%s{%s}' % (Role.role_to_nick.get(i, '(%s)' % i), grants(i)) for i in sorted(perms)))
+                    return (typ, principal, ''.join('%s{%s}' % (Role.role_to_nick.get(i, '(%s)' % i), grants(i)) for i in sorted(perms)))
                 else:
-                    return (principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i) for i in sorted(perms)))
+                    return (typ, principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i) for i in sorted(perms)))
 
             if principal in user_allow:
-                self.write("user:%s:+%s\n" % formatted_perms(user_allow[principal]))
+                self.write("%s:%s:+%s\n" % formatted_perms(user_allow[principal]))
             if principal in user_deny:
-                self.write("user:%s:-%s\n" % formatted_perms(user_deny[principal]))
+                self.write("%s:%s:-%s\n" % formatted_perms(user_deny[principal]))
 
 
 class SetAclCmd(Cmd):
@@ -174,10 +181,19 @@ class SetAclCmd(Cmd):
 
     def _do_set_acl(self, obj, allow_perms, deny_perms, del_perms):
         prinrole = IPrincipalRoleManager(obj)
+        auth = getUtility(IAuthentication, context=None)
 
         def mod_perm(what, setter, p):
             kind, principal, perms = p.split(':')
             if not perms:
+                return
+
+            prin = auth.getPrincipal(principal)
+            if isinstance(prin, Group) and kind == 'u':
+                self.write("No such user '%s', it's a group, perhaps you mean 'g:%s:%s'\n" % (principal, principal, perms))
+                return
+            elif type(prin) is User and kind == 'g':
+                self.write("No such group '%s', it's an user (%s), perhaps you mean 'u:%s:%s'\n" % (principal, prin, principal, perms))
                 return
 
             for perm in perms.strip():
