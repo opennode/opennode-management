@@ -187,7 +187,8 @@ class ListDirContentsCmd(Cmd):
                 return item.__name__
 
         def sorted_obj_list():
-            return sorted(obj.listcontent(), key=lambda o: o.__name__)
+            interaction = self.protocol.interaction
+            return sorted((i for i in obj.listcontent() if interaction.checkPermission('view', i)), key=lambda o: o.__name__)
 
         if self.opts_long:
             def nick(item):
