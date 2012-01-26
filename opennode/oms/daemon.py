@@ -9,8 +9,10 @@ import sys
 from contextlib import closing
 
 from opennode.oms.config import get_config_cmdline
-from opennode.oms.zodb.db import get_db_dir
+from opennode.oms.core import IApplicationInitializedEvent
 from opennode.utils import autoreload
+
+from grokcore.component import subscribe
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
 from twisted.internet import defer
@@ -35,6 +37,27 @@ def run_zeo(db):
     pm = ProcessMonitor()
     pm.addProcess('zeo', ['/bin/sh', '-c', '%s -f %s/data.fs -a %s/socket >%s/zeo.log 2>&1' % (runzeo, db, db, db)], env=os.environ)
     pm.startService()
+
+
+@subscribe(IApplicationInitializedEvent)
+def ensure_zeo_is_running(event):
+    """We start zeo after the application has performed the basic initialization
+    because we cannot import opennode.oms.zodb.db until all grokkers are run in the
+    correct order.
+
+    """
+
+    from opennode.oms.zodb.db import get_db_dir
+
+    db_dir = get_db_dir()
+
+    from zc.lockfile import LockFile, LockError
+    try:
+        with closing(LockFile(os.path.join(db_dir, 'data.fs.lock'))):
+            print "Starting ZEO server"
+        run_zeo(db_dir)
+    except LockError:
+        print "ZEO is already running"
 
 
 def run_app():
@@ -85,8 +108,6 @@ def run():
         if not conf.has_section('db'):
             conf.add_section('db')
         conf.set('db', 'path', args.db)
-
-    run_zeo(get_db_dir())
 
     defer.setDebugging(args.v)
 

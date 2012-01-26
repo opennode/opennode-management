@@ -10,14 +10,12 @@ from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
 
 from opennode.oms.core import setup_environ
-from opennode.oms.endpoint.httprest.root import HttpRestServer
-from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
 from opennode.oms.logging import setup_logging
-from opennode.oms.security.authentication import checkers
 
 
 def create_http_server():
+    from opennode.oms.endpoint.httprest.root import HttpRestServer
+
     rest_server = HttpRestServer(avatar=None)
     site = server.Site(resource=rest_server)
     tcp_server = internet.TCPServer(8080, site)
@@ -26,6 +24,11 @@ def create_http_server():
 
 
 def create_ssh_server():
+    from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+    from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
+    from opennode.oms.security.authentication import checkers
+
+
     def chainProtocolFactory():
         return insults.ServerProtocol(OmsShellProtocol)
 
@@ -42,6 +45,12 @@ def create_ssh_server():
 
 def create_application():
     setup_environ()
+
+    from opennode.oms.endpoint.httprest.root import HttpRestServer
+    from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+    from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
+    from opennode.oms.security.authentication import checkers
+
 
     application = service.Application("OpenNode Management Service")
 
