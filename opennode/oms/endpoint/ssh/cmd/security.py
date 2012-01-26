@@ -4,7 +4,7 @@ import transaction
 from grokcore.component import implements
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
-
+from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
@@ -31,9 +31,16 @@ def effective_perms(interaction, obj):
         prinrole = IPrincipalRoleManager(obj)
 
         allowed = {}
-        for g in effective_principals(interaction):
-            for role, setting in prinrole.getRolesForPrincipal(g.id):
-                allowed[Role.role_to_nick[role]] = setting.getName() == 'Allow'
+
+        def accumulate_roles(role_manager):
+            for g in effective_principals(interaction):
+                for role, setting in role_manager.getRolesForPrincipal(g.id):
+                    if role in Role.role_to_nick:
+                        allowed[Role.role_to_nick[role]] = setting.getName() == 'Allow'
+
+        accumulate_roles(prinroleG)
+        accumulate_roles(prinrole)
+
         return allowed
 
     def parents(o):
