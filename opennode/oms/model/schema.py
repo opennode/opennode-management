@@ -6,6 +6,7 @@ from zope.interface import implements
 from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
 from zope.schema.interfaces import IFromUnicode
 from zope.security.proxy import removeSecurityProxy
+from zope.security.interfaces import Unauthorized
 
 from opennode.oms.util import get_direct_interfaces
 
@@ -82,5 +83,9 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
             key = key.encode('utf8')
         else:
             key = field.title
-        data[key] = field.get(schema(obj))
+        try:
+            data[key] = field.get(schema(obj))
+        except Unauthorized:
+            # skip field
+            continue
     return data
