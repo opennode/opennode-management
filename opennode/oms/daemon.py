@@ -18,6 +18,9 @@ from twisted.runner.procmon import ProcessMonitor
 from twisted.internet import defer
 
 
+_daemon_started = False
+
+
 def get_base_dir():
     """Locates the base directory containing  opennode/oms.tac"""
     for i in opennode.__path__:
@@ -46,6 +49,11 @@ def ensure_zeo_is_running(event):
     correct order.
 
     """
+
+    # prevent zeo starting during unit tests etc
+    global _daemon_started
+    if not _daemon_started:
+        return
 
     from opennode.oms.zodb.db import get_db_dir
 
@@ -112,6 +120,9 @@ def run():
     defer.setDebugging(args.v)
 
     run_debugger(args)
+
+    global _daemon_started
+    _daemon_started = True
 
     if args and args.d:
         autoreload.main(run_app)
