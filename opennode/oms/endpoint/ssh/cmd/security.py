@@ -144,9 +144,10 @@ class SetAclCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
-        parser.add_argument('-m', action='append', help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
-        parser.add_argument('-d', action='append', help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
-        parser.add_argument('-x', action='append', help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-m', action='append', help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-d', action='append', help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-x', action='append', help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
         return parser
 
     @db.ro_transact
