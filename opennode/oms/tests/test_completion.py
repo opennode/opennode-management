@@ -3,13 +3,14 @@ import unittest
 import mock
 import transaction
 from zope.interface import implements, Interface
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 
 from opennode.oms.endpoint.ssh.cmd import registry, commands
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
-from opennode.oms.security.principals import User
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.tests.util import run_in_reactor, assert_mock, no_more_calls, skip, current_call
 from opennode.oms.zodb import db
@@ -19,7 +20,11 @@ class CmdCompletionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.oms_ssh = OmsShellProtocol()
-        self.oms_ssh.logged_in(User('user'))
+        auth = getUtility(IAuthentication, context=None)
+        user = auth.getPrincipal('user')
+        user.groups.append('admins')
+        self.oms_ssh.logged_in(user)
+
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
 
