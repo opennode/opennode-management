@@ -29,18 +29,12 @@ class WhoAmICmd(Cmd):
 
 
 def effective_perms(interaction, obj):
-    def roles_for(obj):
-        prinrole = IPrincipalRoleManager(obj)
-
+    def roles_for(role_manager, obj):
         allowed = {}
 
-        def accumulate_roles(role_manager):
-            for g in effective_principals(interaction):
-                for role, setting in role_manager.getRolesForPrincipal(g.id):
-                    allowed[role] = setting.getName() == 'Allow'
-
-        accumulate_roles(prinroleG)
-        accumulate_roles(prinrole)
+        for g in effective_principals(interaction):
+            for role, setting in role_manager.getRolesForPrincipal(g.id):
+                allowed[role] = setting.getName() == 'Allow'
 
         return allowed
 
@@ -49,10 +43,11 @@ def effective_perms(interaction, obj):
             yield o
             o = o.__parent__
 
-    effective_allowed = {}
+    effective_allowed = roles_for(prinroleG, obj)
+
     with interaction:
         for p in reversed(list(parents(obj))):
-            effective_allowed.update(roles_for(p))
+            effective_allowed.update(roles_for(IPrincipalRoleManager(p), p))
 
     return [k for k, v in effective_allowed.items() if v]
 
