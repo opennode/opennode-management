@@ -1,9 +1,11 @@
 import hashlib
 import os
+import pkg_resources
 import sys
 
 from base64 import encodestring as encode
 from base64 import decodestring as decode
+from contextlib import closing
 from grokcore.component import GlobalUtility, subscribe
 from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
 from zope.component import provideUtility, queryUtility
@@ -13,7 +15,9 @@ from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 from twisted.cred.checkers import FilePasswordDB
-from twisted.python import log
+from twisted.internet import inotify
+from twisted.python import log, filepath
+
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
 from opennode.oms.core import IApplicationInitializedEvent
@@ -23,6 +27,8 @@ from opennode.oms.security.principals import User, Group
 
 
 _checkers = None
+conf_reload_notifier = inotify.INotify()
+conf_reload_notifier.startReading()
 
 
 class AuthenticationUtility(GlobalUtility):
@@ -64,9 +70,28 @@ def checkers():
     return _checkers
 
 
+def setup_conf_reload_watch(path, handler):
+    """Registers a inotify watch which will invoke `handler` for passing the open file"""
+    conf_reload_notifier.watch(filepath.FilePath(path), callbacks=[lambda self, filepath, mask: handler(filepath.open())])
+
+
 @subscribe(IApplicationInitializedEvent)
 def setup_roles(event):
-    for i in file(get_config().get('auth', 'permissions_file')):
+    perm_file = get_config().get('auth', 'permissions_file')
+
+    if os.path.exists(perm_file):
+        setup_conf_reload_watch(perm_file, reload_roles)
+        perm_file_factory = file
+    else:  # read the content from the egg
+        perm_file = os.path.join('../../../', 'oms_permissions')
+        perm_file_factory = lambda f: pkg_resources.resource_stream(__name__, f)
+
+    reload_roles(perm_file_factory(perm_file))
+
+
+def reload_roles(stream):
+    print "(Re)Loading OMS permission definitions"
+    for i in stream:
         nick, role, permissions = i.split(':', 4)
         oms_role = Role(role, nick)
         provideUtility(oms_role, IRole, role)
@@ -77,14 +102,22 @@ def setup_roles(event):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_groups(event):
-    auth = queryUtility(IAuthentication)
-
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
-        log.err("Groups file doesn't exist, please set up groups with `bin/groups`")
-        sys.exit(1)
+        print "Groups file doesn't exist, generating a default groups file, use `bin/groups` to customize it"
+        with closing(open(groups_file, 'w')) as f:
+            f.write(pkg_resources.resource_stream(__name__, os.path.join('../../../', 'oms_groups')).read())
 
-    for i in file(groups_file):
+    reload_groups(file(groups_file))
+    setup_conf_reload_watch(groups_file, reload_groups)
+
+
+def reload_groups(stream):
+    print "(Re)Loading OMS groups definitions"
+
+    auth = queryUtility(IAuthentication)
+
+    for i in stream:
         try:
             group, roles = i.split(':', 2)
         except ValueError:
@@ -100,15 +133,26 @@ def setup_groups(event):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_permissions(event):
-    auth = queryUtility(IAuthentication)
-    auth.registerPrincipal(User('oms.anonymous'))
 
     passwd_file = get_config().get('auth', 'passwd_file')
     if not os.path.exists(passwd_file):
-        log.err("User account and password file doesn't exist, please set up accounts with `bin/passwd`")
+        print "User account and password file doesn't exist"
+        print "please set up at least one admin account with `bin/passwd`, e.g:"
+        print
+        print "  bin/passd -a john -g admins"
         sys.exit(1)
 
-    for i in file(passwd_file):
+    reload_users(file(passwd_file))
+    setup_conf_reload_watch(passwd_file, reload_users)
+
+
+def reload_users(stream):
+    print "(Re)Loading OMS users definitions"
+
+    auth = queryUtility(IAuthentication)
+    auth.registerPrincipal(User('oms.anonymous'))
+
+    for i in stream:
         try:
             user, _, groups = i.split(':', 3)
         except ValueError:
