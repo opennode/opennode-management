@@ -4,7 +4,6 @@ import transaction
 from grokcore.component import implements
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
-from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
@@ -13,7 +12,6 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
 from opennode.oms.security.checker import proxy_factory
-from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
