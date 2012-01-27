@@ -37,8 +37,7 @@ def effective_perms(interaction, obj):
         def accumulate_roles(role_manager):
             for g in effective_principals(interaction):
                 for role, setting in role_manager.getRolesForPrincipal(g.id):
-                    if role in Role.role_to_nick:
-                        allowed[Role.role_to_nick[role]] = setting.getName() == 'Allow'
+                    allowed[role] = setting.getName() == 'Allow'
 
         accumulate_roles(prinroleG)
         accumulate_roles(prinrole)
@@ -55,7 +54,12 @@ def effective_perms(interaction, obj):
         for p in reversed(list(parents(obj))):
             effective_allowed.update(roles_for(p))
 
-    return (''.join(i if effective_allowed.get(i, False) else '-' for i in sorted(Role.nick_to_role.keys())))
+    return [k for k, v in effective_allowed.items() if v]
+
+
+def pretty_effective_perms(interaction, obj):
+    perms = effective_perms(interaction, obj)
+    return ''.join(i if Role.nick_to_role[i].id in perms else '-' for i in sorted(Role.nick_to_role.keys()))
 
 
 class PermCheckCmd(Cmd):
@@ -80,7 +84,7 @@ class PermCheckCmd(Cmd):
             return
 
         if args.p:
-            self.write("Effective permissions: %s\n" % effective_perms(self.protocol.interaction, obj))
+            self.write("Effective permissions: %s\n" % pretty_effective_perms(self.protocol.interaction, obj))
         elif args.r:
             self.check_rights(obj, args)
 
