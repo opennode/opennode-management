@@ -2,8 +2,9 @@ import inspect
 
 from collections import defaultdict
 from zope.interface import implements
+from zope.security._definitions import thread_local
 from zope.security._proxy import _Proxy as Proxy
-from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement
+from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 from twisted.internet.defer import Deferred
 from twisted.python import log
@@ -21,6 +22,15 @@ class strong_defaultdict(defaultdict):
 
     def get(self, name):
         return self[name]
+
+
+def get_interaction(obj):
+    """Extract interaction from a proxied object"""
+    checker = getChecker(obj)
+    if isinstance(checker, Checker):
+        return checker.interaction
+    else:
+        return thread_local.interaction
 
 
 class AuditingPermissionDictionary(dict):
