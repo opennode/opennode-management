@@ -21,3 +21,4 @@ docs/doctrees
 installer/oms_roles
 installer/oms_passwd
 .mr.developer.cfg
+build
