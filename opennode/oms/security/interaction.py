@@ -3,6 +3,7 @@ import inspect
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.security._definitions import thread_local
+from zope.security.interfaces import IPrincipal
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
 
@@ -52,9 +53,10 @@ class SessionStub(object):
 
 
 def new_interaction(principal):
-    auth = getUtility(IAuthentication, context=None)
+    if not IPrincipal.providedBy(principal):
+        auth = getUtility(IAuthentication, context=None)
+        principal = auth.getPrincipal(principal)
 
     interaction = OmsSecurityPolicy()
-    sess = SessionStub(auth.getPrincipal(principal))
-    interaction.add(sess)
+    interaction.add(SessionStub(principal))
     return interaction
