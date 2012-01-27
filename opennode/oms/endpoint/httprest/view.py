@@ -76,7 +76,7 @@ class ContainerView(DefaultView):
                 return IHttpRestView(item).render_recursive(request, depth - 1)
             except Unauthorized:
                 permissions = effective_perms(get_interaction(item), item)
-                return dict(permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
+                return dict(access='denied', permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
 
         children = [secure_render_recursive(item)
                     for item in items
