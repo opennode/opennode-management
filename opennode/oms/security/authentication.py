@@ -8,6 +8,7 @@ from grokcore.component import GlobalUtility, subscribe
 from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
 from zope.component import provideUtility, queryUtility
 from zope.interface import implements
+from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
@@ -36,6 +37,8 @@ class AuthenticationUtility(GlobalUtility):
     def getPrincipal(self, id):
         if id == None:
             return self.principals['oms.anonymous']
+        if id == system_user.id:
+            return system_user
         elif id in self.principals:
             return self.principals[id]
 
