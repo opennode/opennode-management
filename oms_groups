@@ -1,2 +1,2 @@
-admins:admin
+admins:admin,security
 users:rest,read,view,execute

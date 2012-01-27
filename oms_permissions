@@ -1,4 +1,5 @@
 :zope.Anonymous:oms.nothing
+:security:zope.Security
 a:admin:oms.nothing,zope.Security,rest,read,view,modify,add,traverse
 r:read:oms.nothing,read,view
 w:write:modify,add,create
