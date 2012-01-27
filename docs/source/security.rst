@@ -56,25 +56,28 @@ The ACL can be manipulated with the `setfacl` command:
   user:john:+vd
   user:john:-r
 
-In order to appreciate the difference between adding a denial with a  `Deny` ACE (with `-d`) 
+In order to appreciate the difference between adding a denial with a `Deny` ACE (with `-d`)
 vs removing an entry with an `Allow` ACE (with `-x`), we have to take a closer look at permission inheritance.
 
 Permission inheritance
 ----------------------
 
+ACL are inherited by containment. For example if you grant the `admin` permission for a principal on the root object `/`,
+then that principal will have admin permission on the whole namespace, except when explicitly denied in a given subtree.
+
+ACLs are not propagated through symlinks; the inheritance is defined on the primary hierarchy.
 
 Rights
 ------
 
-The OMS permissions define a set of **rights** which are more fine grained and depend on the actual object being secured.
+Each OMS permission is defined a set of **rights** which are more fine grained and depend on the actual object being secured.
 Examples of OMS permission `rights` are as `@read`, `@rest`, `@poweroff`, ...
 Some rights (like `@read`) might have the same name as the permission, but they are not the same concept.
 
 `Rights` allow us to define the exact meaning of a given permission, and to fine-tune what can be actually done by principals
 having a given permission.
 
-The mapping between a `permission` and it's `rights` is defined globally in the `oms_roles` file and this mapping can be extended on a per-type basis.
+The mapping between a `permission` and it's `rights` is defined globally in the `oms_permissions` file and this mapping can be extended on a per-type basis.
 
 You can even override the mapping between a `permission` and it's `rights` for a particular object instance, e.g you can revoke the grant `@shutdown` to
 those who have `write` permission on a given Compute object, while retaining all the existing rights associated with `write` (e.g. access the console etc).
-
