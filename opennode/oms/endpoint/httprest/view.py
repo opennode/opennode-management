@@ -4,10 +4,13 @@ import os
 
 from grokcore.component import context
 from zope.component import queryAdapter
+from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
 
+from opennode.oms.security.checker import get_interaction
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
+from opennode.oms.endpoint.ssh.cmd.security import effective_perms, pretty_effective_perms
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
@@ -29,6 +32,8 @@ class DefaultView(HttpRestView):
         data['id'] = self.context.__name__
         data['__type__'] = type(removeSecurityProxy(self.context)).__name__
         data['url'] = ILocation(self.context).get_url()
+        data['permissions'] = effective_perms(get_interaction(self.context), self.context)
+
         # XXX: Temporary hack--simplejson can't serialize sets
         if 'tags' in data:
             data['tags'] = list(data['tags'])
@@ -66,7 +71,14 @@ class ContainerView(DefaultView):
 
         items = map(follow_symlinks, self.context.listcontent())
 
-        children = [IHttpRestView(item).render_recursive(request, depth - 1)
+        def secure_render_recursive(item):
+            try:
+                return IHttpRestView(item).render_recursive(request, depth - 1)
+            except Unauthorized:
+                permissions = effective_perms(get_interaction(item), item)
+                return dict(permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
+
+        children = [secure_render_recursive(item)
                     for item in items
                     if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
 
