@@ -607,37 +607,38 @@ class SshTestCase(unittest.TestCase):
 
     @run_in_reactor
     def test_acl(self):
-        self._cmd('setfacl / -m u:john:r')
+        self._cmd('setfacl / -m u:user:r')
 
         self.terminal.reset_mock()
         self._cmd('getfacl /')
         with assert_mock(self.terminal) as t:
-            t.write('user:john:+r\n')
+            t.write('user:user:+r\n')
 
-        self._cmd('setfacl / -m u:john:w')
-
-        self.terminal.reset_mock()
-        self._cmd('getfacl /')
-        with assert_mock(self.terminal) as t:
-            t.write('user:john:+rw\n')
-
-        self._cmd('setfacl / -d u:john:a')
+        self._cmd('setfacl / -m u:user:w')
 
         self.terminal.reset_mock()
         self._cmd('getfacl /')
         with assert_mock(self.terminal) as t:
-            t.write('user:john:+rw\n')
-            t.write('user:john:-a\n')
+            t.write('user:user:+rw\n')
 
-        self._cmd('setfacl / -d u:john:w')
+        self._cmd('setfacl / -d u:user:a')
+
         self.terminal.reset_mock()
         self._cmd('getfacl /')
         with assert_mock(self.terminal) as t:
-            t.write('user:john:+r\n')
-            t.write('user:john:-aw\n')
+            t.write('user:user:+rw\n')
+            t.write('user:user:-a\n')
+
+        self._cmd('setfacl / -d u:user:w')
 
         self.terminal.reset_mock()
-        self._cmd('setfacl / -d u:john:G')
+        self._cmd('getfacl /')
+        with assert_mock(self.terminal) as t:
+            t.write('user:user:+r\n')
+            t.write('user:user:-aw\n')
+
+        self.terminal.reset_mock()
+        self._cmd('setfacl / -d u:user:G')
         with assert_mock(self.terminal) as t:
             t.write("No such permission 'G'\n")
 
