@@ -4,7 +4,7 @@ from collections import defaultdict
 from zope.interface import implements
 from zope.security._definitions import thread_local
 from zope.security._proxy import _Proxy as Proxy
-from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement, getChecker
+from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement, getChecker, Checker as ZopeChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 from twisted.internet.defer import Deferred
 from twisted.python import log
@@ -47,7 +47,15 @@ class AuditingPermissionDictionary(dict):
             if key not in _available_by_default:
                 checker_locals = inspect.getouterframes(inspect.currentframe())[1][0].f_locals
                 checker = checker_locals['self']
-                principals = effective_principals(checker.interaction)
+
+                if hasattr(checker, 'interaction'):
+                    interaction = checker.interaction
+                elif hasattr(thread_local, 'interaction'):
+                    interaction = thread_local.interaction
+                else:
+                    return CheckerPublic
+
+                principals = effective_principals(interaction)
 
                 seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['object']).__name__)
                 if seen_key not in self.seen:
@@ -89,6 +97,14 @@ def proxy_factory(value, interaction):
 
 class Checker(object):
     implements(INameBasedChecker)
+
+    def __call__(self, context):
+        """When zope creates security adapters, it won't accept this Checker class as
+        a valid checker, since it doesn't inherit zope securit checker (a C extension),
+        hence it will treat it as a factory and invoke it. We have to return a zope checker
+        with the same permissions."""
+        oms_checker = _select_checker(context, None)
+        return ZopeChecker(oms_checker.get_permissions, oms_checker.set_permissions)
 
     def __init__(self, get_permissions, set_permissions=None, interaction=None):
         """Create a checker
