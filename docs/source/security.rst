@@ -62,8 +62,38 @@ vs removing an entry with an `Allow` ACE (with `-x`), we have to take a closer l
 Permission inheritance
 ----------------------
 
-ACL are inherited by containment. For example if you grant the `admin` permission for a principal on the root object `/`,
-then that principal will have admin permission on the whole namespace, except when explicitly denied in a given subtree.
+ACL can define permissions for the object where they are defined, but it can also define permissions for children, based on a ant-like path expression.
+For example, this will add the `read` permission to all children of the templates container, recursively
+
+.. code-block:: sh
+
+  user@oms:/# setfacl /templates -m u:john:r:**
+  user@oms:/# getfacl /templates
+  user:john:+r:**
+
+
+More specific path expression override broader ones:
+
+.. code-block:: sh
+
+  user@oms:/# setfacl /machines -d u:john:r:**
+  user@oms:/# setfacl /machines -m u:john:r:*/vms/**
+  user:john:+r:**
+  user:john:+r:*/vms/**
+
+In this case the user will not be able to read anything below `/machines` except stuff which lives under a container called `vms` inside each child.
+
+
+It also works if you want to handle nested `vms` containers.
+
+.. code-block:: sh
+
+  user@oms:/# setfacl /machines -d u:john:r:**
+  user@oms:/# setfacl /machines -m u:john:r:**/vms/**
+  user:john:+r:**
+  user:john:+r:**/vms/**
+
+(In future, path expression will contain also type filters, and full regular expressions)
 
 ACLs are not propagated through symlinks; the inheritance is defined on the primary hierarchy.
 

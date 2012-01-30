@@ -11,7 +11,9 @@ from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
+from opennode.oms.model.traversal import canonical_path
 from opennode.oms.security.checker import proxy_factory
+from opennode.oms.security.interaction import current_security_check
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
@@ -45,9 +47,13 @@ def effective_perms(interaction, obj):
 
     effective_allowed = roles_for(prinroleG, obj)
 
-    with interaction:
-        for p in reversed(list(parents(obj))):
-            effective_allowed.update(roles_for(IPrincipalRoleManager(p), p))
+    try:
+        current_security_check.path = canonical_path(obj)
+        with interaction:
+            for p in reversed(list(parents(obj))):
+                effective_allowed.update(roles_for(IPrincipalRoleManager(p), p))
+    finally:
+        del current_security_check.path
 
     return [k for k, v in effective_allowed.items() if v]
 

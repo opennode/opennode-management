@@ -1,10 +1,16 @@
 import inspect
+import threading
 
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.security._definitions import thread_local
 from zope.security.interfaces import IPrincipal
 from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
+
+from opennode.oms.model.traversal import canonical_path
+
+
+current_security_check = threading.local()
 
 
 class OmsSecurityPolicy(ZopeSecurityPolicy):
@@ -44,6 +50,13 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
 
     def __exit__(self, *args):
         del thread_local.interaction
+
+    def checkPermission(self, permission, object):
+        try:
+            current_security_check.path = canonical_path(object)
+            return super(OmsSecurityPolicy, self).checkPermission(permission, object)
+        finally:
+            del current_security_check.path
 
 
 class SessionStub(object):
