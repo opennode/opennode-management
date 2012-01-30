@@ -124,31 +124,36 @@ class GetAclCmd(Cmd):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
 
-        user_allow = collections.defaultdict(list)
-        user_deny = collections.defaultdict(list)
+        user_allow = collections.defaultdict(lambda: collections.defaultdict(list))
+        user_deny = collections.defaultdict(lambda: collections.defaultdict(list))
         users = set()
-        for role, principal, setting in prinrole.getPrincipalsAndRoles():
+        for role, principal, setting, path in prinrole.getPrincipalsAndRolesPaths():
             users.add(principal)
             if setting.getName() == 'Allow':
-                user_allow[principal].append(role)
+                user_allow[principal][path].append(role)
             else:
-                user_deny[principal].append(role)
+                user_deny[principal][path].append(role)
 
         for principal in users:
-            def formatted_perms(perms):
+            def formatted_perms(path, perms):
                 prin = auth.getPrincipal(principal)
                 typ = 'group' if isinstance(prin, Group) else 'user'
+
+                ppath = ':' + path if path else ''
+
                 if verbose:
                     def grants(i):
                         return ','.join('@%s' % i[0] for i in rolePermissionManager.getPermissionsForRole(i) if i[0] != 'oms.nothing')
-                    return (typ, principal, ''.join('%s{%s}' % (Role.role_to_nick.get(i, '(%s)' % i), grants(i)) for i in sorted(perms)))
+                    return (typ, principal, ''.join('%s{%s}' % (Role.role_to_nick.get(i, '(%s)' % i), grants(i)) for i in sorted(perms)), ppath)
                 else:
-                    return (typ, principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i) for i in sorted(perms)))
+                    return (typ, principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i) for i in sorted(perms)), ppath)
 
             if principal in user_allow:
-                self.write("%s:%s:+%s\n" % formatted_perms(user_allow[principal]))
+                for path in sorted(user_allow[principal].keys()):
+                    self.write("%s:%s:+%s%s\n" % formatted_perms(path, user_allow[principal][path]))
             if principal in user_deny:
-                self.write("%s:%s:-%s\n" % formatted_perms(user_deny[principal]))
+                for path in sorted(user_deny[principal].keys()):
+                    self.write("%s:%s:-%s%s\n" % formatted_perms(path, user_deny[principal][path]))
 
 
 class SetAclCmd(Cmd):
@@ -181,7 +186,7 @@ class SetAclCmd(Cmd):
         auth = getUtility(IAuthentication, context=None)
 
         def mod_perm(what, setter, p):
-            path = '^**'
+            path = ''
             kind, principal, perms = p.split(':', 2)
             if not perms:
                 return
