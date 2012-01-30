@@ -181,9 +181,13 @@ class SetAclCmd(Cmd):
         auth = getUtility(IAuthentication, context=None)
 
         def mod_perm(what, setter, p):
-            kind, principal, perms = p.split(':')
+            path = '^**'
+            kind, principal, perms = p.split(':', 2)
             if not perms:
                 return
+
+            if ':' in perms:
+                perms, path = perms.split(':')
 
             prin = auth.getPrincipal(principal)
             if isinstance(prin, Group) and kind == 'u':
@@ -198,15 +202,15 @@ class SetAclCmd(Cmd):
                     raise NoSuchPermission(perm)
                 role = Role.nick_to_role[perm].id
                 self.write("%s permission '%s', principal '%s'\n" % (what, role, principal))
-                setter(role, principal)
+                setter(role, principal, path)
 
         for p in allow_perms or []:
-            mod_perm("Allowing", prinrole.assignRoleToPrincipal, p)
+            mod_perm("Allowing", prinrole.assignRoleToPrincipalPath, p)
 
         for p in deny_perms or []:
-            mod_perm("Denying", prinrole.removeRoleFromPrincipal, p)
+            mod_perm("Denying", prinrole.removeRoleFromPrincipalPath, p)
 
         for p in del_perms or []:
-            mod_perm("Unsetting", prinrole.unsetRoleForPrincipal, p)
+            mod_perm("Unsetting", prinrole.unsetRoleForPrincipalPath, p)
 
         transaction.commit()
