@@ -16,9 +16,13 @@ from opennode.oms.model.model.bin import Command
 class OmsShellTerminalProtocol(object):
     """Connect a OmsShellProtocol to a web terminal session."""
 
+    def logged_in(self, principal):
+        self.principal = principal
+
     def connection_made(self, terminal, size):
         self.shell = OmsShellProtocol()
         self.shell.set_terminal(terminal)
+        self.shell.logged_in(self.principal)
         self.shell.connectionMade()
         self.shell.terminalSize(size[0], size[1])
 
@@ -191,7 +195,9 @@ class TerminalServerMixin(object):
         return NOT_DONE_YET
 
     def get_terminal_protocol(self, request):
-        return self.terminal_protocol
+        protocol = self.terminal_protocol
+        protocol.logged_in(request.interaction.participations[0].principal)
+        return protocol
 
 
 class ConsoleView(HttpRestView, TerminalServerMixin):
