@@ -32,7 +32,9 @@ class DefaultView(HttpRestView):
         data['id'] = self.context.__name__
         data['__type__'] = type(removeSecurityProxy(self.context)).__name__
         data['url'] = ILocation(self.context).get_url()
-        data['permissions'] = effective_perms(get_interaction(self.context), self.context)
+
+        interaction = get_interaction(self.context)
+        data['permissions'] = effective_perms(interaction, self.context) if interaction else []
 
         # XXX: Temporary hack--simplejson can't serialize sets
         if 'tags' in data:

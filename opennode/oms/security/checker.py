@@ -26,7 +26,11 @@ class strong_defaultdict(defaultdict):
 
 def get_interaction(obj):
     """Extract interaction from a proxied object"""
-    checker = getChecker(obj)
+    try:
+        checker = getChecker(obj)
+    except TypeError:
+        return None
+
     if isinstance(checker, Checker):
         return checker.interaction
     else:
