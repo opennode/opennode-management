@@ -1,5 +1,6 @@
 import functools
 import inspect
+import time
 import threading
 
 import zope.interface
@@ -195,3 +196,37 @@ def find_nth(haystack, needle, n, start_boundary=None):
         start = haystack.find(needle, start + len(needle))
         n -= 1
     return start
+
+
+class benchmark(object):
+    """Can be used either as decorator:
+    >>> class Foo(object):
+    ...   @benchmark("some description")
+    ...   def doit(self, args):
+    ...      # your code
+
+
+    or as context manager:
+    >>> with benchmark("some description"):
+    >>>    # your code
+
+    and it will print out the time spent in the function or block.
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self, fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            with self:
+                return fun(*args, **kwargs)
+        return wrapper
+
+    def __enter__(self):
+        self.start = time.time()
+
+    def __exit__(self, ty, val, tb):
+        end = time.time()
+        print("%s : %0.3f seconds" % (self.name, end - self.start))
+        return False
