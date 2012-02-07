@@ -118,6 +118,10 @@ class ReadonlyContainer(Model):
     def __iter__(self):
         return iter(self.listcontent())
 
+    def can_contain(self, item):
+        """A read only container cannot accept new children"""
+        return False
+
     @exception_logger
     def content(self):
         injectors = querySubscriptions(self, IContainerInjector)
