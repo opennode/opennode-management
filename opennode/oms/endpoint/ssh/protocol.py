@@ -87,9 +87,15 @@ class OmsShellProtocol(InteractiveTerminal):
     @defer.inlineCallbacks
     def lineReceived(self, line):
         try:
-            yield self.spawn_command(line)
+            yield self.spawn_commands(line)
         finally:
             self._command_completed()
+
+    @defer.inlineCallbacks
+    def spawn_commands(self, line):
+        # XXX: handle ; chars in quotes and comments
+        for command in line.split(';'):
+            yield self.spawn_command(command)
 
     @defer.inlineCallbacks
     def spawn_command(self, line):
