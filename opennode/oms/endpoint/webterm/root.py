@@ -41,6 +41,9 @@ class SSHClientTerminalProtocol(object):
     """Connect a ssh client session to a web terminal session.
     Can be used to connect to hosts or to services and guis exposed via ssh interfaces, tunnels etc"""
 
+    def logged_in(self, principal):
+        self.principal = principal
+
     def __init__(self, user, host, port=22):
         self.user = user
         self.host = host
