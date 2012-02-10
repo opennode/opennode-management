@@ -43,6 +43,9 @@ class DaemonProcess(object):
             print "Continuing %s" % self.__name__
             self.paused = False
 
+    def __str__(self):
+        return "%s%s" % (self.__name__, ': paused' if self.paused else '')
+
 
 class Task(Model):
     implements(ITask)
@@ -88,7 +91,7 @@ class Proc(ReadonlyContainer):
             self.spawn(i)
 
     def spawn(self, process):
-        self._register(process.run(), '[%s]' % process.__name__, signal_handler=process.signal_handler)
+        self._register(process.run(), '[%s]' % process, signal_handler=process.signal_handler)
 
     def __str__(self):
         return 'Tasks'
