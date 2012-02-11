@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import time
 from collections import OrderedDict
 
-from grokcore.component import querySubscriptions
+from grokcore.component import querySubscriptions, Adapter, context
 from zope import schema
 from zope.interface import Interface, implements
 
@@ -43,8 +43,18 @@ class DaemonProcess(object):
             print "Continuing %s" % self.__name__
             self.paused = False
 
+
+class IProcessStateRenderer(Interface):
+    def __str__():
+        pass
+
+
+class DaemonStateRenderer(Adapter):
+    implements(IProcessStateRenderer)
+    context(DaemonProcess)
+
     def __str__(self):
-        return "%s%s" % (self.__name__, ': paused' if self.paused else '')
+        return "[%s%s]" % (self.context.__name__, ': paused' if self.context.paused else '')
 
 
 class Task(Model):
@@ -91,7 +101,7 @@ class Proc(ReadonlyContainer):
             self.spawn(i)
 
     def spawn(self, process):
-        self._register(process.run(), '[%s]' % process, signal_handler=process.signal_handler)
+        self._register(process.run(), IProcessStateRenderer(process), signal_handler=process.signal_handler)
 
     def __str__(self):
         return 'Tasks'
