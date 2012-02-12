@@ -108,6 +108,7 @@ def run():
     parser.add_argument('-d', action='store_true',
                         help='start in development mode with autorestart')
     parser.add_argument('--db', help='overrides db directory')
+    parser.add_argument('--log', help='log file')
     parser.add_argument('-v', action='store_true', help='verbose logs')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--debug', help='waits for remote pdb attach using supplied password')
@@ -120,6 +121,11 @@ def run():
         if not conf.has_section('db'):
             conf.add_section('db')
         conf.set('db', 'path', args.db)
+
+    if args.log:
+        if not conf.has_section('logging'):
+            conf.add_section('logging')
+        conf.set('logging', 'file', args.log)
 
     defer.setDebugging(args.v)
 

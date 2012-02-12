@@ -2,6 +2,7 @@
 
 DAEMON=/opt/omsd/bin/omsd
 PIDFILE=/var/run/omsd.pid
+LOGFILE=/var/log/omsd
 
 if [ -f /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions
@@ -11,12 +12,12 @@ case $1 in
     start)
         if [ -f /etc/debian_version ]; then
             log_begin_msg "Staring omsd daemon:"
-            start-stop-daemon --start --make-pid --pidfile $PIDFILE --exec $DAEMON --background
+            start-stop-daemon --start --make-pid --pidfile $PIDFILE --exec $DAEMON --background -- --log $LOGFILE
             RETVAL=$?
             log_end_msg $RETVAL
         else
             echo -n "Staring omsd daemon:"
-            $DAEMON >/dev/null 2>&1 &
+            $DAEMON --log $LOGFILE >/dev/null 2>&1 &
             PID=$!
             RETVAL=$?
             echo $PID >$PIDFILE

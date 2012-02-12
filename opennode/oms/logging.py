@@ -3,6 +3,8 @@ import sys
 
 from twisted.python.log import FileLogObserver
 
+from opennode.oms.config import get_config
+
 
 class FilteredLogFileObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""
@@ -30,4 +32,10 @@ class FilteredLogFileObserver(FileLogObserver):
 
 
 def setup_logging():
-    return FilteredLogFileObserver(sys.stdout).emit
+    log_filename = get_config().get('logging', 'file')
+    if not log_filename or log_filename == 'stdout':
+        log_file = sys.stdout
+    else:
+        log_file = open(log_filename, 'a')
+
+    return FilteredLogFileObserver(log_file).emit
