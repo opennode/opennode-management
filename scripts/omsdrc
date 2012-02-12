@@ -3,18 +3,44 @@
 DAEMON=/opt/omsd/bin/omsd
 PIDFILE=/var/run/omsd.pid
 
+if [ -f /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions
+fi
+
 case $1 in
-  start)
+    start)
+        if [ -f /etc/debian_version ]; then
+            log_begin_msg "Staring omsd daemon:"
+            start-stop-daemon --start --make-pid --pidfile $PIDFILE --exec $DAEMON --background
+            RETVAL=$?
+            log_end_msg $RETVAL
+        else
+            echo -n "Staring omsd daemon:"
+            $DAEMON >/dev/null 2>&1 &
+            PID=$!
+            RETVAL=$?
+            echo $PID >$PIDFILE
+            echo
+        fi
+            ;;
 
-    start-stop-daemon --start --make-pid --pidfile $PIDFILE --exec $DAEMON --background
+    stop)
+        if [ -f /etc/debian_version ]; then
+            log_begin_msg "Stopping omsd daemon:"
+            start-stop-daemon --stop --signal TERM --pidfile $PIDFILE
+            RETVAL=$?
+            log_end_msg $RETVAL
+            ps xa|grep '[r]unzeo' | awk '{print $1}' | xargs kill
+        else
+            echo -n "Stopping omsd daemon:"
 
-    ;;
-
-  stop)
-
-    start-stop-daemon --stop --signal INT  --pidfile $PIDFILE
-    ps xa|grep '[r]unzeo' | awk '{print$1}' | xargs kill 
-
+            if [ -f "$PIDFILE" ]; then
+                kill -TERM $(cat $PIDFILE)
+                rm $PIDFILE
+            fi
+            ps xa|grep '[r]unzeo' | awk '{print $1}' | xargs kill
+            echo
+        fi
     ;;
   restart)
 
@@ -29,4 +55,3 @@ case $1 in
 
     ;;
 esac
-
