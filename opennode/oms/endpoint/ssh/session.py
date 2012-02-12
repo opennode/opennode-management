@@ -1,5 +1,6 @@
 from twisted.conch import interfaces as iconch
 from twisted.conch.manhole_ssh import TerminalSession, TerminalSessionTransport, TerminalRealm, TerminalUser
+from twisted.conch.ssh.session import SSHSession
 from twisted.conch.insults import insults
 from twisted.internet import defer
 from zope.authentication.interfaces import IAuthentication
@@ -46,12 +47,29 @@ class OmsTerminalSessionTransport(TerminalSessionTransport):
         chainedProtocol.terminalProtocol.logged_in(avatar.principal)
 
 
+class OmsSSHSession(SSHSession):
+    def __init__(self, *args, **kw):
+        SSHSession.__init__(self, *args, **kw)
+
+    def request_x11_req(self, data):
+        return 0
+
+    def request_env(self, data):
+        return 0
+
+
+class OmsTerminalUser(TerminalUser):
+    def __init__(self, original, avatarId):
+        TerminalUser.__init__(self, original, avatarId)
+        self.channelLookup['session'] = OmsSSHSession
+
+
 class OmsTerminalRealm(TerminalRealm):
     def __init__(self):
         TerminalRealm.__init__(self)
 
         def userFactory(original, avatarId):
-            user = TerminalUser(original, avatarId)
+            user = OmsTerminalUser(original, avatarId)
 
             auth = getUtility(IAuthentication, context=None)
             user.principal = auth.getPrincipal(avatarId)
