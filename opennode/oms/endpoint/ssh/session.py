@@ -50,11 +50,15 @@ class OmsTerminalSessionTransport(TerminalSessionTransport):
 class OmsSSHSession(SSHSession):
     def __init__(self, *args, **kw):
         SSHSession.__init__(self, *args, **kw)
+        self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
     def request_x11_req(self, data):
         return 0
 
     def request_env(self, data):
+        return 0
+
+    def request_agent(self, data):
         return 0
 
 
