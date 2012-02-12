@@ -2,6 +2,7 @@
 INSTALLER=parts/oms-core-installer.sh
 
 rm -rf installer/oms_permissions installer/oms_roles
+cp scripts/omsdrc installer/omsdrc
 
 TMP=$(mktemp /tmp/oms-installer-XXXXXX)
 

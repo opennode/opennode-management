@@ -1,0 +1,32 @@
+#!/bin/sh
+
+DAEMON=/opt/omsd/bin/omsd
+PIDFILE=/var/run/omsd.pid
+
+case $1 in
+  start)
+
+    start-stop-daemon --start --make-pid --pidfile $PIDFILE --exec $DAEMON --background
+
+    ;;
+
+  stop)
+
+    start-stop-daemon --stop --signal INT  --pidfile $PIDFILE
+    ps xa|grep '[r]unzeo' | awk '{print$1}' | xargs kill 
+
+    ;;
+  restart)
+
+    ${0} stop
+    sleep 1
+    ${0} start
+
+    ;;
+  *)
+
+    echo "usage ${0} {start|stop|restart}"
+
+    ;;
+esac
+

@@ -80,3 +80,5 @@ fi
 $PYTHON bootstrap.py --setup-source=$DIR/download-cache/ez_setup.py --download-base=$DIR/download-cache
 rm -rf eggs/opennode*.egg
 bin/buildout -N
+
+sed -i "s/^DAEMON=.*/DAEMON=$DIR/" omsdrc

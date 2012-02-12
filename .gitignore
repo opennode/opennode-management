@@ -20,5 +20,6 @@ docs/html
 docs/doctrees
 installer/oms_roles
 installer/oms_passwd
+installer/omsdrc
 .mr.developer.cfg
 build
