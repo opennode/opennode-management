@@ -1,6 +1,7 @@
 import json
 import zope.security.interfaces
 
+from functools import wraps
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.web import resource
@@ -84,6 +85,16 @@ class BadRequest(HttpStatus):
     status_description = "Bad Request"
 
 
+def adaptive_transact(fun):
+    """Wrap in RO transact or RW transaction, depending on the http request method"""
+    @wraps(fun)
+    def wrapper(self, request):
+        if request.method == 'GET':
+            return db.ro_transact(fun)(self, request)
+        return db.transact(fun)(self, request)
+    return wrapper
+
+
 class HttpRestServer(resource.Resource):
     """Restful HTTP API interface for OMS.
 
@@ -163,7 +174,7 @@ class HttpRestServer(resource.Resource):
         else:
             return authentication_utility.get_token(request)
 
-    @db.transact
+    @adaptive_transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
         corresponding IHttpRestView, and returns the rendered output
