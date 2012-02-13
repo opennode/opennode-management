@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import time
 
 import transaction
@@ -746,9 +747,11 @@ class KillTaskCmd(Cmd):
         return parser
 
     def execute(self, args):
-        tasks = Proc().tasks
         for tid in args.tid:
-            task = tasks[tid]
+            task = self.find_task(tid)
+            if not task:
+                self.write("Cannot find task `%s`\n" % tid)
+                continue
 
             if args.STOP:
                 action = "STOP"
@@ -758,6 +761,21 @@ class KillTaskCmd(Cmd):
                 action = "TERM"
 
             task.signal(action)
+
+    def find_task(self, tid):
+        tasks = Proc().tasks
+
+        if re.match('[0-9]+$', tid):
+            return tasks[tid]
+        else:
+            candidates = []
+            for i in tasks.values():
+                if tid in str(i.cmdline):
+                    candidates.append(i)
+            if len(candidates) == 1:
+                return candidates[0]
+
+        return None
 
 
 class OmsShellCmd(Cmd):
