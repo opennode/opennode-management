@@ -3,6 +3,7 @@ import zope.security.interfaces
 
 from functools import wraps
 from twisted.internet import defer
+from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
@@ -114,7 +115,11 @@ class HttpRestServer(resource.Resource):
         self.use_security_proxy = get_config().getboolean('auth', 'security_proxy_rest')
 
     def render(self, request):
-        self._render(request)
+        deferred = self._render(request)
+        @deferred
+        def on_error(error):
+            log.err("Error while rendering http %s" % error)
+
         return NOT_DONE_YET
 
     @defer.inlineCallbacks
