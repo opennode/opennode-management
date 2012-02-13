@@ -86,16 +86,21 @@ def uninstall_plugin(args):
 def list_plugins(args):
     """Lists installed oms plugins"""
 
-    for i in _load_eggs(sys.path):
-        dev = ''
-        if not i.dist.location.endswith('.egg'):
-            dev = ' [dev]'
+    distributions = [pkg_resources.Environment()['opennode.oms.core'][0]]
+    distributions.extend(i.dist for i in _load_eggs(sys.path))
 
-        autodep = ''
-        if not os.path.exists(os.path.join('eggnest', i.dist.key + '.cfg')):
-            autodep = ' [autodep]'
+    for i in distributions:
+        qualifiers = []
+        if not i.location.endswith('.egg'):
+            qualifiers.append('dev')
 
-        print "%s (%s)%s%s" % (i.dist.key, i.dist.version, dev, autodep)
+        if not os.path.exists(os.path.join('eggnest', i.key + '.cfg')):
+            if i.key == 'opennode.oms.core':
+                qualifiers.append('builtin')
+            else:
+                qualifiers.append('autodep')
+
+        print "%s (%s)%s" % (i.key, i.version, ''.join(' [%s]' % i for i in qualifiers))
 
 
 def search_plugins(args):
