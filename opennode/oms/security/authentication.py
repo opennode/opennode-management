@@ -139,7 +139,7 @@ def setup_permissions(event):
         print "User account and password file doesn't exist"
         print "please set up at least one admin account with `bin/passwd`, e.g:"
         print
-        print "  bin/passd -a john -g admins"
+        print "  <OMS_ROOT>/bin/passwd -a john -g admins"
         sys.exit(1)
 
     reload_users(file(passwd_file))
