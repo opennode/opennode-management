@@ -72,8 +72,13 @@ if [ "x$1" = "x--brew" ]; then
     install_pythonbrew
 else
     if ! which $PYTHON; then
-        echo -e "You don't have python 2.7 installed. You can automatically install python2.7 with pythonbrew and continue installation with:\n\n `pwd`/`basename $0` --brew"
-        exit 1
+	if [ -e $PYTHONBREW_ROOT/pythons/Python-$PYTHON_VERSION/bin/python ]; then
+	  PYTHON=$PYTHONBREW_ROOT/pythons/Python-$PYTHON_VERSION/bin/python
+	  echo "Reusing pythonbrew installation at $PYTHON"
+	else
+	  echo -e "You don't have python 2.7 installed. You can automatically install python2.7 with pythonbrew and continue installation with:\n\n `pwd`/`basename $0` --brew"
+          exit 1
+        fi
     fi
 fi
 
