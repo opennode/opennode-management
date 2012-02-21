@@ -4,7 +4,7 @@ OpenNode Management Service
 OpenNode Management Service (OMS) is a modular framework for creating management applications. Its initial target was
 hosting the OMS [Knot cloud management platform](https://github.com/opennode/opennode-knot).
 
-OMS main documentation is generated and can be [viewed online](http://opennodecloud.com/docs/opennode.oms.core/index.html)
+OMS main documentation is generated and can be [viewed online](http://opennodecloud.com/docs/opennode.oms.core/index.html).
 
 Requirements
 ============
