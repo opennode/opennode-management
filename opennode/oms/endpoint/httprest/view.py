@@ -15,6 +15,7 @@ from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
+from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.search import SearchContainer, SearchResult
 from opennode.oms.model.model.stream import IStream, StreamSubscriber
 from opennode.oms.model.model.symlink import follow_symlinks
@@ -79,6 +80,14 @@ class ContainerView(DefaultView):
             except Unauthorized:
                 permissions = effective_perms(get_interaction(item), item)
                 return dict(access='denied', permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
+
+        # XXX: temporary code until ONC uses /search also for filtering computes
+        q = request.args.get('q', [''])[0]
+        q = q.decode('utf-8')
+
+        if q:
+            items = [item for item in items if IFiltrable(item).match(q)]
+
 
         children = [secure_render_recursive(item)
                     for item in items
