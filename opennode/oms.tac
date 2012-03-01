@@ -9,6 +9,7 @@ from twisted.cred.portal import IRealm, Portal
 from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
 
+from opennode.oms.config import get_config
 from opennode.oms.core import setup_environ
 from opennode.oms.logging import setup_logging
 
@@ -18,7 +19,7 @@ def create_http_server():
 
     rest_server = HttpRestServer(avatar=None)
     site = server.Site(resource=rest_server)
-    tcp_server = internet.TCPServer(8080, site)
+    tcp_server = internet.TCPServer(get_config().getint('rest', 'port'), site)
 
     return tcp_server
 
@@ -38,7 +39,7 @@ def create_ssh_server():
         the_portal.registerChecker(ch)
 
     conch_factory = ConchFactory(the_portal)
-    ssh_server = internet.TCPServer(6022, conch_factory)
+    ssh_server = internet.TCPServer(get_config().getint('ssh', 'port'), conch_factory)
 
     return ssh_server
 
