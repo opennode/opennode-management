@@ -63,6 +63,9 @@ class Model(persistent.Persistent):
     def implemented_interfaces(self):
         return get_direct_interfaces(type(self)) + list(directlyProvidedBy(self).interfaces())
 
+    def _p_resolveConflict(self, oldState, savedState, newState):
+        return newState
+
 
 class IContainerExtender(Interface):
     def extend(self):
