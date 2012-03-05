@@ -9,9 +9,11 @@ from opennode.oms.config import get_config
 class FilteredLogFileObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""
 
-    ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico', '.*POST /+stream', '.*OPTIONS ']
+    ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico', '.*POST /+stream', '.*OPTIONS ',
+                        'got channel session request', 'channel open', 'remote close', 'sending close 0',
+                        'disabling diffie-hellman-group-exchange because we cannot find moduli file']
     #ignored_systems = ['SSHServerTransport', 'SSHChannel']
-    ignored_systems = ['SSHServerTransport']
+    ignored_systems = ['SSHServerTransport', 'SSHService']
 
     def emit(self, eventDict):
 
