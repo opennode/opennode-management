@@ -43,7 +43,7 @@ class ModelTokenizer(Adapter):
         """Hackish way to quickly take all important tokens"""
         tokens = []
         if IDisplayName.providedBy(self.context):
-            tokens.append(IDisplayName(self.context).display_name())
+            tokens.extend(IDisplayName(self.context).display_name().split('_'))
 
         if queryAdapter(self.context, ITagged):
             for tag in ITagged(self.context).tags:
