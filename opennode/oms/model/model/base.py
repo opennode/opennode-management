@@ -10,7 +10,7 @@ from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
-from opennode.oms.model.form import ModelCreatedEvent
+from opennode.oms.model.form import ModelCreatedEvent, ModelMovedEvent
 from zope.component import handle
 
 
@@ -173,7 +173,10 @@ class AddingContainer(ReadonlyContainer):
             raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
 
         res = self._add(item)
-        handle(item, ModelCreatedEvent(self))
+        if item.__parent__ is not self:
+            handle(item, ModelMovedEvent(item.__parent__, self))
+        else:
+            handle(item, ModelCreatedEvent(self))
         return res
 
     def rename(self, old_name, new_name):

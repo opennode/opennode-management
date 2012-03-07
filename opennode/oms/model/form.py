@@ -29,6 +29,10 @@ class IModelCreatedEvent(Interface):
     """Model was created"""
 
 
+class IModelMovedEvent(Interface):
+    """Model was moved"""
+
+
 class IModelDeletedEvent(Interface):
     """Model was deleted"""
 
@@ -46,6 +50,14 @@ class ModelCreatedEvent(object):
 
     def __init__(self, container):
         self.container = container
+
+
+class ModelMovedEvent(object):
+    implements(IModelMovedEvent)
+
+    def __init__(self, fromContainer, toContainer):
+        self.fromContainer = fromContainer
+        self.toContainer = toContainer
 
 
 class ModelDeletedEvent(object):
