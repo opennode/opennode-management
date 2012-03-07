@@ -10,6 +10,7 @@ import logging
 from opennode.oms.core import setup_environ
 from opennode.oms.zodb import db
 from opennode.oms.model.location import ILocation
+from opennode.oms.model.traversal import traverse_path
 from opennode.oms.model.model import OmsRoot
 try:
     from opennode.oms.model.model import Computes, Compute, Templates, Template
@@ -32,5 +33,11 @@ def run():
 
     commit = transaction.commit
     abort = transaction.abort
+
+    def traverse(path):
+        res, _ = traverse_path(oms_root, path)
+        if not res:
+            return None
+        return res[-1]
 
     IPython.embed()
