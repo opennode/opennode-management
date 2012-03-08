@@ -118,14 +118,22 @@ def transact(fun):
         if not _db:
             init()
 
+        cfg = get_config()
+        def trace(msg, t):
+            if cfg.getboolean('debug', 'trace_transactions', False):
+                print "[transaction] %s %s in %s from %s" % (msg, t, fun, fun.__module__)
+
         try:
-            transaction.begin()
+            t = transaction.begin()
+            trace("BEGINNING", t)
             result = fun(*args, **kwargs)
         except:
             log.err("rolling back")
+            trace("ABORTING", t)
             transaction.abort()
             raise
         else:
+            trace("COMMITTING", t)
             transaction.commit()
             return result
 
