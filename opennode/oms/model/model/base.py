@@ -172,8 +172,10 @@ class AddingContainer(ReadonlyContainer):
         if not self.can_contain(item):
             raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
 
+        old_parent = item.__parent__
         res = self._add(item)
-        if item.__parent__ is not self:
+
+        if old_parent is not None and old_parent is not self:
             handle(item, ModelMovedEvent(item.__parent__, self))
         else:
             handle(item, ModelCreatedEvent(self))
