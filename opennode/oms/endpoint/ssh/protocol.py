@@ -22,6 +22,44 @@ from opennode.oms.security.interaction import new_interaction
 from opennode.oms.zodb import db
 
 
+def protocolInlineCallbacks(fun):
+    """Executes protocol async callbacks while buffering next keystrokes
+    during the execution of the callback. After the callback finishes
+    the buffered keystrokes will be replayed back, but currently
+    only non-special characters are replayed, since special characters could
+    trigger a reentrant here which would inject keystrokes out of order.
+    """
+    @defer.inlineCallbacks
+    def wrapper(self, *args, **kwargs):
+        try:
+            old_sub_protocol = self.sub_protocol
+            if not old_sub_protocol:
+                self.sub_protocol = CallbackExecutionSubProtocol()
+
+            yield defer.inlineCallbacks(fun)(self, *args, **kwargs)
+        except Exception as e:
+            if get_config().getboolean('debug', 'print_exceptions'):
+                import traceback
+                traceback.print_exc()
+            print "[protocol] got exception while %s: %s" %  (fun, e)
+
+        execution_sub_protocol = self.sub_protocol
+        self.sub_protocol = old_sub_protocol
+        for (key, mod) in execution_sub_protocol.buffer:
+            if key not in self.keyHandlers.keys():
+                self.keystrokeReceived(key, mod)
+
+    return wrapper
+
+
+class CallbackExecutionSubProtocol(object):
+    def __init__(self):
+        self.buffer = []
+
+    def keystrokeReceived(self, keyID, mod):
+        self.buffer.append((keyID, mod))
+
+
 class OmsShellProtocol(InteractiveTerminal):
     """The OMS virtual console over SSH.
 
@@ -195,7 +233,7 @@ class OmsShellProtocol(InteractiveTerminal):
                         return filtered
         return [token]
 
-    @defer.inlineCallbacks
+    @protocolInlineCallbacks
     def handle_TAB(self):
         """Handles tab completion."""
         partial, rest, completions = yield completion.complete(self, self.lineBuffer, self.lineBufferIndex)
