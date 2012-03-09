@@ -30,6 +30,9 @@ class PluginInfo(Model):
         self.__parent__ = parent
         self.__name__ = name
 
+    def initialize():
+        pass
+
 
 class Plugins(ReadonlyContainer):
     __metaclass__ = Singleton
@@ -80,15 +83,23 @@ class Plugins(ReadonlyContainer):
             plugin = plugin_class()
 
         if IPlugin.implementedBy(plugin_class):
-            config.update()
             plugin.initialize()
 
         return plugin
 
     def load_plugins(self):
+        plugins = []
         for entrypoint in self.load_eggs(sys.path):
             plugin = self.load_plugin(entrypoint)
-            self._items[entrypoint.name] = plugin if IPluginInfo.providedBy(plugin) else PluginInfo(self, entrypoint.name)
+            pinfo = plugin if IPluginInfo.providedBy(plugin) else PluginInfo(self, entrypoint.name)
+
+            plugins.append(pinfo)
+            self._items[entrypoint.name] = pinfo
+
+        config.update()
+
+        for plugin in plugins:
+            plugin.initialize()
 
 
 @subscribe(IApplicationInitializedEvent)
