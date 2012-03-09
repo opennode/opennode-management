@@ -191,7 +191,7 @@ class KeywordValueCompleter(ArgSwitchCompleter):
                 subcompleter = KeywordPathSubCompleter(self.context, action.base_path)
                 return subcompleter.complete(token, parsed, parser, **kwargs)
 
-            if action.choices:
+            if action and action.choices:
                 return [keyword + '=' + value for value in action.choices if value.startswith(value_prefix)]
 
         return []
