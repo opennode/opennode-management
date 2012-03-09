@@ -469,7 +469,15 @@ class SetOrMkCmdDynamicArguments(Adapter):
             kwargs = {}
             if isinstance(field, Path):
                 kwargs['is_path'] = True
-                kwargs['base_path'] = field.base_path
+
+                base_path = '.'
+                if field.relative_to == Path.PARENT:
+                    if self.context.name == 'mk':
+                        base_path = self.context.protocol._cwd()
+                    else:
+                        base_path = canonical_path(model_or_obj.__parent__)
+
+                kwargs['base_path'] = os.path.join(base_path, field.base_path)
 
             parser.add_argument('=%s' % name, required=(args_required and field.required),
                                 type=type, action=GroupDictAction, group='keywords',

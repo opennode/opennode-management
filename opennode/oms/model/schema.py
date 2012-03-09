@@ -12,8 +12,14 @@ from opennode.oms.util import get_direct_interfaces
 
 
 class Path(TextLine):
+    # the current directory of the command being executed
+    CWD = 'cwd'
+    # the parent of an object
+    PARENT = 'parent'
+
     def __init__(self, *args, **kw):
         self.base_path = kw.pop('base_path', '')
+        self.relative_to = kw.pop('relative_to', self.CWD)
         super(TextLine, self).__init__(*args, **kw)
 
 
