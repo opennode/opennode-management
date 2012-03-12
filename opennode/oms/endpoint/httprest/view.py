@@ -127,6 +127,9 @@ class SearchView(ContainerView):
 class StreamView(HttpRestView):
     context(StreamSubscriber)
 
+    def rw_transaction(self, request):
+        return False
+
     def render(self, request):
         timestamp = int(time.time() * 1000)
         oms_root = db.get_root()['oms_root']
