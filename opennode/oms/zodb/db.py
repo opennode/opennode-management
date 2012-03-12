@@ -23,6 +23,15 @@ _connection = threading.local()
 _testing = False
 
 
+class RollbackException(Exception):
+    """Raised to cause a clean rollback of the transaction"""
+
+
+class RollbackValue(object):
+    def __init__(self, value):
+        self.value = value
+
+
 def init_threadpool():
     global _threadpool
 
@@ -127,14 +136,22 @@ def transact(fun):
             t = transaction.begin()
             trace("BEGINNING", t)
             result = fun(*args, **kwargs)
+        except RollbackException:
+            transaction.abort()
         except:
             log.err("rolling back")
             trace("ABORTING", t)
             transaction.abort()
             raise
         else:
-            trace("COMMITTING", t)
-            transaction.commit()
+            if isinstance(result, RollbackValue):
+                trace("VOLUNTARY ROLLBACK", t)
+                result = result.value
+                transaction.abort()
+            else:
+                trace("COMMITTING", t)
+                transaction.commit()
+
             return result
 
     @functools.wraps(fun)
