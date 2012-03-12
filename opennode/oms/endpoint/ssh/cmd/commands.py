@@ -65,7 +65,7 @@ class ChangeDirCmd(Cmd):
                             help="use physical directory structure instead of following symbolic links")
         return parser
 
-    @db.transact
+    @db.ro_transact
     def execute(self, args):
         if not args.path:
             self.path = [self.path[0]]
@@ -157,7 +157,7 @@ class ListDirContentsCmd(Cmd):
         parser.add_argument('paths', nargs='*')
         return parser
 
-    @db.transact
+    @db.ro_transact
     def execute(self, args):
         self.opts_long = args.l
         self.opts_dir = args.d
