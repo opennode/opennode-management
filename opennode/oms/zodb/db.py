@@ -131,8 +131,11 @@ def transact(fun):
 
         cfg = get_config()
         def trace(msg, t):
+            ch = '/'
+            if msg == "BEGINNING":
+                ch = '\\'
             if cfg.getboolean('debug', 'trace_transactions', False):
-                print "[transaction] %s\ttx:%s\tin %s from %s, line %s" % (msg, t.description, fun, fun.__module__, inspect.getsourcelines(fun)[1])
+                print "[transaction] %s\ttx:%s %s\tin %s from %s, line %s %s" % (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch)
 
         try:
             t = transaction.begin()
@@ -148,7 +151,7 @@ def transact(fun):
             raise
         else:
             if isinstance(result, RollbackValue):
-                trace("VOLUNTARY ROLLBACK", t)
+                trace("V ROLLBACK", t)
                 result = result.value
                 transaction.abort()
             else:
