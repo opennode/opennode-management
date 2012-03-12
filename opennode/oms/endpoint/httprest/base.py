@@ -10,6 +10,9 @@ class IHttpRestView(Interface):
     def render_recursive(request, depth):
         pass
 
+    def rw_transaction(request):
+        """Return true if we this request should be committed"""
+
 
 class IHttpRestSubViewFactory(Interface):
     def resolve(path):
@@ -34,3 +37,6 @@ class HttpRestView(Adapter):
 
         from opennode.oms.endpoint.httprest.root import EmptyResponse
         return EmptyResponse
+
+    def rw_transaction(self, request):
+        return request.method != 'GET'

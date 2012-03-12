@@ -16,6 +16,7 @@ from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
+from opennode.oms.zodb.db import RollbackValue
 
 
 class EmptyResponse(Exception):
@@ -84,16 +85,6 @@ class Forbidden(HttpStatus):
 class BadRequest(HttpStatus):
     status_code = 400
     status_description = "Bad Request"
-
-
-def adaptive_transact(fun):
-    """Wrap in RO transact or RW transaction, depending on the http request method"""
-    @wraps(fun)
-    def wrapper(self, request):
-        if request.method == 'GET':
-            return db.ro_transact(fun)(self, request)
-        return db.transact(fun)(self, request)
-    return wrapper
 
 
 class HttpRestServer(resource.Resource):
@@ -179,7 +170,7 @@ class HttpRestServer(resource.Resource):
         else:
             return authentication_utility.get_token(request)
 
-    @adaptive_transact
+    @db.transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
         corresponding IHttpRestView, and returns the rendered output
@@ -204,6 +195,7 @@ class HttpRestServer(resource.Resource):
             obj = proxy_factory(obj, interaction)
 
         view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+        needs_rw_transaction = view.rw_transaction(request)
 
         sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
         if sub_view_factory:
@@ -236,7 +228,12 @@ class HttpRestServer(resource.Resource):
             # hasattr will return false on unauthorized fields
             renderer = get_renderer(view, method)
             if renderer:
-                return renderer(request)
+                res = renderer(request)
+
+                if needs_rw_transaction:
+                    return res
+                else:
+                    return RollbackValue(res)
 
         raise NotImplemented("method %s not implemented\n" % request.method)
 
