@@ -1,4 +1,6 @@
 import functools
+import inspect
+import random
 import subprocess
 import threading
 
@@ -130,10 +132,11 @@ def transact(fun):
         cfg = get_config()
         def trace(msg, t):
             if cfg.getboolean('debug', 'trace_transactions', False):
-                print "[transaction] %s %s in %s from %s" % (msg, t, fun, fun.__module__)
+                print "[transaction] %s\ttx:%s\tin %s from %s, line %s" % (msg, t.description, fun, fun.__module__, inspect.getsourcelines(fun)[1])
 
         try:
             t = transaction.begin()
+            t.note("%s" % (random.randint(0, 1000000)))
             trace("BEGINNING", t)
             result = fun(*args, **kwargs)
         except RollbackException:
