@@ -714,7 +714,7 @@ class TaskListCmd(Cmd):
                             help="Show parent task id")
         return parser
 
-    @db.transact
+    @db.ro_transact
     def execute(self, args):
         # ignore arguments
         tasks = Proc().tasks
