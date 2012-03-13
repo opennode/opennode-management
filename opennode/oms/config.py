@@ -65,14 +65,14 @@ def gen_config_file_names(module, name):
 
 
 class OmsConfig(ConfigParser):
-    __default_files__ = object()
+    NO_DEFAULT = object()
 
-    def __init__(self, config_filenames=__default_files__):
+    def __init__(self, config_filenames=NO_DEFAULT):
         ConfigParser.__init__(self)
         self.update(config_filenames)
 
-    def update(self, config_filenames=__default_files__):
-        if config_filenames == self.__default_files__:
+    def update(self, config_filenames=NO_DEFAULT):
+        if config_filenames == self.NO_DEFAULT:
             conf_requirements = [i for i in querySubscriptions(object(), IRequiredConfigurationFiles) if type(i) not in _loaded_config_requirements]
 
             config_filenames = []
@@ -93,20 +93,29 @@ class OmsConfig(ConfigParser):
             _cmdline_override.write(s)
             self.readfp(StringIO(s.getvalue()))
 
-    def getboolean(self, section, option, default=False):
+    def getboolean(self, section, option, default=NO_DEFAULT):
         try:
             return ConfigParser.getboolean(self, section, option)
         except ConfigKeyError:
-            return default
+            if default is not self.NO_DEFAULT:
+                return default
+            print "CANNOT FIND CONF KEY", section, option
+            raise
 
-    def getint(self, section, option, default=False):
+    def getint(self, section, option, default=NO_DEFAULT):
         try:
             return ConfigParser.getint(self, section, option)
         except ConfigKeyError:
-            return default
+            if default is not self.NO_DEFAULT:
+                return default
+            print "CANNOT FIND CONF KEY", section, option
+            raise
 
-    def getfloat(self, section, option, default=False):
+    def getfloat(self, section, option, default=NO_DEFAULT):
         try:
             return ConfigParser.getfloat(self, section, option)
         except ConfigKeyError:
-            return default
+            if default is not self.NO_DEFAULT:
+                return default
+            print "CANNOT FIND CONF KEY", section, option
+            raise
