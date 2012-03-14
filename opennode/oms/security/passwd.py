@@ -71,7 +71,7 @@ def run():
 
         pw = ask_password()
         with open(passwd_file, 'a') as f:
-            print >>f, '%s:%s:%s' % (args.user, pw, args.g or 'user')
+            print >>f, '%s:%s:%s' % (args.user, pw, args.g or 'users')
     elif args.c:
         password_checker = FilePasswordDB(passwd_file, hash=ssha_hash)
         credentials = UsernamePassword(args.user, getpass("Password: "))
