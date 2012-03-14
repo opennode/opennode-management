@@ -195,7 +195,6 @@ class HttpRestServer(resource.Resource):
             obj = proxy_factory(obj, interaction)
 
         view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
-        needs_rw_transaction = view.rw_transaction(request)
 
         sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
         if sub_view_factory:
@@ -203,6 +202,8 @@ class HttpRestServer(resource.Resource):
 
         if not view:
             raise NotFound
+
+        needs_rw_transaction = view.rw_transaction(request)
 
         # create a security proxy if we have a secured interaction
         if interaction:
