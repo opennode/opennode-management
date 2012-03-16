@@ -61,10 +61,19 @@ def init(test=False):
     global _db, _testing
 
     if not test:
-        from ZODB import DB
+        storage_type = get_config().get('db', 'storage_type')
 
-        storage = ClientStorage('%s/socket' % get_db_dir())
-        _db = DB(storage)
+        if storage_type == 'zeo':
+            from ZODB import DB
+
+            storage = ClientStorage('%s/socket' % get_db_dir())
+            _db = DB(storage)
+        elif storage_type == 'memory':
+            from ZODB.tests.util import DB
+
+            _db = DB()
+        else:
+            raise Exception("Unknown storage type '%s'" % storage_type)
     else:
         from ZODB.tests.util import DB
         _db = DB()
