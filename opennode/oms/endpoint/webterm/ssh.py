@@ -5,6 +5,8 @@ from twisted.internet import defer, reactor, protocol
 
 
 def ssh_connect_interactive_shell(user, host, port, transport, set_channel, size, command=None):
+    if host == '0.0.0.0':
+        raise Exception("invalid ip address '%s'" % host)
     protocol.ClientCreator(reactor, SSHClientTransport, transport, set_channel, size, user, host, command).connectTCP(host, port)
 
 
