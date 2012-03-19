@@ -6,13 +6,18 @@ import threading
 
 import transaction
 from ZEO.ClientStorage import ClientStorage
+from ZODB.FileStorage import FileStorage
+from grokcore.component import subscribe
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
 from twisted.python import log
 from twisted.python.threadable import isInIOThread
 from twisted.python.threadpool import ThreadPool
+from zope.component import handle
+from zope.interface import Interface, implements
 
 from opennode.oms.config import get_config
+from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
 
 
@@ -32,6 +37,14 @@ class RollbackException(Exception):
 class RollbackValue(object):
     def __init__(self, value):
         self.value = value
+
+
+class IBeforeDatabaseInitializedEvent(Interface):
+    """Emitted before database is initialized"""
+
+
+class BeforeDatabaseInitalizedEvent(object):
+    implements(IBeforeDatabaseInitializedEvent)
 
 
 def init_threadpool():
@@ -57,8 +70,16 @@ def get_db_dir():
     return db_dir
 
 
+@subscribe(IBeforeApplicationInitializedEvent)
+def initialize_database(event):
+    init()
+
+
 def init(test=False):
     global _db, _testing
+
+    print "[db] Initializing zodb"
+    handle(BeforeDatabaseInitalizedEvent())
 
     if not test:
         storage_type = get_config().get('db', 'storage_type')
@@ -67,6 +88,11 @@ def init(test=False):
             from ZODB import DB
 
             storage = ClientStorage('%s/socket' % get_db_dir())
+            _db = DB(storage)
+        elif storage_type == 'embedded':
+            from ZODB import DB
+
+            storage = FileStorage('%s/data.fs' % get_db_dir())
             _db = DB(storage)
         elif storage_type == 'memory':
             from ZODB.tests.util import DB
@@ -92,7 +118,7 @@ def init_schema():
 
 def get_db():
     if not _db:
-        init()
+        raise Exception('DB not initalized')
     if isInIOThread() and not _testing:
         raise Exception('The ZODB should not be accessed from the main thread')
     return _db
@@ -136,7 +162,7 @@ def transact(fun):
 
     def run_in_tx(fun, *args, **kwargs):
         if not _db:
-            init()
+            raise Exception('DB not initalized')
 
         cfg = get_config()
         def trace(msg, t):
@@ -192,7 +218,7 @@ def ro_transact(fun):
 
     def run_in_tx(fun, *args, **kwargs):
         if not _db:
-            init()
+            raise Exception('DB not initalized')
 
         try:
             transaction.begin()

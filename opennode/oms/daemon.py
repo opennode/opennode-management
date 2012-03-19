@@ -8,8 +8,8 @@ import sys
 
 from contextlib import closing
 
-from opennode.oms.config import get_config_cmdline
-from opennode.oms.core import IApplicationInitializedEvent
+from opennode.oms.config import get_config_cmdline, get_config
+from opennode.oms.zodb.db import IBeforeDatabaseInitializedEvent
 from opennode.utils import autoreload
 
 from grokcore.component import subscribe
@@ -42,13 +42,18 @@ def run_zeo(db):
     pm.startService()
 
 
-@subscribe(IApplicationInitializedEvent)
+@subscribe(IBeforeDatabaseInitializedEvent)
 def ensure_zeo_is_running(event):
     """We start zeo after the application has performed the basic initialization
     because we cannot import opennode.oms.zodb.db until all grokkers are run in the
     correct order.
 
     """
+
+    if get_config().get('db', 'storage_type') != 'zeo':
+        return
+
+    print "Ensuring ZEO is running"
 
     # prevent zeo starting during unit tests etc
     global _daemon_started

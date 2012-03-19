@@ -7,6 +7,14 @@ from zope.component import handle
 from zope.interface import Interface, implements
 
 
+class IBeforeApplicationInitializedEvent(Interface):
+    """Emitted before application is initialized"""
+
+
+class BeforeApplicationInitalizedEvent(object):
+    implements(IBeforeApplicationInitializedEvent)
+
+
 class IApplicationInitializedEvent(Interface):
     """Emitted when application is initialized"""
 
@@ -58,4 +66,5 @@ def grok_all():
 
 def setup_environ():
     grok_all()
+    handle(BeforeApplicationInitalizedEvent())
     handle(ApplicationInitalizedEvent())
