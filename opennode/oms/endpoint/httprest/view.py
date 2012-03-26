@@ -10,7 +10,7 @@ from zope.security.proxy import removeSecurityProxy
 from opennode.oms.security.checker import get_interaction
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
-from opennode.oms.endpoint.ssh.cmd.security import effective_perms, pretty_effective_perms
+from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.model.form import ApplyRawData
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer

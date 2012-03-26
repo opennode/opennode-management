@@ -1,7 +1,6 @@
 import json
 import zope.security.interfaces
 
-from functools import wraps
 from twisted.internet import defer
 from twisted.python import log
 from twisted.python.failure import Failure
