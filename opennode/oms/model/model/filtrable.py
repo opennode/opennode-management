@@ -1,9 +1,8 @@
-import zope.schema
 from grokcore.component import Adapter, context
 from zope.interface import Interface, implements
 
+from opennode.oms.model.schema import get_schema_fields
 from opennode.oms.model.model.base import IModel
-from opennode.oms.util import get_direct_interfaces
 
 
 class IFiltrable(Interface):
@@ -18,20 +17,19 @@ class ModelFiltrable(Adapter):
     def match(self, query):
         keywords = [i.lower() for i in query.split(' ') if i]
 
-        schemas = get_direct_interfaces(self.context)
-        for schema in schemas:
-            for name, field in zope.schema.getFields(schema).items():
-                for keyword in keywords:
-                    value = getattr(self.context, name, None)
+        for name, field, schema in get_schema_fields(self.context):
+            value = field.get(schema(self.context))
 
-                    if isinstance(value, unicode):
-                        value = value.encode('utf-8')
+            for keyword in keywords:
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
 
-                    if isinstance(value, str):
-                        if keyword in value:
-                            return True
-                    if keyword == value:
+                if isinstance(value, str):
+                    if keyword in value:
                         return True
+
+                if keyword == value:
+                    return True
 
         return False
 
