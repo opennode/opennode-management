@@ -28,6 +28,10 @@ class ModelFiltrable(Adapter):
                     if keyword in value:
                         return True
 
+                if isinstance(value, list) or isinstance(value, set):
+                    if keyword in value:
+                        return True
+
                 if keyword == value:
                     return True
 
