@@ -3,7 +3,7 @@ import time
 import os
 
 from grokcore.component import context
-from zope.component import queryAdapter
+from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
 
@@ -11,7 +11,7 @@ from opennode.oms.security.checker import get_interaction
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
-from opennode.oms.model.form import ApplyRawData
+from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.byname import ByNameContainer
@@ -54,6 +54,20 @@ class DefaultView(HttpRestView):
             request.setResponseCode(BadRequest.status_code)
             return form.error_dict()
 
+    def render_DELETE(self, request):
+        force = request.args.get('force', ['false'])[0] == 'true'
+
+        parent = self.context.__parent__
+        del parent[self.context.__name__]
+
+        try:
+            handle(self.context, ModelDeletedEvent(parent))
+        except Exception as e:
+            if not force:
+                raise e
+            return {'status': 'failure'}
+
+        return {'status': 'success'}
 
 class ContainerView(DefaultView):
     context(IContainer)
