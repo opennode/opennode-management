@@ -23,6 +23,14 @@ class ApplicationInitalizedEvent(object):
     implements(IApplicationInitializedEvent)
 
 
+class IAfterApplicationInitializedEvent(Interface):
+    """Emitted after the application is initialized"""
+
+
+class AfterApplicationInitalizedEvent(object):
+    implements(IAfterApplicationInitializedEvent)
+
+
 def deferred_call(self, fun):
     if fun.__name__ == 'on_success':
         return self.addCallback(fun)
@@ -68,3 +76,4 @@ def setup_environ():
     grok_all()
     handle(BeforeApplicationInitalizedEvent())
     handle(ApplicationInitalizedEvent())
+    handle(AfterApplicationInitalizedEvent())
