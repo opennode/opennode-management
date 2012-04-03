@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 
 from grokcore.component import querySubscriptions, Adapter, context, subscribe
+from twisted.python import log
 from zope import schema
 from zope.interface import Interface, implements
 
@@ -98,6 +99,7 @@ class Proc(ReadonlyContainer):
         self.dead_tasks = OrderedDict()
         self.next_id = 1
 
+    def start_daemons(self):
         for i in querySubscriptions(self, IProcess):
             self.spawn(i)
 
@@ -153,4 +155,7 @@ class CompletedProc(ReadonlyContainer):
 
 @subscribe(IAfterApplicationInitializedEvent)
 def start_daemons(event):
-    Proc()
+    try:
+        Proc().start_daemons()
+    except:
+        log.err("[proc] Got exception while starting daemons")
