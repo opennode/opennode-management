@@ -76,4 +76,3 @@ def setup_environ():
     grok_all()
     handle(BeforeApplicationInitalizedEvent())
     handle(ApplicationInitalizedEvent())
-    handle(AfterApplicationInitalizedEvent())

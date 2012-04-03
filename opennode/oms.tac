@@ -6,11 +6,13 @@ from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory
 from twisted.cred import portal
 from twisted.cred.portal import IRealm, Portal
+from twisted.internet import reactor
 from twisted.python.log import ILogObserver
 from twisted.web import server, guard, resource
+from zope.component import handle
 
 from opennode.oms.config import get_config
-from opennode.oms.core import setup_environ
+from opennode.oms.core import setup_environ, AfterApplicationInitalizedEvent
 from opennode.oms.logging import setup_logging
 
 
@@ -58,6 +60,10 @@ def create_application():
     create_http_server().setServiceParent(application)
     create_ssh_server().setServiceParent(application)
     # TODO: create_websocket_server().setServiceParent(application)
+
+    def after_startup():
+        handle(AfterApplicationInitalizedEvent())
+    reactor.addSystemEventTrigger('after', 'startup', after_startup)
 
     return application
 
