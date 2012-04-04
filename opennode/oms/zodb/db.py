@@ -3,10 +3,12 @@ import inspect
 import random
 import subprocess
 import threading
+import time
 
 import transaction
 from ZEO.ClientStorage import ClientStorage
 from ZODB.FileStorage import FileStorage
+from ZODB.POSException import ConflictError, ReadConflictError
 from grokcore.component import subscribe
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
@@ -175,28 +177,44 @@ def transact(fun):
             if cfg.getboolean('debug', 'trace_transactions', False):
                 print "[transaction] %s\ttx:%s %s\tin %s from %s, line %s %s" % (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch)
 
-        try:
-            t = transaction.begin()
-            t.note("%s" % (random.randint(0, 1000000)))
-            trace("BEGINNING", t)
-            result = fun(*args, **kwargs)
-        except RollbackException:
-            transaction.abort()
-        except:
-            log.err("rolling back")
-            trace("ABORTING", t)
-            transaction.abort()
-            raise
-        else:
-            if isinstance(result, RollbackValue):
-                trace("V ROLLBACK", t)
-                result = result.value
-                transaction.abort()
-            else:
-                trace("COMMITTING", t)
-                transaction.commit()
+        retries = cfg.getint('db', 'conflict_retries')
 
-            return result
+        retrying = False
+        for i in xrange(0, retries + 1):
+            try:
+                t = transaction.begin()
+                t.note("%s" % (random.randint(0, 1000000)))
+                trace("BEGINNING", t)
+                result = fun(*args, **kwargs)
+            except RollbackException:
+                transaction.abort()
+            except:
+                log.err("rolling back")
+                trace("ABORTING", t)
+                transaction.abort()
+                raise
+            else:
+                try:
+                    if isinstance(result, RollbackValue):
+                        trace("V ROLLBACK", t)
+                        result = result.value
+                        transaction.abort()
+                    else:
+                        trace("COMMITTING", t)
+                        transaction.commit()
+                        if retrying:
+                            trace("SUCCEEDED COMMITTING, AFTER %s attempts" % i, t)
+
+                    return result
+                except ReadConflictError as e:
+                    trace("GOT READ CONFLICT IN RW TRANASCT, retrying %s" % i, t)
+                    retrying = True
+                    time.sleep(random.random()*0.1)
+                except ConflictError as e:
+                    trace("GOT WRITE CONFLICT IN RW TRANASCT, retrying %s" % i, t)
+                    retrying = True
+                    time.sleep(random.random()*0.1)
+        raise e
 
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
