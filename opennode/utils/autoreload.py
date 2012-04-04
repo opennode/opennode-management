@@ -2,6 +2,7 @@
 # Borrowed from Peter Hunt and the CherryPy project (http://www.cherrypy.org).
 # Some taken from Ian Bicking's Paste (http://pythonpaste.org/).
 # Adjustments made by Michael Elsdoerfer (michael@elsdoerfer.com).
+# Better handling for CTRL-C handling added by Marko Mikulicic (marko.mikulicic@isti.cnr.it)
 #
 # Portions copyright (c) 2004, CherryPy Team (team@cherrypy.org)
 # All rights reserved.
@@ -30,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import signal
 import sys
 import time
 
@@ -85,15 +87,20 @@ def reloader_thread(softexit=False):
                 os._exit(3)
         time.sleep(1)
 
+pid = None
 
 def restart_with_reloader():
+    global pid
+
     while True:
         args = [sys.executable] + sys.argv
         if sys.platform == "win32":
             args = ['"%s"' % arg for arg in args]
         new_environ = os.environ.copy()
         new_environ["RUN_MAIN"] = 'true'
-        exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_environ)
+        pid = os.spawnve(os.P_NOWAIT, sys.executable, args, new_environ)
+        _, exit_code = os.waitpid(pid, 0)
+        exit_code = exit_code >> 8 # exit status is in the high byte
         if exit_code != 3:
             return exit_code
 
@@ -124,6 +131,14 @@ def python_reloader(main_func, args, kwargs, check_in_thread=True):
         try:
             sys.exit(restart_with_reloader())
         except KeyboardInterrupt:
+            if pid:
+                os.kill(pid, signal.SIGINT)
+                try:
+                    os.waitpid(pid, 0)
+                except KeyboardInterrupt:
+                    print "Autoreloaded child process doesn't want to die. Killing it brutally."
+                    os.kill(pid, signal.SIGKILL)
+
             pass
 
 
