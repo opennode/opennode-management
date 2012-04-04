@@ -109,7 +109,7 @@ def init(test=False):
 
 
 def init_schema():
-    root = get_root()
+    root = get_root(True)
 
     if 'oms_root' not in root:
         root['oms_root'] = OmsRoot()
@@ -124,15 +124,18 @@ def get_db():
     return _db
 
 
-def get_connection():
+def get_connection(accept_main_thread=False):
+    if not accept_main_thread and isInIOThread() and not _testing:
+        raise Exception('The ZODB should not be accessed from the main thread')
+
     global _connection
     if not hasattr(_connection, 'x'):
         _connection.x = get_db().open()
     return _connection.x
 
 
-def get_root():
-    return get_connection().root()
+def get_root(accept_main_thread=False):
+    return get_connection(accept_main_thread).root()
 
 
 def assert_transact(fun):
