@@ -4,8 +4,9 @@ import random
 import subprocess
 import threading
 import time
-
 import transaction
+
+from copy import deepcopy
 from ZEO.ClientStorage import ClientStorage
 from ZODB.FileStorage import FileStorage
 from ZODB.POSException import ConflictError, ReadConflictError
@@ -265,3 +266,27 @@ def ref(obj):
 def deref(obj_id):
     assert isinstance(obj_id, str)
     return get_connection().get(obj_id)
+
+def copy(fun):
+    """Helper designed to cope with db.transact decorated functions which return persistent objects
+    which cannot be used outside the transaction"""
+
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        res = fun(*args, **kwargs)
+
+        # we cannot deepcopy everything since there are many "un(deep)copyable" objects out there
+        if hasattr(res, '_p_jar'):
+            return deepcopy(res)
+        elif isinstance(res, list):
+            if any(hasattr(i, '_p_jar') for i in res):
+                return deepcopy(res)
+        elif isinstance(res, set):
+            if any(hasattr(i, '_p_jar') for i in res):
+                return deepcopy(res)
+        elif isinstance(res, dict):
+            if any(hasattr(i, '_p_jar') for i in res.values()):
+                return deepcopy(res)
+
+        return res
+    return wrapper
