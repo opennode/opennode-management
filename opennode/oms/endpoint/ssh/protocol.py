@@ -3,6 +3,7 @@ import itertools
 import os
 import re
 import sys
+import traceback
 
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
@@ -39,7 +40,6 @@ def protocolInlineCallbacks(fun):
             yield defer.inlineCallbacks(fun)(self, *args, **kwargs)
         except Exception as e:
             if get_config().getboolean('debug', 'print_exceptions'):
-                import traceback
                 traceback.print_exc()
             print "[protocol] got exception while %s: %s" %  (fun, e)
 
@@ -147,7 +147,6 @@ class OmsShellProtocol(InteractiveTerminal):
             return
         except Exception as e:
             log.msg("Got exception parsing '%s': %s" % (line, sys.exc_info()))
-            import traceback
             self.terminal.write(''.join(traceback.format_exception(*sys.exc_info())))
             return
 
@@ -168,6 +167,10 @@ class OmsShellProtocol(InteractiveTerminal):
             self.terminal.write("Command returned an unhandled error: %s\n" % e)
             self.last_error = (line, sys.exc_info())
             log.msg("Got exception executing '%s': %s" % self.last_error)
+
+            if get_config().getboolean('debug', 'print_exceptions'):
+                traceback.print_tb(self.last_error[1][2])
+
             self.terminal.write("type last_error for more details\n")
 
     def _command_completed(self, *args):
