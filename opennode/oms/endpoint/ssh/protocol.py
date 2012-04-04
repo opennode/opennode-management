@@ -81,17 +81,15 @@ class OmsShellProtocol(InteractiveTerminal):
 
         @defer.inlineCallbacks
         def _get_obj_path():
-            # Here, we simply hope that self.obj_path won't actually be
-            # used until it's initialised.  A more fool-proof solution
-            # would be to block everything in the protocol while the ZODB
-            # query is processing, but that would require a more complex
-            # workaround.  This will not be a problem during testing as
-            # DB access is blocking when testing.
             self.obj_path = yield db.ro_transact(lambda: [db.ref(db.get_root()['oms_root'])])()
 
-        _get_obj_path()
+        self.get_object_path_deferred = _get_obj_path()
 
         self.tokenizer = CommandLineTokenizer()
+
+    @defer.inlineCallbacks
+    def ensure_initialized(self):
+        yield self.get_object_path_deferred
 
     def logged_in(self, principal):
         """Invoked when the principal which opened this session is known"""
@@ -131,6 +129,8 @@ class OmsShellProtocol(InteractiveTerminal):
 
     @defer.inlineCallbacks
     def spawn_commands(self, line):
+        yield self.ensure_initialized()
+
         # XXX: handle ; chars in quotes and comments
         for command in line.split(';'):
             yield self.spawn_command(command)
