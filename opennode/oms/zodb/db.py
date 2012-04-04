@@ -221,7 +221,7 @@ def transact(fun):
     def wrapper(*args, **kwargs):
         if not _testing:
             return deferToThreadPool(reactor, _threadpool,
-                                     lambda: run_in_tx(fun, *args, **kwargs))
+                                     lambda: run_in_tx(copy(fun), *args, **kwargs))
         else:
             # No threading during testing
             return defer.succeed(run_in_tx(fun, *args, **kwargs))
@@ -244,7 +244,7 @@ def ro_transact(fun):
 
         try:
             transaction.begin()
-            return fun(*args, **kwargs)
+            return copy(fun)(*args, **kwargs)
         finally:
             transaction.abort()
 
