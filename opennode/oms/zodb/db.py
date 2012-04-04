@@ -159,8 +159,8 @@ def assert_transact(fun):
 def transact(fun):
     """Runs a callable inside a separate thread within a ZODB transaction.
 
-    TODO: Add retry capability on ConflicErrors.
-
+    Returned values are deeply copied. Currently only zodb objects returned directly or
+    contained in the first level content of lists/sets/dicts are copied.
     """
 
     if not _threadpool:
@@ -233,6 +233,9 @@ def ro_transact(fun):
 
     Transaction is always rolledback.
 
+    Returned values are deeply copied. Currently only zodb objects returned directly or
+    contained in the first level content of lists/sets/dicts are copied.
+
     """
 
     if not _threadpool:
@@ -269,7 +272,11 @@ def deref(obj_id):
 
 def copy(fun):
     """Helper designed to cope with db.transact decorated functions which return persistent objects
-    which cannot be used outside the transaction"""
+    which cannot be used outside the transaction.
+
+    Currently it handles only zodb objects returned directly or
+    contained in the first level content of lists/sets/dicts.
+    """
 
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
