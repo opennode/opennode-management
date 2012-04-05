@@ -3,6 +3,7 @@
 
 
 from twisted.python.threadable import isInIOThread
+from twisted.internet import defer
 
 from opennode.oms.config import get_config
 
@@ -14,7 +15,7 @@ def make_persistent_proxy(res):
     import inspect
     if isinstance(res, type):
         return res
-    if isinstance(res, basestring) or isinstance(res, int) or isinstance(res, float):
+    if isinstance(res, basestring) or isinstance(res, int) or isinstance(res, float) or isinstance(res, defer.Deferred):
         return res
     if inspect.isroutine(res) or res.__class__ == ([].__str__).__class__:
         return CallableViralProxy(res)
