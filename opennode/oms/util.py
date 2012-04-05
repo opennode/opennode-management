@@ -8,6 +8,8 @@ from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
 from twisted.internet import defer, reactor
 
+from opennode.oms.config import get_config
+
 
 def get_direct_interfaces(obj):
     """Returns the interfaces that the parent class of `obj`
@@ -182,10 +184,18 @@ def exception_logger(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         try:
-            return fun(*args, **kwargs)
+            res = fun(*args, **kwargs)
+            if isinstance(res, defer.Deferred):
+                @res
+                def on_error(failure):
+                    print "[debug] Got unhandled exception", failure.getErrorMessage()
+                    if get_config().getboolean('debug', 'print_exceptions'):
+                        print "[debug] traceback: ", failure.getTraceback(True)
+            return res
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            if get_config().getboolean('debug', 'print_exceptions'):
+                import traceback
+                traceback.print_exc()
             raise e
     return wrapper
 
