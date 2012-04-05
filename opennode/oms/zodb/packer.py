@@ -34,7 +34,7 @@ class PackDaemonProcess(DaemonProcess):
 
             yield async_sleep(self.interval)
 
-    @db.transact
+    @db.ro_transact
     def pack(self):
         storage_type = get_config().get('db', 'storage_type')
 
