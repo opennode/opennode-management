@@ -189,6 +189,7 @@ def transact(fun):
                 result = fun(*args, **kwargs)
             except RollbackException:
                 transaction.abort()
+                return
             except:
                 log.err("rolling back")
                 trace("ABORTING", t)
