@@ -6,7 +6,6 @@ import threading
 import time
 import transaction
 
-from copy import deepcopy
 from ZEO.ClientStorage import ClientStorage
 from ZODB.FileStorage import FileStorage
 from ZODB.POSException import ConflictError, ReadConflictError
@@ -22,6 +21,7 @@ from zope.interface import Interface, implements
 from opennode.oms.config import get_config
 from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
+from opennode.oms.zodb.proxy import make_persistent_proxy
 
 
 __all__ = ['get_db', 'get_connection', 'get_root', 'transact', 'ref', 'deref']
@@ -207,7 +207,7 @@ def transact(fun):
                         if retrying:
                             trace("SUCCEEDED COMMITTING, AFTER %s attempts" % i, t)
 
-                    return result
+                    return make_persistent_proxy(result)
                 except ReadConflictError as e:
                     trace("GOT READ CONFLICT IN RW TRANASCT, retrying %s" % i, t)
                     retrying = True
@@ -222,7 +222,7 @@ def transact(fun):
     def wrapper(*args, **kwargs):
         if not _testing:
             return deferToThreadPool(reactor, _threadpool,
-                                     lambda: run_in_tx(copy(fun), *args, **kwargs))
+                                     lambda: run_in_tx(fun, *args, **kwargs))
         else:
             # No threading during testing
             return defer.succeed(run_in_tx(fun, *args, **kwargs))
@@ -248,7 +248,7 @@ def ro_transact(fun):
 
         try:
             transaction.begin()
-            return copy(fun)(*args, **kwargs)
+            return make_persistent_proxy(fun(*args, **kwargs))
         finally:
             transaction.abort()
 
@@ -271,30 +271,6 @@ def deref(obj_id):
     assert isinstance(obj_id, str)
     return get_connection().get(obj_id)
 
-def copy(fun):
-    """Helper designed to cope with db.transact decorated functions which return persistent objects
-    which cannot be used outside the transaction.
 
-    Currently it handles only zodb objects returned directly or
-    contained in the first level content of lists/sets/dicts.
-    """
-
-    @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
-        res = fun(*args, **kwargs)
-
-        # we cannot deepcopy everything since there are many "un(deep)copyable" objects out there
-        if hasattr(res, '_p_jar'):
-            return deepcopy(res)
-        elif isinstance(res, list):
-            if any(hasattr(i, '_p_jar') for i in res):
-                return deepcopy(res)
-        elif isinstance(res, set):
-            if any(hasattr(i, '_p_jar') for i in res):
-                return deepcopy(res)
-        elif isinstance(res, dict):
-            if any(hasattr(i, '_p_jar') for i in res.values()):
-                return deepcopy(res)
-
-        return res
-    return wrapper
+def get(obj, name):
+    return ro_transact(lambda: getattr(obj, name))()
