@@ -96,8 +96,10 @@ class ContainerView(DefaultView):
                 return dict(access='denied', permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
 
         # XXX: temporary code until ONC uses /search also for filtering computes
-        q = request.args.get('q', [''])[0]
-        q = q.decode('utf-8')
+        q = None
+        if top_level:
+            q = request.args.get('q', [''])[0]
+            q = q.decode('utf-8')
 
         if q:
             items = [item for item in items if IFiltrable(item).match(q)]
