@@ -20,6 +20,9 @@ import shutil
 shutil.rmtree('gen', True)
 sphinx.apidoc.main('sphinx-api -o gen ../../opennode'.split())
 
+from opennode.utils import conf_ref_gen
+conf_ref_gen.main()
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
