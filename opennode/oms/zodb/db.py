@@ -81,6 +81,9 @@ def initialize_database(event):
 def init(test=False):
     global _db, _testing
 
+    if _db and not test:
+        return
+
     print "[db] Initializing zodb"
     handle(BeforeDatabaseInitalizedEvent())
 

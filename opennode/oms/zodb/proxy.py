@@ -13,6 +13,8 @@ __all__ = ['PersistentProxy', 'make_persistent_proxy']
 
 def make_persistent_proxy(res):
     import inspect
+    if res is None:
+        return None
     if isinstance(res, type):
         return res
     if isinstance(res, basestring) or isinstance(res, int) or isinstance(res, float) or isinstance(res, defer.Deferred):
@@ -122,7 +124,7 @@ class PersistentProxy(object):
 
         namespace = {}
         for name in cls._special_names:
-            if hasattr(theclass, name):
+            if name in dir(theclass):
                 namespace[name] = make_method(name)
         return type("%s(%s)" % (cls.__name__, theclass.__name__), (cls,), namespace)
 
