@@ -62,7 +62,7 @@ function install_pythonbrew() {
             exit 1
         fi
 
-        $PYTHONBREW_ROOT/bin/pythonbrew install --no-test $PYTHON_VERSION --configure="--enable-unicode=ucs4"
+        $PYTHONBREW_ROOT/bin/pythonbrew install $PYTHON_VERSION --configure="--enable-unicode=ucs4"
     fi
 
     PYTHON=$PYTHONBREW_ROOT/pythons/Python-$PYTHON_VERSION/bin/python
