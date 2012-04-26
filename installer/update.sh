@@ -8,7 +8,7 @@ PYTHON_VERSION=2.7.2
 PYTHON=python2.7x
 
 if [ -e bin/buildout ]; then
-    PYTHON=$(head -n 1 bin/omsd | sed 's/^#!//')
+    PYTHON=$(head -n 1 bin/buildout | sed 's/^#!//')
 fi
 
 function install_pythonbrew() {
