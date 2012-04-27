@@ -84,7 +84,7 @@ class ContainerView(DefaultView):
         container_properties = super(ContainerView, self).render_GET(request)
 
         if depth < 1:
-            return container_properties
+            return self.filter_attributes(request, container_properties)
 
         items = map(follow_symlinks, self.context.listcontent())
 
@@ -118,7 +118,7 @@ class ContainerView(DefaultView):
         #if depth > 1:
         if not top_level or depth > 0:
             container_properties['children'] = children
-        return  container_properties
+        return self.filter_attributes(request, container_properties)
 
     def blacklisted(self, item):
         return isinstance(item, ByNameContainer)

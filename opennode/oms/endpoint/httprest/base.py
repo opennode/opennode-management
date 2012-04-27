@@ -24,10 +24,23 @@ class HttpRestView(Adapter):
     baseclass()
     require('rest')
 
+    __builtin_attributes__ = ['id', 'children']
+
+    def filter_attributes(self, request, data):
+        """Handle the filtering of attributes according to the 'attrs' parameter in the request"""
+        attrs = request.args.get('attrs', [''])[0]
+        if attrs:
+            filtered_data = {}
+            for a in attrs.decode('utf-8').split(',') + self.__builtin_attributes__:
+                if a in data:
+                    filtered_data[a] = data[a]
+            return filtered_data
+        return data
+
     def render_recursive(self, request, depth):
         for method in ('render_' + request.method, 'render'):
             if hasattr(self, method):
-                return getattr(self, method)(request)
+                return self.filter_attributes(request, getattr(self, method)(request))
         raise NotImplemented("method %s not implemented\n" % request.method)
 
     def render_OPTIONS(self, request):
