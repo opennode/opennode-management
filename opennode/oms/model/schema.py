@@ -73,7 +73,7 @@ class DictFromUnicode(Adapter):
         res = self.context._type(value)
 
         def convert(k, v):
-            return (IFromUnicode(self.context.key_type).fromUnicode(unicode(v)), IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
+            return (IFromUnicode(self.context.key_type).fromUnicode(unicode(k)), IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
 
         return self.context._type([convert(k, v) for k, v in res.items()])
 
