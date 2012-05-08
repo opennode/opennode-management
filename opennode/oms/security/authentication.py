@@ -14,6 +14,7 @@ from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
+from zope.securitypolicy.principalpermission import principalPermissionManager
 from twisted.cred.checkers import FilePasswordDB
 from twisted.internet import inotify
 from twisted.python import log, filepath
@@ -145,12 +146,20 @@ def setup_permissions(event):
     reload_users(file(passwd_file))
     setup_conf_reload_watch(passwd_file, reload_users)
 
+def create_special_principals():
+    auth = queryUtility(IAuthentication)
+
+    auth.registerPrincipal(User('oms.anonymous'))
+    auth.registerPrincipal(User('oms.rest_options'))
+
+    principalPermissionManager.grantPermissionToPrincipal('rest', 'oms.rest_options')
+
 
 def reload_users(stream):
     print "(Re)Loading OMS users definitions"
 
+    create_special_principals()
     auth = queryUtility(IAuthentication)
-    auth.registerPrincipal(User('oms.anonymous'))
 
     for i in stream:
         try:
