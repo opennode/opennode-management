@@ -21,7 +21,8 @@ from zope.interface import Interface, implements
 from opennode.oms.config import get_config
 from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
-from opennode.oms.zodb.proxy import make_persistent_proxy
+from opennode.oms.zodb.proxy import make_persistent_proxy, get_peristent_context, PersistentProxy
+from opennode.oms.zodb.extractors import context_from_method
 
 
 __all__ = ['get_db', 'get_connection', 'get_root', 'transact', 'ref', 'deref']
@@ -31,6 +32,7 @@ _db = None
 _threadpool = None
 _connection = threading.local()
 _testing = False
+_context = threading.local()
 
 
 class RollbackException(Exception):
@@ -165,13 +167,15 @@ def transact(fun):
     Returned values are deeply copied. Currently only zodb objects returned directly or
     contained in the first level content of lists/sets/dicts are copied.
     """
-
     if not _threadpool:
         init_threadpool()
 
     def run_in_tx(fun, *args, **kwargs):
         if not _db:
             raise Exception('DB not initalized')
+
+        context = context_from_method(fun, args, kwargs)
+        _context.x = context
 
         cfg = get_config()
         def trace(msg, t):
@@ -210,7 +214,8 @@ def transact(fun):
                         if retrying:
                             trace("SUCCEEDED COMMITTING, AFTER %s attempts" % i, t)
 
-                    return make_persistent_proxy(result)
+                    _context.x = None
+                    return make_persistent_proxy(result, context)
                 except ReadConflictError as e:
                     trace("GOT READ CONFLICT IN RW TRANASCT, retrying %s" % i, t)
                     retrying = True
@@ -246,12 +251,16 @@ def ro_transact(fun):
         init_threadpool()
 
     def run_in_tx(fun, *args, **kwargs):
+        context = context_from_method(fun, args, kwargs)
+        _context.x = context
+
         if not _db:
             raise Exception('DB not initalized')
 
         try:
             transaction.begin()
-            return make_persistent_proxy(fun(*args, **kwargs))
+            _context.x = None
+            return make_persistent_proxy(fun(*args, **kwargs), context)
         finally:
             transaction.abort()
 
@@ -277,3 +286,17 @@ def deref(obj_id):
 
 def get(obj, name):
     return ro_transact(lambda: getattr(obj, name))()
+
+
+def context(obj):
+    if getattr(_context, 'x', None):
+        return _context.x
+    return get_peristent_context(obj)
+
+
+def assert_proxy(obj):
+    if not (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)):
+        print "Should be a db proxy", type(obj), obj
+        import traceback
+        traceback.print_stack()
+    assert isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)

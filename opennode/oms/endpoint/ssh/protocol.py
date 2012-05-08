@@ -5,6 +5,7 @@ import re
 import sys
 import traceback
 
+from grokcore.component import Subscription, implements, context
 from twisted.conch.insults.insults import ServerProtocol
 from twisted.internet import defer
 from twisted.python import log
@@ -21,6 +22,7 @@ from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.zodb import db
+from opennode.oms.zodb.extractors import IContextExtractor
 
 
 def protocolInlineCallbacks(fun):
@@ -343,6 +345,14 @@ class CommandExecutionSubProtocol(object):
             return self.parent.exit_sub_protocol()
 
         self.buffer.append((keyID, mod))
+
+
+class ProtocolContextExtractor(Subscription):
+    implements(IContextExtractor)
+    context(OmsShellProtocol)
+
+    def get_context(self):
+        return {'interaction': self.context.interaction}
 
 
 # HACK: Monkey patch

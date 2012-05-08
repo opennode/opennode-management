@@ -72,6 +72,13 @@ def _action_decorator(fun):
             name = self._name
 
             def execute(self, args):
+                from opennode.oms.zodb import db
+                from opennode.oms.zodb.proxy import make_persistent_proxy
+
+                # we obtained `this` before the action exited from the db.transact decorator
+                # thus we need to reapply the db proxy
+                this.context = make_persistent_proxy(this.context, db.context(self))
+
                 return fun(this, self, args)
         return ActionCmd
     return cmd

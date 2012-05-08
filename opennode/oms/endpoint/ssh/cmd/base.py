@@ -1,4 +1,4 @@
-from grokcore.component import queryOrderedSubscriptions
+from grokcore.component import Subscription, implements, context, queryOrderedSubscriptions
 from twisted.internet import defer, reactor
 from twisted.python.threadable import isInIOThread
 from zope.component import queryAdapter
@@ -9,6 +9,7 @@ from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualC
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.zodb import db
+from opennode.oms.zodb.extractors import IContextExtractor
 
 
 class Cmd(object):
@@ -145,3 +146,11 @@ class Cmd(object):
                 return proxy_factory(objs[-1], self.protocol.interaction)
             else:
                 return objs[-1]
+
+
+class CommandContextExtractor(Subscription):
+    implements(IContextExtractor)
+    context(Cmd)
+
+    def get_context(self):
+        return {'interaction': self.context.protocol.interaction}

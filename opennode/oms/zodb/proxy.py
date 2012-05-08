@@ -1,7 +1,6 @@
 # adapted from generic python proxy code available at http://code.activestate.com/recipes/252151-generalized-delegates-and-proxies/
 # credit to Goncalo Rodrigues on Tue, 18 Nov 2003 (PSF)
 
-
 from twisted.python.threadable import isInIOThread
 from twisted.internet import defer
 
@@ -11,17 +10,31 @@ from opennode.oms.config import get_config
 __all__ = ['PersistentProxy', 'make_persistent_proxy']
 
 
-def make_persistent_proxy(res):
+def make_persistent_proxy(res, context={}):
     import inspect
+
     if res is None:
         return None
     if isinstance(res, type):
         return res
     if isinstance(res, basestring) or isinstance(res, int) or isinstance(res, float) or isinstance(res, defer.Deferred):
         return res
+
     if inspect.isroutine(res) or res.__class__ == ([].__str__).__class__:
-        return CallableViralProxy(res)
-    return PersistentProxy(res)
+        return CallableViralProxy(res, context)
+    return PersistentProxy(res, context)
+
+
+def get_peristent_context(obj):
+    try:
+        return object.__getattribute__(obj, '_context')
+    except AttributeError:
+        pass
+
+    try:
+        return getattr(obj, '_v_context', {})
+    except AttributeError:
+        return {}
 
 
 def forbidden_outside_transaction(self, name):
@@ -59,8 +72,17 @@ class PersistentProxy(object):
     """
 
     __slots__ = ["_obj", "__weakref__"]
-    def __init__(self, obj):
+    def __init__(self, obj, context):
+        # we want to keep the context even when we unproxy the object
+        # like when a method is executed and `self` was a proxy
+        try:
+            obj._v_context = context
+        except AttributeError:
+            # cannot write to builting objects
+            pass
+
         object.__setattr__(self, "_obj", obj)
+        object.__setattr__(self, "_context", context)
         object.__setattr__(self, "_fixed_up", False)
 
     #
@@ -71,7 +93,7 @@ class PersistentProxy(object):
 
         res = getattr(object.__getattribute__(self, "_obj"), name)
         if name not in ['__providedBy__']:
-            return make_persistent_proxy(res)
+            return make_persistent_proxy(res, get_peristent_context(self))
         return res
 
     def __delattr__(self, name):
@@ -118,7 +140,7 @@ class PersistentProxy(object):
             def method(self, *args, **kw):
                 res = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
                 if name in cls._proxied_specials:
-                    return make_persistent_proxy(res)
+                    return make_persistent_proxy(res, get_peristent_context(self))
                 return res
             return method
 
@@ -150,8 +172,18 @@ class PersistentProxy(object):
 
 
 class CallableViralProxy(PersistentProxy):
-    def __init__(self, obj):
+    def __init__(self, obj, context):
+        # we want to keep the context even when we unproxy the object
+        # like when a method is executed and `self` was a proxy
+        try:
+            obj._v_context = context
+        except AttributeError:
+            # cannot write to builting objects
+            pass
+
         object.__setattr__(self, "_obj", obj)
+        object.__setattr__(self, "_context", context)
 
     def __call__(self, *args, **kwargs):
-        return make_persistent_proxy(object.__getattribute__(self, "_obj")(*args, **kwargs))
+        return make_persistent_proxy(object.__getattribute__(self, "_obj")(*args, **kwargs),
+                                     get_peristent_context(self))
