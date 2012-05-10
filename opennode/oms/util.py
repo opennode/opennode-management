@@ -180,6 +180,16 @@ def get_u(obj, key):
     return unicode(val) if val is not None else None
 
 
+def get_i(obj, key):
+    val = obj.get(key)
+    return int(val) if val is not None else None
+
+
+def get_f(obj, key):
+    val = obj.get(key)
+    return float(val) if val is not None else None
+
+
 def exception_logger(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
