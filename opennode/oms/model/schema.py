@@ -46,10 +46,14 @@ class CollectionFromUnicode(Adapter):
     baseclass()
 
     def fromUnicode(self, value):
-        from_unicode = IFromUnicode(self.context.value_type)
+        if self.context.value_type:
+            value_converter = IFromUnicode(self.context.value_type)
+            from_unicode = lambda x: value_converter.fromUnicode(x)
+        else:
+            from_unicode = lambda x: x
 
         if isinstance(value, basestring):
-            value = [from_unicode.fromUnicode(unicode(i.strip())) for i in value.split(',')]
+            value = [from_unicode(unicode(i.strip())) for i in value.split(',')]
         return self.context._type(value)
 
 
