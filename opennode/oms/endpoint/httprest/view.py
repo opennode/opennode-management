@@ -97,13 +97,21 @@ class ContainerView(DefaultView):
 
         # XXX: temporary code until ONC uses /search also for filtering computes
         q = None
+        limit = None
+        offset = 0
+
         if top_level:
             q = request.args.get('q', [''])[0]
             q = q.decode('utf-8')
 
+            limit = int(request.args.get('limit', [0])[0])
+            offset = int(request.args.get('offset', [0])[0])
+
         if q:
             items = [item for item in items if IFiltrable(item).match(q)]
 
+        if limit or offset:
+            items = items[offset:limit]
 
         children = [secure_render_recursive(item)
                     for item in items
