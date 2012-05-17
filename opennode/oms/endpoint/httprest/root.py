@@ -152,6 +152,8 @@ class HttpRestServer(resource.Resource):
                 def render(obj):
                     if type(obj) == set:
                         return list(obj)  # safeguard against dumping sets
+                    if hasattr(obj, '__str__'):
+                        return str(obj)
                     print "RENDERING ERROR, cannot json serialize", obj
                     raise TypeError
 
