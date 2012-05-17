@@ -150,7 +150,7 @@ class HttpRestServer(resource.Resource):
             # allow views to take full control of output streaming
             if ret != NOT_DONE_YET:
                 def render(obj):
-                    if obj(type) == set:
+                    if type(obj) == set:
                         return list(obj)  # safeguard against dumping sets
                     print "RENDERING ERROR, cannot json serialize", obj
                     raise TypeError
