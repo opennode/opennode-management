@@ -21,7 +21,7 @@ from zope.interface import Interface, implements
 from opennode.oms.config import get_config
 from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
-from opennode.oms.zodb.proxy import make_persistent_proxy, get_peristent_context, PersistentProxy
+from opennode.oms.zodb.proxy import make_persistent_proxy, remove_persistent_proxy as _remove_persistent_proxy, get_peristent_context, PersistentProxy
 from opennode.oms.zodb.extractors import context_from_method
 
 
@@ -237,7 +237,15 @@ def transact(fun):
     return wrapper
 
 
-def ro_transact(fun):
+def ro_transact(fun=None, proxy=True):
+    if fun is None:
+        def wrapper(fun):
+            return _ro_transact(fun, proxy)
+        return wrapper
+    return _ro_transact(fun, proxy)
+
+
+def _ro_transact(fun, proxy=True):
     """Runs a callable inside a separate thread within a readonly ZODB transaction.
 
     Transaction is always rolledback.
@@ -260,7 +268,11 @@ def ro_transact(fun):
         try:
             transaction.begin()
             _context.x = None
-            return make_persistent_proxy(fun(*args, **kwargs), context)
+
+            res = fun(*args, **kwargs)
+            if proxy:
+                return make_persistent_proxy(res, context)
+            return res
         finally:
             transaction.abort()
 
@@ -300,3 +312,14 @@ def assert_proxy(obj):
         import traceback
         traceback.print_stack()
     assert isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)
+
+
+def assert_not_proxy(obj):
+    if (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)):
+        print "Should not be a db proxy", type(obj), obj
+        import traceback
+        traceback.print_stack()
+    assert not (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred))
+
+
+remove_persistent_proxy = _remove_persistent_proxy
