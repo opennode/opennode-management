@@ -26,7 +26,10 @@ def make_persistent_proxy(res, context={}):
 
 
 def remove_persistent_proxy(obj):
-    return object.__getattribute__(obj, '_obj')
+    try:
+        return object.__getattribute__(obj, '_obj')
+    except AttributeError:
+        return obj
 
 
 def get_peristent_context(obj):
