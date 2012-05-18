@@ -17,25 +17,27 @@ class ModelFiltrable(Adapter):
     def match(self, query):
         keywords = [i.lower() for i in query.split(' ') if i]
 
-        for name, field, schema in get_schema_fields(self.context):
-            value = field.get(schema(self.context))
+        def matches(keyword, value):
+            if isinstance(value, unicode):
+                value = value.encode('utf-8')
 
-            for keyword in keywords:
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
-
-                if isinstance(value, str):
-                    if keyword in value:
-                        return True
-
-                if isinstance(value, list) or isinstance(value, set):
-                    if keyword in value:
-                        return True
-
-                if keyword == value:
+            if isinstance(value, str):
+                if keyword in value:
                     return True
 
-        return False
+            if isinstance(value, list) or isinstance(value, set):
+                if keyword in value:
+                    return True
+
+            if keyword == value:
+                return True
+
+            return False
+
+        def any_field(keyword):
+            return any(matches(keyword, field.get(schema(self.context))) for name, field, schema in get_schema_fields(self.context))
+
+        return all(any_field(keyword) for keyword in keywords)
 
 
 class DefaultFiltrable(Adapter):
