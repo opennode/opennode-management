@@ -3,6 +3,7 @@ from collections import OrderedDict
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
+from zope.interface.interface import InterfaceClass
 from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
 from zope.schema.interfaces import IFromUnicode
 from zope.security.proxy import removeSecurityProxy
@@ -23,7 +24,11 @@ class Path(TextLine):
         super(TextLine, self).__init__(*args, **kw)
 
 
-def get_schemas(model_or_obj):
+def model_implements_marker(model, marker):
+    return marker and isinstance(model, type) and hasattr(model, '__markers__') and marker in model.__markers__
+
+
+def get_schemas(model_or_obj, marker=None):
     model_or_obj = removeSecurityProxy(model_or_obj)
 
     for schema in get_direct_interfaces(model_or_obj):
@@ -34,11 +39,18 @@ def get_schemas(model_or_obj):
     for schema in getSiteManager().adapters._adapters[1].get(implementedBy(model), []):
         yield schema
 
+    if model_implements_marker(model_or_obj, marker):
+        yield marker
 
-def get_schema_fields(model_or_obj):
+
+def get_schema_fields(model_or_obj, marker=None):
     for schema in get_schemas(model_or_obj):
         for name, field in getFieldsInOrder(schema):
             yield name, field, schema
+
+    if model_implements_marker(model_or_obj, marker):
+        for name, field in getFieldsInOrder(marker):
+            yield name, field, marker
 
 
 class CollectionFromUnicode(Adapter):

@@ -430,7 +430,7 @@ class CreateObjCmd(Cmd):
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
 
-        form = ApplyRawData(args.keywords, model=model_cls)
+        form = ApplyRawData(args.keywords, model=model_cls, marker=getattr(self.current_obj, '__contains__', None))
         if not form.errors:
             obj = form.create()
             obj_id = self.current_obj.add(obj)
@@ -455,7 +455,7 @@ class SetOrMkCmdDynamicArguments(Adapter):
                                        if self.context.name == 'mk' else
                                        (self.context.traverse(args.path), False))
 
-        for name, field, schema in get_schema_fields(model_or_obj):
+        for name, field, schema in get_schema_fields(model_or_obj, marker=getattr(self.context.current_obj, '__contains__', None)):
             if field.readonly:
                 continue
 

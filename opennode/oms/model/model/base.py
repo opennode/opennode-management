@@ -161,6 +161,10 @@ class AddingContainer(ReadonlyContainer):
         if isinstance(self.__contains__, InterfaceClass):
             if isinstance(item, Symlink):
                 item = item.target
+            if isinstance(item, type) and hasattr(item, '__markers__'):
+                for item in item.__markers__:
+                    if self.__contains__ == item:
+                        return True
             return self.__contains__.providedBy(item) or self.__contains__.implementedBy(item)
         else:
             return isinstance(item, self.__contains__) or issubclass(item, self.__contains__)
