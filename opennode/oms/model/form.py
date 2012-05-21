@@ -97,6 +97,8 @@ class ApplyRawData(object):
                 if name not in raw_data:
                     continue
 
+                field = field.bind(self.obj or self.model)
+
                 raw_value = raw_data.pop(name)
 
                 if isinstance(raw_value, str):

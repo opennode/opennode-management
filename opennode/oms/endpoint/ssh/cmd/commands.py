@@ -459,6 +459,8 @@ class SetOrMkCmdDynamicArguments(Adapter):
             if field.readonly:
                 continue
 
+            field = field.bind(model_or_obj)
+
             choices = ([i.value.encode('utf-8') for i in field.vocabulary]
                        if isinstance(field, zope.schema.Choice) else
                        None)
