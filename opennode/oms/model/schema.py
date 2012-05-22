@@ -65,7 +65,7 @@ class CollectionFromUnicode(Adapter):
             from_unicode = lambda x: x
 
         if isinstance(value, basestring):
-            value = [from_unicode(unicode(i.strip())) for i in value.split(',')]
+            value = [from_unicode(unicode(i.strip())) for i in value.strip(', ').split(',')]
         return self.context._type(value)
 
 
