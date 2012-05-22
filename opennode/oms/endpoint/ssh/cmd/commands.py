@@ -556,7 +556,7 @@ class FileCmd(Cmd):
             self.write("%s %s" % (row[0].ljust(width), row[1]))
 
     def _do_file(self, path, obj):
-        ifaces = ', '.join([i.__name__ for i in obj.implemented_interfaces()])
+        ifaces = ', '.join(obj.get_features())
         return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
 
 

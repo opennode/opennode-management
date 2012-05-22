@@ -3,9 +3,12 @@ from uuid import uuid4
 import persistent
 from BTrees.OOBTree import OOBTree
 from grokcore.component import Subscription, querySubscriptions, baseclass
+from zope import schema
 from zope.annotation.interfaces import IAttributeAnnotatable
-from zope.interface import implements, directlyProvidedBy, Interface, Attribute
+from zope.interface import implements, directlyProvidedBy, Interface, Attribute, alsoProvides, noLongerProvides
 from zope.interface.interface import InterfaceClass
+from zope.schema.interfaces import IContextSourceBinder
+from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.security.directives import permissions
@@ -52,6 +55,23 @@ class IIncomplete(Interface):
 
         """
 
+class MarkerSourceBinder(object):
+    implements(IContextSourceBinder)
+
+    def __call__(self, context):
+        names = [i.__name__ for i in getattr(context, '__markers__', [])]
+        names = names + ['+' + i for i in names] + ['-' + i for i in names]
+        return SimpleVocabulary([SimpleTerm(i) for i in names])
+
+
+class IMarkable(Interface):
+    """A model implementing this interfaces exposes marker interfaces
+    via a 'features' pseudo attributes, and allows users to modify those attributes via set/mk.
+
+    """
+    features = schema.Set(title=u"Features", required=False,
+                          value_type=schema.Choice(source=MarkerSourceBinder()))
+
 
 class Model(persistent.Persistent):
     implements(IModel, IAttributeAnnotatable)
@@ -65,6 +85,44 @@ class Model(persistent.Persistent):
 
     def _p_resolveConflict(self, oldState, savedState, newState):
         return newState
+
+    def get_features(self):
+        return set([i.__name__ for i in self.implemented_interfaces()])
+
+    def set_features(self, values):
+        """
+        Features is a pseudo attribute which allows us to treat marker interfaces as if they were
+        attributes. This special setter behaves like the tags setter, allowing addition and removal
+        of individual marker interfaces from omsh.
+
+        """
+        # we have to reset the object otherwise indexing framework
+        # won't update removed values
+        features = set(self.get_features())
+
+        def marker_by_name(name):
+            for i in getattr(self, '__markers__', []):
+                if i.__name__ == name:
+                    return i
+            raise KeyError('cannot find marker interface %s' % name)
+
+        if not any(i.startswith('-') or i.startswith('+') for i in values):
+            for i in getattr(self, '__markers__', []):
+                noLongerProvides(self, i)
+
+        # ignore empty strings
+        for value in (i for i in values if i):
+            op = value[0] if value[0] in ['-', '+'] else None
+            if op:
+                value = value[1:]
+
+            if op == '-':
+                if value in features:
+                    noLongerProvides(self, marker_by_name(value))
+            else:
+                alsoProvides(self, marker_by_name(value))
+
+    features = property(get_features, set_features)
 
 
 class IContainerExtender(Interface):
