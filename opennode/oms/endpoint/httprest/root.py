@@ -150,7 +150,7 @@ class HttpRestServer(resource.Resource):
             # allow views to take full control of output streaming
             if ret != NOT_DONE_YET:
                 def render(obj):
-                    if type(obj) == set:
+                    if isinstance(obj, set):
                         return list(obj)  # safeguard against dumping sets
                     if hasattr(obj, '__str__'):
                         return str(obj)
