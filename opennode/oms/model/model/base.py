@@ -61,7 +61,14 @@ class MarkerSourceBinder(object):
     def __call__(self, context):
         names = [i.__name__ for i in getattr(context, '__markers__', [])]
         names = names + ['+' + i for i in names] + ['-' + i for i in names]
-        return SimpleVocabulary([SimpleTerm(i) for i in names])
+
+        # we need to include the current values even if they are not editable markers
+        # otherwise the current object validation will fail (ON-403)
+        # this is caused by the fact that the 'features' pseudo-field contains both
+        # marker interfaces and real interfaces; this might change.
+        # When it changes, we have to remove this union.
+        current = context.get_features()
+        return SimpleVocabulary([SimpleTerm(i) for i in set(names).union(current)])
 
 
 class IMarkable(Interface):
