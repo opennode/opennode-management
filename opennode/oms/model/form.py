@@ -215,3 +215,19 @@ class TmpObj(object):
                 updated[k] = getattr(self.__dict__['obj'], k)
         if updated:
             handle(self.__dict__['obj'], ModelModifiedEvent(original_attrs, updated))
+
+
+def alsoProvides(obj, interface):
+    form = ApplyRawData({'features': '+' + interface.__name__}, obj)
+    if not form.errors:
+        form.apply()
+    else:
+        raise Exception("Cannot set marker interface %s" % interface)
+
+
+def noLongerProvides(obj, interface):
+    form = ApplyRawData({'features': '-' + interface.__name__}, obj)
+    if not form.errors:
+        form.apply()
+    else:
+        raise Exception("Cannot remove marker interface %s" % interface)
