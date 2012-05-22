@@ -206,10 +206,12 @@ class TmpObj(object):
             original_attrs[name] = getattr(self.__dict__['obj'], name, None)
             setattr(self.__dict__['obj'], name, value)
 
-        if self.__dict__['modified_attrs']:
-            # properties could alter the effective value of what we set
-            # so we need to read back the actual values from the object
-            updated = {}
-            for k in self.__dict__['modified_attrs'].keys():
+        # properties could alter the effective value of what we set
+        # so we need to read back the actual values from the object
+        updated = {}
+        for k in self.__dict__['modified_attrs'].keys():
+            new_value = getattr(self.__dict__['obj'], k)
+            if new_value != original_attrs[k]:
                 updated[k] = getattr(self.__dict__['obj'], k)
+        if updated:
             handle(self.__dict__['obj'], ModelModifiedEvent(original_attrs, updated))
