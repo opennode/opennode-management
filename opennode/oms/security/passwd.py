@@ -103,7 +103,7 @@ def run():
                 if line.startswith(args.user + ':'):
                     user, old_pw, groups = line.split(':')
                     if args.g:
-                        groups = args.g
+                        groups = args.g + '\n'
                     if pw == None:
                         pw = old_pw
 
