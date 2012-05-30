@@ -213,7 +213,9 @@ class TmpObj(object):
             new_value = getattr(self.__dict__['obj'], k)
             if new_value != original_attrs[k]:
                 updated[k] = getattr(self.__dict__['obj'], k)
-        if updated:
+        # we emit modification events only for objects
+        # that have been already added to a container (ON-412)
+        if updated and self.__dict__['obj'].__parent__:
             handle(self.__dict__['obj'], ModelModifiedEvent(original_attrs, updated))
 
 
