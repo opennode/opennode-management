@@ -14,6 +14,7 @@ class Foo(object):
     implements(IFoo)
 
     bar = 1
+    __parent__ = object()
 
 
 def test_apply_and_create_preconditions():
