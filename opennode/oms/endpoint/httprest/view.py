@@ -46,6 +46,8 @@ class DefaultView(HttpRestView):
     def render_PUT(self, request):
         data = json.load(request.content)
 
+        data = self.put_filter_attributes(request, data)
+
         form = ApplyRawData(data, obj=self.context)
         if not form.errors:
             form.apply()
@@ -53,6 +55,10 @@ class DefaultView(HttpRestView):
         else:
             request.setResponseCode(BadRequest.status_code)
             return form.error_dict()
+
+    def put_filter_attributes(self, request, data):
+        """Offer the possibility to subclasses to massage the received json before default behavior."""
+        return data
 
     def render_DELETE(self, request):
         force = request.args.get('force', ['false'])[0] == 'true'
