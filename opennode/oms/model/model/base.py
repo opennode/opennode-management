@@ -111,7 +111,7 @@ class Model(persistent.Persistent):
             for i in getattr(self, '__markers__', []):
                 if i.__name__ == name:
                     return i
-            raise KeyError('cannot find marker interface %s' % name)
+            return None
 
         if not any(i.startswith('-') or i.startswith('+') for i in values):
             for i in getattr(self, '__markers__', []):
@@ -123,11 +123,13 @@ class Model(persistent.Persistent):
             if op:
                 value = value[1:]
 
-            if op == '-':
-                if value in features:
-                    noLongerProvides(self, marker_by_name(value))
-            else:
-                alsoProvides(self, marker_by_name(value))
+            marker = marker_by_name(value)
+            if marker:
+                if op == '-':
+                    if value in features:
+                        noLongerProvides(self, marker)
+                else:
+                    alsoProvides(self, marker)
 
     features = property(get_features, set_features)
 
