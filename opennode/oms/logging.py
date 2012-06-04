@@ -10,6 +10,7 @@ class FilteredLogFileObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""
 
     ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico', '.*POST /+stream', '.*OPTIONS /',
+                        '.*GET /plugins/onc/root/',
                         'got channel session request', 'channel open', 'remote close', 'sending close 0',
                         'disabling diffie-hellman-group-exchange because we cannot find moduli file']
     #ignored_systems = ['SSHServerTransport', 'SSHChannel']
