@@ -3,6 +3,8 @@ import time
 import os
 
 from grokcore.component import context
+from twisted.internet import defer
+from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -14,6 +16,7 @@ from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.search import SearchContainer, SearchResult
@@ -22,7 +25,6 @@ from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
-
 
 class DefaultView(HttpRestView):
     context(object)
@@ -185,3 +187,19 @@ class StreamView(HttpRestView):
         res = [list(reversed(val(resource))) for resource in data]
         res = [(i, v) for i, v in enumerate(res) if v]
         return [timestamp, dict(res)]
+
+
+class CommandView(DefaultView):
+    context(ICommand)
+
+    def render_PUT(self, request):
+        @defer.inlineCallbacks
+        def call_action():
+            from opennode.oms.endpoint.ssh.detached import DetachedProtocol
+
+            yield self.context.cmd(DetachedProtocol()).execute(object())
+            request.write(json.dumps({"status": "ok"}))
+            request.finish()
+
+        call_action()
+        return NOT_DONE_YET
