@@ -3,12 +3,14 @@ from __future__ import absolute_import
 import time
 from collections import OrderedDict
 
-from grokcore.component import querySubscriptions, Adapter, context, subscribe
+from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
 from twisted.python import log
 from zope import schema
-from zope.interface import Interface, implements
+from zope.component import provideSubscriptionAdapter
+from zope.interface import Interface, implements, alsoProvides
 
-from .base import Model, ReadonlyContainer
+from .base import ReadonlyContainer
+from .actions import ActionsContainerExtension, Action, action
 from opennode.oms.util import Singleton
 from opennode.oms.config import get_config
 from opennode.oms.core import IAfterApplicationInitializedEvent
@@ -22,6 +24,16 @@ class ITask(Interface):
 
     def signal(name):
         """Process a signal"""
+
+
+class ISuspendableTask(Interface):
+    """A task which can be suspendedD."""
+
+    def stop():
+        pass
+
+    def cont():
+        pass
 
 
 class IProcess(Interface):
@@ -59,7 +71,7 @@ class DaemonStateRenderer(Adapter):
         return "[%s%s]" % (self.context.__name__, ': paused' if self.context.paused else '')
 
 
-class Task(Model):
+class Task(ReadonlyContainer):
     implements(ITask)
 
     def __init__(self, name, parent, deferred, cmdline, ptid, signal_handler=None, principal=None):
@@ -71,6 +83,11 @@ class Task(Model):
         self.ptid = ptid
         self.signal_handler = signal_handler
         self.principal = principal
+
+        # XXX: Workaround to handle ON-425
+        # Refactor with adapters handling each specific signal
+        if self.signal_handler:
+            alsoProvides(self, ISuspendableTask)
 
     @property
     def uptime(self):
@@ -151,6 +168,47 @@ class CompletedProc(ReadonlyContainer):
 
     def content(self):
         return self.tasks
+
+
+class SignalAction(Action):
+    """Send a given signal"""
+    baseclass()
+
+    def execute(self, cmd, args):
+        from opennode.oms.zodb import db
+        @db.ro_transact
+        def execute():
+            self.context.signal(self.__signal__)
+        execute()
+
+
+class StopTaskAction(SignalAction):
+    """Send STOP signal"""
+    context(ISuspendableTask)
+    action('stop')
+
+    __signal__ = 'STOP'
+
+
+class ContinueTaskAction(SignalAction):
+    """Send CONT signal"""
+
+    context(ISuspendableTask)
+    action('continue')
+
+    __signal__ = 'CONT'
+
+
+class TerminateTaskAction(SignalAction):
+    """Send TERM signal"""
+
+    context(ITask)
+    action('terminate')
+
+    __signal__ = 'TERM'
+
+
+provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Task, ))
 
 
 @subscribe(IAfterApplicationInitializedEvent)
