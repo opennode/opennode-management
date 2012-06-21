@@ -26,6 +26,7 @@ from opennode.oms.model.schema import model_to_dict
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.zodb import db
 
+
 class DefaultView(HttpRestView):
     context(object)
 
@@ -76,6 +77,7 @@ class DefaultView(HttpRestView):
             return {'status': 'failure'}
 
         return {'status': 'success'}
+
 
 class ContainerView(DefaultView):
     context(IContainer)

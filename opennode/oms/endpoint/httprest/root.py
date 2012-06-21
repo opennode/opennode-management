@@ -106,6 +106,7 @@ class HttpRestServer(resource.Resource):
 
     def render(self, request):
         deferred = self._render(request)
+
         @deferred
         def on_error(error):
             log.err("Error while rendering http %s" % error)
