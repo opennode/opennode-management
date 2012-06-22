@@ -67,7 +67,7 @@ class MarkerSourceBinder(object):
         # this is caused by the fact that the 'features' pseudo-field contains both
         # marker interfaces and real interfaces; this might change.
         # When it changes, we have to remove this union.
-        current = context.get_features()
+        current = context.get_class_features() if isinstance(context, type) else context.get_features()
         return SimpleVocabulary([SimpleTerm(i) for i in set(names).union(current)])
 
 
@@ -87,11 +87,20 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+
+    @classmethod
+    def class_implemented_interfaces(cls):
+        return get_direct_interfaces(cls)
+
     def implemented_interfaces(self):
-        return get_direct_interfaces(type(self)) + list(directlyProvidedBy(self).interfaces())
+        return self.class_implemented_interfaces() + list(directlyProvidedBy(self).interfaces())
 
     def _p_resolveConflict(self, oldState, savedState, newState):
         return newState
+
+    @classmethod
+    def get_class_features(cls):
+        return set([i.__name__ for i in cls.class_implemented_interfaces()])
 
     def get_features(self):
         return set([i.__name__ for i in self.implemented_interfaces()])
