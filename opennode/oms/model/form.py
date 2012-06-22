@@ -184,7 +184,6 @@ class TmpObj(object):
     __allowed_attrs__ = ['__markers__']
 
     def __init__(self, wrapped):
-        assert wrapped
         self.__dict__['obj'] = wrapped
         self.__dict__['modified_attrs'] = {}
 
