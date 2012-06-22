@@ -145,6 +145,8 @@ class PersistentProxy(object):
 
         def make_method(name):
             def method(self, *args, **kw):
+                if name == '__cmp__':
+                    return cmp(object.__getattribute__(self, "_obj"), *args)
                 res = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
                 if name in cls._proxied_specials:
                     return make_persistent_proxy(res, get_peristent_context(self))
