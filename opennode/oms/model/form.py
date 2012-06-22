@@ -86,7 +86,7 @@ class ApplyRawData(object):
         if hasattr(self, '_errors'):
             return self._errors
 
-        self.tmp_obj = tmp_obj = TmpObj(self.obj)
+        self.tmp_obj = tmp_obj = TmpObj(self.obj, self.model)
         raw_data = dict(self.data)
 
         errors = []
@@ -183,8 +183,9 @@ class TmpObj(object):
 
     __allowed_attrs__ = ['__markers__']
 
-    def __init__(self, wrapped):
+    def __init__(self, wrapped, cls=None):
         self.__dict__['obj'] = wrapped
+        self.__dict__['cls'] = cls
         self.__dict__['modified_attrs'] = {}
 
     def __getattr__(self, name):
@@ -194,6 +195,10 @@ class TmpObj(object):
             return self.__dict__['modified_attrs'][name]
         else:
             obj = self.__dict__['obj']
+            if not obj:
+                # try to access class methods
+                cls_method = getattr(self.__dict__['cls'], name, None)
+                return cls_method if inspect.isroutine(cls_method) else None
             return getattr(obj, name) if obj else None
 
     def __setattr__(self, name, value):
