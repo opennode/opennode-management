@@ -59,7 +59,7 @@ class MarkerSourceBinder(object):
     implements(IContextSourceBinder)
 
     def __call__(self, context):
-        names = [i.__name__ for i in getattr(context, '__markers__', [])]
+        names = [i.__name__ for i in getattr(context, '__markers__', None) or []]
         names = names + ['+' + i for i in names] + ['-' + i for i in names]
 
         # we need to include the current values even if they are not editable markers
