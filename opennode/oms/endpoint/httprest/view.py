@@ -96,7 +96,8 @@ class ContainerView(DefaultView):
         if depth < 1:
             return self.filter_attributes(request, container_properties)
 
-        items = map(follow_symlinks, self.context.listcontent())
+        exclude = [i.strip() for i in request.args.get('exclude', [''])[0].split(',')]
+        items = [follow_symlinks(i) for i in self.context.listcontent() if i.__name__ not in exclude]
 
         def secure_render_recursive(item):
             try:
