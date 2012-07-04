@@ -14,6 +14,7 @@ Contents:
    intro
    config
    security
+   streaming
    developers
    gen/modules
 
