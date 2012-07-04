@@ -176,8 +176,11 @@ class StreamView(HttpRestView):
         after = int(request.args.get('after', ['0'])[0])
 
         subscription_hash = request.args.get('subscription_hash', [''])[0]
-        if subscription_hash in self.cached_subscriptions:
-            data = self.cached_subscriptions[subscription_hash]
+        if subscription_hash:
+            if subscription_hash in self.cached_subscriptions:
+                data = self.cached_subscriptions[subscription_hash]
+            else:
+                raise BadRequest("Unknown subscription hash")
         else:
             if not request.content.getvalue() and not request.args.get('subscription_hash', [''])[0]:
                 return {}
