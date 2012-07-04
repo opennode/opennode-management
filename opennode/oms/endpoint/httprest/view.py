@@ -3,6 +3,7 @@ import time
 import os
 
 from grokcore.component import context
+from hashlib import sha1
 from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter, handle
@@ -162,6 +163,8 @@ class SearchView(ContainerView):
 class StreamView(HttpRestView):
     context(StreamSubscriber)
 
+    cached_subscriptions = dict()
+
     def rw_transaction(self, request):
         return False
 
@@ -172,10 +175,16 @@ class StreamView(HttpRestView):
         limit = int(request.args.get('limit', ['100'])[0])
         after = int(request.args.get('after', ['0'])[0])
 
-        if not request.content.getvalue():
-            return {}
-
-        data = json.load(request.content)
+        subscription_hash = request.args.get('subscription_hash', [''])[0]
+        if subscription_hash in self.cached_subscriptions:
+            data = self.cached_subscriptions[subscription_hash]
+        else:
+            if not request.content.getvalue() and not request.args.get('subscription_hash', [''])[0]:
+                return {}
+            data = json.load(request.content)
+            subscription_hash = sha1(request.content.getvalue()).hexdigest()
+            self.cached_subscriptions[subscription_hash] = data
+            request.responseHeaders.addRawHeader('X-OMS-Subscription-Hash', subscription_hash)
 
         def val(r):
             objs, unresolved_path = traverse_path(oms_root, r)
