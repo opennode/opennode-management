@@ -143,7 +143,7 @@ class ApplyRawData(object):
     def create(self):
         assert self.model, "model needs to be provided to create new objects"
         assert not self.errors, "There should be no validation errors"
-        if self.model.__init__ is object.__init__:
+        if not inspect.ismethod(self.model.__init__):
             argnames = []
         else:
             argnames = inspect.getargspec(self.model.__init__).args
