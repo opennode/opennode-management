@@ -152,6 +152,12 @@ class ApplyRawData(object):
         for name, value in self.data.items():
             (kwargs if name in argnames else rest)[name] = getattr(self.tmp_obj, name)
 
+        for argname in argnames:
+            if argname not in kwargs:
+                for name, field, _ in self.fields:
+                    if name == argname and field.default:
+                        kwargs[name] = field.default
+
         obj = self.model(**kwargs)
         for name, value in rest.items():
             setattr(obj, name, value)
