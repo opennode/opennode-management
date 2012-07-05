@@ -146,7 +146,7 @@ class ApplyRawData(object):
         if not inspect.ismethod(self.model.__init__):
             argnames = []
         else:
-            argnames = inspect.getargspec(self.model.__init__).args
+            argnames = inspect.getargspec(self.model.__init__).args[1:]
 
         kwargs, rest = {}, {}
         for name, value in self.data.items():
