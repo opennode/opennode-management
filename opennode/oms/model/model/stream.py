@@ -151,7 +151,7 @@ def model_deleted(model, event):
 
     parent = event.container
     if IStream.providedBy(parent) or queryAdapter(parent, IStream):
-        IStream(parent).add((timestamp, dict(event='remove', name=model.__name__, url=canonical_path(model))))
+        IStream(parent).add((timestamp, dict(event='remove', name=model.__name__, url=canonical_path(parent))))
 
     if IStream.providedBy(model) or queryAdapter(model, IStream):
         IStream(model).add((timestamp, dict(event='delete', name=model.__name__, url=canonical_path(model))))
