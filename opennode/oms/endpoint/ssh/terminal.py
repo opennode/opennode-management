@@ -84,6 +84,9 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
         self.height = height
         self.terminal.termSize.x = width
         self.terminal.termSize.y = height
+
+    def terminalSizeAfterLogin(self):
+        """Part of terminalSize executed after login"""
         if not self.batch:
             self.drawInputLine()
 

@@ -100,6 +100,8 @@ class OmsShellProtocol(InteractiveTerminal):
         self.interaction = new_interaction(principal.id)
         self.tid = Proc.register(None, '/bin/omsh', principal=principal)
 
+        self.terminalSizeAfterLogin()
+
     def connectionMade(self):
         super(OmsShellProtocol, self).connectionMade()
 
