@@ -23,7 +23,9 @@ class CmdCompletionTestCase(unittest.TestCase):
         auth = getUtility(IAuthentication, context=None)
         user = auth.getPrincipal('user')
         user.groups.append('admins')
+        self.oms_ssh.batch = True
         self.oms_ssh.logged_in(user)
+        self.oms_ssh.batch = False
 
         self.terminal = mock.Mock()
         self.oms_ssh.terminal = self.terminal
