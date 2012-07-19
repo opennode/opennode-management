@@ -22,9 +22,9 @@ class OmsShellTerminalProtocol(object):
     def connection_made(self, terminal, size):
         self.shell = OmsShellProtocol()
         self.shell.set_terminal(terminal)
-        self.shell.logged_in(self.principal)
         self.shell.connectionMade()
         self.shell.terminalSize(size[0], size[1])
+        self.shell.logged_in(self.principal)
 
     def handle_key(self, key):
         self.shell.terminal.dataReceived(key)
