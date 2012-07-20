@@ -94,7 +94,10 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
         """
 
         terminal = self.transport.terminal_transport
-        terminal.write("%s@%s's password: " % (self.user, self.transport.host))
+        # self.transport.host is stored as a unicode object and Twisted conch
+        # doesn't like it
+        prompt = u"%s@%s's password: " % (self.user, self.transport.host)
+        terminal.write(prompt.encode('ascii'))
 
         deferred_password = defer.Deferred()
 
