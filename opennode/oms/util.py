@@ -127,8 +127,6 @@ def blocking_yield(deferred):
     Use this utility only until you refactor the upstream code in order to use pure async code.
     """
 
-    import time
-
     # install a failure handler, otherwise an unhandled deferred error will be logged
     failure = [None]
 
@@ -202,11 +200,11 @@ def exception_logger(fun):
                     if get_config().getboolean('debug', 'print_exceptions'):
                         print "[debug] traceback: ", failure.getTraceback(True)
             return res
-        except Exception as e:
+        except Exception:
             if get_config().getboolean('debug', 'print_exceptions'):
                 import traceback
                 traceback.print_exc()
-            raise e
+            raise
     return wrapper
 
 

@@ -13,7 +13,7 @@ OMS is built on top of Twisted, and relies heavily one the Zope Component librar
 
 The OMS core provides:
 
- 1. A hierarchical "Information System" (HIS), made persistent via ZODB. OMS components (.e.g plugins) define models
+ 1. A hierarchical "Information System" (HIS), made persistent via ZODB. OMS components (e.g. plugins) define models
     that are instantiated in the HIS and can expose their functionality by providing data through attributes and streams,
     reacting on model attribute modifications and by directly exposing executable `actions`.
 

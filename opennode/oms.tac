@@ -1,14 +1,11 @@
 #!/usr/bin/env twistd -ny
-from zope.interface import implements
-
 from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory
 from twisted.cred import portal
-from twisted.cred.portal import IRealm, Portal
 from twisted.internet import reactor
 from twisted.python.log import ILogObserver
-from twisted.web import server, guard, resource
+from twisted.web import server
 from zope.component import handle
 
 from opennode.oms.config import get_config
@@ -28,9 +25,8 @@ def create_http_server():
 
 def create_ssh_server():
     from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-    from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
+    from opennode.oms.endpoint.ssh.session import OmsTerminalRealm
     from opennode.oms.security.authentication import checkers
-
 
     def chainProtocolFactory():
         return insults.ServerProtocol(OmsShellProtocol)
@@ -48,12 +44,6 @@ def create_ssh_server():
 
 def create_application():
     setup_environ()
-
-    from opennode.oms.endpoint.httprest.root import HttpRestServer
-    from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
-    from opennode.oms.endpoint.ssh.session import OmsTerminalSession, OmsTerminalRealm
-    from opennode.oms.security.authentication import checkers
-
 
     application = service.Application("OpenNode Management Service")
 

@@ -24,9 +24,12 @@ If you prefer you can specify the target directory with:
 
   $ curl -s http://opennodecloud.com/download/oms-core-installer.sh | sh -s -- --target /opt/oms
 
-The installer will check if you have `python2.7`, otherwise it will tell you how to proceed by automatically installing a fresh python 2.7 with pythonbrew (https://github.com/utahta/pythonbrew).
+The installer will check if you have `python2.7`, otherwise it will tell you
+how to proceed by automatically installing a fresh python 2.7 with pythonbrew
+(https://github.com/utahta/pythonbrew).
 
-If you prefer you can force the usage (and installation) of a fresh pythonbrew based python instance instead of the system python; just use:
+If you prefer you can force the usage (and installation) of a fresh pythonbrew
+based python instance instead of the system python; just use:
 
 .. code-block:: sh
 
@@ -41,7 +44,8 @@ Before starting we need at least an admin user account:
 
   $ bin/passwd -a john -g admins
 
-You can change the password later on with the same `bin/passwd` utility, see `bin/passwd --help` for additional info.
+You can change the password later on with the same `bin/passwd` utility, see
+`bin/passwd --help` for additional info.
 
 Starting up
 -----------
