@@ -142,3 +142,69 @@ Once a plugin has been installed as egg dependency, you can "upgrade" it to dev 
   $ bin/plugin list
   opennode.oms.knot (0.0-5-gd425) [dev]
   opennode.oms.onc (0.0-320-gc5ca) [dev]
+
+Pitfalls when setting up on Ubuntu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Currently OMS KNOT assumes that `certmaster` is installed system-wide. Thus,
+before running `omsd`, you will have to install `certmaster` from sources and
+run it.
+
+In `certmaster` version `0.28`, though, the init script installed as
+`/etc/init.d/certmaster` needs fixing:
+
+.. code-block:: diff
+
+    --- /etc/init.d/certmaster.old	2009-11-24 17:05:10.000000000 +0200
+    +++ /etc/init.d/certmaster	2012-07-15 14:29:07.797866290 +0300
+    @@ -22,11 +22,11 @@
+     # processname: /usr/bin/certmaster
+
+     # Sanity checks.
+    -[ -x /usr/bin/certmaster ] || exit 0
+    +#[ -x /usr/bin/certmaster ] || exit 0
+
+     SERVICE=certmaster
+     PROCESS=certmaster
+    -DAEMON=/usr/bin/certmaster
+    +DAEMON=/usr/local/bin/certmaster
+     CONFIG_ARGS="--daemon"
+
+     CAStatus()
+
+Consider making the following changes to `certmaster`'s configuration files,
+when setting up development environment:
+
+.. code-block:: diff
+
+    +++ /etc/certmaster/certmaster.conf.old	2012-07-16 00:25:02.331613432 +0300
+    +++ /etc/certmaster/certmaster.conf	2012-07-16 00:25:02.331613432 +0300
+    @@ -1,9 +1,9 @@
+     # configuration for certmasterd and certmaster-ca
+
+     [main]
+    -autosign = no
+    +autosign = yes
+     listen_addr = 
+     listen_port = 51235
+     cadir = /etc/pki/certmaster/ca
+    --- /etc/certmaster/minion.conf	2009-11-24 17:05:10.000000000 +0200
+    +++ /etc/certmaster/minion.conf	2012-07-16 00:29:48.255610217 +0300
+    @@ -1,8 +1,8 @@
+     # configuration for minions
+
+     [main]
+    -certmaster = certmaster
+    -certmaster_port = 51235
+    +certmaster = localhost
+    +certmaster_port = 51234
+     log_level = DEBUG
+     cert_dir = /etc/pki/certmaster
+
+Make sure that VMs have the latest opennode-tui installed:
+
+.. code-block:: sh
+
+    root@on-vm $ yum -y update opennode-tui
+
+
