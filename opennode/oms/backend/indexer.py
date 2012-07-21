@@ -4,11 +4,17 @@ from zope.component import provideSubscriptionAdapter
 from zope.interface import implements
 from zope.keyreference.interfaces import NotYet
 
+from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.model.proc import IProcess, Proc, DaemonProcess
+from opennode.oms.model.model.search import ReindexAction
 from opennode.oms.util import subscription_factory, async_sleep
 from opennode.oms.zodb import db
 from opennode.oms.model.form import IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
+
+class BlackHoleQueue(object):
+    def append(self, val):
+        pass
 
 
 class IndexerDaemonProcess(DaemonProcess):
@@ -18,12 +24,21 @@ class IndexerDaemonProcess(DaemonProcess):
 
     queue = deque()
 
+    black_hole = BlackHoleQueue()
+
     @defer.inlineCallbacks
     def run(self):
         while True:
             try:
                 if not self.paused:
+                    if IndexerDaemonProcess.queue ==  self.black_hole:
+                        IndexerDaemonProcess.queue = deque()
+
+                        self.reindex()
                     yield self.process()
+                else:
+                    IndexerDaemonProcess.queue = self.black_hole
+
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -83,5 +98,7 @@ class IndexerDaemonProcess(DaemonProcess):
 
         return True
 
+    def reindex(self):
+        ReindexAction(None).execute(DetachedProtocol(), object())
 
 provideSubscriptionAdapter(subscription_factory(IndexerDaemonProcess), adapts=(Proc,))
