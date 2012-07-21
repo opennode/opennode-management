@@ -47,7 +47,10 @@ GIT guidelines
  2. Keep separate things in separate commits, i.e. use `git add -p` in order to split unrelated changes in separate commits,
     and interacitve rebase `git rebase -i` in order to curate (split/merge) commits before pushing it to the public repo.
 
- 3. Ticket commit messages should point to the relevant ticket(s)
+ 3. Ticket commit messages should point to the relevant ticket(s). The ticket number(s) should go in parethesis::
+
+      Fixed minor rendering issue (ON-123)
+      Improved handling of blabla (ON-123, ON-321)
 
  4. Ticket commit messages should start with a short description about what this change `did`, e.g. "Fixed a bug in...", "Cleaned up ..."
 
