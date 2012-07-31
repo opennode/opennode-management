@@ -49,6 +49,8 @@ class DefaultView(HttpRestView):
 
     def render_PUT(self, request):
         data = json.load(request.content)
+        if 'id' in data:
+            del data['id']
 
         data = self.put_filter_attributes(request, data)
 
