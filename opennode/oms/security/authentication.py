@@ -103,6 +103,9 @@ def reload_roles(stream):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_groups(event):
+    if event.test:
+        return
+
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
         print "Groups file doesn't exist, generating a default groups file, use `bin/groups` to customize it"
@@ -134,6 +137,10 @@ def reload_groups(stream):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_permissions(event):
+
+    if event.test:
+        reload_users('')
+        return
 
     passwd_file = get_config().get('auth', 'passwd_file')
     if not os.path.exists(passwd_file):
