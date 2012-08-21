@@ -14,6 +14,9 @@ class IBeforeApplicationInitializedEvent(Interface):
 class BeforeApplicationInitalizedEvent(object):
     implements(IBeforeApplicationInitializedEvent)
 
+    def __init__(self, test=False):
+        self.test = test
+
 
 class IApplicationInitializedEvent(Interface):
     """Emitted when application is initialized"""
@@ -22,6 +25,9 @@ class IApplicationInitializedEvent(Interface):
 class ApplicationInitalizedEvent(object):
     implements(IApplicationInitializedEvent)
 
+    def __init__(self, test=False):
+        self.test = test
+
 
 class IAfterApplicationInitializedEvent(Interface):
     """Emitted after the application is initialized"""
@@ -29,6 +35,9 @@ class IAfterApplicationInitializedEvent(Interface):
 
 class AfterApplicationInitalizedEvent(object):
     implements(IAfterApplicationInitializedEvent)
+
+    def __init__(self, test=False):
+        self.test = test
 
 
 def deferred_call(self, fun):
@@ -72,7 +81,7 @@ def grok_all():
     grok('opennode.oms')
 
 
-def setup_environ():
+def setup_environ(test=False):
     grok_all()
-    handle(BeforeApplicationInitalizedEvent())
-    handle(ApplicationInitalizedEvent())
+    handle(BeforeApplicationInitalizedEvent(test=test))
+    handle(ApplicationInitalizedEvent(test=test))
