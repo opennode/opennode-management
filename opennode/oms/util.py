@@ -3,10 +3,13 @@ import inspect
 import time
 import threading
 
+from Queue import Queue, Empty
+
 import zope.interface
 from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
 from twisted.internet import defer, reactor
+from twisted.python.failure import Failure
 
 from opennode.oms.config import get_config
 
@@ -113,7 +116,7 @@ def async_sleep(secs):
     return d
 
 
-def blocking_yield(deferred):
+def blocking_yield(deferred, timeout=None):
     """This utility is part of the HDK (hack development toolkit) use with care and remove it's usage asap.
 
     Sometimes we have to synchronously wait for a deferred to complete,
@@ -127,19 +130,16 @@ def blocking_yield(deferred):
     Use this utility only until you refactor the upstream code in order to use pure async code.
     """
 
-    # install a failure handler, otherwise an unhandled deferred error will be logged
-    failure = [None]
-
-    @deferred
-    def on_error(error):
-        failure[0] = error
-
-    while not deferred.called:
-        time.sleep(0.1)
-
-    if failure[0]:
-        raise failure[0].value
-    return deferred.result
+    q = Queue()
+    deferred.addBoth(q.put)
+    try:
+        ret = q.get(timeout is not None, timeout)
+    except Empty:
+        raise defer.TimeoutError
+    if isinstance(ret, Failure):
+        ret.raiseException()
+    else:
+        return ret
 
 
 def threaded(fun):
