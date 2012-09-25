@@ -119,3 +119,12 @@ class OmsConfig(ConfigParser):
                 return default
             print "CANNOT FIND CONF KEY", section, option
             raise
+
+    def getstring(self, section, option, default=NO_DEFAULT):
+        try:
+            return ConfigParser.get(self, section, option)
+        except ConfigKeyError:
+            if default is not self.NO_DEFAULT:
+                return default
+            print "CANNOT FIND CONF KEY", section, option
+            raise
