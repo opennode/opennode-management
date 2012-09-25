@@ -105,10 +105,6 @@ def run_debugger(args):
 def run():
     """Starts the child zeo process and then starts the twisted reactor running OMS"""
 
-    basedir = os.path.dirname(os.path.dirname(sys.argv[0]))
-    if basedir:
-        os.chdir(basedir)
-
     parser = argparse.ArgumentParser(description='Start OMS')
     parser.add_argument('-d', action='store_true',
                         help='start in development mode with autorestart')
@@ -131,6 +127,11 @@ def run():
         if not conf.has_section('logging'):
             conf.add_section('logging')
         conf.set('logging', 'file', args.log)
+
+
+    basedir = conf.get_base_dir()
+    if basedir:
+        os.chdir(basedir)
 
     defer.setDebugging(args.v)
 

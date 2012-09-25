@@ -34,7 +34,8 @@ def hash_pw(password):
 
 
 def run():
-    basedir = os.path.dirname(os.path.dirname(sys.argv[0]))
+    conf = get_config()
+    basedir = conf.get_base_dir()
     if basedir:
         os.chdir(basedir)
 
@@ -50,7 +51,6 @@ def run():
 
     args = parser.parse_args()
 
-    conf = get_config()
     passwd_file = conf.get('auth', 'passwd_file')
 
     if not os.path.exists(passwd_file):

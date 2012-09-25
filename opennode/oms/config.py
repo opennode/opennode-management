@@ -103,6 +103,9 @@ class OmsBaseConfig(ConfigParser):
             print "CANNOT FIND CONF KEY", section, option
             raise
 
+    def get_base_dir(self):
+        return self.getstring("general", "base_dir", os.path.dirname(os.path.dirname(sys.argv[0])))
+
 
 _cmdline_override = OmsBaseConfig()
 
