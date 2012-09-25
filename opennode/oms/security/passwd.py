@@ -34,6 +34,10 @@ def hash_pw(password):
 
 
 def run():
+    basedir = os.path.dirname(os.path.dirname(sys.argv[0]))
+    if basedir:
+        os.chdir(basedir)
+
     parser = argparse.ArgumentParser(description='Manage OMS passwords')
     parser.add_argument('user', help="user name")
     parser.add_argument('-g', help="group(s): comma separated list of groups the user belongs to", required=False, default=None)
