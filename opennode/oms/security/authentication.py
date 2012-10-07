@@ -7,8 +7,9 @@ from base64 import encodestring as encode
 from base64 import decodestring as decode
 from contextlib import closing
 from grokcore.component import GlobalUtility, subscribe
+import pam
 from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
-from zope.component import provideUtility, queryUtility
+from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
 from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
@@ -16,7 +17,10 @@ from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
 from zope.securitypolicy.principalpermission import principalPermissionManager
 from twisted.cred.checkers import FilePasswordDB
-from twisted.internet import inotify
+from twisted.cred.credentials import IUsernamePassword
+from twisted.cred.checkers import ICredentialsChecker
+from twisted.cred.error import UnauthorizedLogin
+from twisted.internet import inotify, defer
 from twisted.python import log, filepath
 
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
@@ -31,6 +35,18 @@ _checkers = None
 conf_reload_notifier = inotify.INotify()
 conf_reload_notifier.startReading()
 
+class PamAuthChecker(object):
+    """ Check user credentials using PAM infrastructure """
+    credentialInterfaces = IUsernamePassword
+    implements(ICredentialsChecker)
+
+    def requestAvatarId(self, credentials):
+        if pam.authenticate(credentials.username, credentials.password):
+            print 'Successful login with PAM for', credentials.username
+            auth = getUtility(IAuthentication, context=None)
+            auth.registerPrincipal(User(credentials.username))
+            return defer.succeed(credentials.username)
+        return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
 class AuthenticationUtility(GlobalUtility):
     implements(IAuthentication)
@@ -48,7 +64,8 @@ class AuthenticationUtility(GlobalUtility):
             return system_user
         elif id in self.principals:
             return self.principals[id]
-
+        print 'getPrincipal %s not in (None, %s, %s)' % (id, system_user.id,
+                                                         self.principals.keys())
         raise PrincipalLookupError(id)
 
 
@@ -65,15 +82,20 @@ def ssha_hash(user, password, encoded_password):
 def checkers():
     global _checkers
     if _checkers == None:
-        password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
+        pam_checker = PamAuthChecker()
+        password_checker = FilePasswordDB(
+            get_config().get('auth', 'passwd_file'), hash=ssha_hash)
         pubkey_checker = InMemoryPublicKeyCheckerDontUse()
-        _checkers = [password_checker, pubkey_checker]
+        _checkers = [pam_checker, password_checker, pubkey_checker]
     return _checkers
 
 
 def setup_conf_reload_watch(path, handler):
-    """Registers a inotify watch which will invoke `handler` for passing the open file"""
-    conf_reload_notifier.watch(filepath.FilePath(path), callbacks=[lambda self, filepath, mask: handler(filepath.open())])
+    """Registers a inotify watch which will invoke `handler` for passing the
+    open file"""
+    conf_reload_notifier.watch(filepath.FilePath(path),
+                               callbacks=[lambda self, filepath, mask:
+                                          handler(filepath.open())])
 
 
 @subscribe(IApplicationInitializedEvent)
@@ -98,7 +120,8 @@ def reload_roles(stream):
         provideUtility(oms_role, IRole, role)
         for perm in permissions.split(','):
             if perm.strip():
-                rolePermissionManager.grantPermissionToRole(perm.strip(), role.strip())
+                rolePermissionManager.grantPermissionToRole(perm.strip(),
+                                                            role.strip())
 
 
 @subscribe(IApplicationInitializedEvent)
@@ -108,7 +131,8 @@ def setup_groups(event):
 
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
-        print "Groups file doesn't exist, generating a default groups file, use `bin/groups` to customize it"
+        print ("Groups file doesn't exist, generating a default groups file, "
+               "use `bin/groups` to customize it")
         with closing(open(groups_file, 'w')) as f:
             f.write(pkg_resources.resource_stream(__name__, os.path.join('../../../', 'oms_groups')).read())
 
