@@ -1,3 +1,4 @@
+import grp
 import hashlib
 import os
 import pkg_resources
@@ -35,6 +36,10 @@ _checkers = None
 conf_reload_notifier = inotify.INotify()
 conf_reload_notifier.startReading()
 
+def get_linux_groups_for_user(user):
+    all_groups = grp.getgrall()
+    return filter(lambda x: user in x.gr_mem, all_groups)
+
 class PamAuthChecker(object):
     """ Check user credentials using PAM infrastructure """
     credentialInterfaces = IUsernamePassword
@@ -44,8 +49,13 @@ class PamAuthChecker(object):
         if pam.authenticate(credentials.username, credentials.password):
             print 'Successful login with PAM for', credentials.username
             auth = getUtility(IAuthentication, context=None)
-            auth.registerPrincipal(User(credentials.username))
+            oms_user = User(credentials.username)
+            for group in get_linux_groups_for_user(credentials.username):
+                if group.gr_name:
+                    oms_user.groups.append(group.gr_name)
+            auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
+        print 'Authentication failed with PAM for', credentials.username
         return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
 class AuthenticationUtility(GlobalUtility):
@@ -68,9 +78,7 @@ class AuthenticationUtility(GlobalUtility):
                                                          self.principals.keys())
         raise PrincipalLookupError(id)
 
-
 # checkers
-
 def ssha_hash(user, password, encoded_password):
     salt = decode(encoded_password[6:])[-4:]
 

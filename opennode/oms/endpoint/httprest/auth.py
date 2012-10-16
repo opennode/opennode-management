@@ -81,6 +81,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                     avatar = yield i.requestAvatarId(credentials)
                     break
                 except UnauthorizedLogin:
+                    print 'Unauthorized thrown by', i, 'on', credentials.username
                     continue
 
         if avatar:

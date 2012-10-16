@@ -181,7 +181,6 @@ class HttpRestServer(resource.Resource):
         of that view.
 
         """
-
         token = self.check_auth(request)
 
         oms_root = db.get_root()['oms_root']
@@ -226,7 +225,7 @@ class HttpRestServer(resource.Resource):
                 from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
                 if token or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
-                    raise Forbidden()
+                    raise Forbidden('User does not have permission to access this resource')
                 raise Unauthorized()
 
         for method in ('render_' + request.method, 'render'):
