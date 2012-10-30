@@ -9,7 +9,7 @@ from base64 import decodestring as decode
 from contextlib import closing
 from grokcore.component import GlobalUtility, subscribe
 import pam
-from zope.authentication.interfaces import IAuthentication, PrincipalLookupError
+from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
 from zope.security.management import system_user
@@ -53,6 +53,7 @@ class PamAuthChecker(object):
             for group in get_linux_groups_for_user(credentials.username):
                 if group.gr_name:
                     oms_user.groups.append(group.gr_name)
+            print 'Adding user groups: ', ', '.join(oms_user.groups)
             auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
         print 'Authentication failed with PAM for', credentials.username
@@ -74,9 +75,11 @@ class AuthenticationUtility(GlobalUtility):
             return system_user
         elif id in self.principals:
             return self.principals[id]
-        print 'getPrincipal %s not in (None, %s, %s)' % (id, system_user.id,
-                                                         self.principals.keys())
-        raise PrincipalLookupError(id)
+        print ('getPrincipal %s not in (None, %s, %s). '
+            'Defaulting to anonymous' % (id, system_user.id,
+                                         self.principals.keys()))
+        # default to anonymous if nothing more specific is found
+        return self.principals['oms.anonymous']
 
 # checkers
 def ssha_hash(user, password, encoded_password):
