@@ -3,6 +3,7 @@ import hashlib
 import os
 import pkg_resources
 import sys
+import pwd
 
 from base64 import encodestring as encode
 from base64 import decodestring as decode
@@ -37,8 +38,11 @@ conf_reload_notifier = inotify.INotify()
 conf_reload_notifier.startReading()
 
 def get_linux_groups_for_user(user):
-    all_groups = grp.getgrall()
-    return filter(lambda x: user in x.gr_mem, all_groups)
+    groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
+    gid = pwd.getpwnam(user).pw_gid
+    groups.append(grp.getgrgid(gid).gr_name)
+    return groups
+
 
 class PamAuthChecker(object):
     """ Check user credentials using PAM infrastructure """
@@ -50,9 +54,7 @@ class PamAuthChecker(object):
             print 'Successful login with PAM for', credentials.username
             auth = getUtility(IAuthentication, context=None)
             oms_user = User(credentials.username)
-            for group in get_linux_groups_for_user(credentials.username):
-                if group.gr_name:
-                    oms_user.groups.append(group.gr_name)
+            oms_user.groups.extend(get_linux_groups_for_user(credentials.username))
             print 'Adding user groups: ', ', '.join(oms_user.groups)
             auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
