@@ -67,7 +67,8 @@ class MarkerSourceBinder(object):
         # this is caused by the fact that the 'features' pseudo-field contains both
         # marker interfaces and real interfaces; this might change.
         # When it changes, we have to remove this union.
-        current = context.get_class_features() if isinstance(context, type) or isinstance(context, TmpObj) else context.get_features()
+        current = (context.get_class_features() if isinstance(context, type) or isinstance(context, TmpObj)
+                   else context.get_features())
         return SimpleVocabulary([SimpleTerm(i) for i in set(names).union(current)])
 
 

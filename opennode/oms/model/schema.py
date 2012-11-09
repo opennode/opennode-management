@@ -3,7 +3,6 @@ from collections import OrderedDict
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
-from zope.interface.interface import InterfaceClass
 from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
 from zope.schema.interfaces import IFromUnicode
 from zope.security.proxy import removeSecurityProxy
@@ -25,7 +24,8 @@ class Path(TextLine):
 
 
 def model_implements_marker(model, marker):
-    return marker and isinstance(model, type) and hasattr(model, '__markers__') and marker in model.__markers__
+    return (marker and isinstance(model, type) and hasattr(model, '__markers__')
+            and marker in model.__markers__)
 
 
 def get_schemas(model_or_obj, marker=None):
@@ -91,7 +91,8 @@ class DictFromUnicode(Adapter):
         res = self.context._type(value)
 
         def convert(k, v):
-            return (IFromUnicode(self.context.key_type).fromUnicode(unicode(k)), IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
+            return (IFromUnicode(self.context.key_type).fromUnicode(unicode(k)),
+                    IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
 
         return self.context._type([convert(k, v) for k, v in res.items()])
 

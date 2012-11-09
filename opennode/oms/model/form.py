@@ -104,7 +104,7 @@ class ApplyRawData(object):
                 if isinstance(raw_value, str):
                     raw_value = raw_value.decode('utf8')
 
-                # We don't want to accidentally swallow any adaption TypeErrors from here:
+                # We don't want to accidentally swallow any adaptation TypeErrors from here:
                 from_unicode = IFromUnicode(field)
 
                 try:
@@ -114,6 +114,7 @@ class ApplyRawData(object):
                         value = from_unicode.fromUnicode(raw_value)
                     except (ValueError, TypeError):
                         raise WrongType(name)
+                # TODO: make this more descriptive as to which validation failed, where was it defined etc.
                 except zope.schema.ValidationError as exc:
                     errors.append((name, exc))
                 else:
@@ -235,7 +236,7 @@ def alsoProvides(obj, interface):
     if not form.errors:
         form.apply()
     else:
-        raise Exception("Cannot set marker interface %s" % interface)
+        raise Exception("Cannot set marker interface %s; errors: %s" % (interface, form.errors))
 
 
 def noLongerProvides(obj, interface):
@@ -243,4 +244,4 @@ def noLongerProvides(obj, interface):
     if not form.errors:
         form.apply()
     else:
-        raise Exception("Cannot remove marker interface %s" % interface)
+        raise Exception("Cannot remove marker interface %s; erros: %s" % (interface, form.errors))
