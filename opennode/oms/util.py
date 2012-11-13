@@ -117,7 +117,7 @@ def async_sleep(secs):
 
 
 def blocking_yield(deferred, timeout=None):
-    """This utility is part of the HDK (hack development toolkit) use with care and remove it's usage asap.
+    """This utility is part of the HDK (hack development toolkit) use with care and remove its usage asap.
 
     Sometimes we have to synchronously wait for a deferred to complete,
     for example when executing inside db.transact code, which cannot 'yield'
@@ -133,7 +133,7 @@ def blocking_yield(deferred, timeout=None):
     q = Queue()
     deferred.addBoth(q.put)
     try:
-        ret = q.get(timeout is not None, timeout)
+        ret = q.get(True, timeout or 100)
     except Empty:
         raise defer.TimeoutError
     if isinstance(ret, Failure):
