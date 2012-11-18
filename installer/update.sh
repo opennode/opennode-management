@@ -3,9 +3,9 @@ DIR=$(dirname $0)
 cd $DIR
 mkdir -p db eggnest
 
-PYTHON_VERSION=2.7.2
+PYTHON_VERSION=2.7.3
 
-PYTHON=python2.7x
+PYTHON=python2.7
 
 if [ -e bin/buildout ]; then
     PYTHON=$(head -n 1 bin/buildout | sed 's/^#!//')
