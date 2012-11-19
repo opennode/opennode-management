@@ -12,7 +12,7 @@ cp scripts/omsdrc installer/omsdrc
 
 TMP=$(mktemp /tmp/oms-installer-XXXXXX)
 
-makeself.sh --nox11 --notemp installer $TMP oms-core ./update.sh
+makeself --nox11 --notemp installer $TMP oms-core ./update.sh
 sed -i 's/targetdir="installer"/targetdir="oms"/' $TMP
 
 mv -vf $TMP $INSTALLER
