@@ -37,7 +37,7 @@ setup(
         "zope.securitypolicy==3.7.0",
         "ipython>=0.11",
         "ZODB3==3.10.5",
-        "pycrypto==2.4.1",
+        "pycrypto==2.6",
         "pyOpenSSL==0.13",
         "netaddr==0.7.6",
         "BeautifulSoup==3.2.0",
