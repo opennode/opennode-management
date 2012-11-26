@@ -33,6 +33,8 @@ def effective_principals(principal_or_interaction, acc=None):
 
         acc.append(principal_or_interaction)
         for i in principal_or_interaction.groups:
-            effective_principals(auth.getPrincipal(i), acc)
+            principal = auth.getPrincipal(i)
+            if isinstance(principal, Group) or not isinstance(principal, User):
+                effective_principals(principal, acc)
 
     return acc

@@ -37,6 +37,7 @@ _checkers = None
 conf_reload_notifier = inotify.INotify()
 conf_reload_notifier.startReading()
 
+
 def get_linux_groups_for_user(user):
     groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
     gid = pwd.getpwnam(user).pw_gid
@@ -51,15 +52,18 @@ class PamAuthChecker(object):
 
     def requestAvatarId(self, credentials):
         if pam.authenticate(credentials.username, credentials.password):
-            print 'Successful login with PAM for', credentials.username
+            print '[auth][pam] Successful login with PAM for', credentials.username
             auth = getUtility(IAuthentication, context=None)
             oms_user = User(credentials.username)
             oms_user.groups.extend(get_linux_groups_for_user(credentials.username))
-            print 'Adding user groups: ', ', '.join(oms_user.groups)
+            print '[auth][pam] Adding user groups: ', ', '.join(oms_user.groups)
+            for g in get_linux_groups_for_user(credentials.username):
+                auth.registerPrincipal(Group(g))
             auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
-        print 'Authentication failed with PAM for', credentials.username
+        print '[auth][pam] Authentication failed with PAM for', credentials.username
         return defer.fail(UnauthorizedLogin('Invalid credentials'))
+
 
 class AuthenticationUtility(GlobalUtility):
     implements(IAuthentication)
@@ -77,9 +81,8 @@ class AuthenticationUtility(GlobalUtility):
             return system_user
         elif id in self.principals:
             return self.principals[id]
-        print ('getPrincipal %s not in (None, %s, %s). '
-            'Defaulting to anonymous' % (id, system_user.id,
-                                         self.principals.keys()))
+        print ('[auth] getPrincipal %s not in (None, %s, %s). Defaulting to anonymous' % (
+            id, system_user.id, self.principals.keys()))
         # default to anonymous if nothing more specific is found
         return self.principals['oms.anonymous']
 
@@ -125,7 +128,7 @@ def setup_roles(event):
 
 
 def reload_roles(stream):
-    print "(Re)Loading OMS permission definitions"
+    print "[auth] (Re)Loading OMS permission definitions"
     for i in stream:
         nick, role, permissions = i.split(':', 4)
         oms_role = Role(role, nick)
@@ -143,7 +146,7 @@ def setup_groups(event):
 
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
-        print ("Groups file doesn't exist, generating a default groups file, "
+        print ("[auth] Groups file doesn't exist, generating a default groups file, "
                "use `bin/groups` to customize it")
         with closing(open(groups_file, 'w')) as f:
             f.write(pkg_resources.resource_stream(__name__, os.path.join('../../../', 'oms_groups')).read())

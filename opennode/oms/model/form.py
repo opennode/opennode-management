@@ -90,9 +90,8 @@ class ApplyRawData(object):
         raw_data = dict(self.data)
 
         errors = []
-        if not self.fields:
-            errors.append((None, NoSchemaFound()))
-        else:
+
+        if self.fields:
             for name, field, schema in self.fields:
                 if name not in raw_data:
                     continue
@@ -127,12 +126,14 @@ class ApplyRawData(object):
             if not errors:
                 for schema in self.schemas:
                     # XXX: We should not be adapting TmpObj's...  I've
-                    # fixed the issue for no with the `if` but nobody
+                    # fixed the issue for now with the `if` but nobody
                     # knows what other issues this might cause in the
                     # future, or what other (hidden) issues adapting
                     # TmpObj's will cause.
                     adapted = self.adapted_tmp_obj(tmp_obj, schema)
                     errors.extend(zope.schema.getValidationErrors(schema, adapted))
+        else:
+            errors.append((None, NoSchemaFound()))
 
         self._errors = errors
         return errors
