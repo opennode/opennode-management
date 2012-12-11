@@ -189,7 +189,8 @@ class ListDirContentsCmd(Cmd):
 
         def sorted_obj_list():
             interaction = self.protocol.interaction
-            return sorted((i for i in obj.listcontent() if interaction.checkPermission('view', i)), key=lambda o: o.__name__)
+            return sorted((i for i in obj.listcontent() if interaction.checkPermission('view', i)),
+                          key=lambda o: o.__name__)
 
         if self.opts_long:
             def nick(item):
@@ -200,7 +201,8 @@ class ListDirContentsCmd(Cmd):
             if IContainer.providedBy(obj) and not self.opts_dir:
                 for subobj in sorted_obj_list():
                     perms = pretty_effective_perms(self.protocol.interaction, follow_symlinks(subobj))
-                    self.write(('%s %s\t%s\n' % (perms, pretty_name(subobj), ' : '.join(nick(subobj)))).encode('utf8'))
+                    self.write(('%s %s\t%s\n' % (perms, pretty_name(subobj),
+                                                 ' : '.join(nick(subobj)))).encode('utf8'))
                 if recursive:
                     self.ls_recursive(path, obj, sorted_obj_list())
             else:
@@ -222,7 +224,6 @@ class ListDirContentsCmd(Cmd):
             child_obj = obj[i.__name__]
             if IContainer.providedBy(child_obj) and not isinstance(child_obj, Symlink):
                 self.write("\n%s:\n" % os.path.join(path, i.__name__.encode('utf8')))
-
                 self._do_ls(child_obj, os.path.join(path, i.__name__), recursive=True)
 
 

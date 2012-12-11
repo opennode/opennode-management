@@ -36,7 +36,8 @@ class Cmd(object):
 
     def _make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self._format_names(), file=self.protocol.terminal, add_help=True, prefix_chars='-=', parents=parents)
+        return parser_class(prog=self._format_names(), file=self.protocol.terminal, add_help=True,
+                            prefix_chars='-=', parents=parents)
 
     @defer.inlineCallbacks
     def _parent_parsers(self):

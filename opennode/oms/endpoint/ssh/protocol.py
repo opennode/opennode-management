@@ -41,9 +41,9 @@ def protocolInlineCallbacks(fun):
 
             yield defer.inlineCallbacks(fun)(self, *args, **kwargs)
         except Exception as e:
+            print "[protocol] got exception while %s: %s" %  (fun, e)
             if get_config().getboolean('debug', 'print_exceptions'):
                 traceback.print_exc()
-            print "[protocol] got exception while %s: %s" %  (fun, e)
 
         execution_sub_protocol = self.sub_protocol
         self.sub_protocol = old_sub_protocol
@@ -95,11 +95,9 @@ class OmsShellProtocol(InteractiveTerminal):
 
     def logged_in(self, principal):
         """Invoked when the principal which opened this session is known"""
-
         self.principal = principal
         self.interaction = new_interaction(principal.id)
         self.tid = Proc.register(None, self, '/bin/omsh', principal=principal)
-
         self.terminalSizeAfterLogin()
 
     def connectionMade(self):
@@ -134,7 +132,6 @@ class OmsShellProtocol(InteractiveTerminal):
     @defer.inlineCallbacks
     def spawn_commands(self, line):
         yield self.ensure_initialized()
-
         # XXX: handle ; chars in quotes and comments
         for command in line.split(';'):
             yield self.spawn_command(command)
@@ -204,7 +201,7 @@ class OmsShellProtocol(InteractiveTerminal):
         return command, tokenized_cmd_args
 
     def get_command_class(self, name):
-        # NOTE: used to leverage the 'traverse()' method which take into consideration
+        # NOTE: used to leverage the 'traverse()' method which takes into consideration
         # path handling quirks for relative paths
         dummy = commands.NoCommand(self)
         for d in self.environment['PATH'].split(':'):
@@ -228,16 +225,16 @@ class OmsShellProtocol(InteractiveTerminal):
     def expand_token(self, command, token):
         if re.match('.*[*[\]].*', os.path.basename(token)):
             base = os.path.dirname(token)
-
             current_obj = command.traverse(base)
 
             # Only if intermediate path resolves.
-            if current_obj:
-                if IContainer.providedBy(current_obj):
-                    filtered = [os.path.join(base, i) for i in fnmatch.filter(current_obj.listnames(), os.path.basename(token))]
-                    # Bash behavior: if expansion doesn't provide results then pass the glob pattern to the command.
-                    if filtered:
-                        return filtered
+            if current_obj and IContainer.providedBy(current_obj):
+                filtered = [os.path.join(base, i)
+                            for i in fnmatch.filter(current_obj.listnames(), os.path.basename(token))]
+                # Mimic Bash behavior: if expansion doesn't provide results then pass the glob pattern to
+                # the command.
+                if filtered:
+                    return filtered
         return [token]
 
     @protocolInlineCallbacks
@@ -272,7 +269,8 @@ class OmsShellProtocol(InteractiveTerminal):
             # postpone showing list of possible completions until next tab
             if not patch:
                 self.terminal.nextLine()
-                _, _, completions = yield completion.complete(self, self.lineBuffer, self.lineBufferIndex, display=True)
+                _, _, completions = yield completion.complete(self, self.lineBuffer,
+                                                              self.lineBufferIndex, display=True)
 
                 # reorder optional values at end for readability
                 required = []

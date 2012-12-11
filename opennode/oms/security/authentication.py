@@ -2,33 +2,32 @@ import grp
 import hashlib
 import os
 import pkg_resources
-import sys
+import pam
 import pwd
+import sys
 
-from base64 import encodestring as encode
 from base64 import decodestring as decode
+from base64 import encodestring as encode
 from contextlib import closing
 from grokcore.component import GlobalUtility, subscribe
-import pam
+from twisted.cred.checkers import FilePasswordDB
+from twisted.cred.checkers import ICredentialsChecker
+from twisted.cred.credentials import IUsernamePassword
+from twisted.cred.error import UnauthorizedLogin
+from twisted.internet import inotify, defer
+from twisted.python import log, filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
 from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
+from zope.securitypolicy.principalpermission import principalPermissionManager
 from zope.securitypolicy.principalrole import principalRoleManager
 from zope.securitypolicy.rolepermission import rolePermissionManager
-from zope.securitypolicy.principalpermission import principalPermissionManager
-from twisted.cred.checkers import FilePasswordDB
-from twisted.cred.credentials import IUsernamePassword
-from twisted.cred.checkers import ICredentialsChecker
-from twisted.cred.error import UnauthorizedLogin
-from twisted.internet import inotify, defer
-from twisted.python import log, filepath
-
-from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 
 from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
+from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group
 
@@ -135,8 +134,7 @@ def reload_roles(stream):
         provideUtility(oms_role, IRole, role)
         for perm in permissions.split(','):
             if perm.strip():
-                rolePermissionManager.grantPermissionToRole(perm.strip(),
-                                                            role.strip())
+                rolePermissionManager.grantPermissionToRole(perm.strip(), role.strip())
 
 
 @subscribe(IApplicationInitializedEvent)

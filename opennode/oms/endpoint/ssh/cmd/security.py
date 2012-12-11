@@ -140,10 +140,14 @@ class GetAclCmd(Cmd):
                 typ = 'group' if isinstance(prin, Group) else 'user'
                 if verbose:
                     def grants(i):
-                        return ','.join('@%s' % i[0] for i in rolePermissionManager.getPermissionsForRole(i) if i[0] != 'oms.nothing')
-                    return (typ, principal, ''.join('%s{%s}' % (Role.role_to_nick.get(i, '(%s)' % i), grants(i)) for i in sorted(perms)))
+                        return ','.join('@%s' % i[0] for i in rolePermissionManager.getPermissionsForRole(i)
+                                        if i[0] != 'oms.nothing')
+                    return (typ, principal, ''.join('%s{%s}' %
+                                                    (Role.role_to_nick.get(i, '(%s)' % i), grants(i))
+                                                    for i in sorted(perms)))
                 else:
-                    return (typ, principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i) for i in sorted(perms)))
+                    return (typ, principal, ''.join(Role.role_to_nick.get(i, '(%s)' % i)
+                                                    for i in sorted(perms)))
 
             if principal in user_allow:
                 self.write("%s:%s:+%s\n" % formatted_perms(user_allow[principal]))
@@ -160,9 +164,12 @@ class SetAclCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
         group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('-m', action='append', help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
-        group.add_argument('-d', action='append', help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
-        group.add_argument('-x', action='append', help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-m', action='append',
+                           help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-d', action='append',
+                           help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-x', action='append',
+                           help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
         return parser
 
     @db.ro_transact
@@ -187,10 +194,12 @@ class SetAclCmd(Cmd):
 
             prin = auth.getPrincipal(principal)
             if isinstance(prin, Group) and kind == 'u':
-                self.write("No such user '%s', it's a group, perhaps you mean 'g:%s:%s'\n" % (principal, principal, perms))
+                self.write("No such user '%s', it's a group, perhaps you mean 'g:%s:%s'\n" %
+                           (principal, principal, perms))
                 return
             elif type(prin) is User and kind == 'g':
-                self.write("No such group '%s', it's an user (%s), perhaps you mean 'u:%s:%s'\n" % (principal, prin, principal, perms))
+                self.write("No such group '%s', it's an user (%s), perhaps you mean 'u:%s:%s'\n" %
+                           (principal, prin, principal, perms))
                 return
 
             for perm in perms.strip():

@@ -112,7 +112,7 @@ class Proc(ReadonlyContainer):
     def __init__(self):
         super(Proc, self).__init__()
         # represents the init process, just for fun.
-        self.tasks = OrderedDict({'1': Task('1', self, None, '/bin/init', '0')})
+        self.tasks = OrderedDict({'1': Task('1', self, self, None, '/bin/init', '0')})
 
         self.dead_tasks = OrderedDict()
         self.next_id = 1
@@ -122,7 +122,8 @@ class Proc(ReadonlyContainer):
             self.spawn(i)
 
     def spawn(self, process):
-        self._register(process.run(), IProcessStateRenderer(process), signal_handler=process.signal_handler)
+        self._register(process.run(), process, IProcessStateRenderer(process),
+                       signal_handler=process.signal_handler)
 
     def __str__(self):
         return 'Tasks'
@@ -217,3 +218,6 @@ def start_daemons(event):
         Proc().start_daemons()
     except:
         log.err("[proc] Got exception while starting daemons")
+        if get_config().get_boolean('debug', 'print_exceptions'):
+            import traceback
+            print ''.join(traceback.format_exc())
