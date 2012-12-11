@@ -74,9 +74,10 @@ class DaemonStateRenderer(Adapter):
 class Task(ReadonlyContainer):
     implements(ITask)
 
-    def __init__(self, name, parent, deferred, cmdline, ptid, signal_handler=None, principal=None):
+    def __init__(self, name, parent, context, deferred, cmdline, ptid, signal_handler=None, principal=None):
         self.__name__ = name
         self.__parent__ = parent
+        self.context = context
         self.deferred = deferred
         self.cmdline = cmdline
         self.timestamp = time.time()
@@ -132,15 +133,14 @@ class Proc(ReadonlyContainer):
         return res
 
     @classmethod
-    def register(cls, deferred, cmdline=None, ptid='1', principal=None):
-        return Proc()._register(deferred, cmdline, ptid, principal=principal)
+    def register(cls, deferred, context, cmdline=None, ptid='1', principal=None):
+        return Proc()._register(deferred, context, cmdline, ptid, principal=principal)
 
-    def _register(self, deferred, cmdline=None, ptid='1', signal_handler=None, principal=None):
-
+    def _register(self, deferred, context, cmdline, ptid='1', signal_handler=None, principal=None):
         self.next_id += 1
         new_id = str(self.next_id)
 
-        self.tasks[new_id] = Task(new_id, self, deferred, cmdline, ptid, signal_handler, principal)
+        self.tasks[new_id] = Task(new_id, self, context, deferred, cmdline, ptid, signal_handler, principal)
 
         if deferred:
             deferred.addBoth(self._unregister, new_id)

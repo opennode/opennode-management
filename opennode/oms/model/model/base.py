@@ -173,6 +173,8 @@ class ContainerInjector(Subscription):
     __class__ = None
 
     def inject(self):
+        if '__name__' not in self.__class__.__dict__:
+            raise KeyError('__name__ not found in __dict__ of (%s)' % (self.__class__))
         return {self.__class__.__dict__['__name__']: self.__class__()}
 
 

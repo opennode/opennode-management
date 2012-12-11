@@ -98,7 +98,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
         self.principal = principal
         self.interaction = new_interaction(principal.id)
-        self.tid = Proc.register(None, '/bin/omsh', principal=principal)
+        self.tid = Proc.register(None, self, '/bin/omsh', principal=principal)
 
         self.terminalSizeAfterLogin()
 
@@ -156,7 +156,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
         self.sub_protocol = CommandExecutionSubProtocol(self)
         deferred = defer.maybeDeferred(command, *cmd_args)
-        Proc.register(deferred, line, self.tid)
+        Proc.register(deferred, self, line, self.tid)
 
         try:
             yield deferred
