@@ -36,7 +36,9 @@ class Cmd(object):
 
     def _make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self._format_names(), file=self.protocol.terminal, add_help=True,
+        return parser_class(prog=self._format_names(),
+                            file=self.protocol.terminal,
+                            add_help=True,
                             prefix_chars='-=', parents=parents)
 
     @defer.inlineCallbacks
@@ -65,11 +67,7 @@ class Cmd(object):
 
     @defer.inlineCallbacks
     def contextual_arg_parser(self, args, partial=False):
-        """If the command is offers a contextual parser use it, otherwise
-        fallback to the normal parser.
-
-        Returns a deferred.
-        """
+        """If command offers a contextual parser, use it, otherwise fall back to a normal parser."""
 
         parser = yield self.arg_parser(partial=partial)
 
@@ -102,6 +100,7 @@ class Cmd(object):
 
     @property
     def path(self):
+        """ Current working directory """
         return self.protocol.path
 
     @path.setter
@@ -118,15 +117,11 @@ class Cmd(object):
 
     @property
     def current_obj(self):
-        # root directory is represented as [''], but string join on '/' doesn't output '/' in that case
-        path = self.protocol.path
-        if path == ['']:
-            path = path + ['']
-
-        return self.traverse('/'.join(path))
+        return self.traverse('/'.join(self.protocol.path) if self.protocol.path != [''] else '/')
 
     def write(self, *args):
-        """Ensure that all writes are serialized regardless if the command is executing in a another thread."""
+        """Ensure that all writes are serialized regardless if the command is executing in a another thread.
+        """
         if not isInIOThread():
             reactor.callFromThread(self.terminal.write, *args)
         else:
@@ -141,12 +136,15 @@ class Cmd(object):
     def traverse(self, path):
         objs, unresolved_path = self.traverse_full(path)
         if not objs or unresolved_path:
-            return None
+            return
+        elif self.protocol.use_security_proxy:
+            return proxy_factory(objs[-1], self.protocol.interaction)
         else:
-            if self.protocol.use_security_proxy:
-                return proxy_factory(objs[-1], self.protocol.interaction)
-            else:
-                return objs[-1]
+            return objs[-1]
+
+    def subject(self, args):
+        """ Provide the subject of the command (usually free arguments and/or current directory path)"""
+        return None
 
 
 class CommandContextExtractor(Subscription):

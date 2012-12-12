@@ -152,8 +152,10 @@ class OmsShellProtocol(InteractiveTerminal):
             return
 
         self.sub_protocol = CommandExecutionSubProtocol(self)
+
         deferred = defer.maybeDeferred(command, *cmd_args)
-        Proc.register(deferred, self, line, self.tid)
+
+        Proc.register(deferred, command.subject(cmd_args), line, self.tid)
 
         try:
             yield deferred

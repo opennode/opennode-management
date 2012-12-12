@@ -39,7 +39,6 @@ class NoCommand(Cmd):
     def __call__(self, *args):
         """Just do nothing."""
 
-
 class CommonArgs(Subscription):
     """Just an example of common args, not actually sure that -v is needed in every command."""
     implements(ICmdArgumentsSyntax)
@@ -74,27 +73,16 @@ class ChangeDirCmd(Cmd):
 
         # Cleanup '..'s from path using the logical path.
         # Only handles trailing '..'s for now.
-        if not args.P:
-            import itertools
-            ups = len(list(itertools.takewhile(lambda i: i == '..', args.path.split('/'))))
-            ups = min(ups, len(self.path) - 1)
-            if ups:
-                self.path = self.path[0:-ups]
-                self.obj_path = self.obj_path[0:-ups]
-                args.path = args.path[ups * len('../'):]
+        self._resolve_up_dir(args)
 
         # Delegate path traversal to physical traversal.
         # It's possible that we emptied the path by removing all '..'s.
-        if args.path:
-            if args.path == '-':
-                if not self.protocol.path_stack:
-                    self.write("dir stack is empty\n")
-                    return
-                args.path = self.protocol.path_stack.pop()
+        self._resolve_path(args)
 
-            self.protocol.path_stack.insert(0, self.protocol._cwd())
-            self._do_traverse(args.path)
+        # Recompute new absolute path if physical path was requested.
+        self._resolve_physical_path(args)
 
+    def _resolve_physical_path(self, args):
         # Recompute new absolute path if physical path was requested.
         if args.P:
             current = self.current_obj
@@ -104,6 +92,28 @@ class ChangeDirCmd(Cmd):
                 self.path.insert(0, current.__name__)
                 self.obj_path.insert(0, db.ref(current))
                 current = current.__parent__
+
+    def _resolve_path(self, args):
+        # Delegate path traversal to physical traversal.
+        # It's possible that we emptied the path by removing all '..'s.
+        if args.path:
+            if args.path == '-':
+                if self.protocol.path_stack:
+                    args.path = self.protocol.path_stack.pop()
+            self.protocol.path_stack.insert(0, self.protocol._cwd())
+            self._do_traverse(args.path)
+
+    def _resolve_up_dir(self, args):
+        # Cleanup '..'s from path using the logical path.
+        # Only handles trailing '..'s for now.
+        if not args.P:
+            import itertools
+            ups = len(list(itertools.takewhile(lambda i: i == '..', args.path.split('/'))))
+            ups = min(ups, len(self.path) - 1)
+            if ups:
+                self.path = self.path[0:-ups]
+                self.obj_path = self.obj_path[0:-ups]
+                args.path = args.path[ups * len('../'):]
 
     def _do_traverse(self, path):
         objs, unresolved_path = self.traverse_full(path)
@@ -153,7 +163,9 @@ class ListDirContentsCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-l', action='store_true', help="long")
         parser.add_argument('-R', action='store_true', help="recursive")
-        parser.add_argument('-d', action='store_true', help="list directory entries instead of contents, and do not dereference symbolic links")
+        parser.add_argument('-d', action='store_true',
+                            help="list directory entries instead of contents, and do not dereference "
+                            "symbolic links")
         parser.add_argument('paths', nargs='*')
         return parser
 
@@ -169,11 +181,11 @@ class ListDirContentsCmd(Cmd):
                 if not obj:
                     self.write('No such object: %s\n' % path)
                 else:
-                    self._do_ls(obj, path, args.R)
+                    self._do_ls(obj, path, recursive=args.R)
         else:
-            self._do_ls(self.current_obj, args.R)
+            self._do_ls(self.current_obj, recursive=args.R)
 
-    def _do_ls(self, obj, path=None, recursive=False):
+    def _do_ls(self, obj, path='.', recursive=False):
         assert obj not in self.visited
         self.visited.append(obj)
 
@@ -187,44 +199,38 @@ class ListDirContentsCmd(Cmd):
             else:
                 return item.__name__
 
-        def sorted_obj_list():
-            interaction = self.protocol.interaction
-            return sorted((i for i in obj.listcontent() if interaction.checkPermission('view', i)),
-                          key=lambda o: o.__name__)
-
-        if self.opts_long:
+        def make_long_lines(container):
             def nick(item):
                 if isinstance(item, Symlink):
                     return [canonical_path(item)] + getattr(follow_symlinks(item), 'nicknames', [])
                 return getattr(item, 'nicknames', [])
 
-            if IContainer.providedBy(obj) and not self.opts_dir:
-                for subobj in sorted_obj_list():
-                    perms = pretty_effective_perms(self.protocol.interaction, follow_symlinks(subobj))
-                    self.write(('%s %s\t%s\n' % (perms, pretty_name(subobj),
-                                                 ' : '.join(nick(subobj)))).encode('utf8'))
-                if recursive:
-                    self.ls_recursive(path, obj, sorted_obj_list())
-            else:
-                perms = pretty_effective_perms(self.protocol.interaction, follow_symlinks(obj))
-                self.write(('%s %s\t%s\n' % (perms, pretty_name(obj), ' : '.join(nick(obj)))).encode('utf8'))
-        else:
-            if IContainer.providedBy(obj) and not self.opts_dir:
-                items = [pretty_name(subobj) for subobj in sorted_obj_list()]
-                if items:
-                    output = columnize(items, displaywidth=self.protocol.width)
-                    self.write(output)
-                if recursive:
-                    self.ls_recursive(path, obj, sorted_obj_list())
-            else:
-                self.write('%s\n' % path)
+            return [(('%s %s\t%s\n' % (pretty_effective_perms(self.protocol.interaction,
+                                                              follow_symlinks(subobj)),
+                                       pretty_name(subobj),
+                                       ' : '.join(nick(subobj)))).encode('utf8'))
+                    for subobj in container]
 
-    def ls_recursive(self, path, obj, children):
-        for i in children:
-            child_obj = obj[i.__name__]
-            if IContainer.providedBy(child_obj) and not isinstance(child_obj, Symlink):
-                self.write("\n%s:\n" % os.path.join(path, i.__name__.encode('utf8')))
-                self._do_ls(child_obj, os.path.join(path, i.__name__), recursive=True)
+        def make_short_lines(container):
+            return columnize([pretty_name(subobj) for subobj in container], displaywidth=self.protocol.width)
+
+        container = (sorted(filter(lambda i: self.protocol.interaction.checkPermission('view', i),
+                                   obj.listcontent()),
+                            key=lambda o: o.__name__)
+                     if IContainer.providedBy(obj) and not self.opts_dir
+                     else [obj])
+
+        for line in (make_long_lines(container) if self.opts_long else make_short_lines(container)):
+            self.write(line)
+
+        if recursive and IContainer.providedBy(obj) and not self.opts_dir:
+            for ch in container:
+                child_obj = obj[ch.__name__]
+                if (IContainer.providedBy(child_obj)
+                        and not isinstance(child_obj, Symlink)
+                        and child_obj not in self.visited):
+                    self.write("\n%s:\n" % os.path.join(path, ch.__name__.encode('utf8')))
+                    self._do_ls(child_obj, os.path.join(path, ch.__name__), recursive=True)
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(ListDirContentsCmd, ))
@@ -328,9 +334,9 @@ class RemoveCmd(Cmd):
 
             try:
                 handle(obj, ModelDeletedEvent(parent))
-            except Exception as e:
+            except Exception:
                 if not args.f:
-                    raise e
+                    raise
 
 
 class MoveCmd(Cmd):
