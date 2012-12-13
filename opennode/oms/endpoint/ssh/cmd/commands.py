@@ -82,6 +82,9 @@ class ChangeDirCmd(Cmd):
         # Recompute new absolute path if physical path was requested.
         self._resolve_physical_path(args)
 
+    def subject(self, args):
+        return (self.current_obj, self.traverse(args.path if args.path else self.path[0]))
+
     def _resolve_physical_path(self, args):
         # Recompute new absolute path if physical path was requested.
         if args.P:
@@ -126,18 +129,13 @@ class ChangeDirCmd(Cmd):
             self.write('Cannot cd to a non-container\n')
             return
 
-        # The following algorithm works for both up-the-tree,
-        # down-the-tree and mixed traversals. So all of the following
-        # arguments to the 'cd' command work out as expected:
-        #     foo/bar # foo/./../foo ../foo/../.  ../.././foo
-
         # Fixes #41.
         if os.path.isabs(path):
             objs.insert(0, db.deref(self.obj_path[0]))
 
         # Handle '//foo/bar//fee'
         path_components = path.split('/')
-        path_components[1:] = [i for i in path_components[1:] if i != '']
+        path_components[1:] = [comp for comp in path_components[1:] if comp != '']
 
         oms_root = self.obj_path[0]
 
@@ -149,7 +147,6 @@ class ChangeDirCmd(Cmd):
             ref = db.ref(obj)
             if name == '.' or (ref == oms_root and oms_root in self.obj_path):
                 continue
-
             self.obj_path.append(ref)
             self.path.append(name)
 
@@ -184,6 +181,12 @@ class ListDirContentsCmd(Cmd):
                     self._do_ls(obj, path, recursive=args.R)
         else:
             self._do_ls(self.current_obj, recursive=args.R)
+
+    def subject(self, args):
+        if args.paths:
+            return (self.traverse(path) for path in args.paths)
+        else:
+            return (self.current_obj,)
 
     def _do_ls(self, obj, path='.', recursive=False):
         assert obj not in self.visited
@@ -254,6 +257,9 @@ class CatObjectCmd(Cmd):
         parser.add_argument('-o', action='append')
         parser.add_argument('-H', action='store_true')
         return parser
+
+    def subject(self, args):
+        return (self.traverse(path) for path in args.paths)
 
     @db.transact
     def execute(self, args):
@@ -338,6 +344,19 @@ class RemoveCmd(Cmd):
                 if not args.f:
                     raise
 
+    def subject(self, args):
+        def get_subjects():
+            for path in args.paths:
+                obj_dir = self.current_obj
+
+                if path.endswith('/'):
+                    path = path[:-1]
+
+                if os.path.dirname(path):
+                    obj_dir = self.traverse(os.path.dirname(path))
+
+                yield obj_dir[os.path.basename(path)]
+        return (obj for obj in get_subjects())
 
 class MoveCmd(Cmd):
     """Moves an object."""
@@ -375,6 +394,9 @@ class MoveCmd(Cmd):
 
         transaction.commit()
 
+    def subject(self, args):
+        return (self.traverse(args.path[0]), self.traverse(args.path[1]))
+
 
 class SetAttrCmd(Cmd):
     implements(ICmdArgumentsSyntax)
@@ -407,6 +429,9 @@ class SetAttrCmd(Cmd):
             form.write_errors(to=self)
 
         transaction.commit()
+
+    def subject(self, args):
+        return self.traverse(args.path)
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -444,6 +469,9 @@ class CreateObjCmd(Cmd):
             self.write("%s\n" % obj_id)
         else:
             form.write_errors(to=self)
+
+    def subject(self, args):
+        return self.current_obj
 
 
 class SetOrMkCmdDynamicArguments(Adapter):
@@ -535,6 +563,9 @@ class LinkCmd(Cmd):
 
         dst_dir.add(Symlink(os.path.basename(args.dst), src_obj))
 
+    def subject(self, args):
+        return (self.traverse(args.src), self.traverse(args.dst))
+
 
 class FileCmd(Cmd):
     """Outputs the type of an object."""
@@ -568,6 +599,9 @@ class FileCmd(Cmd):
     def _do_file(self, path, obj):
         ifaces = ', '.join(obj.get_features())
         return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
+
+    def subject(self, args):
+        return (self.traverse(path) for path in args.paths)
 
 
 class EchoCmd(Cmd):
@@ -850,6 +884,9 @@ class EditCmd(Cmd):
         updated = yield editor.start(old)
 
         yield self._save(args, old, updated)
+
+    def subject(self, args):
+        return self.traverse(args.path)
 
     @db.transact
     def _save(self, args, old, updated):

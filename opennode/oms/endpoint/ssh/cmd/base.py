@@ -144,7 +144,7 @@ class Cmd(object):
 
     def subject(self, args):
         """ Provide the subject of the command (usually free arguments and/or current directory path)"""
-        return None
+        return
 
 
 class CommandContextExtractor(Subscription):
