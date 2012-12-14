@@ -149,7 +149,8 @@ class Cmd(object):
     def subject_from_raw(self, args):
         """Subclasses should override this if they need raw arguments."""
         parsed = yield defer.maybeDeferred(self.parse_args, args)
-        yield self.subject(parsed)
+        subject = yield self.subject(parsed)
+        defer.returnValue(subject)
 
 
 class CommandContextExtractor(Subscription):

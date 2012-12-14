@@ -8,6 +8,7 @@ import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
+from twisted.python import log
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -84,7 +85,7 @@ class ChangeDirCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return (self.current_obj, self.traverse(args.path if args.path else self.path[0]))
+        return tuple(self.current_obj, self.traverse(args.path if args.path else self.path[0]))
 
     def _resolve_physical_path(self, args):
         # Recompute new absolute path if physical path was requested.
@@ -186,9 +187,9 @@ class ListDirContentsCmd(Cmd):
     @db.ro_transact
     def subject(self, args):
         if args.paths:
-            return (self.traverse(path) for path in args.paths)
+            return tuple(self.traverse(path) for path in args.paths)
         else:
-            return (self.current_obj,)
+            return tuple(self.current_obj,)
 
     def _do_ls(self, obj, path='.', recursive=False):
         assert obj not in self.visited
@@ -261,7 +262,7 @@ class CatObjectCmd(Cmd):
         return parser
 
     def subject(self, args):
-        return (self.traverse(path) for path in args.paths)
+        return tuple(self.traverse(path) for path in args.paths)
 
     @db.transact
     def execute(self, args):
@@ -359,7 +360,7 @@ class RemoveCmd(Cmd):
                     obj_dir = self.traverse(os.path.dirname(path))
 
                 yield obj_dir[os.path.basename(path)]
-        return (obj for obj in get_subjects())
+        return tuple(obj for obj in get_subjects())
 
 class MoveCmd(Cmd):
     """Moves an object."""
@@ -399,7 +400,7 @@ class MoveCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return (self.traverse(args.path[0]), self.traverse(args.path[1]))
+        return tuple(self.traverse(args.path[0]), self.traverse(args.path[1]))
 
 
 class SetAttrCmd(Cmd):
@@ -436,7 +437,7 @@ class SetAttrCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return self.traverse(args.path)
+        return tuple(self.traverse(args.path))
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -570,7 +571,7 @@ class LinkCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return (self.traverse(args.src), self.traverse(args.dst))
+        return tuple(self.traverse(args.src), self.traverse(args.dst))
 
 
 class FileCmd(Cmd):
@@ -608,7 +609,7 @@ class FileCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return (self.traverse(path) for path in args.paths)
+        return tuple(self.traverse(path) for path in args.paths)
 
 
 class EchoCmd(Cmd):
@@ -894,7 +895,7 @@ class EditCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return self.traverse(args.path)
+        return tuple(self.traverse(args.path))
 
     @db.transact
     def _save(self, args, old, updated):
