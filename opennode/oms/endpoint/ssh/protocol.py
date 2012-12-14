@@ -142,6 +142,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
         try:
             command, cmd_args = yield self.parse_line(line)
+            command_subject = yield command.subject_from_raw(cmd_args)
         except CommandLineSyntaxError as e:
             self.terminal.write("Syntax error: %s\n" % (e.message))
             self.print_prompt()
@@ -152,10 +153,8 @@ class OmsShellProtocol(InteractiveTerminal):
             return
 
         self.sub_protocol = CommandExecutionSubProtocol(self)
-
         deferred = defer.maybeDeferred(command, *cmd_args)
-
-        Proc.register(deferred, command.subject(cmd_args), line, self.tid)
+        Proc.register(deferred, command_subject, line, self.tid)
 
         try:
             yield deferred

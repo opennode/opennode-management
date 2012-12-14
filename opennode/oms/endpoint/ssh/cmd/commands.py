@@ -82,6 +82,7 @@ class ChangeDirCmd(Cmd):
         # Recompute new absolute path if physical path was requested.
         self._resolve_physical_path(args)
 
+    @db.ro_transact
     def subject(self, args):
         return (self.current_obj, self.traverse(args.path if args.path else self.path[0]))
 
@@ -182,6 +183,7 @@ class ListDirContentsCmd(Cmd):
         else:
             self._do_ls(self.current_obj, recursive=args.R)
 
+    @db.ro_transact
     def subject(self, args):
         if args.paths:
             return (self.traverse(path) for path in args.paths)
@@ -344,6 +346,7 @@ class RemoveCmd(Cmd):
                 if not args.f:
                     raise
 
+    @db.ro_transact
     def subject(self, args):
         def get_subjects():
             for path in args.paths:
@@ -394,6 +397,7 @@ class MoveCmd(Cmd):
 
         transaction.commit()
 
+    @db.ro_transact
     def subject(self, args):
         return (self.traverse(args.path[0]), self.traverse(args.path[1]))
 
@@ -430,6 +434,7 @@ class SetAttrCmd(Cmd):
 
         transaction.commit()
 
+    @db.ro_transact
     def subject(self, args):
         return self.traverse(args.path)
 
@@ -563,6 +568,7 @@ class LinkCmd(Cmd):
 
         dst_dir.add(Symlink(os.path.basename(args.dst), src_obj))
 
+    @db.ro_transact
     def subject(self, args):
         return (self.traverse(args.src), self.traverse(args.dst))
 
@@ -600,6 +606,7 @@ class FileCmd(Cmd):
         ifaces = ', '.join(obj.get_features())
         return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
 
+    @db.ro_transact
     def subject(self, args):
         return (self.traverse(path) for path in args.paths)
 
@@ -885,6 +892,7 @@ class EditCmd(Cmd):
 
         yield self._save(args, old, updated)
 
+    @db.ro_transact
     def subject(self, args):
         return self.traverse(args.path)
 

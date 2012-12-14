@@ -20,12 +20,12 @@ class Cmd(object):
 
     @defer.inlineCallbacks
     def __call__(self, *args):
-        """Subclasses should override this if you they need raw arguments."""
+        """Subclasses should override this if they need raw arguments."""
         parsed = yield defer.maybeDeferred(self.parse_args, args)
         yield self.execute(parsed)
 
     def execute(args):
-        """Subclasses should override this if you they need parsed arguments."""
+        """Subclasses should override this if they need parsed arguments."""
 
     @classmethod
     def _format_names(cls):
@@ -144,7 +144,12 @@ class Cmd(object):
 
     def subject(self, args):
         """ Provide the subject of the command (usually free arguments and/or current directory path)"""
-        return
+
+    @defer.inlineCallbacks
+    def subject_from_raw(self, args):
+        """Subclasses should override this if they need raw arguments."""
+        parsed = yield defer.maybeDeferred(self.parse_args, args)
+        yield self.subject(parsed)
 
 
 class CommandContextExtractor(Subscription):
