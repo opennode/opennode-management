@@ -124,7 +124,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
                 self.historyLines = [line.strip() for line in open(self.hist_file_name, 'r').readlines()]
                 self.historyPosition = len(self.historyLines)
         except Exception as e:
-            log.msg("cannot restore history: %s" % e)
+            log.err("cannot restore history: %s" % e, system='ssh')
 
     def save_history(self):
         if not self.history_save_enabled:
@@ -135,7 +135,7 @@ class InteractiveTerminal(recvline.HistoricRecvLine):
             with open(self.hist_file_name, 'w') as f:
                 f.writelines(concat)
         except Exception as e:
-            log.msg("cannot save history: %s" % e)
+            log.err("cannot save history: %s" % e, system='ssh')
 
     @property
     def hist_file_name(self):

@@ -112,7 +112,7 @@ class PartialVirtualConsoleArgumentParser(VirtualConsoleArgumentParser):
                 return super(VirtualConsoleArgumentParser, self).parse_args(args[:-1], namespace)
             except ArgumentParsingError as e:
                 # give up, probably we have mandatory positional args
-                log.msg("Tried hard but cannot parse %s" % e)
+                log.msg("Tried hard but cannot parse %s" % e, system='ssh')
                 return object()  # Empty parse results.
 
 

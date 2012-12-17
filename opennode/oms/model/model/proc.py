@@ -217,7 +217,7 @@ def start_daemons(event):
     try:
         Proc().start_daemons()
     except:
-        log.err("[proc] Got exception while starting daemons")
+        log.err("Got exception while starting daemons", system='proc')
         if get_config().get_boolean('debug', 'print_exceptions'):
             import traceback
             print ''.join(traceback.format_exc())

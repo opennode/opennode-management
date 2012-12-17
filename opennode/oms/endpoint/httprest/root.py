@@ -109,7 +109,7 @@ class HttpRestServer(resource.Resource):
 
         @deferred
         def on_error(error):
-            log.err("Error while rendering http %s" % error)
+            log.err("Error while rendering http %s" % error, system='httprest')
 
         return NOT_DONE_YET
 

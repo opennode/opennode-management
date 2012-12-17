@@ -8,7 +8,6 @@ import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
-from twisted.python import log
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -85,7 +84,7 @@ class ChangeDirCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple(self.current_obj, self.traverse(args.path if args.path else self.path[0]))
+        return tuple((self.current_obj, self.traverse(args.path if args.path else self.path[0])))
 
     def _resolve_physical_path(self, args):
         # Recompute new absolute path if physical path was requested.
@@ -189,7 +188,7 @@ class ListDirContentsCmd(Cmd):
         if args.paths:
             return tuple(self.traverse(path) for path in args.paths)
         else:
-            return tuple(self.current_obj,)
+            return tuple((self.current_obj,))
 
     def _do_ls(self, obj, path='.', recursive=False):
         assert obj not in self.visited
@@ -400,7 +399,7 @@ class MoveCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple(self.traverse(args.path[0]), self.traverse(args.path[1]))
+        return tuple((self.traverse(args.path[0]), self.traverse(args.path[1])))
 
 
 class SetAttrCmd(Cmd):
@@ -571,7 +570,7 @@ class LinkCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple(self.traverse(args.src), self.traverse(args.dst))
+        return tuple((self.traverse(args.src), self.traverse(args.dst)))
 
 
 class FileCmd(Cmd):

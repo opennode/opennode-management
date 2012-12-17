@@ -6,14 +6,14 @@ from twisted.python.log import FileLogObserver
 from opennode.oms.config import get_config
 
 
-class FilteredLogFileObserver(FileLogObserver):
+class FilteredFileLogObserver(FileLogObserver):
     """Filter out unwanted log messages, especially during development."""
 
-    ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico', '.*POST /+stream', '.*OPTIONS /',
+    ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico',
+                        '.*POST /+stream', '.*OPTIONS /',
                         '.*GET /plugins/onc/root/',
                         'got channel session request', 'channel open', 'remote close', 'sending close 0',
                         'disabling diffie-hellman-group-exchange because we cannot find moduli file']
-    #ignored_systems = ['SSHServerTransport', 'SSHChannel']
     ignored_systems = ['SSHServerTransport', 'SSHService']
 
     def emit(self, eventDict):
@@ -22,6 +22,8 @@ class FilteredLogFileObserver(FileLogObserver):
         message = eventDict.get('message', '')
         if message:
             message = message[0]
+        else:
+            message = ''
 
         for msg in self.ignored_messages:
             if re.match(msg, message):
@@ -41,4 +43,4 @@ def setup_logging():
     else:
         log_file = open(log_filename, 'a')
 
-    return FilteredLogFileObserver(log_file).emit
+    return FilteredFileLogObserver(log_file).emit

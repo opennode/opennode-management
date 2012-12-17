@@ -55,7 +55,8 @@ class AuditingPermissionDictionary(dict):
 
                 seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['object']).__name__)
                 if seen_key not in self.seen:
-                    log.msg("Audit: permissive mode; granting attribute=%s, principals=(%s), object=%s" % seen_key)
+                    log.msg("Audit: permissive mode; granting attribute=%s, principals=(%s), object=%s" %
+                            seen_key, system='security')
                     self.seen[seen_key] = True
             return CheckerPublic
         return val

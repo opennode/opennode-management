@@ -554,7 +554,7 @@ class Editor(object):
             self.insert_character(keyID)
 
         else:
-            log.msg("GOT Special char '%s' (%s)" % (keyID, type(keyID)))
+            log.msg("GOT Special char '%s' (%s)" % (keyID, type(keyID)), system='ssh')
 
     @exception_logger
     def keystrokeReceived(self, keyID, mod):

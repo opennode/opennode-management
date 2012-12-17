@@ -21,7 +21,8 @@ from zope.interface import Interface, implements
 from opennode.oms.config import get_config
 from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
-from opennode.oms.zodb.proxy import make_persistent_proxy, remove_persistent_proxy as _remove_persistent_proxy, get_peristent_context, PersistentProxy
+from opennode.oms.zodb.proxy import (make_persistent_proxy, remove_persistent_proxy as
+                                     _remove_persistent_proxy, get_peristent_context, PersistentProxy)
 from opennode.oms.zodb.extractors import context_from_method
 
 
@@ -86,7 +87,7 @@ def init(test=False):
     if _db and not test:
         return
 
-    print "[db] Initializing zodb"
+    log.msg("Initializing zodb", system='db')
     handle(BeforeDatabaseInitalizedEvent())
 
     if not test:
@@ -155,7 +156,7 @@ def assert_transact(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         if isInIOThread() and not _testing:
-            log.msg('The ZODB should not be accessed from the main thread')
+            log.err('The ZODB should not be accessed from the main thread', system='db')
             raise Exception('The ZODB should not be accessed from the main thread')
         return fun(*args, **kwargs)
     return wrapper
@@ -183,7 +184,9 @@ def transact(fun):
             if msg == "BEGINNING":
                 ch = '\\'
             if cfg.getboolean('debug', 'trace_transactions', False):
-                print "[transaction] %s\ttx:%s %s\tin %s from %s, line %s %s" % (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch)
+                log.msg("%s\ttx:%s %s\tin %s from %s, line %s %s" %
+                        (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch),
+                        system='transaction')
 
         retries = cfg.getint('db', 'conflict_retries')
 
@@ -198,7 +201,7 @@ def transact(fun):
                 transaction.abort()
                 return
             except:
-                log.err("rolling back")
+                log.err('rolling back', system='db')
                 trace("ABORTING", t)
                 transaction.abort()
                 raise

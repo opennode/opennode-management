@@ -162,7 +162,7 @@ def reload_groups(stream):
         try:
             group, roles = i.split(':', 2)
         except ValueError:
-            log.err("Invalid groups file format")
+            log.err("Invalid groups file format", system='auth')
         else:
             oms_group = Group(group.strip())
             auth.registerPrincipal(oms_group)
@@ -209,7 +209,7 @@ def reload_users(stream):
         try:
             user, _, groups = i.split(':', 3)
         except ValueError:
-            log.err("Invalid password file format")
+            log.err("Invalid password file format", system='auth')
         else:
             oms_user = User(user.strip())
             for group in groups.split(','):

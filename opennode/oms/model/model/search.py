@@ -142,7 +142,7 @@ class SearchContainer(ReadonlyContainer):
         try:
             self.catalog.index_doc(self.ids.register(real_obj), real_obj)
         except NotYet:
-            log.msg("cannot index object %s because not yet committed" % (obj,))
+            log.err("cannot index object %s because not yet committed" % (obj,), system='search')
 
     def _index_object(self, obj):
         real_obj = follow_symlinks(obj)
@@ -152,7 +152,7 @@ class SearchContainer(ReadonlyContainer):
         try:
             self.catalog.unindex_doc(self.ids.register(obj))
         except NotYet:
-            log.msg("cannot index object because not yet committed")
+            log.msg("cannot index object because not yet committed", system='search')
 
     def search(self, **kwargs):
         # HACK, we should be able to setup a persistent utility
