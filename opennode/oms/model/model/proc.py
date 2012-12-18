@@ -222,16 +222,23 @@ def start_daemons(event):
         if get_config().get_boolean('debug', 'print_exceptions'):
             log.err(e, system='proc')
 
+
 def registered_process(procname, get_subject, *procargs, **prockwargs):
     def wrap(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             d = f(*args, **kwargs)
             subjd = get_subject(*args, **kwargs)
-            def register(subj, *args, **kwargs):
+            def register(subj, *rargs, **rkwargs):
+                if hasattr(procname, '__call__'):
+                    name = procname(*args)
+                else:
+                    name = procname
+
                 assert type(subj) is tuple, 'subject must be a tuple'
-                pid = Proc.register(d, subj, '%s %s' % (procname, subj), *procargs, **prockwargs)
-                log.msg('Registered %s as process %s: %s %s' % (args, pid, procname, tuple(map(str, subj))),
+
+                pid = Proc.register(d, subj, '%s %s' % (name, subj), *procargs, **prockwargs)
+                log.msg('Registered %s as process %s: %s %s' % (args, pid, name, tuple(map(str, subj))),
                         system='proc')
             subjd.addCallback(register, *args, **kwargs)
             return d

@@ -5,7 +5,7 @@ __all__ = ['command', 'alias']
 
 
 class command(martian.Directive):
-    """Use this directive in a class in order to set it's command name.
+    """Use this directive in a class in order to set its command name.
     Only classes marked with this directive will be valid commands.
 
     """
