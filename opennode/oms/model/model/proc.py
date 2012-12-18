@@ -5,6 +5,7 @@ from collections import OrderedDict
 from functools import wraps
 
 from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
+from twisted.internet.defer import maybeDeferred
 from twisted.python import log
 from zope import schema
 from zope.component import provideSubscriptionAdapter
@@ -228,7 +229,7 @@ def registered_process(procname, get_subject, *procargs, **prockwargs):
         @wraps(f)
         def wrapper(*args, **kwargs):
             d = f(*args, **kwargs)
-            subjd = get_subject(*args, **kwargs)
+            subjd = maybeDeferred(get_subject, *args, **kwargs)
             def register(subj, *rargs, **rkwargs):
                 if hasattr(procname, '__call__'):
                     name = procname(*args)
@@ -237,7 +238,7 @@ def registered_process(procname, get_subject, *procargs, **prockwargs):
 
                 assert type(subj) is tuple, 'subject must be a tuple'
 
-                pid = Proc.register(d, subj, '%s %s' % (name, subj), *procargs, **prockwargs)
+                pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))), *procargs, **prockwargs)
                 log.msg('Registered %s as process %s: %s %s' % (args, pid, name, tuple(map(str, subj))),
                         system='proc')
             subjd.addCallback(register, *args, **kwargs)
