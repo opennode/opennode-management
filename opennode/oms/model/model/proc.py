@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import time
 from collections import OrderedDict
+from functools import wraps
 
 from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
 from twisted.python import log
@@ -216,8 +217,23 @@ provideSubscriptionAdapter(ActionsContainerExtension, adapts=(Task, ))
 def start_daemons(event):
     try:
         Proc().start_daemons()
-    except:
-        log.err("Got exception while starting daemons", system='proc')
+    except Exception as e:
+        log.msg("Got exception while starting daemons", system='proc')
         if get_config().get_boolean('debug', 'print_exceptions'):
-            import traceback
-            print ''.join(traceback.format_exc())
+            log.err(e, system='proc')
+
+def registered_process(procname, get_subject, *procargs, **prockwargs):
+    def wrap(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            d = f(*args, **kwargs)
+            subjd = get_subject(*args, **kwargs)
+            def register(subj, *args, **kwargs):
+                assert type(subj) is tuple, 'subject must be a tuple'
+                pid = Proc.register(d, subj, '%s %s' % (procname, subj), *procargs, **prockwargs)
+                log.msg('Registered %s as process %s: %s %s' % (args, pid, procname, tuple(map(str, subj))),
+                        system='proc')
+            subjd.addCallback(register, *args, **kwargs)
+            return d
+        return wrapper
+    return wrap

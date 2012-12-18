@@ -9,8 +9,7 @@ from .bin import ICommand, Command
 
 
 class ActionsContainer(ReadonlyContainer):
-    """Implements a dynamic view containing commands
-    representing actions that can be performer on a given object.
+    """Implements a dynamic view containing actions that can be performed on a given object.
 
     """
 
