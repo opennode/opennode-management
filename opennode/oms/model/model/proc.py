@@ -241,7 +241,8 @@ def registered_process(procname, get_subject, *procargs, **prockwargs):
                 # under item.subject
                 assert type(subj) is tuple, 'subject must be a tuple'
 
-                pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))), *procargs, **prockwargs)
+                pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))),
+                                    *procargs, **prockwargs)
                 log.msg('Registered %s as process %s: %s %s' % (args, pid, name, tuple(map(str, subj))),
                         system='proc')
             subjd.addCallback(register, *args, **kwargs)
