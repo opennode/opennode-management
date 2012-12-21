@@ -260,6 +260,7 @@ class CatObjectCmd(Cmd):
         parser.add_argument('-H', action='store_true')
         return parser
 
+    @db.ro_transact
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
@@ -475,6 +476,7 @@ class CreateObjCmd(Cmd):
         else:
             form.write_errors(to=self)
 
+    @db.ro_transact
     def subject(self, args):
         return self.current_obj
 
