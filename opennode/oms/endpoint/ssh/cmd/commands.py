@@ -437,7 +437,7 @@ class SetAttrCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple(self.traverse(args.path))
+        return tuple((self.traverse(args.path),))
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -896,7 +896,7 @@ class EditCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple(self.traverse(args.path))
+        return tuple((self.traverse(args.path),))
 
     @db.transact
     def _save(self, args, old, updated):
