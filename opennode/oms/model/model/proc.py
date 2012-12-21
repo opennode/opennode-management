@@ -239,7 +239,7 @@ def registered_process(procname, get_subject, *procargs, **prockwargs):
                 # XXX: for some reason, when I let subject to be a generator instance, I get an empty
                 # generator in the ComputeTasks container, while it magically works when I save it as a tuple
                 # under item.subject
-                assert type(subj) is tuple, 'subject must be a tuple'
+                assert type(subj) is tuple, 'subject of \'%s\' must be a tuple, got %s' % (name, type(subj))
 
                 pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))),
                                     *procargs, **prockwargs)
