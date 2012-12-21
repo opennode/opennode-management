@@ -400,7 +400,7 @@ class MoveCmd(Cmd):
 
     @db.ro_transact
     def subject(self, args):
-        return tuple((self.traverse(args.path[0]), self.traverse(args.path[1])))
+        return tuple(self.traverse(path) for path in args.paths)
 
 
 class SetAttrCmd(Cmd):
@@ -412,6 +412,10 @@ class SetAttrCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('path')
         return parser
+
+    @db.ro_transact
+    def subject(self, args):
+        return tuple((self.traverse(args.path),))
 
     @db.transact
     def execute(self, args):
@@ -434,10 +438,6 @@ class SetAttrCmd(Cmd):
             form.write_errors(to=self)
 
         transaction.commit()
-
-    @db.ro_transact
-    def subject(self, args):
-        return tuple((self.traverse(args.path),))
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))

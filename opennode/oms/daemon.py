@@ -16,6 +16,7 @@ from grokcore.component import subscribe
 from twisted.scripts import twistd
 from twisted.runner.procmon import ProcessMonitor
 from twisted.internet import defer
+from twisted.python import log
 
 
 _daemon_started = False
@@ -53,7 +54,7 @@ def ensure_zeo_is_running(event):
     if get_config().get('db', 'storage_type') != 'zeo':
         return
 
-    print "Ensuring ZEO is running"
+    log.msg("Ensuring ZEO is running", system='db')
 
     # prevent zeo starting during unit tests etc
     global _daemon_started
@@ -67,10 +68,10 @@ def ensure_zeo_is_running(event):
     from zc.lockfile import LockFile, LockError
     try:
         with closing(LockFile(os.path.join(db_dir, 'data.fs.lock'))):
-            print "Starting ZEO server"
+            log.msg("Starting ZEO server", system='db')
         run_zeo(db_dir)
     except LockError:
-        print "ZEO is already running"
+        log.msg("ZEO is already running", system='db')
 
 
 def run_app():
@@ -83,8 +84,8 @@ def run_app():
 def run_debugger(args):
     module_file = sys.modules[__name__].__file__
     if args.debug:
-        print "Waiting for debugger connection. Please attach a debugger, e.g.:"
-        print "winpdb --attach %s" % (module_file)
+        log.msg("Waiting for debugger connection. Please attach a debugger, e.g.:", system='db')
+        log.msg("winpdb --attach %s" % (module_file), system='db')
 
         import rpdb2
         rpdb2.start_embedded_debugger(args.debug)
@@ -94,9 +95,9 @@ def run_debugger(args):
         with closing(open(os.path.expanduser('~/.rpdb2_settings/passwords/%s' % rid), 'w')) as f:
             f.write(pw)
 
-        print "Spawning winpdb"
+        log.msg("Spawning winpdb", system='db')
         subprocess.Popen(['winpdb', '--rid', str(rid), '--attach', module_file])
-        print "Waiting for debugger connection"
+        log.msg("Waiting for debugger connection", system='db')
 
         import rpdb2
         rpdb2.start_embedded_debugger(pw)
