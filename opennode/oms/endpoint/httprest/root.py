@@ -109,7 +109,7 @@ class HttpRestServer(resource.Resource):
 
         @deferred
         def on_error(error):
-            log.err("Error while rendering http %s" % error, system='httprest')
+            log.msg("Error while rendering http %s" % error, system='httprest')
 
         return NOT_DONE_YET
 
@@ -123,7 +123,8 @@ class HttpRestServer(resource.Resource):
         else:
             request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS, HEAD')
-        request.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Cache-Control, X-Requested-With')
+        request.setHeader('Access-Control-Allow-Headers',
+                          'Origin, Content-Type, Cache-Control, X-Requested-With')
 
         ret = None
         try:
@@ -174,6 +175,18 @@ class HttpRestServer(resource.Resource):
         else:
             return authentication_utility.get_token(request)
 
+    def find_view(self, obj, unresolved_path):
+        view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+
+        sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
+        if sub_view_factory:
+            view = sub_view_factory.resolve(unresolved_path[1:])
+
+        if not view:
+            raise NotFound
+
+        return view
+
     @db.transact
     def handle_request(self, request):
         """Takes a request, maps it to a domain object and a
@@ -197,15 +210,7 @@ class HttpRestServer(resource.Resource):
         if self.use_security_proxy:
             obj = proxy_factory(obj, interaction)
 
-        view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
-
-        sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
-        if sub_view_factory:
-            view = sub_view_factory.resolve(unresolved_path[1:])
-
-        if not view:
-            raise NotFound
-
+        view = self.find_view(obj, unresolved_path)
         needs_rw_transaction = view.rw_transaction(request)
 
         # create a security proxy if we have a secured interaction

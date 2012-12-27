@@ -362,6 +362,7 @@ class RemoveCmd(Cmd):
                 yield obj_dir[os.path.basename(path)]
         return tuple(obj for obj in get_subjects())
 
+
 class MoveCmd(Cmd):
     """Moves an object."""
     implements(ICmdArgumentsSyntax)

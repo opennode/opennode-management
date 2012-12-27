@@ -1,6 +1,6 @@
 import json
-import time
 import os
+import time
 
 from grokcore.component import context
 from hashlib import sha1
@@ -10,7 +10,6 @@ from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
 
-from opennode.oms.security.checker import get_interaction
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
@@ -25,6 +24,7 @@ from opennode.oms.model.model.stream import IStream, StreamSubscriber
 from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.model.traversal import traverse_path
+from opennode.oms.security.checker import get_interaction
 from opennode.oms.zodb import db
 
 
@@ -107,7 +107,8 @@ class ContainerView(DefaultView):
                 return IHttpRestView(item).render_recursive(request, depth - 1)
             except Unauthorized:
                 permissions = effective_perms(get_interaction(item), item)
-                return dict(access='denied', permissions=permissions, __type__=type(removeSecurityProxy(item)).__name__)
+                return dict(access='denied', permissions=permissions,
+                            __type__=type(removeSecurityProxy(item)).__name__)
 
         # XXX: temporary code until ONC uses /search also for filtering computes
         q = None
