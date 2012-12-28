@@ -253,7 +253,7 @@ class AddingContainer(ReadonlyContainer):
 
     def add(self, item):
         if not self.can_contain(item):
-            raise Exception("Container can only contain instances of or objects providing %s" % self.__contains__.__name__)
+            raise Exception("Can only contain instances or providers of %s" % self.__contains__.__name__)
 
         old_parent = item.__parent__
         res = self._add(item)

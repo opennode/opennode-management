@@ -51,33 +51,36 @@ class ActionGrokker(martian.ClassGrokker):
         if action is None:
             return False
 
-        class_.cmd = _action_decorator(class_.execute)
-        class_._name = action
+        if getattr(class_, 'cmd', None) is None:
+            class_.cmd = _action_decorator_parametrized(cls=class_)(class_.execute)
+            class_._name = action
 
         return True
 
 
-def _action_decorator(fun):
-    """
-    Decorate a method so that it behaves as a property which returns a Cmd object.
-    """
-    @property
-    def cmd(self):
-        from opennode.oms.endpoint.ssh.cmd.base import Cmd
+def _action_decorator_parametrized(cls):
+    def _action_decorator(fun):
+        """
+        Decorate a method so that it behaves as a property which returns a Cmd object.
+        """
+        @property
+        def cmd(self):
+            from opennode.oms.endpoint.ssh.cmd.base import Cmd
+            this = self
 
-        this = self
+            class ActionCmd(Cmd):
+                name = self._name
 
-        class ActionCmd(Cmd):
-            name = self._name
+                def execute(self, args):
+                    from opennode.oms.zodb import db
+                    from opennode.oms.zodb.proxy import make_persistent_proxy
 
-            def execute(self, args):
-                from opennode.oms.zodb import db
-                from opennode.oms.zodb.proxy import make_persistent_proxy
+                    # we obtained `this` before the action exited from the db.transact decorator
+                    # thus we need to reapply the db proxy
+                    this.context = make_persistent_proxy(this.context, db.context(self))
 
-                # we obtained `this` before the action exited from the db.transact decorator
-                # thus we need to reapply the db proxy
-                this.context = make_persistent_proxy(this.context, db.context(self))
-
-                return fun(this, self, args)
-        return ActionCmd
-    return cmd
+                    return fun(this, self, args)
+            ActionCmd.arguments = getattr(cls, 'arguments', None)
+            return ActionCmd
+        return cmd
+    return _action_decorator

@@ -147,7 +147,8 @@ class OmsShellProtocol(InteractiveTerminal):
             self.print_prompt()
             return
         except Exception as e:
-            log.msg("Got exception parsing '%s': %s" % (line, sys.exc_info()), system='ssh')
+            log.msg("Got exception parsing '%s'" % (line), system='ssh')
+            log.err(system='ssh')
             self.terminal.write(''.join(traceback.format_exception(*sys.exc_info())))
             return
 

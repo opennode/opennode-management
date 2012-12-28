@@ -56,10 +56,14 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
     """
 
     def __init__(self, add_help=None, *args, **kwargs):
-        super(VirtualConsoleArgumentParser, self).__init__(add_help=False, formatter_class=VirtualConsoleHelpFormatter, *args, **kwargs)
+        super(VirtualConsoleArgumentParser, self).__init__(add_help=False,
+                                                           formatter_class=VirtualConsoleHelpFormatter,
+                                                           *args, **kwargs)
 
         if add_help:
-            self.add_argument('-h', '--help', action=argparse._HelpAction, help="show this help message and exit")
+            self.add_argument('-h', '--help',
+                              action=argparse._HelpAction,
+                              help="show this help message and exit")
 
         self.declarations = {}
 
@@ -75,8 +79,9 @@ class VirtualConsoleArgumentParser(InstrumentableArgumentParser):
     def declare_argument(self, dest, default=None):
         """Declares the existence of an argument without adding a requirement and an option string for it.
 
-        It's useful for GroupDictAction argument or other actions where multiple arguments store in the same value.
-        The `dest` attribute for declared arguments will have it's default value even if no argument was defined
+        It's useful for GroupDictAction argument or other actions where multiple arguments store in the same
+        value.  The `dest` attribute for declared arguments will have its default value even if no argument
+        was defined
         or matched.
 
         """

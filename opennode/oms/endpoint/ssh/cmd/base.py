@@ -36,10 +36,8 @@ class Cmd(object):
 
     def _make_arg_parser(self, parents, partial=False):
         parser_class = VirtualConsoleArgumentParser if not partial else PartialVirtualConsoleArgumentParser
-        return parser_class(prog=self._format_names(),
-                            file=self.protocol.terminal,
-                            add_help=True,
-                            prefix_chars='-=', parents=parents)
+        return parser_class(prog=self._format_names(), file=self.protocol.terminal,
+                            add_help=True, prefix_chars='-=', parents=parents)
 
     @defer.inlineCallbacks
     def _parent_parsers(self):
@@ -58,17 +56,15 @@ class Cmd(object):
         """Returns the argument parser for this command.
 
         Use partial=True if you want to tolerate incomplete last token
-        and avoid executing the help action (e.g. during completion).
+        and avoid executing help action (e.g. during completion).
 
         """
-
         parents = yield self._parent_parsers()
         defer.returnValue(self._make_arg_parser(parents, partial=partial))
 
     @defer.inlineCallbacks
     def contextual_arg_parser(self, args, partial=False):
         """If command offers a contextual parser, use it, otherwise fall back to a normal parser."""
-
         parser = yield self.arg_parser(partial=partial)
 
         contextual = queryAdapter(self, IContextualCmdArgumentsSyntax)
@@ -94,7 +90,6 @@ class Cmd(object):
     @defer.inlineCallbacks
     def parse_args(self, args):
         """Parse command line arguments. Return a deferred."""
-
         parser = yield self.contextual_arg_parser(args)
         defer.returnValue(parser.parse_args(args))
 
@@ -120,7 +115,7 @@ class Cmd(object):
         return self.traverse('/'.join(self.protocol.path) if self.protocol.path != [''] else '/')
 
     def write(self, *args):
-        """Ensure that all writes are serialized regardless if the command is executing in a another thread.
+        """Ensure that all writes are serialized regardless if the command is executing in another thread.
         """
         if not isInIOThread():
             reactor.callFromThread(self.terminal.write, *args)

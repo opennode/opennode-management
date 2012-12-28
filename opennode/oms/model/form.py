@@ -109,6 +109,7 @@ class ApplyRawData(object):
                 try:
                     if not raw_value and field.required:
                         raise RequiredMissing(name)
+
                     try:
                         value = from_unicode.fromUnicode(raw_value)
                     except (ValueError, TypeError):
