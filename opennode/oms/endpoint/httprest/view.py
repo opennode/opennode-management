@@ -218,11 +218,11 @@ class CommandView(DefaultView):
         Parameters passed as 'arg' are converted into positional arguments, others are converted into
         named parameters:
 
-            PUT /bin/ls?arg=/some/path&arg=/another/path&--R
+            PUT /bin/ls?arg=/some/path&arg=/another/path&-l&--recursive
 
         thus translates to:
 
-            /bin/ls /some/path /another/path -R
+            /bin/ls /some/path /another/path -l --recursive
         """
 
         def convert_args(args):
