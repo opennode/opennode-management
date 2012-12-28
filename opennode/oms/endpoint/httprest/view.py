@@ -241,6 +241,8 @@ class CommandView(DefaultView):
             protocol = DetachedProtocol()
             protocol.interaction = get_interaction(self.context)
             protocol.path = ['']
+            # XXX: HACK: TODO: should use configuration here instead!
+            protocol.use_security_proxy = False
             cmd = self.context.cmd(protocol)
             if ICmdArgumentsSyntax.providedBy(cmd):
                 parser = cmd.arguments()
