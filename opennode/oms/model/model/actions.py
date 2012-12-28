@@ -88,7 +88,7 @@ def _action_decorator_parametrized(cls):
                     return fun(this, self, args)
 
             arguments_method, object_ = ((cls.arguments, this) if hasattr(cls, 'arguments')
-                                else (ActionCmd.arguments, self))
+                                         else (ActionCmd.arguments, self))
             def arguments_wrapper(self):
                 return arguments_method(object_)
 

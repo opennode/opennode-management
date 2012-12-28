@@ -6,6 +6,7 @@ from grokcore.component import context
 from hashlib import sha1
 from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
+from twisted.python import log
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -13,6 +14,7 @@ from zope.security.proxy import removeSecurityProxy
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
 from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
@@ -211,11 +213,39 @@ class CommandView(DefaultView):
     context(ICommand)
 
     def render_PUT(self, request):
+        """ Converts arguments into command-line counterparts and executes the omsh command.
+
+        Parameters passed as 'arg' are converted into positional arguments, others are converted into
+        named parameters:
+
+            PUT /bin/ls?arg=/some/path&arg=/another/path&--R
+
+        thus translates to:
+
+            /bin/ls /some/path /another/path -R
+        """
+
+        def convert_args(args):
+            tokenized_args = args.get('arg', [])
+            def named_args_filter_and_flatten(nargs):
+                for name, vallist in nargs:
+                    if name != 'arg':
+                        for val in vallist:
+                            yield name
+                            yield val
+            return tokenized_args + list(named_args_filter_and_flatten(args.items()))
+
         @defer.inlineCallbacks
         def call_action():
             from opennode.oms.endpoint.ssh.detached import DetachedProtocol
-
-            yield self.context.cmd(DetachedProtocol()).execute(object())
+            protocol = DetachedProtocol()
+            protocol.interaction = get_interaction(self.context)
+            protocol.path = ['']
+            cmd = self.context.cmd(protocol)
+            if ICmdArgumentsSyntax.providedBy(cmd):
+                parser = cmd.arguments()
+            args = parser.parse_args(convert_args(request.args))
+            yield cmd.execute(args)
             request.write(json.dumps({"status": "ok"}))
             request.finish()
 
