@@ -211,9 +211,7 @@ class OmsShellProtocol(InteractiveTerminal):
         # path handling quirks for relative paths
         dummy = commands.NoCommand(self)
         for d in self.environment['PATH'].split(':'):
-            effective_dir = name
-            if not os.path.isabs(name):
-                effective_dir = os.path.join(d, name)
+            effective_dir = name if os.path.isabs(name) else os.path.join(d, name)
             try:
                 command = dummy.traverse(effective_dir)
                 if ICommand.providedBy(command):

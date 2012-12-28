@@ -66,10 +66,16 @@ def _action_decorator_parametrized(cls):
         @property
         def cmd(self):
             from opennode.oms.endpoint.ssh.cmd.base import Cmd
+            from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
+
             this = self
 
             class ActionCmd(Cmd):
+                implements(ICmdArgumentsSyntax)
                 name = self._name
+
+                def arguments(self):
+                    return VirtualConsoleArgumentParser()
 
                 def execute(self, args):
                     from opennode.oms.zodb import db
@@ -80,7 +86,13 @@ def _action_decorator_parametrized(cls):
                     this.context = make_persistent_proxy(this.context, db.context(self))
 
                     return fun(this, self, args)
-            ActionCmd.arguments = getattr(cls, 'arguments', None)
+
+            arguments_method, object_ = ((cls.arguments, this) if hasattr(cls, 'arguments')
+                                else (ActionCmd.arguments, self))
+            def arguments_wrapper(self):
+                return arguments_method(object_)
+
+            ActionCmd.arguments = arguments_wrapper
             return ActionCmd
         return cmd
     return _action_decorator
