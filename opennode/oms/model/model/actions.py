@@ -52,7 +52,7 @@ class ActionGrokker(martian.ClassGrokker):
             return False
 
         if getattr(class_, 'cmd', None) is None:
-            class_.cmd = _action_decorator_parametrized(cls=class_)(class_.execute)
+            class_.cmd = _action_decorator_parametrized(class_)(class_.execute)
             class_._name = action
 
         return True
@@ -64,15 +64,16 @@ def _action_decorator_parametrized(cls):
         Decorate a method so that it behaves as a property which returns a Cmd object.
         """
         @property
-        def cmd(self):
+        def cmd(wself):
             from opennode.oms.endpoint.ssh.cmd.base import Cmd
             from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
 
-            this = self
+            this = wself
 
             class ActionCmd(Cmd):
                 implements(ICmdArgumentsSyntax)
-                name = self._name
+                name = wself._name
+                _name = wself._name
 
                 def arguments(self):
                     return VirtualConsoleArgumentParser()
@@ -87,12 +88,10 @@ def _action_decorator_parametrized(cls):
 
                     return fun(this, self, args)
 
-            arguments_method, object_ = ((cls.arguments, this) if hasattr(cls, 'arguments')
-                                         else (ActionCmd.arguments, self))
-            def arguments_wrapper(self):
-                return arguments_method(object_)
-
-            ActionCmd.arguments = arguments_wrapper
+            if hasattr(cls, 'arguments'):
+                def action_arguments(self):
+                    return cls.arguments(this)
+                ActionCmd.arguments = action_arguments
             return ActionCmd
         return cmd
     return _action_decorator

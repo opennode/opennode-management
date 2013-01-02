@@ -6,7 +6,6 @@ from grokcore.component import context
 from hashlib import sha1
 from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
-from twisted.python import log
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -235,21 +234,23 @@ class CommandView(DefaultView):
                             yield val
             return tokenized_args + list(named_args_filter_and_flatten(args.items()))
 
-        @defer.inlineCallbacks
-        def call_action():
-            from opennode.oms.endpoint.ssh.detached import DetachedProtocol
-            protocol = DetachedProtocol()
-            protocol.interaction = get_interaction(self.context)
-            protocol.path = ['']
-            # XXX: HACK: TODO: should use configuration here instead!
-            protocol.use_security_proxy = False
-            cmd = self.context.cmd(protocol)
-            if ICmdArgumentsSyntax.providedBy(cmd):
-                parser = cmd.arguments()
-            args = parser.parse_args(convert_args(request.args))
-            yield cmd.execute(args)
-            request.write(json.dumps({"status": "ok"}))
+        from opennode.oms.endpoint.ssh.detached import DetachedProtocol
+
+        protocol = DetachedProtocol()
+        protocol.interaction = get_interaction(self.context)
+        protocol.path = ['']
+        # XXX: HACK: TODO: should use configuration here instead!
+        protocol.use_security_proxy = False
+
+        cmd = self.context.cmd(protocol)
+
+        if ICmdArgumentsSyntax.providedBy(cmd):
+            parser = cmd.arguments()
+        args = parser.parse_args(convert_args(request.args))
+        pid = cmd.execute(args)
+        def get_pid(d):
+            request.write(json.dumps({"status": "ok", 'pid': d}))
             request.finish()
 
-        call_action()
+        pid.addCallback(get_pid)
         return NOT_DONE_YET
