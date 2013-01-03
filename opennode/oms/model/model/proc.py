@@ -245,13 +245,8 @@ def registered_process(procname, get_subject, defer_to_thread=False):
                 returnValue(pid)
 
             if defer_to_thread:
-                d = deferToThread(f, self, *args, **kwargs)
-                deferred = register(d)
-                return deferred
+                return register(deferToThread(f, self, *args, **kwargs))
             else:
-                d = f(self, *args, **kwargs)
-                deferred = register(d)
-                deferred.addCallback(d.callback)
-                return deferred
+                return register(f(self, *args, **kwargs))
         return wrapper
     return wrap
