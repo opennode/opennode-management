@@ -28,6 +28,7 @@ from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.schema import Path, get_schema_fields, model_to_dict
 from opennode.oms.model.traversal import canonical_path
+from opennode.oms.security.principals import effective_principals
 from opennode.oms.zodb import db
 
 
@@ -38,6 +39,7 @@ class NoCommand(Cmd):
 
     def __call__(self, *args):
         """Just do nothing."""
+
 
 class CommonArgs(Subscription):
     """Just an example of common args, not actually sure that -v is needed in every command."""
@@ -919,3 +921,28 @@ class EditCmd(Cmd):
                 form.write_errors(to=self)
 
             transaction.commit()
+
+
+class IdCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
+    command('id')
+
+    @db.ro_transact
+    def subject(self, args):
+        return tuple()
+
+    def arguments(self):
+        return VirtualConsoleArgumentParser()
+
+    def execute(self, args):
+        interaction = self.protocol.interaction
+        for participation in interaction.participations:
+            user = participation.principal
+            groups = user.groups
+            self.write('user: %s\n'
+                       'groups: %s\n'
+                       'effective_principals: %s\n' %
+                       (user.id,
+                        ' '.join(map(str, groups)),
+                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
