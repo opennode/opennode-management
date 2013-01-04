@@ -11,9 +11,7 @@ class Log(ReadonlyContainer):
     __contains__ = ILogContainer
     __name__ = 'log'
 
-    _items = property(lambda self: {
-        'news': self.news,
-        })
+    _items = property(lambda self: {'news': self.news})
 
     @property
     def news(self):

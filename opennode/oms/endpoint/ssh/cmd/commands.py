@@ -8,6 +8,7 @@ import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
+from twisted.python import log
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -949,3 +950,36 @@ class IdCmd(Cmd):
                        (user.id,
                         ' '.join(map(str, groups)),
                         ' '.join(map(lambda p: p.id, effective_principals(user)))))
+
+
+class CatLogCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+    command('catlog')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-b', help='Starting line')
+        parser.add_argument('-e', help='Ending line')
+        return parser
+
+    def execute(self, args):
+        from opennode.oms.config import get_config
+        logfilename = get_config().get('logging', 'file')
+
+        if logfilename == 'stdout':
+            log.msg('Configured to log to stdout. Cannot cat to omsh terminal', system='catlog')
+            return
+
+        with open(logfilename, 'rb') as f:
+            lc = 0
+            if args.b is not None:
+                for i in range(int(args.b)):
+                    if not f:
+                        break
+                    f.readline()
+                    lc += 1
+            for line in f:
+                if (args.e is not None and lc >= int(args.e)):
+                    break
+                self.terminal.write(line)
+                lc += 1
