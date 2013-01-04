@@ -4,8 +4,9 @@ import time
 
 from grokcore.component import context
 from hashlib import sha1
-from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
+from twisted.python import log
+from twisted.internet.defer import maybeDeferred
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -224,33 +225,36 @@ class CommandView(DefaultView):
             /bin/ls /some/path /another/path -l --recursive
         """
 
+        def named_args_filter_and_flatten(nargs):
+            for name, vallist in nargs:
+                if name != 'arg':
+                    for val in vallist:
+                        yield name
+                        yield val
+
         def convert_args(args):
             tokenized_args = args.get('arg', [])
-            def named_args_filter_and_flatten(nargs):
-                for name, vallist in nargs:
-                    if name != 'arg':
-                        for val in vallist:
-                            yield name
-                            yield val
             return tokenized_args + list(named_args_filter_and_flatten(args.items()))
 
         from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 
         protocol = DetachedProtocol()
         protocol.interaction = get_interaction(self.context)
-        protocol.path = ['']
-        # XXX: HACK: TODO: should use configuration here instead!
-        protocol.use_security_proxy = False
 
         cmd = self.context.cmd(protocol)
 
         if ICmdArgumentsSyntax.providedBy(cmd):
             parser = cmd.arguments()
         args = parser.parse_args(convert_args(request.args))
-        pid = cmd.execute(args)
-        def get_pid(d):
-            request.write(json.dumps({"status": "ok", 'pid': d}))
+        d = maybeDeferred(cmd.execute, args)
+
+        def get_results(pid, cmd):
+            log.msg(repr(cmd.protocol.terminal.write_buffer), system='command-view')
+            log.msg(repr(cmd.protocol.terminal.write_buffer), system='command-view')
+            request.write(json.dumps({'status': 'ok',
+                                      'pid': pid,
+                                      'stdout': cmd.protocol.terminal.write_buffer}))
             request.finish()
 
-        pid.addCallback(get_pid)
+        d.addCallback(get_results, cmd)
         return NOT_DONE_YET

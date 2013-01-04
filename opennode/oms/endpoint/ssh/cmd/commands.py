@@ -937,6 +937,12 @@ class IdCmd(Cmd):
 
     def execute(self, args):
         interaction = self.protocol.interaction
+        if not interaction:
+            # TODO: HACK
+            # There is a special anonymous role in the Zope Security infrastructure
+            self.write('user: anonymous\n')
+            return
+
         for participation in interaction.participations:
             user = participation.principal
             groups = user.groups

@@ -6,6 +6,10 @@ class DetachedProtocol(object):
 
     def __init__(self):
         self.terminal = self
+        self.path = ['']
+        self.use_security_proxy = False
+        self.write_buffer = []
 
     def write(self, *args, **kwargs):
-        log.msg("SYSLOG: %s" % args, system='ssh-detached', **kwargs)
+        self.write_buffer.append(''.join(map(str, args)))
+        log.msg("DETACHED: %s" % self.write_buffer, system='omsh-detached', **kwargs)
