@@ -241,7 +241,7 @@ def registered_process(procname, get_subject, defer_to_thread=False):
 
                 pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))))
                 log.msg('Registered %s as process %s: %s %s' %
-                        (args, pid, name, tuple(map(str, subj))), system='proc')
+                        (self, pid, name, tuple(map(str, subj))), system='proc')
                 returnValue(pid)
 
             if defer_to_thread:
