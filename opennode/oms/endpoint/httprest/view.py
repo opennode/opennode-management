@@ -6,6 +6,7 @@ from grokcore.component import context
 from hashlib import sha1
 from twisted.web.server import NOT_DONE_YET
 from twisted.python import log
+from twisted.internet import reactor
 from twisted.internet.defer import maybeDeferred
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
@@ -248,13 +249,14 @@ class CommandView(DefaultView):
         args = parser.parse_args(convert_args(request.args))
         d = maybeDeferred(cmd.execute, args)
 
-        def get_results(pid, cmd):
-            log.msg(repr(cmd.protocol.terminal.write_buffer), system='command-view')
-            log.msg(repr(cmd.protocol.terminal.write_buffer), system='command-view')
+        def write_results(pid, cmd):
+            log.msg('Called %s got result: pid(%s) term writes=%s' % (
+                cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
             request.write(json.dumps({'status': 'ok',
                                       'pid': pid,
                                       'stdout': cmd.protocol.terminal.write_buffer}))
             request.finish()
 
-        d.addCallback(get_results, cmd)
+
+        d.addCallback(lambda pid: reactor.callFromThread(write_results, pid, cmd))
         return NOT_DONE_YET

@@ -117,10 +117,8 @@ class Cmd(object):
     def write(self, *args):
         """Ensure that all writes are serialized regardless if the command is executing in another thread.
         """
-        if not isInIOThread():
-            reactor.callFromThread(self.terminal.write, *args)
-        else:
-            self.terminal.write(*args)
+        deferredMethod = (reactor.callFromThread if not isInIOThread() else defer.maybeDeferred)
+        return deferredMethod(self.terminal.write, *args)
 
     def traverse_full(self, path):
         if path.startswith('/'):
