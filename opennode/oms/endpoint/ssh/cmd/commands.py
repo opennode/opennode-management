@@ -967,19 +967,26 @@ class CatLogCmd(Cmd):
         logfilename = get_config().get('logging', 'file')
 
         if logfilename == 'stdout':
-            log.msg('Configured to log to stdout. Cannot cat to omsh terminal', system='catlog')
+            log.msg('System is configured to log to stdout. Cannot cat to omsh terminal', system='catlog')
             return
 
         with open(logfilename, 'rb') as f:
             lc = 0
             if args.b is not None:
-                for i in range(int(args.b)):
+                begin = int(args.b)
+                for i in xrange(begin):
                     if not f:
                         break
                     f.readline()
                     lc += 1
+
+            end = int(args.e) if args.e is not None else None
+
+            linebuf = []
             for line in f:
-                if (args.e is not None and lc >= int(args.e)):
+                if end is not None and lc >= end:
                     break
-                self.terminal.write(line)
+                linebuf.append(line)
                 lc += 1
+
+            map(self.terminal.write, linebuf)
