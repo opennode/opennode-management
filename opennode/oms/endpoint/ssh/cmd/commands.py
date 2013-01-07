@@ -938,8 +938,7 @@ class IdCmd(Cmd):
     def execute(self, args):
         interaction = self.protocol.interaction
         if not interaction:
-            # FIXME: HACK There is a special anonymous role in OMS
-            return self.write('user: anonymous\n')
+            return self.write('user: oms.anonymous\n')
 
         for participation in interaction.participations:
             user = participation.principal
