@@ -5,7 +5,7 @@ from collections import OrderedDict
 from functools import wraps
 
 from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
-from twisted.internet.defer import returnValue, maybeDeferred, inlineCallbacks, succeed
+from twisted.internet.defer import returnValue, maybeDeferred, inlineCallbacks
 from twisted.internet.threads import deferToThread
 from twisted.python import log
 from zope import schema
