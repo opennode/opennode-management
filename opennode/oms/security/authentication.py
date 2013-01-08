@@ -51,16 +51,16 @@ class PamAuthChecker(object):
 
     def requestAvatarId(self, credentials):
         if pam.authenticate(credentials.username, credentials.password):
-            print '[auth][pam] Successful login with PAM for', credentials.username
+            log.msg('Successful login with PAM for %s' % credentials.username, system='auth-pam')
             auth = getUtility(IAuthentication, context=None)
             oms_user = User(credentials.username)
             oms_user.groups.extend(get_linux_groups_for_user(credentials.username))
-            print '[auth][pam] Adding user groups: ', ', '.join(oms_user.groups)
+            log.msg(' Adding user groups: %s' % ', '.join(oms_user.groups), system='auth-pam')
             for g in get_linux_groups_for_user(credentials.username):
                 auth.registerPrincipal(Group(g))
             auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
-        print '[auth][pam] Authentication failed with PAM for', credentials.username
+        log.msg(' Authentication failed with PAM for %s' % credentials.username, system='auth-pam')
         return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
 
@@ -80,8 +80,8 @@ class AuthenticationUtility(GlobalUtility):
             return system_user
         elif id in self.principals:
             return self.principals[id]
-        print ('[auth] getPrincipal %s not in (None, %s, %s). Defaulting to anonymous' % (
-            id, system_user.id, self.principals.keys()))
+        log.msg('getPrincipal %s not in (None, %s, %s). Defaulting to anonymous' % (
+            id, system_user.id, self.principals.keys()), system='auth')
         # default to anonymous if nothing more specific is found
         return self.principals['oms.anonymous']
 
@@ -127,7 +127,7 @@ def setup_roles(event):
 
 
 def reload_roles(stream):
-    print "[auth] (Re)Loading OMS permission definitions"
+    log.msg("(Re)Loading OMS permission definitions", system='auth')
     for i in stream:
         nick, role, permissions = i.split(':', 4)
         oms_role = Role(role, nick)
@@ -144,8 +144,8 @@ def setup_groups(event):
 
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
-        print ("[auth] Groups file doesn't exist, generating a default groups file, "
-               "use `bin/groups` to customize it")
+        log.msg("Groups file doesn't exist, generating a default groups file, "
+                "use `bin/groups` to customize it", system='auth')
         with closing(open(groups_file, 'w')) as f:
             f.write(pkg_resources.resource_stream(__name__, os.path.join('../../../', 'oms_groups')).read())
 
@@ -154,7 +154,7 @@ def setup_groups(event):
 
 
 def reload_groups(stream):
-    print "(Re)Loading OMS groups definitions"
+    log.msg("(Re)Loading OMS groups definitions", system='auth')
 
     auth = queryUtility(IAuthentication)
 
@@ -162,7 +162,7 @@ def reload_groups(stream):
         try:
             group, roles = i.split(':', 2)
         except ValueError:
-            log.err("Invalid groups file format", system='auth')
+            log.msg("Invalid groups file format", system='auth')
         else:
             oms_group = Group(group.strip())
             auth.registerPrincipal(oms_group)
@@ -174,7 +174,6 @@ def reload_groups(stream):
 
 @subscribe(IApplicationInitializedEvent)
 def setup_permissions(event):
-
     if event.test:
         reload_users('')
         return
@@ -200,7 +199,7 @@ def create_special_principals():
 
 
 def reload_users(stream):
-    print "(Re)Loading OMS users definitions"
+    log.msg("(Re)Loading OMS users definitions", system='auth')
 
     create_special_principals()
     auth = queryUtility(IAuthentication)
@@ -209,7 +208,7 @@ def reload_users(stream):
         try:
             user, _, groups = i.split(':', 3)
         except ValueError:
-            log.err("Invalid password file format", system='auth')
+            log.msg("Invalid password file format", system='auth')
         else:
             oms_user = User(user.strip())
             for group in groups.split(','):

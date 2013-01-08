@@ -41,9 +41,9 @@ def protocolInlineCallbacks(fun):
 
             yield defer.inlineCallbacks(fun)(self, *args, **kwargs)
         except Exception as e:
-            print "[protocol] got exception while %s: %s" %  (fun, e)
+            log.msg("got exception while %s: %s" %  (fun, e), system='protocol')
             if get_config().getboolean('debug', 'print_exceptions'):
-                traceback.print_exc()
+                log.err(system='protocol')
 
         execution_sub_protocol = self.sub_protocol
         self.sub_protocol = old_sub_protocol
@@ -147,8 +147,7 @@ class OmsShellProtocol(InteractiveTerminal):
             self.print_prompt()
             return
         except Exception as e:
-            log.msg("Got exception parsing '%s'" % (line), system='ssh')
-            log.err(system='ssh')
+            log.msg("Got exception parsing '%s'" % (line), system='protocol')
             self.terminal.write(''.join(traceback.format_exception(*sys.exc_info())))
             return
 
@@ -171,13 +170,13 @@ class OmsShellProtocol(InteractiveTerminal):
                 msg = "accessing %s's attribute '%s' requires @%s right" % e.message
             self.terminal.write("Permission denied: %s\n" % msg)
         except Exception as e:
-            self.terminal.write("Command returned an unhandled error: %s\n" % e)
             self.last_error = (line, sys.exc_info())
-            log.msg("Got exception executing '%s': %s" % self.last_error, system='ssh')
+            log.msg("Got exception executing '%s': %s" % self.last_error, system='protocol')
 
             if get_config().getboolean('debug', 'print_exceptions'):
                 traceback.print_tb(self.last_error[1][2])
 
+            self.terminal.write("Command returned an unhandled error: %s\n" % e)
             self.terminal.write("type last_error for more details\n")
 
     def _command_completed(self, *args):

@@ -8,6 +8,7 @@ import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer
+from twisted.python import log
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -28,6 +29,7 @@ from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.schema import Path, get_schema_fields, model_to_dict
 from opennode.oms.model.traversal import canonical_path
+from opennode.oms.security.principals import effective_principals
 from opennode.oms.zodb import db
 
 
@@ -38,6 +40,7 @@ class NoCommand(Cmd):
 
     def __call__(self, *args):
         """Just do nothing."""
+
 
 class CommonArgs(Subscription):
     """Just an example of common args, not actually sure that -v is needed in every command."""
@@ -919,3 +922,71 @@ class EditCmd(Cmd):
                 form.write_errors(to=self)
 
             transaction.commit()
+
+
+class IdCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
+    command('id')
+
+    @db.ro_transact
+    def subject(self, args):
+        return tuple()
+
+    def arguments(self):
+        return VirtualConsoleArgumentParser()
+
+    def execute(self, args):
+        interaction = self.protocol.interaction
+        if not interaction:
+            return self.write('user: oms.anonymous\n')
+
+        for participation in interaction.participations:
+            user = participation.principal
+            groups = user.groups
+            self.write('user: %s\n'
+                       'groups: %s\n'
+                       'effective_principals: %s\n' %
+                       (user.id,
+                        ' '.join(map(str, groups)),
+                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
+
+
+class CatLogCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+    command('catlog')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('-b', help='Starting line')
+        parser.add_argument('-e', help='Ending line')
+        return parser
+
+    def execute(self, args):
+        from opennode.oms.config import get_config
+        logfilename = get_config().get('logging', 'file')
+
+        if logfilename == 'stdout':
+            log.msg('System is configured to log to stdout. Cannot cat to omsh terminal', system='catlog')
+            return
+
+        with open(logfilename, 'rb') as f:
+            lc = 0
+            if args.b is not None:
+                begin = int(args.b)
+                for i in xrange(begin):
+                    if not f:
+                        break
+                    f.readline()
+                    lc += 1
+
+            end = int(args.e) if args.e is not None else None
+
+            linebuf = []
+            for line in f:
+                if end is not None and lc >= end:
+                    break
+                linebuf.append(line)
+                lc += 1
+
+            map(self.terminal.write, linebuf)
