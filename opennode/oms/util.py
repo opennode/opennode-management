@@ -9,6 +9,7 @@ import zope.interface
 from zope.component import getSiteManager, implementedBy
 from zope.interface import classImplements
 from twisted.internet import defer, reactor
+from twisted.python import log
 from twisted.python.failure import Failure
 
 from opennode.oms.config import get_config
@@ -144,7 +145,8 @@ def blocking_yield(deferred, timeout=None):
 
 def threaded(fun):
     """Helper decorator to quickly turn a function in a threaded function using a newly allocated thread,
-    mostly useful during debugging/profiling in order to see if there are any queuing issues in the threadpools.
+    mostly useful during debugging/profiling in order to see if there are any queuing issues in the
+    threadpools.
 
     """
 
@@ -158,7 +160,7 @@ def threaded(fun):
 def trace(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
-        print "[trace]", fun, args, kwargs
+        log.msg('%s %s %s' % (fun, args, kwargs), system='trace')
         return fun(*args, **kwargs)
     return wrapper
 
@@ -196,14 +198,13 @@ def exception_logger(fun):
             if isinstance(res, defer.Deferred):
                 @res
                 def on_error(failure):
-                    print "[debug] Got unhandled exception", failure.getErrorMessage()
+                    log.msg("Got unhandled exception: %s" % failure.getErrorMessage(), system='debug')
                     if get_config().getboolean('debug', 'print_exceptions'):
-                        print "[debug] traceback: ", failure.getTraceback(True)
+                        log.err(failure, system='debug')
             return res
         except Exception:
             if get_config().getboolean('debug', 'print_exceptions'):
-                import traceback
-                traceback.print_exc()
+                log.err(system='debug')
             raise
     return wrapper
 
@@ -270,7 +271,10 @@ def timeout(secs):
             timesUp = reactor.callLater(secs, timeoutD.callback, None)
 
             try:
-                rawResult, timeoutResult = yield defer.DeferredList([rawD, timeoutD], fireOnOneCallback=True, fireOnOneErrback=True, consumeErrors=True)
+                rawResult, timeoutResult = yield defer.DeferredList([rawD, timeoutD],
+                                                                    fireOnOneCallback=True,
+                                                                    fireOnOneErrback=True,
+                                                                    consumeErrors=True)
             except defer.FirstError, e:
                 #Only rawD should raise an exception
                 assert e.index == 0

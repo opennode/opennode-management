@@ -61,7 +61,9 @@ def gen_config_file_names(module, name):
     """
 
     base_dir = os.path.dirname(os.path.dirname(module.__path__[0]))
-    return [i % name for i in ['%s/opennode-%%s.conf' % base_dir, './opennode-%s.conf', '/etc/opennode/opennode-%s.conf']]
+    return [i % name for i in ['%s/opennode-%%s.conf' % base_dir,
+                               './opennode-%s.conf',
+                               '/etc/opennode/opennode-%s.conf']]
 
 
 class OmsBaseConfig(ConfigParser):
@@ -119,7 +121,8 @@ class OmsConfig(OmsBaseConfig):
 
     def update(self, config_filenames=NO_DEFAULT):
         if config_filenames == self.NO_DEFAULT:
-            conf_requirements = [i for i in querySubscriptions(object(), IRequiredConfigurationFiles) if type(i) not in _loaded_config_requirements]
+            conf_requirements = [i for i in querySubscriptions(object(), IRequiredConfigurationFiles)
+                                 if type(i) not in _loaded_config_requirements]
 
             config_filenames = []
             for i in [i.config_file_names() for i in conf_requirements]:
