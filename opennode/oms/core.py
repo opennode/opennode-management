@@ -47,6 +47,8 @@ def deferred_call(self, fun):
         return self.addErrback(fun)
     else:
         raise TypeError("Callable name needs to be either 'on_success' or 'on_error'")
+
+
 Deferred.__call__ = deferred_call
 
 

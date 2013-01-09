@@ -2,6 +2,7 @@
 # credit to Goncalo Rodrigues on Tue, 18 Nov 2003 (PSF)
 
 from twisted.python.threadable import isInIOThread
+from twisted.python import log
 from twisted.internet import defer
 
 from opennode.oms.config import get_config
@@ -17,7 +18,8 @@ def make_persistent_proxy(res, context={}):
         return None
     if isinstance(res, type):
         return res
-    if isinstance(res, basestring) or isinstance(res, int) or isinstance(res, float) or isinstance(res, defer.Deferred):
+    if any((isinstance(res, basestring), isinstance(res, int), isinstance(res, float),
+           isinstance(res, defer.Deferred))):
         return res
 
     if inspect.isroutine(res) or res.__class__ == ([].__str__).__class__:
@@ -45,7 +47,8 @@ def get_peristent_context(obj):
 
 
 def forbidden_outside_transaction(self, name):
-    return name not in ['__class__', '__providedBy__', '__implements__', '__conform__'] and hasattr(object.__getattribute__(self, "_obj"), '_p_jar')
+    return (name not in ['__class__', '__providedBy__', '__implements__', '__conform__'] and
+            hasattr(object.__getattribute__(self, "_obj"), '_p_jar'))
 
 
 def ensure_fixed_up(self, name, op):
@@ -55,9 +58,10 @@ def ensure_fixed_up(self, name, op):
         return
 
     if isInIOThread():
-        msg = "Cannot %s '%s' attribute from persistent proxy object '%s' while in the main thread" % (op, name, self)
+        msg = ("Cannot %s '%s' attribute from persistent proxy object '%s' "
+               "while in the main thread" % (op, name, self))
         if get_config().getboolean('debug', 'print_exceptions'):
-            print msg
+            log.msg(msg, system='zodb')
             import traceback
             traceback.print_stack()
         raise Exception(msg)
@@ -71,8 +75,8 @@ def ensure_fixed_up(self, name, op):
 
 
 class PersistentProxy(object):
-    """This is a proxy object which tracks attribute acces when the persistent object is outsite a living transaction
-    (e.g. when returned from a db.transact deferred).
+    """This is a proxy object which tracks attribute acces when the persistent object is outsite a living
+    transaction (e.g. when returned from a db.transact deferred).
     The access will cause an exception if it's done in the main thread.
     Access done in a zodb thread will cause the object to be reloaded in the current transaction.
 

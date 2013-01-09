@@ -6,9 +6,10 @@ from zope.component import queryAdapter
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
                                                VirtualConsoleArgumentParser, ArgumentParsingError,
                                                PartialVirtualConsoleArgumentParser)
+from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
-from opennode.oms.zodb import db
+from opennode.oms.zodb import db, proxy
 from opennode.oms.zodb.extractors import IContextExtractor
 
 
@@ -137,14 +138,31 @@ class Cmd(object):
 
     def subject(self, args):
         """ Provide the subject of the command (usually free arguments and/or current directory path)"""
+        return tuple()
 
     @defer.inlineCallbacks
     def subject_from_raw(self, args):
         """Subclasses should override this if they need raw arguments."""
         parsed = yield defer.maybeDeferred(self.parse_args, args)
-        subject = yield self.subject(parsed)
+        subject = yield defer.maybeDeferred(self.subject, parsed)
         defer.returnValue(subject)
 
+    @defer.inlineCallbacks
+    def register(self, d, args, command_line, ptid=None):
+        subj = yield defer.maybeDeferred(self.subject_from_raw, args)
+
+        # XXX: for some reason, when I let subject to be a generator instance, I get an empty
+        # generator in the ComputeTasks container, while it magically works when I save it as a tuple
+        # under item.subject
+        if type(subj) is proxy.PersistentProxy:
+            subj = subj.remove_persistent_proxy()
+        assert type(subj) is tuple, 'subject of \'%s\' must be a tuple, got %s' % (self.name, type(subj))
+
+        self.pid = Proc.register(d, subj, command_line, ptid)
+        defer.returnValue(self.pid)
+
+    def unregister(self):
+        Proc.unregister(self.pid)
 
 class CommandContextExtractor(Subscription):
     implements(IContextExtractor)

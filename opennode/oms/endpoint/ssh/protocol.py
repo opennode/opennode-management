@@ -142,6 +142,9 @@ class OmsShellProtocol(InteractiveTerminal):
 
         try:
             command, cmd_args = yield self.parse_line(line)
+            self.sub_protocol = CommandExecutionSubProtocol(self)
+            deferred = defer.maybeDeferred(command, *cmd_args)
+            yield command.register(deferred, cmd_args, line, self.tid)
         except CommandLineSyntaxError as e:
             self.terminal.write("Syntax error: %s\n" % (e.message))
             self.print_prompt()
@@ -150,15 +153,6 @@ class OmsShellProtocol(InteractiveTerminal):
             log.msg("Got exception parsing '%s'" % (line), system='protocol')
             self.terminal.write(''.join(traceback.format_exception(*sys.exc_info())))
             return
-
-        try:
-            command_subject = yield command.subject_from_raw(cmd_args)
-        except cmdline.ArgumentParsingError:
-            return
-
-        self.sub_protocol = CommandExecutionSubProtocol(self)
-        deferred = defer.maybeDeferred(command, *cmd_args)
-        Proc.register(deferred, command_subject, line, self.tid)
 
         try:
             yield deferred

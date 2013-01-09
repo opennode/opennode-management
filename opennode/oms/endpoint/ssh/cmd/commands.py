@@ -85,7 +85,7 @@ class ChangeDirCmd(Cmd):
         # Recompute new absolute path if physical path was requested.
         self._resolve_physical_path(args)
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple((self.current_obj, self.traverse(args.path if args.path else self.path[0])))
 
@@ -186,7 +186,7 @@ class ListDirContentsCmd(Cmd):
         else:
             self._do_ls(self.current_obj, recursive=args.R)
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         if args.paths:
             return tuple(self.traverse(path) for path in args.paths)
@@ -263,7 +263,7 @@ class CatObjectCmd(Cmd):
         parser.add_argument('-H', action='store_true')
         return parser
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
@@ -350,7 +350,7 @@ class RemoveCmd(Cmd):
                 if not args.f:
                     raise
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         def get_subjects():
             for path in args.paths:
@@ -402,7 +402,7 @@ class MoveCmd(Cmd):
 
         transaction.commit()
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
@@ -417,7 +417,7 @@ class SetAttrCmd(Cmd):
         parser.add_argument('path')
         return parser
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple((self.traverse(args.path),))
 
@@ -480,7 +480,7 @@ class CreateObjCmd(Cmd):
         else:
             form.write_errors(to=self)
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return self.current_obj
 
@@ -574,7 +574,7 @@ class LinkCmd(Cmd):
 
         dst_dir.add(Symlink(os.path.basename(args.dst), src_obj))
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple((self.traverse(args.src), self.traverse(args.dst)))
 
@@ -612,7 +612,7 @@ class FileCmd(Cmd):
         ifaces = ', '.join(obj.get_features())
         return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
@@ -898,7 +898,7 @@ class EditCmd(Cmd):
 
         yield self._save(args, old, updated)
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple((self.traverse(args.path),))
 
@@ -929,7 +929,7 @@ class IdCmd(Cmd):
 
     command('id')
 
-    @db.ro_transact
+    @db.ro_transact(proxy=False)
     def subject(self, args):
         return tuple()
 

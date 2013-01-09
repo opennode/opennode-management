@@ -5,9 +5,8 @@ import time
 from grokcore.component import context
 from hashlib import sha1
 from twisted.web.server import NOT_DONE_YET
-from twisted.python import log
-from twisted.internet import reactor
-from twisted.internet.defer import maybeDeferred
+from twisted.python import log, failure
+from twisted.internet import defer, reactor, threads
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -15,7 +14,7 @@ from zope.security.proxy import removeSecurityProxy
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax
+from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
@@ -228,7 +227,7 @@ class CommandView(DefaultView):
 
         def named_args_filter_and_flatten(nargs):
             for name, vallist in nargs:
-                if name != 'arg':
+                if name not in ('arg', 'asynchronous'):
                     for val in vallist:
                         yield name
                         yield val
@@ -237,26 +236,37 @@ class CommandView(DefaultView):
             tokenized_args = args.get('arg', [])
             return tokenized_args + list(named_args_filter_and_flatten(args.items()))
 
-        from opennode.oms.endpoint.ssh.detached import DetachedProtocol
-
         protocol = DetachedProtocol()
-        protocol.interaction = get_interaction(self.context)
+        protocol.interaction = get_interaction(self.context) or request.interaction
 
+        args = convert_args(request.args)
         cmd = self.context.cmd(protocol)
 
-        if ICmdArgumentsSyntax.providedBy(cmd):
-            parser = cmd.arguments()
-        args = parser.parse_args(convert_args(request.args))
-        d = maybeDeferred(cmd.execute, args)
+        def call_command(cmd, args):
+            threads.blockingCallFromThread(reactor, cmd, *args)
+            cmd.unregister()
+
+        pid = threads.blockingCallFromThread(reactor, cmd.register, None, args,
+                                             '%s %s' % (request.path, args))
+        d = threads.deferToThread(call_command, cmd, args)
 
         def write_results(pid, cmd):
             log.msg('Called %s got result: pid(%s) term writes=%s' % (
-                cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
-            request.write(json.dumps({'status': 'ok',
-                                      'pid': pid,
+                    cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
+            request.write(json.dumps({'status': 'ok', 'pid': pid,
                                       'stdout': cmd.protocol.terminal.write_buffer}))
             request.finish()
 
-
-        d.addCallback(lambda pid: reactor.callFromThread(write_results, pid, cmd))
-        return NOT_DONE_YET
+        if request.args.get('asynchronous', []):
+            reactor.callFromThread(write_results, pid, cmd)
+        else:
+            d.addCallback(lambda r: reactor.callFromThread(write_results, pid, cmd))
+            def errhandler(e, pid, cmd):
+                e.trap(Exception)
+                log.msg('Error calling %s (%s)' % (cmd, pid), system='command-view')
+                log.err(e, system='command-view')
+                request.write(json.dumps({'status': 'err', 'pid': pid,
+                                          'stdout': str(e)}))
+                request.finish()
+            d.addErrback(errhandler, pid, cmd)
+            return NOT_DONE_YET

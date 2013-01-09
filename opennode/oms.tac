@@ -3,8 +3,8 @@ from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory
 from twisted.cred import portal
-from twisted.internet import reactor
-from twisted.python.log import ILogObserver
+from twisted.internet import reactor, defer
+from twisted.python import log
 from twisted.web import server
 from zope.component import handle
 
@@ -57,7 +57,8 @@ def create_application():
 
     return application
 
+defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
 
 application = create_application()
 
-application.setComponent(ILogObserver, setup_logging())
+application.setComponent(log.ILogObserver, setup_logging())
