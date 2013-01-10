@@ -5,8 +5,8 @@ import time
 from grokcore.component import context
 from hashlib import sha1
 from twisted.web.server import NOT_DONE_YET
-from twisted.python import log, failure
-from twisted.internet import defer, reactor, threads
+from twisted.python import log
+from twisted.internet import reactor, threads
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -15,6 +15,7 @@ from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
+from opennode.oms.endpoint.ssh.cmdline import ArgumentParsingError
 from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
@@ -246,8 +247,12 @@ class CommandView(DefaultView):
             threads.blockingCallFromThread(reactor, cmd, *args)
             cmd.unregister()
 
-        pid = threads.blockingCallFromThread(reactor, cmd.register, None, args,
+        try:
+            pid = threads.blockingCallFromThread(reactor, cmd.register, None, args,
                                              '%s %s' % (request.path, args))
+        except ArgumentParsingError, e:
+            raise BadRequest(str(e))
+
         d = threads.deferToThread(call_command, cmd, args)
 
         def write_results(pid, cmd):
@@ -262,11 +267,7 @@ class CommandView(DefaultView):
         else:
             d.addCallback(lambda r: reactor.callFromThread(write_results, pid, cmd))
             def errhandler(e, pid, cmd):
-                e.trap(Exception)
-                log.msg('Error calling %s (%s)' % (cmd, pid), system='command-view')
-                log.err(e, system='command-view')
-                request.write(json.dumps({'status': 'err', 'pid': pid,
-                                          'stdout': str(e)}))
-                request.finish()
+                e.trap(ArgumentParsingError)
+                raise BadRequest(str(e))
             d.addErrback(errhandler, pid, cmd)
             return NOT_DONE_YET
