@@ -139,12 +139,8 @@ class OmsShellProtocol(InteractiveTerminal):
     @defer.inlineCallbacks
     def spawn_command(self, line):
         line = line.strip()
-
         try:
             command, cmd_args = yield self.parse_line(line)
-            self.sub_protocol = CommandExecutionSubProtocol(self)
-            deferred = defer.maybeDeferred(command, *cmd_args)
-            yield command.register(deferred, cmd_args, line, self.tid)
         except CommandLineSyntaxError as e:
             self.terminal.write("Syntax error: %s\n" % (e.message))
             self.print_prompt()
@@ -155,6 +151,9 @@ class OmsShellProtocol(InteractiveTerminal):
             return
 
         try:
+            self.sub_protocol = CommandExecutionSubProtocol(self)
+            deferred = defer.maybeDeferred(command, *cmd_args)
+            yield command.register(deferred, cmd_args, line, self.tid)
             yield deferred
         except cmdline.ArgumentParsingError:
             return
@@ -162,6 +161,7 @@ class OmsShellProtocol(InteractiveTerminal):
             msg = e
             if isinstance(e.message, tuple) and len(e.message) == 3:
                 msg = "accessing %s's attribute '%s' requires @%s right" % e.message
+                log.err(system='ssh')
             self.terminal.write("Permission denied: %s\n" % msg)
         except Exception as e:
             self.last_error = (line, sys.exc_info())
