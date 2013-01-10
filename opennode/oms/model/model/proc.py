@@ -2,11 +2,8 @@ from __future__ import absolute_import
 
 import time
 from collections import OrderedDict
-from functools import wraps
 
 from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
-from twisted.internet.defer import returnValue, maybeDeferred, inlineCallbacks
-from twisted.internet.threads import deferToThread
 from twisted.python import log
 from zope import schema
 from zope.component import provideSubscriptionAdapter
@@ -138,7 +135,9 @@ class Proc(ReadonlyContainer):
 
     @classmethod
     def register(cls, deferred, subject, cmdline=None, ptid='1', principal=None):
-        return Proc()._register(deferred, subject, cmdline, ptid, principal=principal)
+        pid = Proc()._register(deferred, subject, cmdline, ptid, principal=principal)
+        log.msg('Registered as process %s: %s %s' % (pid, cmdline, subject), system='proc')
+        return pid
 
     def _register(self, deferred, subject, cmdline, ptid='1', signal_handler=None, principal=None):
         self.next_id += 1
@@ -223,30 +222,3 @@ def start_daemons(event):
         log.msg("Got exception while starting daemons", system='proc')
         if get_config().get_boolean('debug', 'print_exceptions'):
             log.err(e, system='proc')
-
-
-def registered_process(procname, get_subject, defer_to_thread=False):
-    def wrap(f):
-        @wraps(f)
-        def wrapper(self, *args, **kwargs):
-            @inlineCallbacks
-            def register(d):
-                subj = yield maybeDeferred(get_subject, self, *args, **kwargs)
-                name = (yield procname(self, *args)) if hasattr(procname, '__call__') else procname
-
-                # XXX: for some reason, when I let subject to be a generator instance, I get an empty
-                # generator in the ComputeTasks container, while it magically works when I save it as a tuple
-                # under item.subject
-                assert type(subj) is tuple, 'subject of \'%s\' must be a tuple, got %s' % (name, type(subj))
-
-                pid = Proc.register(d, subj, '%s %s' % (name, tuple(map(str, subj))))
-                log.msg('Registered %s as process %s: %s %s' %
-                        (self, pid, name, tuple(map(str, subj))), system='proc')
-                returnValue(pid)
-
-            if defer_to_thread:
-                return register(deferToThread(f, self, *args, **kwargs))
-            else:
-                return register(f(self, *args, **kwargs))
-        return wrapper
-    return wrap

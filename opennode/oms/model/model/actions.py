@@ -12,7 +12,6 @@ class ActionsContainer(ReadonlyContainer):
     """Implements a dynamic view containing actions that can be performed on a given object.
 
     """
-
     __name__ = 'actions'
 
     def __init__(self, parent):
@@ -35,6 +34,8 @@ class Action(Subscription):
     implements(ICommand)
     baseclass()
 
+    def subject(self, args):
+        return tuple()
 
 class action(martian.Directive):
     """Use this directive on adapters used to define actions for specific model objects."""
@@ -54,7 +55,6 @@ class ActionGrokker(martian.ClassGrokker):
         if getattr(class_, 'cmd', None) is None:
             class_.cmd = _action_decorator_parametrized(class_)(class_.execute)
             class_._name = action
-
         return True
 
 
@@ -63,29 +63,29 @@ def _action_decorator_parametrized(cls):
         """
         Decorate a method so that it behaves as a property which returns a Cmd object.
         """
+        from opennode.oms.endpoint.ssh.cmd.base import Cmd
+        from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
+        from opennode.oms.zodb import db
+        from opennode.oms.zodb.proxy import make_persistent_proxy
+
         @property
         def cmd(wself):
-            from opennode.oms.endpoint.ssh.cmd.base import Cmd
-            from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
-
             this = wself
 
             class ActionCmd(Cmd):
                 implements(ICmdArgumentsSyntax)
                 name = wself._name
                 _name = wself._name
+                aliases = None
+                subject = wself.subject
 
                 def arguments(self):
                     return VirtualConsoleArgumentParser()
 
                 def execute(self, args):
-                    from opennode.oms.zodb import db
-                    from opennode.oms.zodb.proxy import make_persistent_proxy
-
                     # we obtained `this` before the action exited from the db.transact decorator
                     # thus we need to reapply the db proxy
                     this.context = make_persistent_proxy(this.context, db.context(self))
-
                     return fun(this, self, args)
 
             if hasattr(cls, 'arguments'):

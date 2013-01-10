@@ -32,7 +32,8 @@ def run():
 
     install_parser.add_argument('plugin')
     install_parser.add_argument('-d', help="Path to plugin checkout")
-    install_parser.add_argument('-n', action='store_true', help="Update to newest dependencies (might be slow)")
+    install_parser.add_argument('-n', action='store_true',
+                                help="Update to newest dependencies (might be slow)")
     install_parser.set_defaults(func=install_plugin)
 
     uninstall_parser.add_argument('plugin')
@@ -104,7 +105,8 @@ def list_plugins(args):
 
 
 def search_plugins(args):
-    """Searches for eggs prefixed with `opennode.oms.` in the egg repository specified with `--find-links` or the default repo specified in the buildout conf."""
+    """Searches for eggs prefixed with `opennode.oms.` in the egg repository specified with `--find-links` or
+    the default repo specified in the buildout conf."""
 
     if not args.plugin:
         args.plugin = ''

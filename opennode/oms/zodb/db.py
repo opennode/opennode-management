@@ -95,17 +95,14 @@ def init(test=False):
 
         if storage_type == 'zeo':
             from ZODB import DB
-
             storage = ClientStorage('%s/socket' % get_db_dir())
             _db = DB(storage)
         elif storage_type == 'embedded':
             from ZODB import DB
-
             storage = FileStorage('%s/data.fs' % get_db_dir())
             _db = DB(storage)
         elif storage_type == 'memory':
             from ZODB.tests.util import DB
-
             _db = DB()
         else:
             raise Exception("Unknown storage type '%s'" % storage_type)
@@ -156,7 +153,6 @@ def assert_transact(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         if isInIOThread() and not _testing:
-            log.err('The ZODB should not be accessed from the main thread', system='db')
             raise Exception('The ZODB should not be accessed from the main thread')
         return fun(*args, **kwargs)
     return wrapper
@@ -201,7 +197,7 @@ def transact(fun):
                 transaction.abort()
                 return
             except:
-                log.err('rolling back', system='db')
+                log.msg('rolling back', system='db')
                 trace("ABORTING", t)
                 transaction.abort()
                 raise
@@ -233,10 +229,10 @@ def transact(fun):
     def wrapper(*args, **kwargs):
         if not _testing:
             return deferToThreadPool(reactor, _threadpool,
-                                     lambda: run_in_tx(fun, *args, **kwargs))
+                                     run_in_tx, fun, *args, **kwargs)
         else:
             # No threading during testing
-            return defer.succeed(run_in_tx(fun, *args, **kwargs))
+            return defer.execute(run_in_tx, fun, *args, **kwargs)
     return wrapper
 
 
@@ -283,10 +279,9 @@ def _ro_transact(fun, proxy=True):
     def wrapper(*args, **kwargs):
         if not _testing:
             return deferToThreadPool(reactor, _threadpool,
-                                     lambda: run_in_tx(fun, *args, **kwargs))
+                                     run_in_tx, fun, *args, **kwargs)
         else:
-            # No threading during testing
-            return defer.succeed(run_in_tx(fun, *args, **kwargs))
+            return defer.execute(run_in_tx, fun, *args, **kwargs)
     return wrapper
 
 
@@ -310,19 +305,26 @@ def context(obj):
 
 
 def assert_proxy(obj):
-    if not (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)):
-        print "Should be a db proxy", type(obj), obj
+    if any((not (isinstance(obj, PersistentProxy)), isinstance(obj, basestring), isinstance(obj, int),
+            isinstance(obj, float), isinstance(obj, defer.Deferred))):
+        log.msg("Should be a db proxy %s %s" % (type(obj), obj))
         import traceback
         traceback.print_stack()
-    assert isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)
+    assert any((isinstance(obj, PersistentProxy),
+               isinstance(obj, basestring),
+               isinstance(obj, int),
+               isinstance(obj, float),
+               isinstance(obj, defer.Deferred)))
 
 
 def assert_not_proxy(obj):
-    if (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred)):
-        print "Should not be a db proxy", type(obj), obj
+    if any(isinstance(obj, PersistentProxy), isinstance(obj, basestring), isinstance(obj, int),
+           isinstance(obj, float), isinstance(obj, defer.Deferred)):
+        log.msg("Should be a db proxy %s %s" % (type(obj), obj))
         import traceback
         traceback.print_stack()
-    assert not (isinstance(obj, PersistentProxy) or isinstance(obj, basestring) or isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, defer.Deferred))
+    assert any(not (isinstance(obj, PersistentProxy), isinstance(obj, basestring), isinstance(obj, int),
+                    isinstance(obj, float), isinstance(obj, defer.Deferred)))
 
 
 remove_persistent_proxy = _remove_persistent_proxy

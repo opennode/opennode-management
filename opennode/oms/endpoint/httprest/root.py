@@ -2,8 +2,7 @@ import json
 import zope.security.interfaces
 
 from twisted.internet import defer
-from twisted.python import log
-from twisted.python.failure import Failure
+from twisted.python import log, failure
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
 from zope.component import queryAdapter, getUtility
@@ -15,7 +14,6 @@ from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
-from opennode.oms.zodb.db import RollbackValue
 
 
 class EmptyResponse(Exception):
@@ -146,8 +144,8 @@ class HttpRestServer(resource.Resource):
         except Exception:
             request.setResponseCode(500, "Server Error")
             request.write("%s %s\n\n" % (500, "Server Error"))
-            # TODO: if DEBUG:
-            Failure().printTraceback(request)
+            log.err(system='httprest')
+            failure.Failure().printTraceback(request)
         else:
             # allow views to take full control of output streaming
             if ret != NOT_DONE_YET:
@@ -156,7 +154,7 @@ class HttpRestServer(resource.Resource):
                         return list(obj)  # safeguard against dumping sets
                     if hasattr(obj, '__str__'):
                         return str(obj)
-                    print "RENDERING ERROR, cannot json serialize", obj
+                    log.msg("RENDERING ERROR, cannot json serialize %s" % obj, system='httprest')
                     raise TypeError
 
                 request.write(json.dumps(ret, indent=2, default=render) + '\n')
@@ -242,9 +240,9 @@ class HttpRestServer(resource.Resource):
                 if needs_rw_transaction:
                     return res
                 else:
-                    return RollbackValue(res)
+                    return db.RollbackValue(res)
 
-        raise NotImplemented("method %s not implemented\n" % request.method)
+        raise NotImplementedError("method %s not implemented\n" % request.method)
 
     def get_interaction(self, request, token):
         # TODO: we can quickly disable rest auth

@@ -17,7 +17,6 @@ class FilteredFileLogObserver(FileLogObserver):
     ignored_systems = ['SSHServerTransport', 'SSHService']
 
     def emit(self, eventDict):
-
         system = eventDict.get('system', '')
         message = eventDict.get('message', '')
         if message:
