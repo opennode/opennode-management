@@ -136,7 +136,6 @@ class Proc(ReadonlyContainer):
     @classmethod
     def register(cls, deferred, subject, cmdline=None, ptid='1', principal=None):
         pid = Proc()._register(deferred, subject, cmdline, ptid, principal=principal)
-        #subject_names = tuple(map(str, subject)))
         log.msg('Registered as process %s: %s %s' % (pid, cmdline, subject), system='proc')
         return pid
 
