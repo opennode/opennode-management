@@ -51,10 +51,10 @@ class DaemonProcess(object):
 
     def signal_handler(self, name):
         if name == 'STOP':
-            print "Stopping %s" % self.__name__
+            log.msg("Stopping %s" % self.__name__, system='proc')
             self.paused = True
         elif name == 'CONT':
-            print "Continuing %s" % self.__name__
+            log.msg("Continuing %s" % self.__name__, system='proc')
             self.paused = False
 
 
@@ -136,7 +136,7 @@ class Proc(ReadonlyContainer):
     @classmethod
     def register(cls, deferred, subject, cmdline=None, ptid='1', principal=None):
         pid = Proc()._register(deferred, subject, cmdline, ptid, principal=principal)
-        log.msg('Registered as process %s: %s %s' % (pid, cmdline, subject), system='proc')
+        log.msg('Registered as process %s: %s' % (pid, cmdline), system='proc')
         return pid
 
     def _register(self, deferred, subject, cmdline, ptid='1', signal_handler=None, principal=None):
@@ -151,14 +151,15 @@ class Proc(ReadonlyContainer):
         return new_id
 
     @classmethod
-    def unregister(cls, id):
+    def unregister(cls, id_):
         self = Proc()
-        self.dead_tasks[id] = self.tasks[id]
-        del self.tasks[id]
+        self.dead_tasks[id_] = self.tasks[id_]
+        del self.tasks[id_]
+        log.msg('Unregistered process %s: %s' % (id_, self.dead_tasks[id_].cmdline), system='proc')
 
     @classmethod
-    def _unregister(cls, res, id):
-        cls.unregister(id)
+    def _unregister(cls, res, id_):
+        cls.unregister(id_)
         return res
 
 

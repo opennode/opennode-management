@@ -152,8 +152,10 @@ class OmsShellProtocol(InteractiveTerminal):
 
         try:
             self.sub_protocol = CommandExecutionSubProtocol(self)
-            deferred = defer.maybeDeferred(command, *cmd_args)
+            deferred = defer.Deferred()
             yield command.register(deferred, cmd_args, line, self.tid)
+            cmdd = command(*cmd_args)
+            cmdd.chainDeferred(deferred)
             yield deferred
         except cmdline.ArgumentParsingError:
             return
