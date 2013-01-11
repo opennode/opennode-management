@@ -24,3 +24,4 @@ installer/omsdrc
 .mr.developer.cfg
 build
 .*.swp
+*.orig

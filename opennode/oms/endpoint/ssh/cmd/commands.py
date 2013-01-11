@@ -453,6 +453,10 @@ class CreateObjCmd(Cmd):
     command('mk')
     alias('create')
 
+    @db.ro_transact(proxy=False)
+    def subject(self, args):
+        return tuple((self.current_obj, ))
+
     @db.transact
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
@@ -472,17 +476,14 @@ class CreateObjCmd(Cmd):
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
 
-        form = ApplyRawData(args.keywords, model=model_cls, marker=getattr(self.current_obj, '__contains__', None))
+        form = ApplyRawData(args.keywords, model=model_cls,
+                            marker=getattr(self.current_obj, '__contains__', None))
         if not form.errors:
             obj = form.create()
             obj_id = self.current_obj.add(obj)
             self.write("%s\n" % obj_id)
         else:
             form.write_errors(to=self)
-
-    @db.ro_transact(proxy=False)
-    def subject(self, args):
-        return self.current_obj
 
 
 class SetOrMkCmdDynamicArguments(Adapter):
