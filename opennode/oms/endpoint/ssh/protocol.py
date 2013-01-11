@@ -154,16 +154,16 @@ class OmsShellProtocol(InteractiveTerminal):
             self.sub_protocol = CommandExecutionSubProtocol(self)
             deferred = defer.Deferred()
             yield command.register(deferred, cmd_args, line, self.tid)
-            cmdd = command(*cmd_args)
+            cmdd = defer.maybeDeferred(command, *cmd_args)
             cmdd.chainDeferred(deferred)
             yield deferred
         except cmdline.ArgumentParsingError:
             return
         except Unauthorized as e:
             msg = e
+            log.err(system='ssh')
             if isinstance(e.message, tuple) and len(e.message) == 3:
                 msg = "accessing %s's attribute '%s' requires @%s right" % e.message
-                log.err(system='ssh')
             self.terminal.write("Permission denied: %s\n" % msg)
         except Exception as e:
             self.last_error = (line, sys.exc_info())

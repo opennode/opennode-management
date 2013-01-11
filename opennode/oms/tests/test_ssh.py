@@ -75,6 +75,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('non-existent-command')
         with assert_mock(self.terminal) as t:
             t.write('No such command: non-existent-command\n')
+        assert not self.terminal.method_calls[1][1][0].startswith('Command returned an unhandled error')
 
     @run_in_reactor
     def test_pwd(self):
