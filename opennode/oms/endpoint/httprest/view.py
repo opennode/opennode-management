@@ -233,6 +233,9 @@ class CommandView(DefaultView):
         thus translates to:
 
             /bin/ls /some/path /another/path -l --recursive
+
+        Allows blocking (synchronous) and non-blocking operation using the 'asynchronous' parameter (any
+        value will trigger it). Synchronous operation requires two threads to function.
         """
 
         def named_args_filter_and_flatten(nargs):
