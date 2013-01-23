@@ -20,9 +20,9 @@ from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol, CommandLineSynt
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import Model, Container
 from opennode.oms.tests.util import run_in_reactor, clean_db, assert_mock, no_more_calls, skip, current_call
-from opennode.oms.zodb import db
 from opennode.oms.tests.util import whatever
 from opennode.oms.tests.test_compute import Compute
+from opennode.oms.zodb import db
 
 
 class SshTestCase(unittest.TestCase):
@@ -561,7 +561,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('last_error')
         with assert_mock(self.terminal) as t:
-            assert 'some mock error' in current_call(t).arg
+            assert 'some mock error' in current_call(t).arg, 'Apparently, fail command did not fail'
 
     @run_in_reactor
     def test_suggestion(self):

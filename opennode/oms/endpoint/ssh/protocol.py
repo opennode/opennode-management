@@ -7,7 +7,7 @@ import traceback
 
 from grokcore.component import Subscription, implements, context
 from twisted.conch.insults.insults import ServerProtocol
-from twisted.internet import defer, threads
+from twisted.internet import defer
 from twisted.python import log
 from zope.security.interfaces import ForbiddenAttribute, Unauthorized
 
@@ -157,7 +157,7 @@ class OmsShellProtocol(InteractiveTerminal):
 
             cmdd = defer.maybeDeferred(command, *cmd_args)
             cmdd.chainDeferred(deferred)
-            yield cmdd
+            yield deferred
         except cmdline.ArgumentParsingError:
             return
         except Unauthorized as e:
