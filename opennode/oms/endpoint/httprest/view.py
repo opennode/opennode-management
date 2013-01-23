@@ -1,12 +1,13 @@
 import json
 import os
 import time
+import Queue
 
 from grokcore.component import context
 from hashlib import sha1
 from twisted.web.server import NOT_DONE_YET
 from twisted.python import log
-from twisted.internet import reactor, threads
+from twisted.internet import reactor, threads, defer
 from zope.component import queryAdapter, handle
 from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
@@ -213,6 +214,14 @@ class StreamView(HttpRestView):
 class CommandView(DefaultView):
     context(ICommand)
 
+    def write_results(self, request, pid, cmd):
+        log.msg('Called %s got result: pid(%s) term writes=%s' % (
+                cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
+        request.write(json.dumps({'status': 'ok', 'pid': pid,
+                                  'stdout': cmd.protocol.terminal.write_buffer}))
+        request.finish()
+
+
     def render_PUT(self, request):
         """ Converts arguments into command-line counterparts and executes the omsh command.
 
@@ -242,32 +251,32 @@ class CommandView(DefaultView):
 
         args = convert_args(request.args)
         cmd = self.context.cmd(protocol)
-
-        def call_command(cmd, args):
-            cmd(*args)
-            cmd.unregister()
+        d0 = defer.Deferred()
 
         try:
-            pid = threads.blockingCallFromThread(reactor, cmd.register, None, args,
+            pid = threads.blockingCallFromThread(reactor, cmd.register, d0, args,
                                                  '%s %s' % (request.path, args))
         except ArgumentParsingError, e:
             raise BadRequest(str(e))
 
-        d = threads.deferToThread(call_command, cmd, args)
+        q = Queue.Queue()
+        def execute(cmd, args):
+            log.msg('Executing command...', system='httprest-command')
+            d = defer.maybeDeferred(cmd, *args)
+            log.msg('Deferred returned...', system='httprest-command')
+            d.addBoth(lambda x: log.msg('Ready to put to queue...', system='httprest-command'))
+            d.addBoth(q.put)
+            d.chainDeferred(d0)
 
-        def write_results(pid, cmd):
-            log.msg('Called %s got result: pid(%s) term writes=%s' % (
-                    cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
-            request.write(json.dumps({'status': 'ok', 'pid': pid,
-                                      'stdout': cmd.protocol.terminal.write_buffer}))
-            request.finish()
+        dt = threads.deferToThread(execute, cmd, args)
 
         if request.args.get('asynchronous', []):
-            reactor.callFromThread(write_results, pid, cmd)
+            reactor.callFromThread(self.write_results, request, pid, cmd)
         else:
-            d.addCallback(lambda r: reactor.callFromThread(write_results, pid, cmd))
+            dt.addBoth(lambda r: threads.deferToThread(q.get, True, 60))
+            dt.addCallback(lambda r: reactor.callFromThread(self.write_results, request, pid, cmd))
             def errhandler(e, pid, cmd):
                 e.trap(ArgumentParsingError)
                 raise BadRequest(str(e))
-            d.addErrback(errhandler, pid, cmd)
-            return NOT_DONE_YET
+            dt.addErrback(errhandler, pid, cmd)
+        return NOT_DONE_YET
