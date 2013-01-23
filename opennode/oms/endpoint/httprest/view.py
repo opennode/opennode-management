@@ -244,12 +244,12 @@ class CommandView(DefaultView):
         cmd = self.context.cmd(protocol)
 
         def call_command(cmd, args):
-            threads.blockingCallFromThread(reactor, cmd, *args)
+            cmd(*args)
             cmd.unregister()
 
         try:
             pid = threads.blockingCallFromThread(reactor, cmd.register, None, args,
-                                             '%s %s' % (request.path, args))
+                                                 '%s %s' % (request.path, args))
         except ArgumentParsingError, e:
             raise BadRequest(str(e))
 
