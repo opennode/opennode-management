@@ -1,3 +1,5 @@
+from opennode.oms.config import get_config
+
 from twisted.python import log
 
 class DetachedProtocol(object):
@@ -12,4 +14,5 @@ class DetachedProtocol(object):
 
     def write(self, *args, **kwargs):
         self.write_buffer.append(''.join(map(str, args)))
-        log.msg("DETACHED: %s" % self.write_buffer, system='omsh-detached', **kwargs)
+        if get_config().getboolean('general', 'log_detached', False):
+            log.msg("DETACHED: %s" % self.write_buffer, system='omsh-detached', **kwargs)
