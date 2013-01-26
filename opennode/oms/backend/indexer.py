@@ -1,5 +1,6 @@
 from collections import deque
 from twisted.internet import defer
+from twisted.python import log
 from zope.component import provideSubscriptionAdapter
 from zope.interface import implements
 from zope.keyreference.interfaces import NotYet
@@ -57,7 +58,7 @@ class IndexerDaemonProcess(DaemonProcess):
 
     @db.transact
     def _process(self):
-        print "[indexer] indexing a batch of objects"
+        log.msg("indexing a batch of objects", system="indexer")
 
         searcher = db.get_root()['oms_root']['search']
 
@@ -68,17 +69,17 @@ class IndexerDaemonProcess(DaemonProcess):
         for model, event in currently_queued():
             self.index(searcher, model, event)
 
-        print "[indexer] done"
+        log.msg("done", system="indexer")
 
     def index(self, searcher, model, event):
         if not self.try_index(searcher, model, event):
-            print "[indexer] cannot (un)index", model, type(event).__name__
+            log.msg("cannot (un)index %s %s" % (model, type(event).__name__), system="indexer")
 
     def try_index(self, searcher, model, event):
         path = canonical_path(model)
         op = 'un' if IModelDeletedEvent.providedBy(event) else ''
 
-        print "[indexer] %sindexing" % op, path, type(event).__name__
+        log.msg("%sindexing %s %s" % (op, path, type(event).__name__), system="indexer")
 
         objs, unresolved_path = traverse_path(db.get_root()['oms_root'], path)
         if unresolved_path and not IModelDeletedEvent.providedBy(event):
@@ -94,8 +95,7 @@ class IndexerDaemonProcess(DaemonProcess):
         except NotYet:
             return False
 
-        print "[indexer] %sindexed" % op, path, type(event).__name__
-
+        log.msg("%sindexed %s %s" % (op, path, type(event).__name__), system="indexer")
         return True
 
     def reindex(self):
