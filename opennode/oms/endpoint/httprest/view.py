@@ -134,7 +134,7 @@ class ContainerView(DefaultView):
                 return
 
         if q:
-            items = [item for item in items if secure_filter_match(q)]
+            items = [item for item in items if secure_filter_match(item, q)]
 
         if limit or offset:
             items = items[offset:limit]
