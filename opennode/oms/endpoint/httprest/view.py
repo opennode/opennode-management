@@ -126,8 +126,15 @@ class ContainerView(DefaultView):
             limit = int(request.args.get('limit', [0])[0])
             offset = int(request.args.get('offset', [0])[0])
 
+
+        def secure_filter_match(item, q):
+            try:
+                return IFiltrable(item).match(q)
+            except Unauthorized:
+                return
+
         if q:
-            items = [item for item in items if IFiltrable(item).match(q)]
+            items = [item for item in items if secure_filter_match(q)]
 
         if limit or offset:
             items = items[offset:limit]
