@@ -1,7 +1,9 @@
 import os
+from logging import DEBUG
 
 from twisted.conch.checkers import SSHPublicKeyDatabase
 from twisted.conch.ssh import keys
+from twisted.python import log
 
 
 class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
@@ -15,13 +17,18 @@ class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
 
     def checkKey(self, credentials):
         """Accepts any user name"""
-
+        log.msg('Checking key for creds: %s' % credentials, system='ssh-pubkey', logLevel=DEBUG)
         home = os.environ["HOME"]
         with open('%s/.ssh/authorized_keys' % home) as f:
             for key in f:
                 if self._checkKey(credentials, key):
+                    log.msg('Check success, found matching key', system='ssh-pubkey', logLevel=DEBUG)
                     return True
-        return  False
+        log.msg('Check failed: pubkey not found in authorized list', system='ssh-pubkey', logLevel=DEBUG)
+        return False
 
     def _checkKey(self, credentials, key):
-        return keys.Key.fromString(data=key).blob() == credentials.blob
+        try:
+            return keys.Key.fromString(data=key).blob() == credentials.blob
+        except Exception:
+            log.err(system='ssh-pubkey')

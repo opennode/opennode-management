@@ -272,9 +272,9 @@ def timeout(secs):
 
             try:
                 rawResult, timeoutResult = yield defer.DeferredList([rawD, timeoutD],
-                                                                    fireOnOneCallback=True,
-                                                                    fireOnOneErrback=True,
-                                                                    consumeErrors=True)
+                                                                     fireOnOneCallback=True,
+                                                                     fireOnOneErrback=True,
+                                                                     consumeErrors=True)
             except defer.FirstError, e:
                 #Only rawD should raise an exception
                 assert e.index == 0

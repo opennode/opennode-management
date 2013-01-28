@@ -21,8 +21,9 @@ from zope.interface import Interface, implements
 from opennode.oms.config import get_config
 from opennode.oms.core import IBeforeApplicationInitializedEvent
 from opennode.oms.model.model import OmsRoot
-from opennode.oms.zodb.proxy import (make_persistent_proxy, remove_persistent_proxy as
-                                     _remove_persistent_proxy, get_peristent_context, PersistentProxy)
+from opennode.oms.zodb.proxy import (make_persistent_proxy,
+                                     remove_persistent_proxy as _remove_persistent_proxy,
+                                     get_peristent_context, PersistentProxy)
 from opennode.oms.zodb.extractors import context_from_method
 
 
