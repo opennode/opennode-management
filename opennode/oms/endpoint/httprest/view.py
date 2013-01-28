@@ -111,8 +111,11 @@ class ContainerView(DefaultView):
                 return IHttpRestView(item).render_recursive(request, depth - 1)
             except Unauthorized:
                 permissions = effective_perms(get_interaction(item), item)
-                return dict(access='denied', permissions=permissions,
-                            __type__=type(removeSecurityProxy(item)).__name__)
+                if 'view' not in permissions:
+                    return
+                else:
+                    return dict(access='denied', permissions=permissions,
+                                __type__=type(removeSecurityProxy(item)).__name__)
 
         # XXX: temporary code until ONC uses /search also for filtering computes
         q = None
@@ -126,7 +129,6 @@ class ContainerView(DefaultView):
             limit = int(request.args.get('limit', [0])[0])
             offset = int(request.args.get('offset', [0])[0])
 
-
         def secure_filter_match(item, q):
             try:
                 return IFiltrable(item).match(q)
@@ -134,14 +136,13 @@ class ContainerView(DefaultView):
                 return
 
         if q:
-            items = [item for item in items if secure_filter_match(item, q)]
+            items = filter(None, [item for item in items if secure_filter_match(item, q)])
 
         if limit or offset:
             items = items[offset:limit]
 
-        children = [secure_render_recursive(item)
-                    for item in items
-                    if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)]
+        children = filter(None, [secure_render_recursive(item) for item in items
+                                 if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)])
 
         # backward compatibility:
         # top level results for pure containers are plain lists
