@@ -136,7 +136,7 @@ class ContainerView(DefaultView):
                 return
 
         if q:
-            items = filter(None, [item for item in items if secure_filter_match(item, q)])
+            items = filter(lambda item: secure_filter_match(item, q), items)
 
         if limit or offset:
             items = items[offset:limit]
