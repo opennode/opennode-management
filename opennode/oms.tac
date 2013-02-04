@@ -54,6 +54,9 @@ def create_application():
     def after_startup():
         handle(AfterApplicationInitalizedEvent())
     reactor.addSystemEventTrigger('after', 'startup', after_startup)
+    # increase a suggested thread pool to reduce the risk of pool depletion
+    # caused by multiple simultaneous commands
+    reactor.suggestThreadPoolSize(100)
 
     return application
 
