@@ -971,7 +971,7 @@ class CatLogCmd(Cmd):
         if logfilename == 'stdout':
             log.msg('System is configured to log to stdout. Cannot cat to omsh terminal',
                     system='catlog')
-            return
+            defer.returnValue(None)
 
         nr_of_lines = int(args.n) if args.n is not None else 10
 
