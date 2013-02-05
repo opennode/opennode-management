@@ -224,9 +224,9 @@ class CommandView(DefaultView):
 
     def write_results(self, request, pid, cmd):
         log.msg('Called %s got result: pid(%s) term writes=%s' % (
-                cmd, pid, len(cmd.protocol.terminal.write_buffer)), system='command-view')
+                cmd, pid, len(cmd.write_buffer)), system='command-view')
         request.write(json.dumps({'status': 'ok', 'pid': pid,
-                                  'stdout': cmd.protocol.terminal.write_buffer}))
+                                  'stdout': cmd.write_buffer}))
         request.finish()
 
 
@@ -262,6 +262,8 @@ class CommandView(DefaultView):
 
         args = convert_args(request.args)
         cmd = self.context.cmd(protocol)
+        # Setting write_buffer to a list makes command save the output to the buffer too
+        cmd.write_buffer = []
         d0 = defer.Deferred()
 
         try:
@@ -272,10 +274,10 @@ class CommandView(DefaultView):
 
         q = Queue.Queue()
         def execute(cmd, args):
-            log.msg('Executing command...', system='httprest-command')
+            log.msg('Executing %s' % cmd, system='httprest-command')
             d = defer.maybeDeferred(cmd, *args)
-            log.msg('Deferred returned...', system='httprest-command')
-            d.addBoth(lambda x: log.msg('Ready to put to queue...', system='httprest-command'))
+            log.msg('Deferred returned for %s' % cmd, system='httprest-command')
+            d.addBoth(lambda x: log.msg('Putting results to queue', system='httprest-command'))
             d.addBoth(q.put)
             d.chainDeferred(d0)
 

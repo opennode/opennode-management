@@ -21,6 +21,7 @@ class ITask(Interface):
     cmdline = schema.TextLine(title=u"command line", description=u"Command line", readonly=True, required=False)
     uptime = schema.Int(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
     ptid = schema.TextLine(title=u"parent task", description=u"Parent task", readonly=True, required=False)
+    stdout = schema.TextLine(title=u"stdout", description=u"Standard output", readonly=True, required=False)
 
     def signal(name):
         """Process a signal"""
@@ -74,7 +75,8 @@ class DaemonStateRenderer(Adapter):
 class Task(ReadonlyContainer):
     implements(ITask)
 
-    def __init__(self, name, parent, subject, deferred, cmdline, ptid, signal_handler=None, principal=None):
+    def __init__(self, name, parent, subject, deferred, cmdline, ptid, signal_handler=None, principal=None,
+                 write_buffer=None):
         self.__name__ = name
         self.__parent__ = parent
         self.subject = subject
@@ -84,6 +86,7 @@ class Task(ReadonlyContainer):
         self.ptid = ptid
         self.signal_handler = signal_handler
         self.principal = principal
+        self.write_buffer = write_buffer
 
         # XXX: Workaround to handle ON-425
         # Refactor with adapters handling each specific signal
@@ -97,6 +100,10 @@ class Task(ReadonlyContainer):
     @property
     def nicknames(self):
         return [self.cmdline, ]
+
+    @property
+    def stdout(self):
+        return self.write_buffer
 
     def signal(self, name):
         if self.signal_handler:
@@ -134,17 +141,18 @@ class Proc(ReadonlyContainer):
         return res
 
     @classmethod
-    def register(cls, deferred, subject, cmdline=None, ptid='1', principal=None):
-        pid = Proc()._register(deferred, subject, cmdline, ptid, principal=principal)
+    def register(cls, deferred, subject, cmdline=None, ptid='1', principal=None, write_buffer=None):
+        pid = Proc()._register(deferred, subject, cmdline, ptid, principal=principal,
+                               write_buffer=write_buffer)
         log.msg('Registered as process %s: %s' % (pid, cmdline), system='proc')
         return pid
 
-    def _register(self, deferred, subject, cmdline, ptid='1', signal_handler=None, principal=None):
+    def _register(self, deferred, subject, cmdline,
+                  ptid='1', signal_handler=None, principal=None, write_buffer=None):
         self.next_id += 1
         new_id = str(self.next_id)
-
-        self.tasks[new_id] = Task(new_id, self, subject, deferred, cmdline, ptid, signal_handler, principal)
-
+        self.tasks[new_id] = Task(new_id, self, subject, deferred, cmdline, ptid, signal_handler,
+                                  principal, write_buffer)
         if deferred:
             deferred.addBoth(self._unregister, new_id)
 
