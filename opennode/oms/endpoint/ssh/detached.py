@@ -10,9 +10,8 @@ class DetachedProtocol(object):
         self.terminal = self
         self.path = ['']
         self.use_security_proxy = False
-        self.write_buffer = []
 
     def write(self, *args, **kwargs):
-        self.write_buffer.append(''.join(map(str, args)))
+        data = ''.join(map(str, args))
         if get_config().getboolean('general', 'log_detached', False):
-            log.msg("DETACHED: %s" % self.write_buffer, system='omsh-detached', **kwargs)
+            log.msg("DETACHED: %s" % data, system='omsh-detached', **kwargs)

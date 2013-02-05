@@ -18,6 +18,7 @@ class Cmd(object):
     def __init__(self, protocol):
         self.protocol = protocol
         self.terminal = protocol.terminal
+        self.write_buffer = None
 
     @defer.inlineCallbacks
     def __call__(self, *args):
@@ -118,6 +119,8 @@ class Cmd(object):
     def write(self, *args):
         """Ensure that all writes are serialized regardless if the command is executing in another thread.
         """
+        if self.write_buffer is not None and hasattr(self.write_buffer, 'append'):
+            self.write_buffer.append(' '.join(map(str, args)))
         deferredMethod = (reactor.callFromThread if not isInIOThread() else defer.maybeDeferred)
         return deferredMethod(self.terminal.write, *args)
 
@@ -156,9 +159,10 @@ class Cmd(object):
         # under item.subject
         if type(subj) is proxy.PersistentProxy:
             subj = subj.remove_persistent_proxy()
-        assert type(subj) is tuple, 'subject of \'%s\' must be a tuple, got %s' % (self.name, type(subj))
+        assert type(subj) is tuple, "subject of '%s' must be a tuple, got %s" % (self.name, type(subj))
 
-        self.pid = Proc.register(d, subj, command_line, ptid)
+        self.pid = Proc.register(d, subj, command_line, ptid,
+                                 write_buffer=self.write_buffer)
         defer.returnValue(self.pid)
 
     def unregister(self):
