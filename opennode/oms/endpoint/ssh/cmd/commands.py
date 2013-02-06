@@ -978,5 +978,5 @@ class CatLogCmd(Cmd):
         outputCb = utils.getProcessOutput("tail",
                                         args=('-n %s' % nr_of_lines, logfilename),
                                         errortoo=True)
-        outputCb.addCallback(lambda output: self.terminal.write(output))
+        outputCb.addCallback(lambda output: self.write(output))
         yield outputCb
