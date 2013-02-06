@@ -274,10 +274,7 @@ class CommandView(DefaultView):
 
         q = Queue.Queue()
         def execute(cmd, args):
-            log.msg('Executing %s' % cmd, system='httprest-command')
             d = defer.maybeDeferred(cmd, *args)
-            log.msg('Deferred returned for %s' % cmd, system='httprest-command')
-            d.addBoth(lambda x: log.msg('Putting results to queue', system='httprest-command'))
             d.addBoth(q.put)
             d.chainDeferred(d0)
 
