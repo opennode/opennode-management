@@ -122,7 +122,8 @@ class Cmd(object):
         if self.write_buffer is not None and hasattr(self.write_buffer, 'append'):
             self.write_buffer.append(' '.join(map(str, args)))
         deferredMethod = (reactor.callFromThread if not isInIOThread() else defer.maybeDeferred)
-        return deferredMethod(self.terminal.write, *args)
+        # XXX: HACK: force str for the first param to avoid UnicodeDecodeError happening in Conch
+        return deferredMethod(self.terminal.write, str(args[0]), *args[1:])
 
     def traverse_full(self, path):
         if path.startswith('/'):
