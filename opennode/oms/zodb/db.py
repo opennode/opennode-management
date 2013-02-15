@@ -217,13 +217,13 @@ def transact(fun):
                     _context.x = None
                     return make_persistent_proxy(result, context)
                 except ReadConflictError as e:
-                    trace("GOT READ CONFLICT IN RW TRANASCT, retrying %s" % i, t)
+                    trace("GOT READ CONFLICT IN RW TRANSACT, retrying %s" % i, t)
                     retrying = True
-                    time.sleep(random.random()*0.1)
+                    time.sleep(random.random() * 0.1)
                 except ConflictError as e:
-                    trace("GOT WRITE CONFLICT IN RW TRANASCT, retrying %s" % i, t)
+                    trace("GOT WRITE CONFLICT IN RW TRANSACT, retrying %s" % i, t)
                     retrying = True
-                    time.sleep(random.random()*0.1)
+                    time.sleep(random.random() * 0.1)
         raise e
 
     @functools.wraps(fun)
