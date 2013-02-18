@@ -87,6 +87,8 @@ def monkey_patch_epollreactor():
                             system='epoll-add')
                     log.msg('Retrying _add recursively...', system='epoll-add')
                     _addw(xer, primary, other, selectables, event, aevent)
+                else:
+                    raise
         return _add_substitute
 
     def remove_wrapper(_removew):
@@ -111,6 +113,8 @@ def monkey_patch_epollreactor():
                             system='epoll-remove')
                     log.msg('Retrying _remove recursively...', system='epoll-remove')
                     _removew(xer, primary, other, selectables, event, aevent)
+                else:
+                    raise
         return _remove_substitute
 
     reactor._add = add_wrapper(reactor._add)
