@@ -1,4 +1,7 @@
 #!/usr/bin/env twistd -ny
+import functools
+import errno
+
 from twisted.application import service, internet
 from twisted.conch.insults import insults
 from twisted.conch.manhole_ssh import ConchFactory
@@ -59,6 +62,62 @@ def create_application():
     reactor.suggestThreadPoolSize(100)
 
     return application
+
+def monkey_patch_epollreactor():
+    def add_wrapper(_addw):
+        @functools.wraps(_addw)
+        def _add_substitute(xer, primary, other, selectables, event, aevent):
+            try:
+                fd = xer.fileno()
+                if fd not in primary:
+                    if fd in other:
+                        log.msg('mod %s s: %s\n                                     '
+                                '(%s)' % (fd, len(selectables), xer), system='epoll')
+                    else:
+                        log.msg('reg %s s: %s\n                                     '
+                            '(%s)' % (fd, len(selectables), xer), system='epoll')
+
+                _addw(xer, primary, other, selectables, event, aevent)
+            except IOError as e:
+                if e.errno == errno.ENOENT:
+                    if fd in other:
+                        del other[fd]
+                    log.msg('WARNING: It appears like %s is not registered, '
+                            'although it should be: %s %s' % (fd, other, xer),
+                            system='epoll-add')
+                    log.msg('Retrying _add recursively...', system='epoll-add')
+                    _addw(xer, primary, other, selectables, event, aevent)
+        return _add_substitute
+
+    def remove_wrapper(_removew):
+        @functools.wraps(_removew)
+        def _remove_substitute(xer, primary, other, selectables, event, aevent):
+            try:
+                fd = xer.fileno()
+                if fd in primary:
+                    if fd in other:
+                        log.msg('mod %s s: %s\n                                     '
+                                '(%s)' % (fd, len(selectables), xer), system='epoll')
+                    else:
+                        log.msg('unr %s s: %s\n                                     '
+                            '(%s)' % (fd, len(selectables), xer), system='epoll')
+                _removew(xer, primary, other, selectables, event, aevent)
+            except IOError as e:
+                if e.errno == errno.ENOENT:
+                    if fd in other:
+                        del other[fd]
+                    log.msg('WARNING: It appears like %s is not registered, '
+                            'although it should be: %s %s' % (fd, other, xer),
+                            system='epoll-remove')
+                    log.msg('Retrying _remove recursively...', system='epoll-remove')
+                    _removew(xer, primary, other, selectables, event, aevent)
+        return _remove_substitute
+
+    reactor._add = add_wrapper(reactor._add)
+    reactor._remove = remove_wrapper(reactor._remove)
+
+
+monkey_patch_epollreactor()
 
 defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
 
