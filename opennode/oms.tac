@@ -77,7 +77,7 @@ def put_to_queue(data):
             global_op_queue.get(False)
         except Queue.Empty:
             pass
-        global_op_queue.put(data, False)
+        put_to_queue(data)
 
 
 def dump_queue(fd):
