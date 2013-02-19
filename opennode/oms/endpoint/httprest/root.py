@@ -1,4 +1,5 @@
 import json
+import functools
 import zope.security.interfaces
 
 from twisted.internet import defer
@@ -84,6 +85,28 @@ class BadRequest(HttpStatus):
     status_description = "Bad Request"
 
 
+def log_wrapper(self, f, server):
+    @functools.wraps(f)
+    def log_(request):
+        """
+        Log a request's result to the logfile, by default in combined log format.
+        """
+        if hasattr(self, "logFile"):
+            line = '%s %s - %s "%s" %d %s "%s" "%s"\n' % (
+                request.getClientIP(),
+                map(lambda pp: pp.principal.id, request.interaction.participations),
+                self._logDateTime,
+                '%s %s %s' % (self._escape(request.method),
+                              self._escape(request.uri),
+                              self._escape(request.clientproto)),
+                request.code,
+                request.sentLength or "-",
+                self._escape(request.getHeader("referer") or "-"),
+                self._escape(request.getHeader("user-agent") or "-"))
+            self.logFile.write(line)
+    return log_
+
+
 class HttpRestServer(resource.Resource):
     """Restful HTTP API interface for OMS.
 
@@ -103,6 +126,7 @@ class HttpRestServer(resource.Resource):
         self.use_security_proxy = get_config().getboolean('auth', 'security_proxy_rest')
 
     def render(self, request):
+        request.site.log = log_wrapper(request.site, request.site.log, self)
         deferred = self._render(request)
 
         @deferred
