@@ -1,5 +1,4 @@
 import re
-import sys
 import time
 import threading
 
@@ -7,7 +6,6 @@ from twisted.python import failure
 from twisted.python import log
 from twisted.python import context
 
-from opennode.oms.config import get_config
 
 class ThreadInfoLogPublisher(log.LogPublisher):
     def __init__(self, oldpublisher):
@@ -17,6 +15,8 @@ class ThreadInfoLogPublisher(log.LogPublisher):
         """
         Log a new message, just like with twisted.python.log.msg, but record thread info as well.
         """
+        if not context:
+            return
         actualEventDict = (context.get(log.ILogContext) or {}).copy()
         actualEventDict.update(kw)
         actualEventDict['message'] = message
@@ -50,7 +50,7 @@ if not isinstance(log.theLogPublisher, ThreadInfoLogPublisher):
     log.msg = log.theLogPublisher.msg
 
 
-class FilteredFileLogObserver(log.FileLogObserver):
+class FilteredPythonLoggingObserver(log.PythonLoggingObserver):
     """Filter out unwanted log messages, especially during development."""
 
     ignored_messages = ['.*keepalive@openssh.com', '.*POST .*/webterm', '.*GET /favicon.ico',
@@ -81,22 +81,4 @@ class FilteredFileLogObserver(log.FileLogObserver):
         if text is None:
             return
 
-        timeStr = self.formatTime(eventDict['time'])
-        fmtDict = {'system': eventDict['system'],
-                   'text': text.replace("\n", "\n\t"),
-                   'threadid' : eventDict['thread'].ident,
-                   'threadname': eventDict['thread'].name}
-        msgStr = log._safeFormat("%(threadid)x [%(system)s]\t%(text)s\n", fmtDict)
-
-        log.util.untilConcludes(self.write, timeStr + " " + msgStr)
-        log.util.untilConcludes(self.flush)  # Hoorj!
-
-
-def setup_logging():
-    log_filename = get_config().get('logging', 'file')
-    if not log_filename or log_filename == 'stdout':
-        log_file = sys.stdout
-    else:
-        log_file = open(log_filename, 'a')
-
-    return FilteredFileLogObserver(log_file).emit
+        log.PythonLoggingObserver.emit(self, eventDict)

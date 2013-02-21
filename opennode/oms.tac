@@ -1,5 +1,7 @@
 #!/usr/bin/env twistd -ny
 import functools
+import logging
+import logging.config
 import errno
 import Queue
 
@@ -14,7 +16,7 @@ from zope.component import handle
 
 from opennode.oms.config import get_config
 from opennode.oms.core import setup_environ, AfterApplicationInitalizedEvent
-from opennode.oms.logging import setup_logging
+from opennode.oms.logging import FilteredPythonLoggingObserver
 
 
 def create_http_server():
@@ -156,6 +158,28 @@ monkey_patch_epollreactor()
 
 defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
 
-application = create_application()
+def setup_logging():
+    log_filename = get_config().get('logging', 'file')
+    logging.config.dictConfig({
+        'formatters': {
+            'default': {'format': '%(asctime)s %(name)s %(levelname)s %(thread)s %(message)s',},
+            'twisted': {'format': '%(asctime)s %(name)s %(levelname)s %(thread)s %(message)s',}},
+        'handlers': {'filehandler': {'class': 'logging.FileHandler',
+                                     'filename': log_filename,
+                                     'formatter': 'default'}},
+        'root': {
+            'handlers': ['filehandler'],
+            'level': 'DEBUG'},
+        'loggers': {'txn': {'level': 'WARNING'},
+                    'ZEO.zrpc': {'level': 'WARNING'},
+                    'ZEO.ClientStorage': {'level': 'WARNING'},
+                   },
+        'version': 1,
+        'disable_existing_loggers': False
+    })
+    observer = FilteredPythonLoggingObserver()
+    return observer.emit
 
-application.setComponent(log.ILogObserver, setup_logging())
+logger = setup_logging()
+application = create_application()
+application.setComponent(log.ILogObserver, logger)
