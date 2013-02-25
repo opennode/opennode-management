@@ -177,6 +177,7 @@ def setup_logging():
         'version': 1,
         'disable_existing_loggers': False
     })
+    logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
     observer = FilteredPythonLoggingObserver()
     return observer.emit
 
