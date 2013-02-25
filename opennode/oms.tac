@@ -3,6 +3,7 @@ import functools
 import logging
 import logging.config
 import errno
+import os
 import Queue
 
 from twisted.application import service, internet
@@ -178,7 +179,8 @@ def setup_logging():
         'version': 1,
         'disable_existing_loggers': False
     })
-    logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
+    if os.path.exists('logging.conf'):
+        logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
     logging.warn('Logging level is set to %s' %
                  logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
     observer = FilteredPythonLoggingObserver()
