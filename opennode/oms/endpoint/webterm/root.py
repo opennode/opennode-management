@@ -54,7 +54,8 @@ class SSHClientTerminalProtocol(object):
     def connection_made(self, terminal, size):
         self.transport = terminal.transport
 
-        ssh_connect_interactive_shell(self.user, self.host, self.port, self.transport, self.set_channel, size)
+        ssh_connect_interactive_shell(self.user, self.host, self.port,
+                                      self.transport, self.set_channel, size)
 
     def set_channel(self, channel):
         self.channel = channel
@@ -81,7 +82,8 @@ class WebTransport(object):
     def loseConnection(self):
         """Close the connection ensuring the the web client will properly detect this close.
         The name of the method was chosen to implement the twisted convention."""
-        del TerminalServerMixin.sessions[self.session.id]
+        if self.session.id in TerminalServerMixin.sessions:
+            del TerminalServerMixin.sessions[self.session.id]
         self.write('\r\n')
 
 
