@@ -1,9 +1,11 @@
+import logging
 import os
 
 from twisted.conch.ssh import transport, keys, userauth
 from twisted.conch.ssh import connection, channel, session, common
 from twisted.internet import defer, reactor, protocol
 
+log = logging.getLogger(__name__)
 
 def ssh_connect_interactive_shell(user, host, port, transport, set_channel,
                                   size, command=None):
@@ -62,11 +64,13 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
 
         def read(ext):
             home = os.environ['HOME']
-            for base in names:
-                name = '%s/.ssh/%s%s' % (home, base, ext)
-                if os.path.exists(name):
-                    f = open(name, 'r')
-                    return f.read()
+            for basedir in ['/etc/opennode', home]:
+                for base in names:
+                    name = os.path.join(basedir, '%s%s' % (base, ext))
+                    if os.path.exists(name):
+                        log.info('Reading key from "%s"...', name)
+                        f = open(name, 'r')
+                        return f.read()
             return None
 
         self.publicKey = read('.pub')
@@ -80,8 +84,13 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
         return keys.Key.fromString(data=self.publicKey).blob()
 
     def getPrivateKey(self):
-        return defer.succeed(
-            keys.Key.fromString(data=self.privateKey).keyObject)
+        try:
+            k = keys.Key.fromString(data=self.privateKey)
+            ko = k.keyObject
+            return defer.succeed(ko)
+        except Exception as e:
+            log.error('Reading private key failed... %s', e)
+            return defer.fail(None)
 
     def getPassword(self, prompt=None):
         """Conch expects a deferred which will yield a password to try.
