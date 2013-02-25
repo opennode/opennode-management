@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 import threading
@@ -81,4 +82,13 @@ class FilteredPythonLoggingObserver(log.PythonLoggingObserver):
         if text is None:
             return
 
-        log.PythonLoggingObserver.emit(self, eventDict)
+        if 'logLevel' in eventDict:
+            level = eventDict['logLevel']
+        elif eventDict['isError']:
+            level = logging.ERROR
+        else:
+            level = logging.INFO
+        text = log.textFromEventDict(eventDict)
+        if text is None:
+            return
+        self.logger.log(level, text, extra={'system': eventDict.get('system', '')})
