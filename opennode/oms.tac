@@ -3,6 +3,7 @@ import functools
 import logging
 import logging.config
 import errno
+import os
 import Queue
 
 from twisted.application import service, internet
@@ -160,15 +161,16 @@ defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
 
 def setup_logging():
     log_filename = get_config().get('logging', 'file')
+    log_level = get_config().getstring('logging', 'level', 'INFO')
     logging.config.dictConfig({
         'formatters': {
-            'default': {'format': '%(asctime)s %(thread)s %(name)s %(levelname)s %(message)s',},
-            'twisted': {'format': '%(asctime)s %(thread)s %(name)s %(levelname)s %(system)s %(message)s',}},
+            'default': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(message)s',},
+            'twisted': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(system)s %(message)s',}},
         'handlers': {'default': {'class': 'logging.FileHandler', 'filename': log_filename,
                                      'formatter': 'default'},
                      'twisted': {'class': 'logging.FileHandler', 'filename': log_filename,
                                  'formatter': 'twisted'},},
-        'root': {'handlers': ['default'], 'level': 'INFO'},
+        'root': {'handlers': ['default'], 'level': log_level},
         'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False},
                     'txn': {'level': 'WARNING'},
                     'ZEO.zrpc': {'level': 'WARNING'},
@@ -177,6 +179,10 @@ def setup_logging():
         'version': 1,
         'disable_existing_loggers': False
     })
+    if os.path.exists('logging.conf'):
+        logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
+    logging.warn('Logging level is set to %s' %
+                 logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
     observer = FilteredPythonLoggingObserver()
     return observer.emit
 
