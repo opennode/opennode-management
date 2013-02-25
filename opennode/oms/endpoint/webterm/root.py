@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import uuid
 
@@ -12,6 +13,7 @@ from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
 from opennode.oms.endpoint.webterm.ssh import ssh_connect_interactive_shell
 from opennode.oms.model.model.bin import Command
 
+log = logging.getLogger(__name__)
 
 class OmsShellTerminalProtocol(object):
     """Connect a OmsShellProtocol to a web terminal session."""
@@ -182,7 +184,6 @@ class TerminalServerMixin(object):
             return json.dumps(dict(session='', data=''))
 
         session = self.sessions[session_id]
-
         session.handle_resize(size)
 
         # There are two types of requests:
@@ -191,7 +192,7 @@ class TerminalServerMixin(object):
         keys = request.args.get('keys', None)
         if keys:
             session.handle_keys(keys[0])
-            return ""  # responsed to this kind of requests are ignored
+            return ""  # responses to this kind of requests are ignored
         else:
             session.enqueue(request)
 
