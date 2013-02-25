@@ -64,7 +64,8 @@ class SSHClientTerminalProtocol(object):
         self.channel.write(key)
 
     def terminalSize(self, width, height):
-        self.channel.terminalSize(width, height)
+        if callable(getattr(self.channel, 'terminalSize', None)):
+            self.channel.terminalSize(width, height)
 
 
 class WebTransport(object):
