@@ -162,17 +162,17 @@ def setup_logging():
     log_filename = get_config().get('logging', 'file')
     logging.config.dictConfig({
         'formatters': {
-            'default': {'format': '%(asctime)s %(name)s %(levelname)s %(thread)s %(message)s',},
-            'twisted': {'format': '%(asctime)s %(name)s %(levelname)s %(thread)s %(message)s',}},
-        'handlers': {'filehandler': {'class': 'logging.FileHandler',
-                                     'filename': log_filename,
-                                     'formatter': 'default'}},
-        'root': {
-            'handlers': ['filehandler'],
-            'level': 'DEBUG'},
-        'loggers': {'txn': {'level': 'WARNING'},
+            'default': {'format': '%(asctime)s %(thread)s %(name)s %(levelname)s %(message)s',},
+            'twisted': {'format': '%(asctime)s %(thread)s %(name)s %(levelname)s %(system)s %(message)s',}},
+        'handlers': {'default': {'class': 'logging.FileHandler', 'filename': log_filename,
+                                     'formatter': 'default'},
+                     'twisted': {'class': 'logging.FileHandler', 'filename': log_filename,
+                                 'formatter': 'twisted'},},
+        'root': {'handlers': ['default'], 'level': 'DEBUG'},
+        'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False},
+                    'txn': {'level': 'WARNING'},
                     'ZEO.zrpc': {'level': 'WARNING'},
-                    'ZEO.ClientStorage': {'level': 'WARNING'},
+                    'ZEO.ClientStorage': {'level': 'WARNING',},
                    },
         'version': 1,
         'disable_existing_loggers': False
