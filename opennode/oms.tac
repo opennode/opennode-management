@@ -168,7 +168,7 @@ def setup_logging():
                                      'formatter': 'default'},
                      'twisted': {'class': 'logging.FileHandler', 'filename': log_filename,
                                  'formatter': 'twisted'},},
-        'root': {'handlers': ['default'], 'level': 'DEBUG'},
+        'root': {'handlers': ['default'], 'level': 'INFO'},
         'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False},
                     'txn': {'level': 'WARNING'},
                     'ZEO.zrpc': {'level': 'WARNING'},
