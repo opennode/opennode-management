@@ -59,11 +59,13 @@ class SSHClientTerminalProtocol(object):
 
     def set_channel(self, channel):
         self.channel = channel
+        log.debug('set_channel: %s', self.channel)
 
     def handle_key(self, key):
         self.channel.write(key)
 
     def terminalSize(self, width, height):
+        log.debug('self.channel: %s', self.channel)
         if callable(getattr(self.channel, 'terminalSize', None)):
             self.channel.terminalSize(width, height)
 
@@ -155,6 +157,7 @@ class TerminalSession(object):
 
         chunk = unicode_buffer[0:chunk_size]
 
+        log.debug('TerminalSession writing: "%s"', dict(session=self.id, data=chunk))
         request.write(json.dumps(dict(session=self.id, data=chunk)))
         request.finish()
 
@@ -176,6 +179,7 @@ class TerminalServerMixin(object):
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
+            log.debug('Init session: %s', session_id)
             session = TerminalSession(self.get_terminal_protocol(request), size)
             session_id = session.id
             self.sessions[session.id] = session
@@ -183,6 +187,7 @@ class TerminalServerMixin(object):
         if session_id not in self.sessions:
             # Session interruption is defined using a success status
             # but with empty session (that's the protocol, I didn't design it).
+            log.debug('Session interrupted: %s not in %s', session_id, self.sessions)
             request.setResponseCode(200)
             return json.dumps(dict(session='', data=''))
 
