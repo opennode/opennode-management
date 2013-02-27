@@ -174,7 +174,8 @@ def setup_logging():
         'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False},
                     'txn': {'level': 'WARNING'},
                     'ZEO.zrpc': {'level': 'WARNING'},
-                    'ZEO.ClientStorage': {'level': 'WARNING',},
+                    'ZEO.ClientStorage': {'level': 'WARNING'},
+                    'salt': {'level': 'WARNING'},
                    },
         'version': 1,
         'disable_existing_loggers': False
