@@ -17,7 +17,7 @@ from zope.component import handle
 
 from opennode.oms.config import get_config
 from opennode.oms.core import setup_environ, AfterApplicationInitalizedEvent
-from opennode.oms.logging import FilteredPythonLoggingObserver
+from opennode.oms.log import FilteredPythonLoggingObserver
 
 
 def create_http_server():

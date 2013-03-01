@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import pkg_resources
 import re
@@ -14,6 +15,7 @@ __all__ = 'run'
 
 ENTRY_POINT_NAME = 'oms.plugins'
 
+log = logging.getLogger(__name__)
 
 def run():
     """bin/plugin allows to add/remove plugins to the eggnest"""
@@ -146,7 +148,7 @@ def _load_eggs(search_path, auto_enable=None):
             working_set.add(dist)
 
     def _log_error(item, e):
-        print "[plugins] error loading", item, e
+        log.error("[plugins] error loading %s %s", item, e)
 
     for dist, e in errors.iteritems():
         # ignore version conflict of modules which are not OMS plugins

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import logging
 import pkg_resources
 import sys
 
@@ -13,6 +14,8 @@ from opennode.oms import config
 from opennode.oms.util import Singleton
 from opennode.oms.core import IApplicationInitializedEvent
 
+
+log = logging.getLogger(__name__)
 
 class IPluginInfo(Interface):
     name = schema.TextLine(title=u"Plugin name")
@@ -53,7 +56,7 @@ class Plugins(ReadonlyContainer):
                 working_set.add(dist)
 
         def _log_error(item, e):
-            print "[plugins] error loading", item, e
+            log.error("[plugins] error loading %s %s", item, e)
 
         for dist, e in errors.iteritems():
             # ignore version conflict of modules which are not OMS plugins
@@ -63,7 +66,7 @@ class Plugins(ReadonlyContainer):
         for entry in sorted(working_set.iter_entry_points(self.ENTRY_POINT_NAME),
                             key=lambda entry: entry.name):
 
-            # print '[plugins] Loading %s from %s' % (entry.name, entry.dist.location)
+            log.debug('[plugins] Loading %s from %s' % (entry.name, entry.dist.location))
             try:
                 entry.load(require=True)
             except Exception, e:
