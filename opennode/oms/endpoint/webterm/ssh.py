@@ -63,7 +63,7 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
                  'id_fake_rsa', 'id_dsa', 'id_rsa']
 
         def read(ext):
-            home = os.environ['HOME']
+            home = os.getenv('HOME', '.')
             for basedir in ['/etc/opennode', home]:
                 for base in names:
                     name = os.path.join(basedir, '%s%s' % (base, ext))
