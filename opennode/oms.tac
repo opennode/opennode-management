@@ -1,9 +1,6 @@
 #!/usr/bin/env twistd -ny
 import functools
-import logging
-import logging.config
 import errno
-import os
 import Queue
 
 from twisted.application import service, internet
@@ -17,7 +14,7 @@ from zope.component import handle
 
 from opennode.oms.config import get_config
 from opennode.oms.core import setup_environ, AfterApplicationInitalizedEvent
-from opennode.oms.log import FilteredPythonLoggingObserver
+from opennode.oms.log import setup_logging
 
 
 def create_http_server():
@@ -158,35 +155,6 @@ def monkey_patch_epollreactor():
 monkey_patch_epollreactor()
 
 defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
-
-def setup_logging():
-    log_filename = get_config().get('logging', 'file')
-    log_level = get_config().getstring('logging', 'level', 'INFO')
-    logging.config.dictConfig({
-        'formatters': {
-            'default': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(message)s',},
-            'twisted': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(system)s %(message)s',}},
-        'handlers': {'default': {'class': 'logging.FileHandler', 'filename': log_filename,
-                                     'formatter': 'default'},
-                     'twisted': {'class': 'logging.FileHandler', 'filename': log_filename,
-                                 'formatter': 'twisted'},},
-        'root': {'handlers': ['default'], 'level': log_level},
-        'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False},
-                    'txn': {'level': 'WARNING'},
-                    'ZEO.zrpc': {'level': 'WARNING'},
-                    'ZEO.ClientStorage': {'level': 'WARNING'},
-                    'salt': {'level': 'WARNING'},
-                   },
-        'version': 1,
-        'disable_existing_loggers': False
-    })
-    if os.path.exists('logging.conf'):
-        logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
-    logging.warn('Logging level is set to %s' %
-                 logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
-    observer = FilteredPythonLoggingObserver()
-    return observer.emit
-
 logger = setup_logging()
 application = create_application()
 application.setComponent(log.ILogObserver, logger)
