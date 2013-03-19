@@ -503,18 +503,19 @@ class SetOrMkCmdDynamicArguments(Adapter):
                                        if self.context.name == 'mk' else
                                        (self.context.traverse(args.path), False))
 
-        for name, field, schema in get_schema_fields(model_or_obj, marker=getattr(self.context.current_obj, '__contains__', None)):
+        schema_fields = get_schema_fields(model_or_obj,
+                                          marker=getattr(self.context.current_obj, '__contains__', None))
+
+        for name, field, schema in schema_fields:
             if field.readonly:
                 continue
 
             field = field.bind(model_or_obj)
 
             choices = ([i.value.encode('utf-8') for i in field.vocabulary]
-                       if isinstance(field, zope.schema.Choice) else
-                       None)
+                       if isinstance(field, zope.schema.Choice) else None)
 
-            type = (int if isinstance(field, zope.schema.Int)
-                    else None)
+            type = (int if isinstance(field, zope.schema.Int) else None)
 
             kwargs = {}
             if isinstance(field, Path):

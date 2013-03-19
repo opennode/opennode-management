@@ -76,7 +76,8 @@ class PathCompleter(PositionalCompleter):
                 def name(obj):
                     return os.path.join(base_path, obj.__name__)
 
-                return [name(obj) + suffix(obj) for obj in container.listcontent() if name(obj).startswith(token)]
+                return [name(obj) + suffix(obj) for obj in container.listcontent()
+                        if name(obj).startswith(token)]
 
 
 class CommandCompleter(PathCompleter):
@@ -126,7 +127,8 @@ class KeywordPathSubCompleter(PathCompleter):
         self.context = self
         keyword, value_prefix = token.split('=')
         res = yield super(KeywordPathSubCompleter, self).complete(value_prefix, parsed, parser, **kwargs)
-        defer.returnValue([keyword + '=' + i for i in res])
+        if res is not None:
+            defer.returnValue([keyword + '=' + i for i in res])
 
     def traverse(self, path):
         if not os.path.isabs(path):
