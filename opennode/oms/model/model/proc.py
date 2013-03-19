@@ -75,8 +75,8 @@ class DaemonStateRenderer(Adapter):
 class Task(ReadonlyContainer):
     implements(ITask)
 
-    def __init__(self, name, parent, subject, deferred, cmdline, ptid, signal_handler=None, principal=None,
-                 write_buffer=None):
+    def __init__(self, name, parent, subject, deferred, cmdline, ptid,
+                 signal_handler=None, principal=None, write_buffer=None):
         self.__name__ = name
         self.__parent__ = parent
         self.subject = subject
