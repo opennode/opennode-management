@@ -19,8 +19,8 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
     We rely on a custom checker (see opennode.oms.security.checker) for embedding the
     interaction inside the security proxy itself; however in some cases we need to
     use security proxies which are created by other libraries (like secured adapters
-    created for IPrincipalRoleManager) and in that cases we need to temporarily setup
-    an interaction for the current thread, but we have to avoid that it leaks out to
+    created for IPrincipalRoleManager) and in these cases we need to temporarily setup
+    an interaction for the current thread, but we have to prevent it from leaking out to
     other coroutines.
 
     For that end, we extend ZopeSecurityPolicy in such a way that it can be used as:

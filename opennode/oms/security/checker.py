@@ -4,7 +4,8 @@ from collections import defaultdict
 from zope.interface import implements
 from zope.security._definitions import thread_local
 from zope.security._proxy import _Proxy as Proxy
-from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement, getChecker
+from zope.security.checker import _available_by_default, getCheckerForInstancesOf
+from zope.security.checker import CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 from twisted.internet.defer import Deferred
 from twisted.python import log
