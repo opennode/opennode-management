@@ -96,7 +96,7 @@ def ssha_hash(user, password, encoded_password):
 
 def checkers():
     global _checkers
-    if _checkers == None:
+    if _checkers is None:
         pam_checker = PamAuthChecker() if get_config().getboolean('auth', 'use_pam') else None
         password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
         pubkey_checker = InMemoryPublicKeyCheckerDontUse()
@@ -105,11 +105,9 @@ def checkers():
 
 
 def setup_conf_reload_watch(path, handler):
-    """Registers a inotify watch which will invoke `handler` for passing the
-    open file"""
+    """Registers a inotify watch which will invoke `handler` for passing the open file"""
     conf_reload_notifier.watch(filepath.FilePath(path),
-                               callbacks=[lambda self, filepath, mask:
-                                          handler(filepath.open())])
+                               callbacks=[lambda self, filepath, mask: handler(filepath.open())])
 
 
 @subscribe(IApplicationInitializedEvent)
@@ -128,8 +126,8 @@ def setup_roles(event):
 
 def reload_roles(stream):
     log.msg("(Re)Loading OMS permission definitions", system='auth')
-    for i in stream:
-        nick, role, permissions = i.split(':', 4)
+    for line in stream:
+        nick, role, permissions = line.split(':', 4)
         oms_role = Role(role, nick)
         provideUtility(oms_role, IRole, role)
         for perm in permissions.split(','):
@@ -158,9 +156,9 @@ def reload_groups(stream):
 
     auth = queryUtility(IAuthentication)
 
-    for i in stream:
+    for line in stream:
         try:
-            group, roles = i.split(':', 2)
+            group, roles = line.split(':', 2)
         except ValueError:
             log.msg("Invalid groups file format", system='auth')
         else:
@@ -204,9 +202,9 @@ def reload_users(stream):
     create_special_principals()
     auth = queryUtility(IAuthentication)
 
-    for i in stream:
+    for line in stream:
         try:
-            user, _, groups = i.split(':', 3)
+            user, _, groups = line.split(':', 3)
         except ValueError:
             log.msg("Invalid password file format", system='auth')
         else:

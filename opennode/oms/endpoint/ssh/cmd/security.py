@@ -68,7 +68,8 @@ class PermCheckCmd(Cmd):
 
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument('-p', action='store_true', help="Show effective permissions for a given object")
-        group.add_argument('-r', action=MergeListAction, nargs='+', help="Check if the user has some rights on a given object")
+        group.add_argument('-r', action=MergeListAction, nargs='+',
+                           help="Check if the user has some rights on a given object")
         return parser
 
     @db.ro_transact

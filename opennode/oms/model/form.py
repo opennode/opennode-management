@@ -10,7 +10,7 @@ from opennode.oms.model.schema import get_schemas, get_schema_fields
 from opennode.oms.util import query_adapter_for_class
 
 
-__all__ = ['ApplyRawData']
+__all__ = ['RawDataApplier', 'RawDataValidatingFactory']
 
 
 class UnknownAttribute(zope.schema.ValidationError):
@@ -67,59 +67,25 @@ class ModelDeletedEvent(object):
         self.container = container
 
 
-class ApplyRawData(object):
+class RawDataValidator(object):
+    obj = None
+    model = None
 
-    def __init__(self, data, obj=None, model=None, marker=None):
-        assert isinstance(data, dict)
-        assert (obj or model) and not (obj and model), \
-               "One of either obj or model needs to be provided, but not both"
-
-        self.schemas = list(get_schemas(obj or model, marker=marker))
-        self.fields = list(get_schema_fields(obj or model, marker=marker))
-
-        self.data = data
-        self.obj = obj
-        self.model = model
+    def adapted_tmp_obj(self, tmp_obj, schema):
+        adapter_cls = query_adapter_for_class(self.model or type(removeSecurityProxy(self.obj)), schema)
+        return adapter_cls(tmp_obj) if adapter_cls else tmp_obj
 
     @property
     def errors(self):
         if hasattr(self, '_errors'):
             return self._errors
 
-        self.tmp_obj = tmp_obj = TmpObj(self.obj, self.model)
-        raw_data = dict(self.data)
-
+        self.tmp_obj = TmpObj(self.obj, self.model)
         errors = []
 
         if self.fields:
-            for name, field, schema in self.fields:
-                if name not in raw_data:
-                    continue
-
-                field = field.bind(self.obj or self.model)
-
-                raw_value = raw_data.pop(name)
-
-                if isinstance(raw_value, str):
-                    raw_value = raw_value.decode('utf8')
-
-                # We don't want to accidentally swallow any adaptation TypeErrors from here:
-                from_unicode = IFromUnicode(field)
-
-                try:
-                    if not raw_value and field.required:
-                        raise RequiredMissing(name)
-
-                    try:
-                        value = from_unicode.fromUnicode(raw_value)
-                    except (ValueError, TypeError):
-                        raise WrongType(name)
-                # TODO: make this more descriptive as to which validation failed, where was it defined etc.
-                except zope.schema.ValidationError as exc:
-                    errors.append((name, exc))
-                else:
-                    setattr(self.adapted_tmp_obj(tmp_obj, schema), name, value)
-
+            raw_data = dict(self.data)
+            errors = self._validate_fields(raw_data, errors)
             if raw_data:
                 for key in raw_data:
                     errors.append((key, UnknownAttribute()))
@@ -131,7 +97,7 @@ class ApplyRawData(object):
                     # knows what other issues this might cause in the
                     # future, or what other (hidden) issues adapting
                     # TmpObj's will cause.
-                    adapted = self.adapted_tmp_obj(tmp_obj, schema)
+                    adapted = self.adapted_tmp_obj(self.tmp_obj, schema)
                     errors.extend(zope.schema.getValidationErrors(schema, adapted))
         else:
             errors.append((None, NoSchemaFound()))
@@ -139,17 +105,78 @@ class ApplyRawData(object):
         self._errors = errors
         return errors
 
-    def adapted_tmp_obj(self, tmp_obj, schema):
-        adapter_cls = query_adapter_for_class(self.model or type(removeSecurityProxy(self.obj)), schema)
-        return adapter_cls(tmp_obj) if adapter_cls else tmp_obj
+    def _validate_fields(self, raw_data, errors):
+        for name, field, schema in self.fields:
+            if name not in raw_data:
+                continue
+
+            field = field.bind(self.obj or self.model)
+
+            raw_value = raw_data.pop(name)
+
+            if isinstance(raw_value, str):
+                raw_value = raw_value.decode('utf8')
+
+            # We don't want to accidentally swallow any adaptation TypeErrors from here:
+            from_unicode = IFromUnicode(field)
+
+            try:
+                if not raw_value and field.required:
+                    raise RequiredMissing(name)
+
+                try:
+                    value = from_unicode.fromUnicode(raw_value)
+                except (ValueError, TypeError):
+                    raise WrongType(name)
+            # TODO: make this more descriptive as to which validation failed, where was it defined etc.
+            except zope.schema.ValidationError as exc:
+                errors.append((name, exc))
+            else:
+                setattr(self.adapted_tmp_obj(self.tmp_obj, schema), name, value)
+        return errors
+
+    def error_dict(self):
+        ret = {}
+        for key, error in self.errors:
+            msg = error.doc().encode('utf8')
+            ret[key if key is not None else '__all__'] = msg
+        return ret
+
+    def write_errors(self, to):
+        for key, msg in self.error_dict().items():
+            to.write("%s: %s\n" % (key, msg) if key is not '__all__' else "%s\n" % msg)
+
+
+class RawDataApplier(RawDataValidator):
+
+    def __init__(self, data, obj, marker=None):
+        assert isinstance(data, dict)
+        self.schemas = list(get_schemas(obj, marker=marker))
+        self.fields = list(get_schema_fields(obj, marker=marker))
+        self.data = data
+        self.obj = obj
+
+    def apply(self):
+        assert not self.errors, "There must be no validation errors"
+        self.tmp_obj.apply()
+
+
+class RawDataValidatingFactory(RawDataValidator):
+
+    def __init__(self, data, model, marker=None):
+        assert isinstance(data, dict)
+        self.schemas = list(get_schemas(model, marker=marker))
+        self.fields = list(get_schema_fields(model, marker=marker))
+
+        self.data = data
+        self.model = model
 
     def create(self):
-        assert self.model, "model needs to be provided to create new objects"
-        assert not self.errors, "There should be no validation errors"
-        if not inspect.ismethod(self.model.__init__):
-            argnames = []
-        else:
+        assert not self.errors, "There must be no validation errors"
+        if inspect.ismethod(self.model.__init__):
             argnames = inspect.getargspec(self.model.__init__).args[1:]
+        else:
+            argnames = []
 
         kwargs, rest = {}, {}
         for name, value in self.data.items():
@@ -166,22 +193,6 @@ class ApplyRawData(object):
             setattr(obj, name, value)
 
         return obj
-
-    def apply(self):
-        assert self.obj, "obj needs to be provided to apply changes to an existing object"
-        assert not self.errors, "There should be no validation errors"
-        self.tmp_obj.apply()
-
-    def error_dict(self):
-        ret = {}
-        for key, error in self.errors:
-            msg = error.doc().encode('utf8')
-            ret[key if key is not None else '__all__'] = msg
-        return ret
-
-    def write_errors(self, to):
-        for key, msg in self.error_dict().items():
-            to.write("%s: %s\n" % (key, msg) if key is not '__all__' else "%s\n" % msg)
 
 
 class TmpObj(object):
@@ -234,7 +245,7 @@ class TmpObj(object):
 
 
 def alsoProvides(obj, interface):
-    form = ApplyRawData({'features': '+' + interface.__name__}, obj)
+    form = RawDataApplier({'features': '+' + interface.__name__}, obj)
     if not form.errors:
         form.apply()
     else:
@@ -242,7 +253,7 @@ def alsoProvides(obj, interface):
 
 
 def noLongerProvides(obj, interface):
-    form = ApplyRawData({'features': '-' + interface.__name__}, obj)
+    form = RawDataApplier({'features': '-' + interface.__name__}, obj)
     if not form.errors:
         form.apply()
     else:
