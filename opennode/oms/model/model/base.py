@@ -10,6 +10,7 @@ from zope.interface.interface import InterfaceClass
 from zope.schema.interfaces import IContextSourceBinder
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 from zope.security.proxy import removeSecurityProxy
+from zope.securitypolicy import interfaces
 
 from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
@@ -88,6 +89,17 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+    def set_owner(self, principal):
+        prinrole = interfaces.IPrincipalRoleManager(self)
+        prinrole.assignRoleToPrincipal('owner', principal.id)
+
+    def get_owner(self):
+        prinrole = interfaces.IPrincipalRoleManager(self)
+        return map(lambda p: p[0],
+                   filter(lambda p: p[1].getName() == 'Allow',
+                          prinrole.getPrincipalsForRole('owner')))
+
+    __owner__ = property(get_owner, set_owner)
 
     @classmethod
     def class_implemented_interfaces(cls):
