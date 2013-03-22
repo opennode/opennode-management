@@ -492,7 +492,7 @@ class CreateObjCmd(Cmd):
             else:
                 principal = interaction.participations[0].principal
 
-            obj.__owner__ = principal.id
+            obj.__owner__ = principal
 
             self.write("%s\n" % obj_id)
         else:

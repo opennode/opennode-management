@@ -1,0 +1,3 @@
+/:allow:g:cloud:read,execute   # comments at the end of line are also supported
+/computes:allow:g:cloud:read,execute
+/machines/hangar:allow:g:cloud:read,execute

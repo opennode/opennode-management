@@ -11,14 +11,12 @@ from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
+from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
 
-
-class NoSuchPermission(Exception):
-    pass
 
 
 class WhoAmICmd(Cmd):
