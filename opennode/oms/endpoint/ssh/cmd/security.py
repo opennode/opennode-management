@@ -199,7 +199,7 @@ class SetAclCmd(Cmd):
                            (principal, principal, perms))
                 return
             elif type(prin) is User and kind == 'g':
-                self.write("No such group '%s', it's an user (%s), perhaps you mean 'u:%s:%s'\n" %
+                self.write("No such group '%s', it's a user (%s), perhaps you mean 'u:%s:%s'\n" %
                            (principal, prin, principal, perms))
                 return
 

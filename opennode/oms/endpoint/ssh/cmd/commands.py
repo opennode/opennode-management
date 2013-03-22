@@ -9,7 +9,8 @@ from grokcore.component import implements, Adapter, Subscription, baseclass, ord
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer, utils
 from twisted.python import log
-
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -479,9 +480,20 @@ class CreateObjCmd(Cmd):
 
         form = RawDataValidatingFactory(args.keywords, model_cls,
                                         marker=getattr(self.current_obj, '__contains__', None))
+
         if not form.errors:
             obj = form.create()
             obj_id = self.current_obj.add(obj)
+
+            interaction = self.protocol.interaction
+            if not interaction:
+                auth = getUtility(IAuthentication, context=None)
+                principal = auth.getPrincipal(None)
+            else:
+                principal = interaction.participations[0].principal
+
+            obj.__owner__ = principal.id
+
             self.write("%s\n" % obj_id)
         else:
             form.write_errors(to=self)

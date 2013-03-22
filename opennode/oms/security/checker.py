@@ -143,7 +143,6 @@ class Checker(object):
         __traceback_supplement__ = (TracebackSupplement, obj)
         raise Unauthorized(obj, name, permission)
 
-
     def check_setattr(self, obj, name):
         'See IChecker'
         permission = self.set_permissions.get(name)

@@ -1,2 +1,3 @@
 admins:admin,security
 users:rest,read,view,execute
+cloud:rest

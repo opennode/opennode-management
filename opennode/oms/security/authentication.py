@@ -74,7 +74,7 @@ class AuthenticationUtility(GlobalUtility):
         self.principals[principal.id] = principal
 
     def getPrincipal(self, id):
-        if id == None:
+        if id is None:
             return self.principals['oms.anonymous']
         if id == system_user.id:
             return system_user
@@ -187,8 +187,21 @@ def setup_permissions(event):
     reload_users(file(passwd_file))
     setup_conf_reload_watch(passwd_file, reload_users)
 
+
 def create_special_principals():
     auth = queryUtility(IAuthentication)
+
+    root = User('root')
+    root.groups.append('root')
+    auth.registerPrincipal(root)
+
+    permissions = ['read', 'modify', 'create', 'add', 'remove', 'delete', 'view', 'traverse',
+                   'zope.Security']
+
+    principalRoleManager.assignRoleToPrincipal('root', 'root')
+    for permission in permissions:
+        rolePermissionManager.grantPermissionToRole(permission, 'root')
+        rolePermissionManager.grantPermissionToRole(permission, 'owner')
 
     auth.registerPrincipal(User('oms.anonymous'))
     auth.registerPrincipal(User('oms.rest_options'))

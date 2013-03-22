@@ -167,7 +167,6 @@ class RawDataValidatingFactory(RawDataValidator):
         assert isinstance(data, dict)
         self.schemas = list(get_schemas(model, marker=marker))
         self.fields = list(get_schema_fields(model, marker=marker))
-
         self.data = data
         self.model = model
 
@@ -189,6 +188,7 @@ class RawDataValidatingFactory(RawDataValidator):
                         kwargs[name] = field.default
 
         obj = self.model(**kwargs)
+
         for name, value in rest.items():
             setattr(obj, name, value)
 
