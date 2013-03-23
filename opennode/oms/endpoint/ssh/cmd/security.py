@@ -1,4 +1,5 @@
 import collections
+import logging
 import transaction
 
 from grokcore.component import implements
@@ -10,13 +11,16 @@ from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import MergeListAction
 from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
 
+
+log = logging.getLogger(__name__)
 
 
 class WhoAmICmd(Cmd):
@@ -27,13 +31,13 @@ class WhoAmICmd(Cmd):
 
 
 def effective_perms(interaction, obj):
-    def roles_for(role_manager, obj):
-        allowed = {}
 
+    def roles_for(role_manager, obj):
+        allowed = []
         for g in effective_principals(interaction):
             for role, setting in role_manager.getRolesForPrincipal(g.id):
-                allowed[role] = setting.getName() == 'Allow'
-
+                if setting.getName() == 'Allow':
+                    allowed.append(role)
         return allowed
 
     def parents(o):
@@ -45,9 +49,9 @@ def effective_perms(interaction, obj):
 
     with interaction:
         for p in reversed(list(parents(obj))):
-            effective_allowed.update(roles_for(IPrincipalRoleManager(p), p))
+            effective_allowed.extend(roles_for(IPrincipalRoleManager(p), p))
 
-    return [k for k, v in effective_allowed.items() if v]
+    return effective_allowed
 
 
 def pretty_effective_perms(interaction, obj):

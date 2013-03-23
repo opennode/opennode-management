@@ -84,13 +84,13 @@ class AuthenticationUtility(GlobalUtility):
             return self.principals['oms.anonymous']
         if id == system_user.id:
             return system_user
-        elif id in self.principals:
+        else:
             p = self.principals.get(id)
             if p is None:
                 p = self.principals.get('g:' + id)
             return p
         log.debug('getPrincipal %s not in (None, %s, %s). Defaulting to anonymous'
-                  % (id, system_user.id, self.principals.keys()))
+                  % (id, system_user.id, ', '.join(self.principals.keys())))
         # default to anonymous if nothing more specific is found
         return self.principals['oms.anonymous']
 

@@ -12,7 +12,7 @@ class User(object):
         self.groups = []
 
     def __repr__(self):
-        return '%s (%s)' % (type(self), self.id)
+        return '<%s %s>' % (type(self).__name__, self.id)
 
 
 class Group(User):
