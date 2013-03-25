@@ -197,6 +197,8 @@ class ReadonlyContainer(Model):
                      listcontent='traverse',
                      __iter__='traverse',
                      __getitem__='traverse',
+                     __contains__='read',
+                     can_contain='add',
                      content='traverse',
                      add='add',
                      ))

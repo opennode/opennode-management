@@ -9,7 +9,6 @@ from zope.security.checker import _available_by_default, getCheckerForInstancesO
 from zope.security.checker import CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
 from twisted.internet.defer import Deferred
-from twisted.python import log
 
 from opennode.oms.config import get_config
 from opennode.oms.security.principals import effective_principals
@@ -59,8 +58,8 @@ class AuditingPermissionDictionary(dict):
                 principals = effective_principals(checker.interaction)
                 seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['obj']).__name__)
                 if seen_key not in self.seen:
-                    log.msg("Audit: permissive mode; granting attribute=%s, principals=(%s), obj=%s" %
-                            seen_key, system='security')
+                    log.warning("Audit: permissive mode; granting attribute=%s, principals=(%s), obj=%s" %
+                                seen_key)
                     self.seen[seen_key] = True
             return CheckerPublic
         return val

@@ -223,11 +223,10 @@ def create_special_principals():
 
     principalRoleManager.assignRoleToPrincipal('root', 'root')
 
-    owner_role = Role('owner', 'owner')
+    owner_role = Role('o', 'owner')
     provideUtility(owner_role, IRole, 'owner')
     for perm in permissions:
         rolePermissionManager.grantPermissionToRole(perm, 'owner')
-
 
     for permission in permissions:
         rolePermissionManager.grantPermissionToRole(permission, 'root')
