@@ -6,6 +6,7 @@ import pkg_resources
 import pam
 import pwd
 import sys
+import time
 
 from base64 import decodestring as decode
 from base64 import encodestring as encode
@@ -115,8 +116,13 @@ def checkers():
 
 def setup_conf_reload_watch(path, handler):
     """Registers a inotify watch which will invoke `handler` for passing the open file"""
+
+    def delayed_handler(self, filepath, mask):
+        time.sleep(1)
+        handler(filepath.open())
+
     conf_reload_notifier.watch(filepath.FilePath(path),
-                               callbacks=[lambda self, filepath, mask: handler(filepath.open())])
+                               callbacks=[delayed_handler])
 
 
 @subscribe(IApplicationInitializedEvent)
@@ -144,6 +150,7 @@ def reload_roles(stream):
                 rolePermissionManager.grantPermissionToRole(perm.strip(), role.strip())
 
 
+@subscribe(IApplicationInitializedEvent)
 def setup_groups(event):
     if event.test:
         return
@@ -194,7 +201,6 @@ def setup_permissions(event):
 
     reload_users(file(passwd_file))
     setup_conf_reload_watch(passwd_file, reload_users)
-    setup_groups(event)
 
 
 def create_special_principals():

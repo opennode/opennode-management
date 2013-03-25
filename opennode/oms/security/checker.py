@@ -140,7 +140,7 @@ class Checker(object):
         if self.interaction.checkPermission(permission, obj):
             return
 
-        __traceback_supplement__ = (TracebackSupplement, obj)
+        __traceback_supplement__ = (TracebackSupplement, obj); __traceback_supplement__
         raise Unauthorized(obj, name, permission)
 
     def check_setattr(self, obj, name):
