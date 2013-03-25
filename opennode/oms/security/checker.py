@@ -133,9 +133,7 @@ class Checker(object):
         self.check(obj, name)
 
     def _checkPermission(self, obj, name, permission):
-        log.debug('_checkPermission %s %s %s' % (obj, name, permission))
         if permission is None:
-            log.debug('No permission \'%s\' for %s: %s' % (name, obj, self.get_permissions))
             __traceback_supplement__ = (TracebackSupplement, obj)
             raise ForbiddenAttribute(name, obj)
 
