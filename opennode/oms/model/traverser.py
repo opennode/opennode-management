@@ -34,10 +34,10 @@ class ContainerTraverser(ModelTraverser):
 
         """
         ret = super(ContainerTraverser, self).traverse(name)
-        if ret is not None:
-            return ret
+        if ret is None:
+            return self.context[name] if ret is None else ret
         else:
-            return self.context[name]
+            return ret
 
 
 class RootTraverser(ContainerTraverser):

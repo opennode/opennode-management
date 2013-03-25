@@ -213,6 +213,7 @@ def create_special_principals():
     root.groups.append('root')
     auth.registerPrincipal(root)
 
+    # TODO: create/use a global registry of permissions
     permissions = ['read', 'modify', 'create', 'add', 'remove', 'delete', 'view', 'traverse',
                    'zope.Security']
 
@@ -223,7 +224,7 @@ def create_special_principals():
 
     principalRoleManager.assignRoleToPrincipal('root', 'root')
 
-    owner_role = Role('o', 'owner')
+    owner_role = Role('owner', 'o')
     provideUtility(owner_role, IRole, 'owner')
     for perm in permissions:
         rolePermissionManager.grantPermissionToRole(perm, 'owner')

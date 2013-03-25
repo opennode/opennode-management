@@ -47,10 +47,6 @@ def effective_perms(interaction, obj):
 
     effective_allowed = roles_for(prinroleG, obj)
 
-    with interaction:
-        for p in reversed(list(parents(obj))):
-            effective_allowed.extend(roles_for(IPrincipalRoleManager(p), p))
-
     return effective_allowed
 
 
