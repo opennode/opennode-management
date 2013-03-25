@@ -25,22 +25,23 @@ class SecurityGrokker(martian.ClassGrokker):
         # which doesn't play well in async frameworks like twisted.
         defineChecker(factory, Checker(perms, perms))
 
-        for name, permission in permissions.items():
-            if isinstance(permission, tuple):
-                read_perm, write_perm = permission
+        for inheritance_level in permissions:
+            for name, permission in inheritance_level.items():
+                if isinstance(permission, tuple):
+                    read_perm, write_perm = permission
+
+                    config.action(
+                        discriminator=('protectNameSet', factory, name),
+                        callable=grokcore.security.util.protect_setattr,
+                        args=(factory, name, write_perm),
+                        )
+                else:
+                    read_perm = permission
 
                 config.action(
-                    discriminator=('protectNameSet', factory, name),
-                    callable=grokcore.security.util.protect_setattr,
-                    args=(factory, name, write_perm),
+                    discriminator=('protectName', factory, name),
+                    callable=grokcore.security.util.protect_getattr,
+                    args=(factory, name, read_perm),
                     )
-            else:
-                read_perm = permission
-
-            config.action(
-                discriminator=('protectName', factory, name),
-                callable=grokcore.security.util.protect_getattr,
-                args=(factory, name, read_perm),
-                )
 
         return True

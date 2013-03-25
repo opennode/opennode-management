@@ -1,4 +1,5 @@
 import inspect
+import logging
 
 from collections import defaultdict
 from zope.interface import implements
@@ -12,6 +13,9 @@ from twisted.python import log
 
 from opennode.oms.config import get_config
 from opennode.oms.security.principals import effective_principals
+
+
+log = logging.getLogger(__name__)
 
 
 _available_by_default.extend(['_p_oid', '__providedBy__', '__conform__'])
@@ -129,7 +133,9 @@ class Checker(object):
         self.check(obj, name)
 
     def _checkPermission(self, obj, name, permission):
+        log.debug('_checkPermission %s %s %s' % (obj, name, permission))
         if permission is None:
+            log.debug('No permission \'%s\' for %s: %s' % (name, obj, self.get_permissions))
             __traceback_supplement__ = (TracebackSupplement, obj)
             raise ForbiddenAttribute(name, obj)
 

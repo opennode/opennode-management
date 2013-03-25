@@ -196,6 +196,7 @@ class ReadonlyContainer(Model):
     permissions(dict(listnames='traverse',
                      listcontent='traverse',
                      __iter__='traverse',
+                     __getitem__='traverse',
                      content='traverse',
                      add='add',
                      ))
