@@ -23,7 +23,8 @@ class IModel(Interface):
     __parent__ = Attribute("Parent")
 
     def display_name():
-        """Optionally returns a better display name instead of the __name__ when __name__ is more like an ID."""
+        """Optionally returns a better display name instead of the __name__ when
+        __name__ is more like an ID."""
 
     def implemented_interfaces():
         """Returns the interfaces implemented by this model."""

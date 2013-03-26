@@ -40,12 +40,10 @@ def effective_perms(interaction, obj):
                     allowed.append(role)
         return allowed
 
-    def parents(o):
-        while o:
-            yield o
-            o = o.__parent__
-
     effective_allowed = roles_for(prinroleG, obj)
+
+    with interaction:
+        effective_allowed.extend(roles_for(IPrincipalRoleManager(obj), obj))
 
     return effective_allowed
 
@@ -66,7 +64,7 @@ class PermCheckCmd(Cmd):
 
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument('-p', action='store_true', help="Show effective permissions for a given object")
-        group.add_argument('-r', action=MergeListAction, nargs='+',
+        group.add_argument('-r', action=MergeListAction,
                            help="Check if the user has some rights on a given object")
         return parser
 
@@ -78,7 +76,8 @@ class PermCheckCmd(Cmd):
             return
 
         if args.p:
-            self.write("Effective permissions: %s\n" % pretty_effective_perms(self.protocol.interaction, obj))
+            self.write("Effective permissions: %s\n" %
+                       pretty_effective_perms(self.protocol.interaction, obj))
         elif args.r:
             self.check_rights(obj, args)
 

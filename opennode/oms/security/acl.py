@@ -3,13 +3,14 @@ import os
 import transaction
 
 from grokcore.component import subscribe
+from twisted.internet import defer
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
-from opennode.oms.model.traversal import traverse_path
+from opennode.oms.model.traversal import traverse1
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
 from opennode.oms.zodb import db
@@ -23,6 +24,7 @@ class NoSuchPermission(Exception):
 
 
 @subscribe(IApplicationInitializedEvent)
+@defer.inlineCallbacks
 def setup_permissions(event):
     if event.test:
         preload_acl_file('')
@@ -33,7 +35,7 @@ def setup_permissions(event):
         log.warning("ACL file doesn't exist")
         return
 
-    preload_acl_file(file(acl_file), filename=acl_file)
+    yield preload_acl_file(file(acl_file), filename=acl_file)
 
 
 @db.ro_transact
@@ -47,7 +49,7 @@ def preload_acl_file(iterable, filename=''):
                 continue
             path, permspec = specline.split(':', 1)
             lineno += 1
-            preload_acl_line(path, permspec)
+            preload_acl_line(path, permspec, filename, lineno)
         transaction.commit()
     except NoSuchPermission as e:
         log.error('No such permission: \'%s\'; file: \'%s\' line: %s' % (e, filename, lineno))
@@ -55,8 +57,12 @@ def preload_acl_file(iterable, filename=''):
         transaction.abort()
 
 
-def preload_acl_line(path, permspec, meta={}):
-    obj = traverse_path(db.get_root()['oms_root'], path[1:])[0][0]
+def preload_acl_line(path, permspec, filename='-', lineno='-'):
+    obj = traverse1(path[1:])
+    if obj is None:
+        log.warning('No such object: \'%s\'; file: \'%s\' line: %s' % (path, filename, lineno))
+        return
+
     auth = getUtility(IAuthentication, context=None)
     interaction = new_interaction(auth.getPrincipal('root'))
     with interaction:
@@ -68,6 +74,8 @@ def preload_acl_line(path, permspec, meta={}):
         permtype, kind, principal, perms = permspec.strip().split(':', 3)
 
         if not perms:
+            log.warning('No permissions specified for object: \'%s\'; file: \'%s\' line: %s'
+                        % (path, filename, lineno))
             return
 
         for perm in perms.strip().split(','):
