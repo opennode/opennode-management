@@ -162,6 +162,9 @@ class SetAclCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
         group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-i', action='store_true',
+                           help='Set object to inherit permissions from its parent(s)',
+                           default=False)
         group.add_argument('-m', action='append',
                            help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
         group.add_argument('-d', action='append',
@@ -180,14 +183,15 @@ class SetAclCmd(Cmd):
                     log.warning("Transient object %s always inherits permissions from its parent", path)
                     continue
                 with self.protocol.interaction:
-                    self._do_set_acl(obj, args.m, args.d, args.x)
+                    self._do_set_acl(obj, args.i, args.m, args.d, args.x)
         except NoSuchPermission as e:
             self.write("No such permission '%s'\n" % (e.message))
             transaction.abort()
 
-    def _do_set_acl(self, obj, allow_perms, deny_perms, del_perms):
+    def _do_set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
+        obj.inherit_permissions = inherit
 
         def mod_perm(what, setter, p):
             kind, principal, perms = p.split(':')

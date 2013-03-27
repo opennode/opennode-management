@@ -52,8 +52,8 @@ def preload_acl_file(iterable, filename=''):
             preload_acl_line(path, permspec, filename, lineno)
         transaction.commit()
     except NoSuchPermission as e:
-        log.error('No such permission: \'%s\'; file: \'%s\' line: %s' % (e, filename, lineno))
-        log.info('Available permissions: %s' % Role.nick_to_role.keys())
+        log.error('No such permission: \'%s\'; file: \'%s\' line: %s', e, filename, lineno)
+        log.info('Available permissions: %s', Role.nick_to_role.keys())
         transaction.abort()
 
 
@@ -61,11 +61,18 @@ def preload_acl_line(path, permspec, filename='-', lineno='-'):
     obj = traverse1(path[1:])
 
     if obj is None:
-        log.warning('No such object: \'%s\'; file: \'%s\' line: %s' % (path, filename, lineno))
+        log.warning('No such object: \'%s\'; file: \'%s\' line: %s', path, filename, lineno)
         return
 
     if obj.__transient__:
         log.warning("Transient object %s always inherits permissions from its parent", path)
+        return
+
+    if permspec == 'inherit':
+        obj.inherit_permissions = True
+        return
+    elif permspec == 'noinherit':
+        obj.inherit_permissions = False
         return
 
     auth = getUtility(IAuthentication, context=None)
@@ -76,16 +83,21 @@ def preload_acl_line(path, permspec, filename='-', lineno='-'):
                       'deny': prinrole.removeRoleFromPrincipal,
                       'unset': prinrole.unsetRoleForPrincipal}
 
-        permtype, kind, principal, perms = permspec.strip().split(':', 3)
+        parsedspec = permspec.strip().split(':', 3)
+        if len(parsedspec) < 4:
+            log.error('Format error: not all fields are specified in \'%s\' on line %s', filename, lineno)
+            return
+
+        permtype, kind, principal, perms = parsedspec
 
         if not perms:
-            log.warning('No permissions specified for object: \'%s\'; file: \'%s\' line: %s'
-                        % (path, filename, lineno))
+            log.warning('No permissions specified for object: \'%s\'; file: \'%s\' line: %s',
+                        path, filename, lineno)
             return
 
         for perm in perms.strip().split(','):
             if perm not in Role.nick_to_role:
                 raise NoSuchPermission(perm)
             role = Role.nick_to_role[perm].id
-            log.info('%s \'%s\' on %s (%s) to \'%s\'' % (permtype, perm, path, obj, principal))
+            log.info('%s \'%s\' on %s (%s) to \'%s\'', permtype, perm, path, obj, principal)
             action_map[permtype](role, principal)
