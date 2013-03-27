@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 import pkg_resources
 import sys
+import traceback
 
 from grokcore.component import subscribe
 from pkg_resources import working_set
@@ -57,6 +58,8 @@ class Plugins(ReadonlyContainer):
 
         def _log_error(item, e):
             log.error("[plugins] error loading %s %s", item, e)
+            log.error('[plugins] %s', traceback.format_exc())
+
 
         for dist, e in errors.iteritems():
             # ignore version conflict of modules which are not OMS plugins

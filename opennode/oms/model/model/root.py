@@ -24,6 +24,9 @@ class OmsRoot(ReadonlyContainer):
 
     __name__ = ''
 
+    # Always inherits the global permissions
+    inherit_permissions = True
+
     def __init__(self):
         self._items = OOBTree()
 

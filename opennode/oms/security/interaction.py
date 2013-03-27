@@ -4,6 +4,7 @@ from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.security._definitions import thread_local
 from zope.security.interfaces import IPrincipal
+from zope.security.proxy import removeSecurityProxy
 from zope.securitypolicy.interfaces import Allow, Deny, Unset
 from zope.securitypolicy.interfaces import IRolePermissionMap
 from zope.securitypolicy.interfaces import IPrincipalRoleMap
@@ -91,6 +92,12 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
                 cache_prin_per[permission] = prinper
                 return prinper
 
+        if parent.inherit_permissions:
+            parent = removeSecurityProxy(getattr(parent, '__parent__', None))
+            prinper = self.cached_prinper(parent, principal, groups, permission)
+            cache_prin_per[permission] = prinper
+            return prinper
+
         prinper = SettingAsBoolean[
             globalPrincipalPermissionSetting(permission, principal, None)]
         cache_prin_per[permission] = prinper
@@ -107,10 +114,22 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
         except KeyError:
             pass
 
-        roles = dict(
-            [(role, 1)
-             for (role, setting) in globalRolesForPermission(permission)
-             if setting is Allow])
+        if parent is None:
+            roles = dict(
+                [(role, 1)
+                 for (role, setting) in globalRolesForPermission(permission)
+                 if setting is Allow])
+            cache_roles[permission] = roles
+            return roles
+
+        if parent.inherit_permissions:
+            roles = self.cached_roles(
+                removeSecurityProxy(getattr(parent, '__parent__', None)),
+                permission)
+        else:
+            roles = dict([(role, 1)
+                          for (role, setting) in globalRolesForPermission(permission)
+                          if setting is Allow])
 
         roleper = IRolePermissionMap(parent, None)
         if roleper:
@@ -134,10 +153,23 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
         except KeyError:
             pass
 
-        roles = dict(
-            [(role, SettingAsBoolean[setting])
-             for (role, setting) in globalRolesForPrincipal(principal)])
-        roles['zope.Anonymous'] = True  # Everybody has Anonymous
+        if parent is None:
+            roles = dict(
+                [(role, SettingAsBoolean[setting])
+                 for (role, setting) in globalRolesForPrincipal(principal)])
+            roles['zope.Anonymous'] = True  # Everybody has Anonymous
+            cache_principal_roles[principal] = roles
+            return roles
+
+        if parent.inherit_permissions:
+            roles = self.cached_principal_roles(
+                removeSecurityProxy(getattr(parent, '__parent__', None)),
+                principal)
+        else:
+            roles = dict(
+                [(role, SettingAsBoolean[setting])
+                 for (role, setting) in globalRolesForPrincipal(principal)])
+            roles['zope.Anonymous'] = True  # Everybody has Anonymous
 
         prinrole = IPrincipalRoleMap(parent, None)
         if prinrole:

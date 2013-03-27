@@ -90,6 +90,8 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+    inherit_permissions = False
+
     def set_owner(self, principal):
         prinrole = interfaces.IPrincipalRoleManager(self)
         prinrole.assignRoleToPrincipal('owner', principal.id)
