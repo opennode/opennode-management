@@ -90,6 +90,8 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+    __transient__ = False
+
     inherit_permissions = False
 
     def set_owner(self, principal):
@@ -237,6 +239,8 @@ class ReadonlyContainer(Model):
             children = extender.extend()
             for v in children.values():
                 v.__parent__ = self
+                v.__transient__ = True
+                v.inherit_permissions = True
             items.update(children)
 
         return items

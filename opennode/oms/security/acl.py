@@ -59,8 +59,13 @@ def preload_acl_file(iterable, filename=''):
 
 def preload_acl_line(path, permspec, filename='-', lineno='-'):
     obj = traverse1(path[1:])
+
     if obj is None:
         log.warning('No such object: \'%s\'; file: \'%s\' line: %s' % (path, filename, lineno))
+        return
+
+    if obj.__transient__:
+        log.warning("Transient object %s always inherits permissions from its parent", path)
         return
 
     auth = getUtility(IAuthentication, context=None)

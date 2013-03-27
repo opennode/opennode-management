@@ -175,6 +175,10 @@ class SetAclCmd(Cmd):
         try:
             for path in args.paths:
                 obj = self.traverse(path)
+                if obj.__transient__:
+                    self.write("Transient object %s always inherits permissions from its parent\n" % path)
+                    log.warning("Transient object %s always inherits permissions from its parent", path)
+                    continue
                 with self.protocol.interaction:
                     self._do_set_acl(obj, args.m, args.d, args.x)
         except NoSuchPermission as e:
