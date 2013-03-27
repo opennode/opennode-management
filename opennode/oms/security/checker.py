@@ -2,13 +2,13 @@ import inspect
 import logging
 
 from collections import defaultdict
+from twisted.internet.defer import Deferred
 from zope.interface import implements
 from zope.security._definitions import thread_local
 from zope.security._proxy import _Proxy as Proxy
 from zope.security.checker import _available_by_default, getCheckerForInstancesOf
 from zope.security.checker import CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
-from twisted.internet.defer import Deferred
 
 from opennode.oms.config import get_config
 from opennode.oms.security.principals import effective_principals
@@ -139,7 +139,6 @@ class Checker(object):
         if permission is CheckerPublic:
             return
 
-        # use local interaction
         if self.interaction.checkPermission(permission, obj):
             return
 

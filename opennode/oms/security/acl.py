@@ -85,7 +85,7 @@ def preload_acl_line(path, permspec, filename='-', lineno='-'):
 
         parsedspec = permspec.strip().split(':', 3)
         if len(parsedspec) < 4:
-            log.error('Format error: not all fields are specified in \'%s\' on line %s', filename, lineno)
+            log.error('Format error: not all fields are specified: \'%s\' on line %s', filename, lineno)
             return
 
         permtype, kind, principal, perms = parsedspec
