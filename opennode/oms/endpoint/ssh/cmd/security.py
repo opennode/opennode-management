@@ -302,8 +302,8 @@ class PasswdCmd(Cmd):
                 args.u = current_user.id
 
             principals = map(lambda p: p.id, effective_principals(current_user))
-            if args.u != current_user and 'admin' not in principals:
-                self.write('Permission denied: admin not in effective permissions: %s\n'
+            if args.u != current_user and 'admins' not in principals:
+                self.write('Permission denied: admins not in effective permissions: %s\n'
                            % ', '.join(principals))
                 return
             update_passwd(args.u, password=args.password, group=args.g)
