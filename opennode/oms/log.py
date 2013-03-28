@@ -71,8 +71,10 @@ class TwistedSystemFilter(logging.Filter):
 
 
 def setup_logging():
-    if os.path.exists('logging.conf'):
-        load_config_in_varous_formats('logging.conf')
+    for filename in get_config_filenames():
+        if os.path.exists(filename):
+            load_config_in_varous_formats(filename)
+            break
     else:
         config_defaults()
 
@@ -158,3 +160,6 @@ def config_defaults():
         'version': 1,
         'disable_existing_loggers': False
     })
+
+def get_config_filenames():
+    return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
