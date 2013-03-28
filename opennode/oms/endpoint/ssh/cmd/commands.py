@@ -9,7 +9,8 @@ from grokcore.component import implements, Adapter, Subscription, baseclass, ord
 from twisted.conch.insults.insults import modes
 from twisted.internet import defer, utils
 from twisted.python import log
-
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
 from zope.security.proxy import removeSecurityProxy
 
@@ -22,7 +23,7 @@ from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualC
                                                GroupDictAction, VirtualConsoleArgumentParser)
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
-from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
+from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory, ModelDeletedEvent
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
@@ -435,7 +436,7 @@ class SetAttrCmd(Cmd):
             for key, value in raw_data.items():
                 self.write("Setting %s=%s\n" % (key, value))
 
-        form = ApplyRawData(raw_data, obj)
+        form = RawDataApplier(raw_data, obj)
 
         if not form.errors:
             form.apply()
@@ -477,11 +478,22 @@ class CreateObjCmd(Cmd):
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
 
-        form = ApplyRawData(args.keywords, model=model_cls,
-                            marker=getattr(self.current_obj, '__contains__', None))
+        form = RawDataValidatingFactory(args.keywords, model_cls,
+                                        marker=getattr(self.current_obj, '__contains__', None))
+
         if not form.errors:
             obj = form.create()
             obj_id = self.current_obj.add(obj)
+
+            interaction = self.protocol.interaction
+            if not interaction:
+                auth = getUtility(IAuthentication, context=None)
+                principal = auth.getPrincipal(None)
+            else:
+                principal = interaction.participations[0].principal
+
+            obj.__owner__ = principal
+
             self.write("%s\n" % obj_id)
         else:
             form.write_errors(to=self)
@@ -918,7 +930,7 @@ class EditCmd(Cmd):
                 if line and not line.startswith('#'):
                     key, value = line.split('=', 1)
                     raw_data[key.strip()] = value.strip()
-            form = ApplyRawData(raw_data, obj)
+            form = RawDataApplier(raw_data, obj)
             if not form.errors:
                 form.apply()
             else:

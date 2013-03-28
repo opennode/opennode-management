@@ -22,25 +22,23 @@ class SecurityGrokker(martian.ClassGrokker):
             perms = AuditingPermissionDictionary()
 
         # mandatory, otherwise zope's default Checker impl will be used
-        # which doesn't play well in async frameworks like twisted.
+        # which doesn't play well with Twisted.
         defineChecker(factory, Checker(perms, perms))
 
-        for name, permission in permissions.items():
-            if isinstance(permission, tuple):
-                read_perm, write_perm = permission
+        # TODO: supply the 'inherit' option to the class somehow
+        # to facilitate optional inheritance of all permissions
+        for class_inheritance_level in permissions:
+            for name, permission in class_inheritance_level.items():
+                if isinstance(permission, tuple):
+                    read_perm, write_perm = permission
+                    config.action(discriminator=('protectNameSet', factory, name),
+                                  callable=grokcore.security.util.protect_setattr,
+                                  args=(factory, name, write_perm))
+                else:
+                    read_perm = permission
 
-                config.action(
-                    discriminator=('protectNameSet', factory, name),
-                    callable=grokcore.security.util.protect_setattr,
-                    args=(factory, name, write_perm),
-                    )
-            else:
-                read_perm = permission
-
-            config.action(
-                discriminator=('protectName', factory, name),
-                callable=grokcore.security.util.protect_getattr,
-                args=(factory, name, read_perm),
-                )
+                config.action(discriminator=('protectName', factory, name),
+                              callable=grokcore.security.util.protect_getattr,
+                              args=(factory, name, read_perm))
 
         return True

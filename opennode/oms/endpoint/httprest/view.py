@@ -17,7 +17,7 @@ from opennode.oms.endpoint.httprest.root import BadRequest
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.endpoint.ssh.cmdline import ArgumentParsingError
-from opennode.oms.model.form import ApplyRawData, ModelDeletedEvent
+from opennode.oms.model.form import RawDataApplier, ModelDeletedEvent
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
@@ -58,7 +58,7 @@ class DefaultView(HttpRestView):
 
         data = self.put_filter_attributes(request, data)
 
-        form = ApplyRawData(data, obj=self.context)
+        form = RawDataApplier(data, self.context)
         if not form.errors:
             form.apply()
             return [IHttpRestView(self.context).render_recursive(request, depth=0)]

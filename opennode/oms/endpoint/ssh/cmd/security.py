@@ -1,4 +1,5 @@
 import collections
+import logging
 import transaction
 
 from grokcore.component import implements
@@ -10,15 +11,16 @@ from zope.securitypolicy.principalrole import principalRoleManager as prinroleG
 
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
-from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser, MergeListAction
+from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
+from opennode.oms.endpoint.ssh.cmdline import MergeListAction
+from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
 
 
-class NoSuchPermission(Exception):
-    pass
+log = logging.getLogger(__name__)
 
 
 class WhoAmICmd(Cmd):
@@ -29,27 +31,21 @@ class WhoAmICmd(Cmd):
 
 
 def effective_perms(interaction, obj):
-    def roles_for(role_manager, obj):
-        allowed = {}
 
+    def roles_for(role_manager, obj):
+        allowed = []
         for g in effective_principals(interaction):
             for role, setting in role_manager.getRolesForPrincipal(g.id):
-                allowed[role] = setting.getName() == 'Allow'
-
+                if setting.getName() == 'Allow':
+                    allowed.append(role)
         return allowed
-
-    def parents(o):
-        while o:
-            yield o
-            o = o.__parent__
 
     effective_allowed = roles_for(prinroleG, obj)
 
     with interaction:
-        for p in reversed(list(parents(obj))):
-            effective_allowed.update(roles_for(IPrincipalRoleManager(p), p))
+        effective_allowed.extend(roles_for(IPrincipalRoleManager(obj), obj))
 
-    return [k for k, v in effective_allowed.items() if v]
+    return effective_allowed
 
 
 def pretty_effective_perms(interaction, obj):
@@ -68,7 +64,8 @@ class PermCheckCmd(Cmd):
 
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument('-p', action='store_true', help="Show effective permissions for a given object")
-        group.add_argument('-r', action=MergeListAction, nargs='+', help="Check if the user has some rights on a given object")
+        group.add_argument('-r', action=MergeListAction,
+                           help="Check if the user has some rights on a given object")
         return parser
 
     @db.ro_transact
@@ -79,7 +76,8 @@ class PermCheckCmd(Cmd):
             return
 
         if args.p:
-            self.write("Effective permissions: %s\n" % pretty_effective_perms(self.protocol.interaction, obj))
+            self.write("Effective permissions: %s\n" %
+                       pretty_effective_perms(self.protocol.interaction, obj))
         elif args.r:
             self.check_rights(obj, args)
 
@@ -164,6 +162,9 @@ class SetAclCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
         group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-i', action='store_true',
+                           help='Set object to inherit permissions from its parent(s)',
+                           default=False)
         group.add_argument('-m', action='append',
                            help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
         group.add_argument('-d', action='append',
@@ -177,15 +178,20 @@ class SetAclCmd(Cmd):
         try:
             for path in args.paths:
                 obj = self.traverse(path)
+                if obj.__transient__:
+                    self.write("Transient object %s always inherits permissions from its parent\n" % path)
+                    log.warning("Transient object %s always inherits permissions from its parent", path)
+                    continue
                 with self.protocol.interaction:
-                    self._do_set_acl(obj, args.m, args.d, args.x)
+                    self._do_set_acl(obj, args.i, args.m, args.d, args.x)
         except NoSuchPermission as e:
             self.write("No such permission '%s'\n" % (e.message))
             transaction.abort()
 
-    def _do_set_acl(self, obj, allow_perms, deny_perms, del_perms):
+    def _do_set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
+        obj.inherit_permissions = inherit
 
         def mod_perm(what, setter, p):
             kind, principal, perms = p.split(':')
@@ -198,7 +204,7 @@ class SetAclCmd(Cmd):
                            (principal, principal, perms))
                 return
             elif type(prin) is User and kind == 'g':
-                self.write("No such group '%s', it's an user (%s), perhaps you mean 'u:%s:%s'\n" %
+                self.write("No such group '%s', it's a user (%s), perhaps you mean 'u:%s:%s'\n" %
                            (principal, prin, principal, perms))
                 return
 

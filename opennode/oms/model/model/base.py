@@ -10,6 +10,7 @@ from zope.interface.interface import InterfaceClass
 from zope.schema.interfaces import IContextSourceBinder
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 from zope.security.proxy import removeSecurityProxy
+from zope.securitypolicy import interfaces
 
 from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
@@ -22,7 +23,8 @@ class IModel(Interface):
     __parent__ = Attribute("Parent")
 
     def display_name():
-        """Optionally returns a better display name instead of the __name__ when __name__ is more like an ID."""
+        """Optionally returns a better display name instead of the __name__ when
+        __name__ is more like an ID."""
 
     def implemented_interfaces():
         """Returns the interfaces implemented by this model."""
@@ -88,6 +90,21 @@ class Model(persistent.Persistent):
     __parent__ = None
     __name__ = None
 
+    __transient__ = False
+
+    inherit_permissions = False
+
+    def set_owner(self, principal):
+        prinrole = interfaces.IPrincipalRoleManager(self)
+        prinrole.assignRoleToPrincipal('owner', principal.id)
+
+    def get_owner(self):
+        prinrole = interfaces.IPrincipalRoleManager(self)
+        return map(lambda p: p[0],
+                   filter(lambda p: p[1].getName() == 'Allow',
+                          prinrole.getPrincipalsForRole('owner')))
+
+    __owner__ = property(get_owner, set_owner)
 
     @classmethod
     def class_implemented_interfaces(cls):
@@ -159,11 +176,14 @@ class ContainerExtension(Subscription):
     baseclass()
 
     __class__ = None
+    __interfaces__ = ()
 
     def extend(self):
         # XXX: currently models designed for container extension expect the parent
         # as constructor argument, but it's not needed anymore
-        return {self.__class__.__dict__['__name__']: self.__class__(self.context)}
+        if '__name__' not in self.__class__.__dict__:
+            raise KeyError('__name__ not found in __dict__ of (%s)' % (self.__class__))
+        return {self.__class__.__dict__['__name__']: self.__class__()}
 
 
 class ContainerInjector(Subscription):
@@ -171,6 +191,7 @@ class ContainerInjector(Subscription):
     baseclass()
 
     __class__ = None
+    __interfaces__ = ()
 
     def inject(self):
         if '__name__' not in self.__class__.__dict__:
@@ -184,6 +205,8 @@ class ReadonlyContainer(Model):
     permissions(dict(listnames='traverse',
                      listcontent='traverse',
                      __iter__='traverse',
+                     __getitem__='traverse',
+                     can_contain='add',
                      content='traverse',
                      add='add',
                      ))
@@ -208,6 +231,10 @@ class ReadonlyContainer(Model):
     def content(self):
         injectors = querySubscriptions(self, IContainerInjector)
         for injector in injectors:
+            interface_filter = getattr(injector, '__interfaces__', [])
+            if interface_filter and not any(map(lambda i: i.providedBy(self), interface_filter)):
+                continue
+
             for k, v in injector.inject().items():
                 if k not in self._items:
                     v.__parent__ = self
@@ -217,9 +244,15 @@ class ReadonlyContainer(Model):
 
         extenders = querySubscriptions(self, IContainerExtender)
         for extender in extenders:
+            interface_filter = getattr(extender, '__interfaces__', [])
+            if interface_filter and not any(map(lambda i: i.providedBy(self), interface_filter)):
+                continue
+
             children = extender.extend()
             for v in children.values():
                 v.__parent__ = self
+                v.__transient__ = True
+                v.inherit_permissions = True
             items.update(children)
 
         return items

@@ -1,10 +1,16 @@
 import unittest
 
 from nose.tools import eq_, assert_raises
+from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
+from zope.interface import implementer
 from zope.security.interfaces import Unauthorized
+from zope.security.management import newInteraction, getInteraction, endInteraction, setSecurityPolicy
+from zope.securitypolicy import interfaces
+from zope.securitypolicy import zopepolicy
 from zope.securitypolicy.principalpermission import principalPermissionManager as prinperG
+
 
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.schema import model_to_dict
@@ -21,6 +27,26 @@ class SessionStub(object):
         self.principal = principal
         self.interaction = None
 
+
+@implementer(IAttributeAnnotatable)
+class DummyObject(object):
+    pass
+
+
+class Participation:
+    interaction = None
+
+
+class InteractionScope(object):
+    def __init__(self, principal):
+        self.principal = principal
+
+    def __enter__(self):
+        newInteraction(self.principal)
+        return getInteraction()
+
+    def __exit__(self, type, value, traceback):
+        endInteraction()
 
 class SecurityTestCase(unittest.TestCase):
 
@@ -98,6 +124,46 @@ class SecurityTestCase(unittest.TestCase):
         eq_(model_to_dict(compute), model_to_dict(compute_proxy))
         #print model_to_dict(compute)
         #print model_to_dict(compute_proxy)
+
+    def test_ownership_concept(self):
+        alice = User('alice')
+        bob = User('bob')
+
+        oldpolicy = setSecurityPolicy(zopepolicy.ZopeSecurityPolicy)
+
+        def create_object():
+            obj = DummyObject()
+            roleper = interfaces.IRolePermissionManager(obj)
+            roleper.grantPermissionToRole('anything', 'owner')
+            return obj
+
+        def set_owner(obj, principal):
+            prinrole = interfaces.IPrincipalRoleManager(obj)
+            prinrole.assignRoleToPrincipal('owner', principal.id)
+
+        aobj = create_object()
+        bobj = create_object()
+
+        bob_p = Participation()
+        bob_p.principal = bob
+
+        alice_p = Participation()
+        alice_p.principal = alice
+
+        set_owner(aobj, alice)
+        set_owner(bobj, bob)
+
+        with InteractionScope(alice_p) as alice_int:
+            # alice is owner of aobj, but cannot access bobj
+            assert not alice_int.checkPermission('anything', bobj)
+            assert alice_int.checkPermission('anything', aobj)
+
+        with InteractionScope(bob_p) as bob_int:
+            # bob is owner of bobj, but cannot access aobj
+            assert bob_int.checkPermission('anything', bobj)
+            assert not bob_int.checkPermission('anything', aobj)
+
+        setSecurityPolicy(oldpolicy)
 
     def test_with(self):
         interaction = self._get_interaction('user1')

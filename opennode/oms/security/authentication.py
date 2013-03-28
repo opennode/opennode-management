@@ -1,10 +1,12 @@
 import grp
 import hashlib
+import logging
 import os
 import pkg_resources
 import pam
 import pwd
 import sys
+import time
 
 from base64 import decodestring as decode
 from base64 import encodestring as encode
@@ -15,7 +17,7 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import inotify, defer
-from twisted.python import log, filepath
+from twisted.python import filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
@@ -31,6 +33,8 @@ from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group
 
+
+log = logging.getLogger(__name__)
 
 _checkers = None
 conf_reload_notifier = inotify.INotify()
@@ -51,16 +55,16 @@ class PamAuthChecker(object):
 
     def requestAvatarId(self, credentials):
         if pam.authenticate(credentials.username, credentials.password):
-            log.msg('Successful login with PAM for %s' % credentials.username, system='auth-pam')
+            log.info('Successful login with PAM for %s' % credentials.username)
             auth = getUtility(IAuthentication, context=None)
             oms_user = User(credentials.username)
             oms_user.groups.extend(get_linux_groups_for_user(credentials.username))
-            log.msg(' Adding user groups: %s' % ', '.join(oms_user.groups), system='auth-pam')
+            log.info(' Adding user groups: %s' % ', '.join(oms_user.groups))
             for g in get_linux_groups_for_user(credentials.username):
                 auth.registerPrincipal(Group(g))
             auth.registerPrincipal(oms_user)
             return defer.succeed(credentials.username)
-        log.msg(' Authentication failed with PAM for %s' % credentials.username, system='auth-pam')
+        log.warning(' Authentication failed with PAM for %s' % credentials.username)
         return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
 
@@ -71,17 +75,23 @@ class AuthenticationUtility(GlobalUtility):
         self.principals = {}
 
     def registerPrincipal(self, principal):
-        self.principals[principal.id] = principal
+        if type(principal) is Group:
+            self.principals['g:' + principal.id] = principal
+        else:
+            self.principals[principal.id] = principal
 
     def getPrincipal(self, id):
-        if id == None:
+        if id is None:
             return self.principals['oms.anonymous']
         if id == system_user.id:
             return system_user
-        elif id in self.principals:
-            return self.principals[id]
-        log.msg('getPrincipal %s not in (None, %s, %s). Defaulting to anonymous' % (
-            id, system_user.id, self.principals.keys()), system='auth')
+        else:
+            p = self.principals.get(id)
+            if p is None:
+                p = self.principals.get('g:' + id)
+            return p
+        log.debug('getPrincipal %s not in (None, %s, %s). Defaulting to anonymous'
+                  % (id, system_user.id, ', '.join(self.principals.keys())))
         # default to anonymous if nothing more specific is found
         return self.principals['oms.anonymous']
 
@@ -96,7 +106,7 @@ def ssha_hash(user, password, encoded_password):
 
 def checkers():
     global _checkers
-    if _checkers == None:
+    if _checkers is None:
         pam_checker = PamAuthChecker() if get_config().getboolean('auth', 'use_pam') else None
         password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
         pubkey_checker = InMemoryPublicKeyCheckerDontUse()
@@ -105,11 +115,14 @@ def checkers():
 
 
 def setup_conf_reload_watch(path, handler):
-    """Registers a inotify watch which will invoke `handler` for passing the
-    open file"""
+    """Registers a inotify watch which will invoke `handler` for passing the open file"""
+
+    def delayed_handler(self, filepath, mask):
+        time.sleep(1)
+        handler(filepath.open())
+
     conf_reload_notifier.watch(filepath.FilePath(path),
-                               callbacks=[lambda self, filepath, mask:
-                                          handler(filepath.open())])
+                               callbacks=[delayed_handler])
 
 
 @subscribe(IApplicationInitializedEvent)
@@ -127,9 +140,9 @@ def setup_roles(event):
 
 
 def reload_roles(stream):
-    log.msg("(Re)Loading OMS permission definitions", system='auth')
-    for i in stream:
-        nick, role, permissions = i.split(':', 4)
+    log.info("(Re)Loading OMS permission definitions")
+    for line in stream:
+        nick, role, permissions = line.split(':', 4)
         oms_role = Role(role, nick)
         provideUtility(oms_role, IRole, role)
         for perm in permissions.split(','):
@@ -154,15 +167,15 @@ def setup_groups(event):
 
 
 def reload_groups(stream):
-    log.msg("(Re)Loading OMS groups definitions", system='auth')
+    log.info("(Re)Loading OMS groups definitions")
 
     auth = queryUtility(IAuthentication)
 
-    for i in stream:
+    for line in stream:
         try:
-            group, roles = i.split(':', 2)
+            group, roles = line.split(':', 2)
         except ValueError:
-            log.msg("Invalid groups file format", system='auth')
+            log.info("Invalid groups file format")
         else:
             oms_group = Group(group.strip())
             auth.registerPrincipal(oms_group)
@@ -189,8 +202,36 @@ def setup_permissions(event):
     reload_users(file(passwd_file))
     setup_conf_reload_watch(passwd_file, reload_users)
 
+
 def create_special_principals():
     auth = queryUtility(IAuthentication)
+
+    groot = Group('root')
+    auth.registerPrincipal(groot)
+
+    root = User('root')
+    root.groups.append('root')
+    auth.registerPrincipal(root)
+
+    # TODO: create/use a global registry of permissions
+    permissions = ['read', 'modify', 'create', 'add', 'remove', 'delete', 'view', 'traverse',
+                   'zope.Security']
+
+    root_role = Role('root', 'root')
+    provideUtility(root_role, IRole, 'root')
+    for perm in permissions:
+        rolePermissionManager.grantPermissionToRole(perm, 'root')
+
+    principalRoleManager.assignRoleToPrincipal('root', 'root')
+
+    owner_role = Role('owner', 'o')
+    provideUtility(owner_role, IRole, 'owner')
+    for perm in permissions:
+        rolePermissionManager.grantPermissionToRole(perm, 'owner')
+
+    for permission in permissions:
+        rolePermissionManager.grantPermissionToRole(permission, 'root')
+        rolePermissionManager.grantPermissionToRole(permission, 'owner')
 
     auth.registerPrincipal(User('oms.anonymous'))
     auth.registerPrincipal(User('oms.rest_options'))
@@ -199,16 +240,16 @@ def create_special_principals():
 
 
 def reload_users(stream):
-    log.msg("(Re)Loading OMS users definitions", system='auth')
+    log.info("(Re)Loading OMS users definitions")
 
     create_special_principals()
     auth = queryUtility(IAuthentication)
 
-    for i in stream:
+    for line in stream:
         try:
-            user, _, groups = i.split(':', 3)
+            user, _, groups = line.split(':', 3)
         except ValueError:
-            log.msg("Invalid password file format", system='auth')
+            log.error("Invalid password file format")
         else:
             oms_user = User(user.strip())
             for group in groups.split(','):

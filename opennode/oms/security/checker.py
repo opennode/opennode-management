@@ -1,16 +1,20 @@
 import inspect
+import logging
 
 from collections import defaultdict
+from twisted.internet.defer import Deferred
 from zope.interface import implements
 from zope.security._definitions import thread_local
 from zope.security._proxy import _Proxy as Proxy
-from zope.security.checker import _available_by_default, getCheckerForInstancesOf, CheckerPublic, TracebackSupplement, getChecker
+from zope.security.checker import _available_by_default, getCheckerForInstancesOf
+from zope.security.checker import CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
-from twisted.internet.defer import Deferred
-from twisted.python import log
 
 from opennode.oms.config import get_config
 from opennode.oms.security.principals import effective_principals
+
+
+log = logging.getLogger(__name__)
 
 
 _available_by_default.extend(['_p_oid', '__providedBy__', '__conform__'])
@@ -52,11 +56,10 @@ class AuditingPermissionDictionary(dict):
                 checker_locals = inspect.getouterframes(inspect.currentframe())[1][0].f_locals
                 checker = checker_locals['self']
                 principals = effective_principals(checker.interaction)
-
-                seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['object']).__name__)
+                seen_key = (key, ','.join(i.id for i in principals), type(checker_locals['obj']).__name__)
                 if seen_key not in self.seen:
-                    log.msg("Audit: permissive mode; granting attribute=%s, principals=(%s), object=%s" %
-                            seen_key, system='security')
+                    log.warning("Audit: permissive mode; granting attribute=%s, principals=(%s), obj=%s" %
+                                seen_key)
                     self.seen[seen_key] = True
             return CheckerPublic
         return val
@@ -95,7 +98,7 @@ def proxy_factory(value, interaction):
 class Checker(object):
     implements(INameBasedChecker)
 
-    def __init__(self, get_permissions, set_permissions=None, interaction=None):
+    def __init__(self, get_permissions, set_permissions={}, interaction=None):
         """Create a checker
 
         A dictionary must be provided for computing permissions for
@@ -111,8 +114,7 @@ class Checker(object):
         """
         assert isinstance(get_permissions, dict)
         self.get_permissions = get_permissions
-        if set_permissions is not None:
-            assert isinstance(set_permissions, dict)
+        assert isinstance(set_permissions, dict)
         self.set_permissions = set_permissions
 
         self.interaction = interaction
@@ -123,51 +125,37 @@ class Checker(object):
 
     def setattr_permission_id(self, name):
         'See INameBasedChecker'
-        if self.set_permissions:
-            return self.set_permissions.get(name)
+        return self.set_permissions.get(name)
 
-    def check_getattr(self, object, name):
+    def check_getattr(self, obj, name):
         'See IChecker'
-        self.check(object, name)
+        self.check(obj, name)
 
-    def check_setattr(self, object, name):
-        'See IChecker'
-        # handle defaultdict
-        if self.set_permissions is not None:
-            permission = self.set_permissions.get(name)
-        else:
-            permission = None
+    def _checkPermission(self, obj, name, permission):
+        if permission is None:
+            __traceback_supplement__ = (TracebackSupplement, obj)
+            raise ForbiddenAttribute(name, obj)
 
-        if permission is not None:
-            if permission is CheckerPublic:
-                return  # Public
-            if self.interaction.checkPermission(permission, object):  # use local interaction
-                return  # allowed
-            else:
-                __traceback_supplement__ = (TracebackSupplement, object)
-                raise Unauthorized(object, name, permission)
-
-        __traceback_supplement__ = (TracebackSupplement, object)
-        raise ForbiddenAttribute(name, object)
-
-    def check(self, object, name):
-        'See IChecker'
-        permission = self.get_permissions.get(name)
-
-        if permission is not None:
-            if permission is CheckerPublic:
-                return  # Public
-            if self.interaction.checkPermission(permission, object):  # use local interaction
-                return
-            else:
-                __traceback_supplement__ = (TracebackSupplement, object)
-                raise Unauthorized(object, name, permission)
-        elif name in _available_by_default:
+        if permission is CheckerPublic:
             return
 
-        if name != '__iter__' or hasattr(object, name):
-            __traceback_supplement__ = (TracebackSupplement, object)
-            raise ForbiddenAttribute(name, object)
+        if self.interaction.checkPermission(permission, obj):
+            return
+
+        __traceback_supplement__ = (TracebackSupplement, obj); __traceback_supplement__
+        raise Unauthorized(obj, name, permission)
+
+    def check_setattr(self, obj, name):
+        'See IChecker'
+        permission = self.set_permissions.get(name)
+        self._checkPermission(obj, name, permission)
+
+    def check(self, obj, name):
+        'See IChecker'
+        permission = self.get_permissions.get(name)
+        if permission is None and name in _available_by_default:
+            return
+        self._checkPermission(obj, name, permission)
 
     def proxy(self, value):
         'See IChecker'

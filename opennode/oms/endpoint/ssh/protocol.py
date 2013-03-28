@@ -160,6 +160,10 @@ class OmsShellProtocol(InteractiveTerminal):
             yield deferred
         except cmdline.ArgumentParsingError:
             return
+        except ForbiddenAttribute as e:
+            msg = e
+            log.err(system='ssh')
+            self.terminal.write("Permission denied: %s\n" % msg)
         except Unauthorized as e:
             msg = e
             log.err(system='ssh')
@@ -213,6 +217,8 @@ class OmsShellProtocol(InteractiveTerminal):
                 if ICommand.providedBy(command):
                     return command.cmd
             except ForbiddenAttribute:
+                pass
+            except Unauthorized:
                 # skip command paths where we don't have access
                 pass
 

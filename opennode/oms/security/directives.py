@@ -5,8 +5,8 @@ __all__ = ['permissions']
 
 
 class permissions(martian.Directive):
-    """Use this directive in a class in order to set it's attribute's permissions."""
+    """Use this directive in a class in order to set its attribute permissions."""
 
     scope = martian.CLASS
-    store = martian.ONCE
+    store = martian.MULTIPLE
     default = None

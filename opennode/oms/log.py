@@ -71,8 +71,10 @@ class TwistedSystemFilter(logging.Filter):
 
 
 def setup_logging():
-    if os.path.exists('logging.conf'):
-        load_config_in_varous_formats('logging.conf')
+    for filename in get_config_filenames():
+        if os.path.exists(filename):
+            load_config_in_varous_formats(filename)
+            break
     else:
         config_defaults()
 
@@ -125,21 +127,29 @@ def config_defaults():
                                 'sending close 0',
                                 'disabling diffie-hellman-group-exchange because we cannot find moduli file']
 
+    if log_filename == 'stdout':
+        root_handlers = ['stderr']
+    else:
+        root_handlers = ['default']
+
     logging.config.dictConfig({
         'formatters': {
             'default': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(message)s',},
             'twisted': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(system)s %(message)s',}},
-        'handlers': {'default': {'class': 'logging.handlers.WatchedFileHandler', 'filename': log_filename,
-                                     'formatter': 'default'},
-                     'twisted': {'class': 'logging.handlers.WatchedFileHandler', 'filename': log_filename,
-                                 'formatter': 'twisted'},},
+        'handlers': {'default': {'class': 'logging.handlers.WatchedFileHandler',
+                                 'filename': log_filename,
+                                 'formatter': 'default'},
+                     'twisted': {'class': 'logging.handlers.WatchedFileHandler',
+                                 'filename': log_filename,
+                                 'formatter': 'twisted'},
+                     'stderr': {'class': 'logging.StreamHandler', 'formatter': 'default'}},
         'filters': {
             'twisted-system': {'()': 'opennode.oms.log.TwistedSystemFilter',
                                'banlist': ['SSHServerTransport', 'SSHService']},
             'excluded-messages': {'()': 'opennode.oms.log.MessageRegexFilter',
-                                 'banlist': default_ignored_messages}},
+                                  'banlist': default_ignored_messages}},
 
-        'root': {'handlers': ['default'], 'level': log_level},
+        'root': {'handlers': root_handlers, 'level': log_level},
         'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False,
                                 'filters': ['twisted-system', 'excluded-messages']},
                     'txn': {'level': 'WARNING'},
@@ -150,3 +160,6 @@ def config_defaults():
         'version': 1,
         'disable_existing_loggers': False
     })
+
+def get_config_filenames():
+    return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
