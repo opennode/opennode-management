@@ -12,6 +12,9 @@ class ICommand(Interface):
 class Command(Model):
     implements(ICommand)
 
+    __transient__ = True
+    inherit_permissions = True
+
     def __init__(self, name, parent, cmd):
         self.__name__ = name
         self.__parent__ = parent

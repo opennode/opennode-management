@@ -176,11 +176,14 @@ class ContainerExtension(Subscription):
     baseclass()
 
     __class__ = None
+    __interfaces__ = ()
 
     def extend(self):
         # XXX: currently models designed for container extension expect the parent
         # as constructor argument, but it's not needed anymore
-        return {self.__class__.__dict__['__name__']: self.__class__(self.context)}
+        if '__name__' not in self.__class__.__dict__:
+            raise KeyError('__name__ not found in __dict__ of (%s)' % (self.__class__))
+        return {self.__class__.__dict__['__name__']: self.__class__()}
 
 
 class ContainerInjector(Subscription):
@@ -188,6 +191,7 @@ class ContainerInjector(Subscription):
     baseclass()
 
     __class__ = None
+    __interfaces__ = ()
 
     def inject(self):
         if '__name__' not in self.__class__.__dict__:
@@ -227,6 +231,10 @@ class ReadonlyContainer(Model):
     def content(self):
         injectors = querySubscriptions(self, IContainerInjector)
         for injector in injectors:
+            interface_filter = getattr(injector, '__interfaces__', [])
+            if interface_filter and not any(map(lambda i: i.providedBy(self), interface_filter)):
+                continue
+
             for k, v in injector.inject().items():
                 if k not in self._items:
                     v.__parent__ = self
@@ -236,6 +244,10 @@ class ReadonlyContainer(Model):
 
         extenders = querySubscriptions(self, IContainerExtender)
         for extender in extenders:
+            interface_filter = getattr(extender, '__interfaces__', [])
+            if interface_filter and not any(map(lambda i: i.providedBy(self), interface_filter)):
+                continue
+
             children = extender.extend()
             for v in children.values():
                 v.__parent__ = self

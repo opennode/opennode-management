@@ -19,7 +19,8 @@ class ActionsContainer(ReadonlyContainer):
 
     def content(self):
         actions = querySubscriptions(self.__parent__, ICommand)
-        return dict((i._name, Command(i._name, self, i.cmd)) for i in actions)
+        return dict((action._name, Command(action._name, self, action.cmd)) for action in actions
+                    if any(i.providedBy(action) for i in getattr(action, '__interfaces__', [])))
 
 
 class ActionsContainerExtension(Subscription):
