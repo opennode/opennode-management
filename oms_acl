@@ -1,2 +1,8 @@
 /:allow:g:cloud:x # comments at the end of line are also supported
-#/:allow:u:ca:x
+/machines:allow:g:cloud:v,x
+/machines/hangar:allow:g:cloud:v,x
+/machines/hangar/vms-openvz:allow:g:cloud:v,w,x
+/machines/hangar/vms-openvz/actions:allow:g:cloud:v,r,x
+/hangar/vms-openvz/by-name:allow:g:cloud:v,r,x
+/templates:allow:g:cloud:v,x
+/computes:allow:g:cloud:v,x
