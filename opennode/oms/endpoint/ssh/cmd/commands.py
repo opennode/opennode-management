@@ -939,34 +939,6 @@ class EditCmd(Cmd):
             transaction.commit()
 
 
-class IdCmd(Cmd):
-    implements(ICmdArgumentsSyntax)
-
-    command('id')
-
-    @db.ro_transact(proxy=False)
-    def subject(self, args):
-        return tuple()
-
-    def arguments(self):
-        return VirtualConsoleArgumentParser()
-
-    def execute(self, args):
-        interaction = self.protocol.interaction
-        if not interaction:
-            return self.write('user: oms.anonymous\n')
-
-        for participation in interaction.participations:
-            user = participation.principal
-            groups = user.groups
-            self.write('user: %s\n'
-                       'groups: %s\n'
-                       'effective_principals: %s\n' %
-                       (user.id,
-                        ' '.join(map(str, groups)),
-                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
-
-
 class CatLogCmd(Cmd):
     implements(ICmdArgumentsSyntax)
     command('catlog')
@@ -989,7 +961,7 @@ class CatLogCmd(Cmd):
         nr_of_lines = int(args.n) if args.n is not None else 10
 
         outputCb = utils.getProcessOutput("tail",
-                                        args=('-n %s' % nr_of_lines, logfilename),
-                                        errortoo=True)
+                                          args=('-n %s' % nr_of_lines, logfilename),
+                                          errortoo=True)
         outputCb.addCallback(lambda output: self.write(output))
         yield outputCb
