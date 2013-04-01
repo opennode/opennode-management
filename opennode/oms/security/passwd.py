@@ -27,7 +27,7 @@ def ask_password():
     if pw != confirm:
         raise UserManagementError("Password mismatch, aborting")
 
-    return hash_pw(pw)
+    return pw
 
 
 def hash_pw(password):
@@ -52,7 +52,7 @@ def add_user(user, password, group=None):
                 raise UserManagementError("User %s already exists" % user)
 
     with open(passwd_file, 'a') as f:
-        f.write('%s:%s:%s\n' % (user, password, group or 'users'))
+        f.write('%s:%s:%s\n' % (user, hash_pw(password), group or 'users'))
 
 
 def delete_user(user):
@@ -80,7 +80,7 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
     if not found:
         raise UserManagementError("User %s doesn't exist" % user)
 
-    pw = ask_password() if password is None and (force_askpass or not group) else password
+    pw = hash_pw(ask_password() if password is None and (force_askpass or not group) else password)
 
     with open(passwd_file, 'w') as f:
         for line in lines:
