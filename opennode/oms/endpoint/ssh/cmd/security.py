@@ -273,8 +273,8 @@ class AddUserCmd(Cmd):
             interaction = self.protocol.interaction
             current_user = interaction.participations[0].principal
             principals = map(lambda p: p.id, effective_principals(current_user))
-            if 'admin' not in principals:
-                self.write('Permission denied: admin not in effective permissions: %s\n' %
+            if 'admins' not in principals:
+                self.write('Permission denied: admins not in effective permissions: %s\n' %
                            ', '.join(principals))
                 return
             add_user(args.user, args.password, group=args.g)
