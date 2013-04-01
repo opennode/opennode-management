@@ -15,6 +15,7 @@ from opennode.oms.model.model.bin import Command
 
 log = logging.getLogger(__name__)
 
+
 class OmsShellTerminalProtocol(object):
     """Connect a OmsShellProtocol to a web terminal session."""
 

@@ -11,6 +11,7 @@ class IContextExtractor(Interface):
         objects returned by methods of a given class decorated by @transact
         """
 
+
 def context_from_method(fun, args, kwargs):
     """Currently works only for methods by assuming that the first
     argument is `self`. Unfortunately we cannot know the dynamic binding
@@ -30,6 +31,6 @@ def context_from_method(fun, args, kwargs):
         extractors = querySubscriptions(that, IContextExtractor)
         if extractors:
             for i in extractors:
-               context.update(i.get_context())
+                context.update(i.get_context())
 
     return context

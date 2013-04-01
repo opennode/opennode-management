@@ -169,6 +169,7 @@ class Cmd(object):
     def unregister(self):
         Proc.unregister(self.pid)
 
+
 class CommandContextExtractor(Subscription):
     implements(IContextExtractor)
     context(Cmd)

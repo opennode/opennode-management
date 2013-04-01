@@ -108,7 +108,7 @@ def run():
                     user, old_pw, groups = line.split(':')
                     if args.g:
                         groups = args.g + '\n'
-                    if pw == None:
+                    if pw is None:
                         pw = old_pw
 
                     print >>f, '%s:%s:%s' % (user, pw, groups),

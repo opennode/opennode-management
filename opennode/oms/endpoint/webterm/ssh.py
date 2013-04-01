@@ -7,6 +7,7 @@ from twisted.internet import defer, reactor, protocol
 
 log = logging.getLogger(__name__)
 
+
 def ssh_connect_interactive_shell(user, host, port, transport, set_channel,
                                   size, command=None):
     if host == '0.0.0.0':
@@ -33,10 +34,10 @@ class SSHClientTransport(transport.SSHClientTransport):
 
     def connectionSecure(self):
         self.requestService(ClientUserAuth(self.user,
-                                   SSHShellConnection(self.terminal_transport,
-                                                      self.set_channel,
-                                                      self.terminal_size,
-                                                      self.command)))
+                                           SSHShellConnection(self.terminal_transport,
+                                                              self.set_channel,
+                                                              self.terminal_size,
+                                                              self.command)))
 
     def connectionLost(self, reason):
         transport.SSHClientTransport.connectionLost(self, reason)

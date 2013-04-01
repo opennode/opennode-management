@@ -354,7 +354,7 @@ class Editor(object):
         return res if res != -1 else len(self.buffer) - 1
 
     def bol_pos(self, from_pos=None):
-        if from_pos == None:
+        if from_pos is None:
             from_pos = self.pos
         return self.buffer.rfind('\n', 0, from_pos) + 1
 

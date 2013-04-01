@@ -188,6 +188,7 @@ class SignalAction(Action):
 
     def execute(self, cmd, args):
         from opennode.oms.zodb import db
+
         @db.ro_transact
         def execute():
             self.context.signal(self.__signal__)

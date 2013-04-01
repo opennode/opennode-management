@@ -61,7 +61,7 @@ class ICompute(Interface):
         required=False)
     memory_info = schema.TextLine(
         title=u"Memory Info", description=(u"Info about the physical installed memory "
-                     "banks such as model, make, speed, latency"),
+                                           "banks such as model, make, speed, latency"),
         required=False)
 
     # State
@@ -325,15 +325,6 @@ class ComputesRootInjector(ContainerInjector):
     context(OmsRoot)
     __class__ = Computes
 
-###############
-
-from zope.component import provideSubscriptionAdapter
-
-#from .base import Container
-#from .byname import ByNameContainerExtension
-#from .compute import Compute
-#from .hangar import Hangar
-
 
 class Machines(Container):
     __contains__ = Compute
@@ -346,14 +337,11 @@ class Machines(Container):
         return 'Machines list'
 
 
-#provideSubscriptionAdapter(ByNameContainerExtension, adapts=(Machines, ))
-
 class MachinesRootInjector(ContainerInjector):
     context(OmsRoot)
     __class__ = Machines
 
-###
+
 from opennode.oms.model.model import creatable_models
-compute_creatable_models = dict((cls.__name__.lower(), cls)
-                        for cls in [Compute])
+compute_creatable_models = dict((cls.__name__.lower(), cls) for cls in [Compute])
 creatable_models.update(compute_creatable_models)

@@ -804,11 +804,12 @@ class TaskListCmd(Cmd):
 
         for tid, task in tasks.items():
             ptid = task.ptid
-            self.write("%s %s   %s %s %s\n" % (tid.rjust(max_key_len),
-                                         (ptid + ' ').rjust(max_key_len) if args.l else '',
-                                         (task.principal.id if task.principal else '-').ljust(max_user_len),
-                                         datetime.timedelta(0, int(task.uptime)),
-                                         task.cmdline))
+            self.write("%s %s   %s %s %s\n" %
+                       (tid.rjust(max_key_len),
+                        (ptid + ' ').rjust(max_key_len) if args.l else '',
+                        (task.principal.id if task.principal else '-').ljust(max_user_len),
+                        datetime.timedelta(0, int(task.uptime)),
+                        task.cmdline))
 
 
 class KillTaskCmd(Cmd):
@@ -989,7 +990,7 @@ class CatLogCmd(Cmd):
         nr_of_lines = int(args.n) if args.n is not None else 10
 
         outputCb = utils.getProcessOutput("tail",
-                                        args=('-n %s' % nr_of_lines, logfilename),
-                                        errortoo=True)
+                                          args=('-n %s' % nr_of_lines, logfilename),
+                                          errortoo=True)
         outputCb.addCallback(lambda output: self.write(output))
         yield outputCb

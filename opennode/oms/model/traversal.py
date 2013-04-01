@@ -82,7 +82,7 @@ def traverse1(path):
 def canonical_path(item):
     path = []
     while item:
-        assert item.__name__ != None
+        assert item.__name__ is not None
         item = follow_symlinks(item)
         path.insert(0, item.__name__)
         item = item.__parent__

@@ -83,6 +83,7 @@ class PersistentProxy(object):
     """
 
     __slots__ = ["_obj", "__weakref__"]
+
     def __init__(self, obj, context):
         # we want to keep the context even when we unproxy the object
         # like when a method is executed and `self` was a proxy
@@ -109,6 +110,7 @@ class PersistentProxy(object):
 
     def __delattr__(self, name):
         delattr(object.__getattribute__(self, "_obj"), name)
+
     def __setattr__(self, name, value):
         ensure_fixed_up(self, name, 'write')
 
@@ -116,8 +118,10 @@ class PersistentProxy(object):
 
     def __nonzero__(self):
         return bool(object.__getattribute__(self, "_obj"))
+
     def __str__(self):
         return str(object.__getattribute__(self, "_obj"))
+
     def __repr__(self):
         return repr(object.__getattribute__(self, "_obj"))
 

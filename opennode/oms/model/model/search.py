@@ -67,7 +67,7 @@ class ModelTags(Adapter):
 
     def _get_tags(self):
         # we have to check for None value because of TmpObj
-        if not hasattr(self.context, '_tags') or self.context._tags == None:
+        if not hasattr(self.context, '_tags') or self.context._tags is None:
             self.context._tags = set()
         return self.context._tags
 

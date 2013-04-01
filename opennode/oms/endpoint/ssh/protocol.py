@@ -41,7 +41,7 @@ def protocolInlineCallbacks(fun):
 
             yield defer.inlineCallbacks(fun)(self, *args, **kwargs)
         except Exception as e:
-            log.msg("got exception while %s: %s" %  (fun, e), system='protocol')
+            log.msg("got exception while %s: %s" % (fun, e), system='protocol')
             if get_config().getboolean('debug', 'print_exceptions'):
                 log.err(system='protocol')
 

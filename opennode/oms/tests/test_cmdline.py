@@ -60,8 +60,8 @@ class PartialCmdLineParserTestCase(unittest.TestCase):
         self.parser.add_argument('--bar')
 
         args = self.parser.parse_args('--foo'.split(' '))
-        assert args.foo == None
-        assert args.bar == None
+        assert args.foo is None
+        assert args.bar is None
 
         eq_(len(self.terminal.method_calls), 0)
 

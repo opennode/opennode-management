@@ -18,6 +18,7 @@ from opennode.oms.core import IApplicationInitializedEvent
 
 log = logging.getLogger(__name__)
 
+
 class IPluginInfo(Interface):
     name = schema.TextLine(title=u"Plugin name")
 
@@ -59,7 +60,6 @@ class Plugins(ReadonlyContainer):
         def _log_error(item, e):
             log.error("[plugins] error loading %s %s", item, e)
             log.error('[plugins] %s', traceback.format_exc())
-
 
         for dist, e in errors.iteritems():
             # ignore version conflict of modules which are not OMS plugins

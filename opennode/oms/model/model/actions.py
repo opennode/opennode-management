@@ -38,6 +38,7 @@ class Action(Subscription):
     def subject(self, args):
         return tuple()
 
+
 class action(martian.Directive):
     """Use this directive on adapters used to define actions for specific model objects."""
     scope = martian.CLASS

@@ -48,6 +48,7 @@ class InteractionScope(object):
     def __exit__(self, type, value, traceback):
         endInteraction()
 
+
 class SecurityTestCase(unittest.TestCase):
 
     def _get_interaction(self, uid):

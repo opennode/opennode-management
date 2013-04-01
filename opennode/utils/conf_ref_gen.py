@@ -1,6 +1,7 @@
 def is_group(l):
     return l.startswith('[')
 
+
 def is_comment(l):
     return l.startswith('#')
 
@@ -21,7 +22,7 @@ def main():
             if is_group(l):
                 group = l[1:-1]
                 print >>f, group
-                print >>f, "~"*len(group)
+                print >>f, "~" * len(group)
             elif is_comment(l):
                 last_comment += l[1:].strip() + '\n'
             else:

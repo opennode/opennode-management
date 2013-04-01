@@ -127,9 +127,9 @@ class MethodProxy(object):
     def __call__(self, *args, **kwargs):
         while True:
             assert len(self.mock.method_calls) > self.index, \
-                   ("Expected a %s call but instead there was no call" % _pretty_print(self.name, args, kwargs)
-                    if not self.proxy.__dict__['whatever'] else
-                    "No matching call found for %s; found: %s" % (_pretty_print(self.name, args, kwargs),
+                    ("Expected a %s call but instead there was no call" % _pretty_print(self.name, args, kwargs)
+                     if not self.proxy.__dict__['whatever'] else
+                     "No matching call found for %s; found: %s" % (_pretty_print(self.name, args, kwargs),
                                                                    "; ".join(_pretty_print(n, a, kw) for n, a, kw in self.whatever_tries)))
 
             call = self.mock.method_calls[self.index]
@@ -187,7 +187,7 @@ def no_more_calls(mock_proxy):
     next_index = mock_proxy.__dict__['next_method_index']
     method_calls = mock_proxy.__dict__['mock'].method_calls
     assert next_index == len(method_calls), \
-           "There should be no more method calls but there are: %s" % '; '.join(_pretty_print(*call) for call in method_calls)
+            "There should be no more method calls but there are: %s" % '; '.join(_pretty_print(*call) for call in method_calls)
 
 
 def skip(mock_proxy, num):

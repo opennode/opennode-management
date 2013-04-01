@@ -176,6 +176,7 @@ def transact(fun):
         _context.x = context
 
         cfg = get_config()
+
         def trace(msg, t):
             ch = '/'
             if msg == "BEGINNING":

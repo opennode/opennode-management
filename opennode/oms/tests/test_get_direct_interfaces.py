@@ -47,12 +47,11 @@ def assert_direct_interfaces(cls, interfaces, instance=NONE):
         instance = cls()
     for i in (cls, instance):
         direct_interfaces = get_direct_interfaces(i)
-        assert interfaces == direct_interfaces, \
-               "%s should have no direct interfaces" % i
+        assert interfaces == direct_interfaces, "%s should have no direct interfaces" % i
         if len(interfaces) <= 1:
             direct_interface = get_direct_interface(i)
-            assert (interfaces[0] if interfaces else None) == direct_interface, \
-                   "%s should not have a direct interface" % i
+            assert (interfaces[0] if interfaces else None) == direct_interface,\
+                    "%s should not have a direct interface" % i
         else:
             with assert_raises(Exception) as cm:
                 get_direct_interface(i)

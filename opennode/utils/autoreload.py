@@ -89,6 +89,7 @@ def reloader_thread(softexit=False):
 
 pid = None
 
+
 def restart_with_reloader():
     global pid
 
@@ -100,7 +101,7 @@ def restart_with_reloader():
         new_environ["RUN_MAIN"] = 'true'
         pid = os.spawnve(os.P_NOWAIT, sys.executable, args, new_environ)
         _, exit_code = os.waitpid(pid, 0)
-        exit_code = exit_code >> 8 # exit status is in the high byte
+        exit_code = exit_code >> 8  # exit status is in the high byte
         if exit_code != 3:
             return exit_code
 
