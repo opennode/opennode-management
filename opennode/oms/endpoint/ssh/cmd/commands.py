@@ -31,7 +31,6 @@ from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.schema import Path, get_schema_fields, model_to_dict
 from opennode.oms.model.traversal import canonical_path
-from opennode.oms.security.principals import effective_principals
 from opennode.oms.zodb import db
 
 

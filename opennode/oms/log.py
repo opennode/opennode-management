@@ -162,3 +162,17 @@ def config_defaults():
 
 def get_config_filenames():
     return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
+
+
+class UserLogger(object):
+    logger = logging.getLogger('opennode.oms.userlog')
+
+    def __init__(self, principal):
+        self.principal = principal
+
+    def log(self, msg, *args, **kw):
+        self.logger.log(logging.INFO, msg, *args, extra={'username': self.principal.id}, **kw)
+
+
+def log_user_event(logger, principal, msg, *args, **kwargs):
+    logger.log(logging.INFO, msg, *args, extra={'username': principal.id}, **kwargs)

@@ -15,14 +15,14 @@ from opennode.oms.security.directives import permissions
 class INewsItem(Interface):
     """A news item in the activity stream"""
     message = schema.TextLine(title=u"message", description=u"message")
-    timestamp = schema.Float(title=u"uptime", description=u"Task uptime in seconds", readonly=True, required=False)
+    timestamp = schema.Float(title=u"uptime", description=u"Task uptime in seconds", readonly=True,
+                             required=False)
 
 
 class NewsItem(Model):
     implements(INewsItem)
     permissions(dict(message=('read', 'modify'),
-                     timestamp='read',
-                     ))
+                     timestamp='read'))
 
     def __init__(self, message):
         self.message = message

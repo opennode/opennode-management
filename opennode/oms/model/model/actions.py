@@ -20,7 +20,8 @@ class ActionsContainer(ReadonlyContainer):
     def content(self):
         actions = querySubscriptions(self.__parent__, ICommand)
         return dict((action._name, Command(action._name, self, action.cmd)) for action in actions
-                    if any(i.providedBy(action) for i in getattr(action, '__interfaces__', [])))
+                    if any(i.providedBy(action) for i in getattr(action, '__interfaces__', [])) or
+                    not getattr(action, '__interfaces__', []))
 
 
 class ActionsContainerExtension(Subscription):
