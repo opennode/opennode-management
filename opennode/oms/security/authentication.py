@@ -263,11 +263,13 @@ def reload_users(stream):
     create_special_principals()
     auth = queryUtility(IAuthentication)
 
+    lineno = 0
     for line in stream:
+        lineno += 1
         try:
             user, _, groups = line.split(':', 3)
         except ValueError:
-            log.error("Invalid password file format")
+            log.error("Invalid password file format: '%s':%s" % (stream.name, lineno))
         else:
             oms_user = User(user.strip())
             for group in groups.split(','):

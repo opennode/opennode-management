@@ -15,6 +15,7 @@ from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsol
 from opennode.oms.endpoint.ssh.cmdline import MergeListAction
 from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
+from opennode.oms.security.passwd import add_user, update_passwd, UserManagementError
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group, effective_principals
 from opennode.oms.zodb import db
@@ -225,3 +226,86 @@ class SetAclCmd(Cmd):
             mod_perm("Unsetting", prinrole.unsetRoleForPrincipal, p)
 
         transaction.commit()
+
+
+class IdCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+
+    command('id')
+
+    @db.ro_transact(proxy=False)
+    def subject(self, args):
+        return tuple()
+
+    def arguments(self):
+        return VirtualConsoleArgumentParser()
+
+    def execute(self, args):
+        interaction = self.protocol.interaction
+        if not interaction:
+            return self.write('user: oms.anonymous\n')
+
+        for participation in interaction.participations:
+            user = participation.principal
+            groups = user.groups
+            self.write('user: %s\n'
+                       'groups: %s\n'
+                       'effective_principals: %s\n' %
+                       (user.id,
+                        ' '.join(map(str, groups)),
+                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
+
+
+class AddUserCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+    command('adduser')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('user')
+        parser.add_argument('password')
+        parser.add_argument('-g', help="group(s): comma separated list of "
+                            "groups the user belongs to", required=False, default=None)
+        return parser
+
+    def execute(self, args):
+        try:
+            interaction = self.protocol.interaction
+            current_user = interaction.participations[0].principal
+            principals = map(lambda p: p.id, effective_principals(current_user))
+            if 'admin' not in principals:
+                self.write('Permission denied: admin not in effective permissions: %s\n' %
+                           ', '.join(principals))
+                return
+            add_user(args.user, args.password, group=args.g)
+        except UserManagementError as e:
+            self.write('%s\n' % str(e))
+
+
+class PasswdCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+    command('passwd')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('password')
+        parser.add_argument('-u', help='User name', required=False, default=None)
+        parser.add_argument('-g', help="group(s): comma separated list of "
+                            "groups the user belongs to", required=False, default=None)
+        return parser
+
+    def execute(self, args):
+        try:
+            interaction = self.protocol.interaction
+            current_user = interaction.participations[0].principal
+            if args.u is None:
+                args.u = current_user.id
+
+            principals = map(lambda p: p.id, effective_principals(current_user))
+            if args.u != current_user and 'admins' not in principals:
+                self.write('Permission denied: admins not in effective permissions: %s\n'
+                           % ', '.join(principals))
+                return
+            update_passwd(args.u, password=args.password, group=args.g)
+        except UserManagementError as e:
+            self.write('%s\n' % str(e))

@@ -940,34 +940,6 @@ class EditCmd(Cmd):
             transaction.commit()
 
 
-class IdCmd(Cmd):
-    implements(ICmdArgumentsSyntax)
-
-    command('id')
-
-    @db.ro_transact(proxy=False)
-    def subject(self, args):
-        return tuple()
-
-    def arguments(self):
-        return VirtualConsoleArgumentParser()
-
-    def execute(self, args):
-        interaction = self.protocol.interaction
-        if not interaction:
-            return self.write('user: oms.anonymous\n')
-
-        for participation in interaction.participations:
-            user = participation.principal
-            groups = user.groups
-            self.write('user: %s\n'
-                       'groups: %s\n'
-                       'effective_principals: %s\n' %
-                       (user.id,
-                        ' '.join(map(str, groups)),
-                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
-
-
 class CatLogCmd(Cmd):
     implements(ICmdArgumentsSyntax)
     command('catlog')
