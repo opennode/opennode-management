@@ -92,7 +92,7 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
                 cache_prin_per[permission] = prinper
                 return prinper
 
-        if parent.inherit_permissions:
+        if getattr(parent, 'inherit_permissions', None):
             parent = removeSecurityProxy(getattr(parent, '__parent__', None))
             prinper = self.cached_prinper(parent, principal, groups, permission)
             cache_prin_per[permission] = prinper
@@ -122,7 +122,7 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
             cache_roles[permission] = roles
             return roles
 
-        if parent.inherit_permissions:
+        if getattr(parent, 'inherit_permissions', False):
             roles = self.cached_roles(
                 removeSecurityProxy(getattr(parent, '__parent__', None)),
                 permission)
@@ -161,7 +161,7 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
             cache_principal_roles[principal] = roles
             return roles
 
-        if parent.inherit_permissions:
+        if getattr(parent, 'inherit_permissions', False):
             roles = self.cached_principal_roles(
                 removeSecurityProxy(getattr(parent, '__parent__', None)),
                 principal)

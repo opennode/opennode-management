@@ -13,6 +13,7 @@ from opennode.oms.zodb import db
 from opennode.oms.model.form import IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
 
+
 class BlackHoleQueue(object):
     def append(self, val):
         pass
@@ -32,13 +33,13 @@ class IndexerDaemonProcess(DaemonProcess):
         while True:
             try:
                 if not self.paused:
-                    if IndexerDaemonProcess.queue ==  self.black_hole:
+                    if IndexerDaemonProcess.queue == self.black_hole:
                         IndexerDaemonProcess.queue = deque()
 
                         self.reindex()
-                    yield self.process()
-                else:
-                    IndexerDaemonProcess.queue = self.black_hole
+                        yield self.process()
+                    else:
+                        IndexerDaemonProcess.queue = self.black_hole
 
             except Exception:
                 import traceback

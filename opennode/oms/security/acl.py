@@ -1,15 +1,10 @@
 import logging
-import os
 import transaction
 
-from grokcore.component import subscribe
-from twisted.internet import defer
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
-from opennode.oms.core import IApplicationInitializedEvent
-from opennode.oms.config import get_config
 from opennode.oms.model.traversal import traverse1
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
@@ -21,21 +16,6 @@ log = logging.getLogger(__name__)
 
 class NoSuchPermission(Exception):
     pass
-
-
-@subscribe(IApplicationInitializedEvent)
-@defer.inlineCallbacks
-def setup_permissions(event):
-    if event.test:
-        preload_acl_file('')
-        return
-
-    acl_file = get_config().getstring('auth', 'acl_file', 'oms_acl')
-    if not os.path.exists(acl_file):
-        log.warning("ACL file doesn't exist")
-        return
-
-    yield preload_acl_file(file(acl_file), filename=acl_file)
 
 
 @db.ro_transact

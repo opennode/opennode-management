@@ -17,6 +17,7 @@ ENTRY_POINT_NAME = 'oms.plugins'
 
 log = logging.getLogger(__name__)
 
+
 def run():
     """bin/plugin allows to add/remove plugins to the eggnest"""
 

@@ -129,7 +129,6 @@ def run():
             conf.add_section('logging')
         conf.set('logging', 'file', args.log)
 
-
     basedir = conf.get_base_dir()
     if basedir:
         os.chdir(basedir)

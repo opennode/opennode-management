@@ -21,20 +21,18 @@ class Group(User):
 
 def effective_principals(principal_or_interaction, acc=None):
     """Returns all the principals including recursive groups"""
-
     if acc is None:
         acc = []
 
     if IInteraction.providedBy(principal_or_interaction):
-        for i in principal_or_interaction.participations:
-            effective_principals(i.principal, acc)
+        for participation in principal_or_interaction.participations:
+            effective_principals(participation.principal, acc)
     else:
         auth = getUtility(IAuthentication, context=None)
 
         acc.append(principal_or_interaction)
-        for i in principal_or_interaction.groups:
-            principal = auth.getPrincipal(i)
+        for group in principal_or_interaction.groups:
+            principal = auth.getPrincipal(group)
             if isinstance(principal, Group) or not isinstance(principal, User):
                 effective_principals(principal, acc)
-
     return acc

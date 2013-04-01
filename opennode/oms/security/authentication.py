@@ -30,6 +30,7 @@ from zope.securitypolicy.rolepermission import rolePermissionManager
 from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
+from opennode.oms.security import acl
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group
 
@@ -94,6 +95,7 @@ class AuthenticationUtility(GlobalUtility):
                   % (id, system_user.id, ', '.join(self.principals.keys())))
         # default to anonymous if nothing more specific is found
         return self.principals['oms.anonymous']
+
 
 # checkers
 def ssha_hash(user, password, encoded_password):
@@ -203,8 +205,25 @@ def setup_permissions(event):
     setup_conf_reload_watch(passwd_file, reload_users)
 
 
+@subscribe(IApplicationInitializedEvent)
+@defer.inlineCallbacks
+def setup_acl(event):
+    if event.test:
+        acl.preload_acl_file('')
+        return
+
+    acl_file = get_config().getstring('auth', 'acl_file', 'oms_acl')
+    if not os.path.exists(acl_file):
+        log.warning("ACL file doesn't exist")
+        return
+
+    yield acl.preload_acl_file(file(acl_file), filename=acl_file)
+
+
 def create_special_principals():
     auth = queryUtility(IAuthentication)
+
+    auth.registerPrincipal(User('oms.anonymous'))
 
     groot = Group('root')
     auth.registerPrincipal(groot)
@@ -233,7 +252,6 @@ def create_special_principals():
         rolePermissionManager.grantPermissionToRole(permission, 'root')
         rolePermissionManager.grantPermissionToRole(permission, 'owner')
 
-    auth.registerPrincipal(User('oms.anonymous'))
     auth.registerPrincipal(User('oms.rest_options'))
 
     principalPermissionManager.grantPermissionToPrincipal('rest', 'oms.rest_options')

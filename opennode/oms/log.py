@@ -134,8 +134,8 @@ def config_defaults():
 
     logging.config.dictConfig({
         'formatters': {
-            'default': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(message)s',},
-            'twisted': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(system)s %(message)s',}},
+            'default': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(message)s'},
+            'twisted': {'format': '%(asctime)s %(thread)x %(name)s %(levelname)s %(system)s %(message)s'}},
         'handlers': {'default': {'class': 'logging.handlers.WatchedFileHandler',
                                  'filename': log_filename,
                                  'formatter': 'default'},
@@ -148,18 +148,17 @@ def config_defaults():
                                'banlist': ['SSHServerTransport', 'SSHService']},
             'excluded-messages': {'()': 'opennode.oms.log.MessageRegexFilter',
                                   'banlist': default_ignored_messages}},
-
         'root': {'handlers': root_handlers, 'level': log_level},
         'loggers': {'twisted': {'level': 'INFO', 'handlers': ['twisted'], 'propagate': False,
                                 'filters': ['twisted-system', 'excluded-messages']},
                     'txn': {'level': 'WARNING'},
                     'ZEO.zrpc': {'level': 'WARNING'},
                     'ZEO.ClientStorage': {'level': 'WARNING'},
-                    'salt': {'level': 'WARNING'},
-                   },
+                    'salt': {'level': 'WARNING'}},
         'version': 1,
         'disable_existing_loggers': False
     })
+
 
 def get_config_filenames():
     return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']

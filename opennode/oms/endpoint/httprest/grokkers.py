@@ -21,10 +21,8 @@ class HttpRestViewSecurityGrokker(martian.ClassGrokker):
         defineChecker(factory, Checker({}, {}))
 
         for method_name in [i for i in dir(factory) if i.startswith('render')]:
-            config.action(
-                discriminator=('protectName', factory, method_name),
-                callable=protect_getattr,
-                args=(factory, method_name, permission),
-                )
+            config.action(discriminator=('protectName', factory, method_name),
+                          callable=protect_getattr,
+                          args=(factory, method_name, permission))
 
         return True

@@ -229,7 +229,6 @@ class CommandView(DefaultView):
                                   'stdout': cmd.write_buffer}))
         request.finish()
 
-
     def render_PUT(self, request):
         """ Converts arguments into command-line counterparts and executes the omsh command.
 
@@ -273,6 +272,7 @@ class CommandView(DefaultView):
             raise BadRequest(str(e))
 
         q = Queue.Queue()
+
         def execute(cmd, args):
             d = defer.maybeDeferred(cmd, *args)
             d.addBoth(q.put)
@@ -285,6 +285,7 @@ class CommandView(DefaultView):
         else:
             dt.addBoth(lambda r: threads.deferToThread(q.get, True, 60))
             dt.addCallback(lambda r: reactor.callFromThread(self.write_results, request, pid, cmd))
+
             def errhandler(e, pid, cmd):
                 e.trap(ArgumentParsingError)
                 raise BadRequest(str(e))
