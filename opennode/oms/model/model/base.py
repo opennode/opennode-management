@@ -1,11 +1,12 @@
+import persistent
 from uuid import uuid4
 
-import persistent
 from BTrees.OOBTree import OOBTree
 from grokcore.component import Subscription, querySubscriptions, baseclass
 from zope import schema
 from zope.annotation.interfaces import IAttributeAnnotatable
-from zope.interface import implements, directlyProvidedBy, Interface, Attribute, alsoProvides, noLongerProvides
+from zope.interface import alsoProvides, noLongerProvides
+from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 from zope.schema.interfaces import IContextSourceBinder
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
@@ -85,6 +86,7 @@ class IMarkable(Interface):
 
 
 class Model(persistent.Persistent):
+
     implements(IModel, IAttributeAnnotatable)
     permissions(dict(__name__='view'))
 

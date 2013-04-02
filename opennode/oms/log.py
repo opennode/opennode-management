@@ -4,8 +4,11 @@ import os
 import re
 
 from twisted.python import log
+from zope.component import getUtility
+from zope.authentication.interfaces import IAuthentication
 
 from opennode.oms.config import get_config
+
 
 try:
     import yaml
@@ -162,3 +165,23 @@ def config_defaults():
 
 def get_config_filenames():
     return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
+
+
+class UserLogger(object):
+    logger = logging.getLogger('opennode.oms.userlog')
+
+    def __init__(self, principal=None, subject=None, owner=None):
+        self.subject = subject
+        self.owner = owner
+
+        if principal is None:
+            auth = getUtility(IAuthentication, context=None)
+            self.principal = auth.getPrincipal('root')
+        else:
+            self.principal = principal
+
+    def log(self, msg, *args, **kw):
+        self.logger.log(logging.INFO, msg, *args,
+                        extra={'username': self.principal.id if self.principal else '-',
+                               'subject': self.subject or '-',
+                               'owner': self.owner[0] if self.owner else '-'}, **kw)
