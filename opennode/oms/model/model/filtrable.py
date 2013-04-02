@@ -10,12 +10,12 @@ class IFiltrable(Interface):
         """Returns true if this object matches the given query."""
 
 
-class ModelFiltrable(Adapter):
+class ModelFieldFiltrable(Adapter):
     implements(IFiltrable)
     context(IModel)
 
     def match(self, query):
-        keywords = [i.lower() for i in query.split(' ') if i]
+        terms = [t for t in query.split(' ') if t]
 
         def matches(keyword, value):
             if isinstance(value, unicode):
@@ -35,9 +35,23 @@ class ModelFiltrable(Adapter):
             return False
 
         def any_field(keyword):
-            return any(matches(keyword, field.get(schema(self.context))) for name, field, schema in get_schema_fields(self.context))
+            return any(matches(keyword, field.get(schema(self.context)))
+                       for name, field, schema in get_schema_fields(self.context))
 
-        return all(any_field(keyword) for keyword in keywords)
+        def specific_field(fieldname, value):
+            schema = get_schema_fields(self.context)
+            result = filter(lambda (name, field, schema): name == fieldname,
+                            get_schema_fields(self.context))
+
+            if len(result) == 0:
+                return False
+
+            name, field, schema = result[0]
+            fieldvalue = field.get(schema(self.context))
+            return matches(value, fieldvalue)
+
+        return all(any_field(term.lower()) if ':' not in term else specific_field(*term.split(':')[0:2])
+                   for term in terms)
 
 
 class DefaultFiltrable(Adapter):
