@@ -85,7 +85,6 @@ class IMarkable(Interface):
                           value_type=schema.Choice(source=MarkerSourceBinder()))
 
 
-
 class Model(persistent.Persistent):
 
     implements(IModel, IAttributeAnnotatable)

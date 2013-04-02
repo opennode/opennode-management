@@ -6,7 +6,6 @@ from opennode.oms.config import get_config
 from opennode.oms.security.interaction import new_interaction
 
 
-
 class DetachedProtocol(object):
     """This represents a detached background protocol used to execute commands
     in background and redirect output to logs"""
