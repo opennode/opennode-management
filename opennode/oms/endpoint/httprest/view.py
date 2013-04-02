@@ -95,15 +95,18 @@ class ContainerView(DefaultView):
             depth = int(depth)
         except ValueError:
             depth = 0
-        return self.render_recursive(request, depth, top_level=True)
 
-    def render_recursive(self, request, depth, top_level=False):
+        filter_ = request.args.get('filter', [])
+
+        return self.render_recursive(request, depth, filter_=filter_, top_level=True)
+
+    def render_recursive(self, request, depth, filter_=[], top_level=False):
         container_properties = super(ContainerView, self).render_GET(request)
 
         if depth < 1:
             return self.filter_attributes(request, container_properties)
 
-        exclude = [i.strip() for i in request.args.get('exclude', [''])[0].split(',')]
+        exclude = [excluded.strip() for excluded in request.args.get('exclude', [''])[0].split(',')]
         items = [follow_symlinks(i) for i in self.context.listcontent() if i.__name__ not in exclude]
 
         def secure_render_recursive(item):
@@ -117,15 +120,13 @@ class ContainerView(DefaultView):
                     return dict(access='denied', permissions=permissions,
                                 __type__=type(removeSecurityProxy(item)).__name__)
 
-        # XXX: temporary code until ONC uses /search also for filtering computes
-        q = None
+        qlist = []
         limit = None
         offset = 0
 
         if top_level:
-            q = request.args.get('q', [''])[0]
-            q = q.decode('utf-8')
-
+            qlist = request.args.get('q', [])
+            qlist = map(lambda q: q.decode('utf-8'), qlist)
             limit = int(request.args.get('limit', [0])[0])
             offset = int(request.args.get('offset', [0])[0])
 
@@ -135,8 +136,9 @@ class ContainerView(DefaultView):
             except Unauthorized:
                 return
 
-        if q:
-            items = filter(lambda item: secure_filter_match(item, q), items)
+        if qlist:
+            for q in qlist:
+                items = filter(lambda item: secure_filter_match(item, q), items)
 
         if limit or offset:
             items = items[offset:limit]
@@ -149,8 +151,6 @@ class ContainerView(DefaultView):
         if top_level and (not container_properties or len(container_properties.keys()) == 1):
             return children
 
-        #if not top_level or depth > 1:
-        #if depth > 1:
         if not top_level or depth > 0:
             container_properties['children'] = children
         return self.filter_attributes(request, container_properties)
