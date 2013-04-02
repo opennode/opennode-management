@@ -120,7 +120,6 @@ class ContainerView(DefaultView):
                     return dict(access='denied', permissions=permissions,
                                 __type__=type(removeSecurityProxy(item)).__name__)
 
-        # XXX: temporary code until ONC uses /search also for filtering computes
         qlist = []
         limit = None
         offset = 0
