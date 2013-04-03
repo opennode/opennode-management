@@ -96,9 +96,7 @@ class ContainerView(DefaultView):
         except ValueError:
             depth = 0
 
-        filter_ = request.args.get('filter', [])
-
-        return self.render_recursive(request, depth, filter_=filter_, top_level=True)
+        return self.render_recursive(request, depth, top_level=True)
 
     def render_recursive(self, request, depth, filter_=[], top_level=False):
         container_properties = super(ContainerView, self).render_GET(request)
