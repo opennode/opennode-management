@@ -8,6 +8,7 @@ from twisted.internet import reactor
 # 10k records is ought to be enough for anyone!
 global_op_queue = Queue.Queue(10000)
 
+
 def put_to_queue(data):
     global global_op_queue
     try:
