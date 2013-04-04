@@ -99,6 +99,7 @@ class Model(persistent.Persistent):
 
     def set_owner(self, principal):
         prinrole = interfaces.IPrincipalRoleManager(self)
+        prinrole.unsetRoleForPrincipal('owner', self.__owner__)
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
     def get_owner(self):
@@ -107,7 +108,7 @@ class Model(persistent.Persistent):
         owners = map(lambda p: p[0],
                    filter(lambda p: p[1].getName() == 'Allow',
                           owners))
-        assert len(owners) <= 1, 'The must be only one owner, got %s instead' % owners
+        assert len(owners) <= 1, 'There must be only one owner, got %s instead' % owners
         if len(owners) == 1:
             return owners[0]
 

@@ -3,6 +3,7 @@ import logging
 import transaction
 
 from grokcore.component import implements
+from twisted.internet import defer
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
@@ -309,3 +310,47 @@ class PasswdCmd(Cmd):
             update_passwd(args.u, password=args.password, group=args.g)
         except UserManagementError as e:
             self.write('%s\n' % str(e))
+
+
+class ChownCmd(Cmd):
+    implements(ICmdArgumentsSyntax)
+    command('chown')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('user', help='User name')
+        parser.add_argument('path', help='Ownership change target')
+        return parser
+
+    @defer.inlineCallbacks
+    def execute(self, args):
+        interaction = self.protocol.interaction
+        current_user = interaction.participations[0].principal
+        principals = map(lambda p: p.id, effective_principals(current_user))
+
+        if 'admins' not in principals:
+            self.write('Permission denied: only admins can change ownership: %s\n'
+                       % ', '.join(principals))
+            return
+
+        auth = getUtility(IAuthentication, context=None)
+        principal = auth.getPrincipal(args.user)
+
+        if not principal:
+            self.write('No such user: %s\n' % (args.user))
+            return
+
+        @db.transact
+        def set_owner():
+            target = self.traverse(args.path)
+            if not target:
+                self.write('Not found: %s\n' % args.path)
+                return
+
+            if target.__transient__:
+                self.write("Transient object %s cannot have its owner changed\n" % args.path)
+                log.warning("Transient object %s cannot have its owner changed", args.path)
+                return
+            target.__owner__ = principal
+
+        yield set_owner()
