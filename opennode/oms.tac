@@ -9,10 +9,11 @@ from twisted.python import log
 from twisted.web import server
 from zope.component import handle
 
-from opennode.oms.__mpatches import monkey_patch_epollreactor
+from opennode.__mpatches import monkey_patch_epollreactor
 from opennode.oms.config import get_config
 from opennode.oms.core import setup_environ, AfterApplicationInitalizedEvent
 from opennode.oms.log import setup_logging
+
 
 def create_http_server():
     from opennode.oms.endpoint.httprest.root import HttpRestServer
