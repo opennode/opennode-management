@@ -214,10 +214,14 @@ class ListDirContentsCmd(Cmd):
                     return [canonical_path(item)] + getattr(follow_symlinks(item), 'nicknames', [])
                 return getattr(item, 'nicknames', [])
 
-            return [(('%s %s\t%s\n' % (pretty_effective_perms(self.protocol.interaction,
-                                                              follow_symlinks(subobj)),
-                                       pretty_name(subobj),
-                                       ' : '.join(nick(subobj)))).encode('utf8'))
+            def owner(item):
+                return item.__owner__ or 'root'
+
+            return [(('%s %s\t%s\t%s\n' % (pretty_effective_perms(self.protocol.interaction,
+                                                                  follow_symlinks(subobj)),
+                                           owner(subobj),
+                                           pretty_name(subobj),
+                                           ' : '.join(nick(subobj)))).encode('utf8'))
                     for subobj in container]
 
         def make_short_lines(container):
