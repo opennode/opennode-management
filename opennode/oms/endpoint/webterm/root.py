@@ -124,7 +124,7 @@ class TerminalSession(object):
             key_stream = key_stream[2:]
 
     def handle_keys(self, key_stream):
-        """Send each input key the terminal."""
+        """Send each input key to the terminal."""
         for key in self.parse_keys(key_stream):
             self.terminal_protocol.handle_key(key)
 
@@ -137,28 +137,30 @@ class TerminalSession(object):
         pass
 
     def enqueue(self, request):
+        request.notifyFinish().addErrback(self._responseFailed, len(self.queue))
         self.queue.append(request)
         if self.buffer:
             self.process_queue()
 
+    def _responseFailed(self, e, i):
+        log.debug('Client disconnected. Cancelling request')
+        del self.queue[i]
+
     def process_queue(self):
         # Only one ongoing polling request should be live.
-        # But I'm not sure if this can be guaranteed so let's keep temporarily keep them all.
-        if self.queue:
-            for r in self.queue:
-                self.write(r)
-            self.queue = []
+        # But I'm not sure if this can be guaranteed so let's keep them all temporarily.
+        for r in self.queue:
+            self.flush(r)
+        self.queue = []
 
-    def write(self, request):
+    def flush(self, request):
         # chunk writes because the javascript renderer is very slow
         # this avoids long pauses to the user.
         chunk_size = 4000
-
         unicode_buffer = self.buffer.decode('utf-8')
-
         chunk = unicode_buffer[0:chunk_size]
 
-        log.debug('TerminalSession writing: "%s"', dict(session=self.id, data=chunk))
+        log.debug('TerminalSession %s writing: "%s"', self.id, chunk)
         request.write(json.dumps(dict(session=self.id, data=chunk)))
         request.finish()
 
@@ -180,15 +182,16 @@ class TerminalServerMixin(object):
 
         # The handshake consists of the session id and initial data to be rendered.
         if not session_id:
-            log.debug('Init session: %s', session_id)
+            log.debug('Init session (session_id supplied: %s)', session_id)
             session = TerminalSession(self.get_terminal_protocol(request), size)
             session_id = session.id
-            self.sessions[session.id] = session
+            self.sessions[session_id] = session
 
         if session_id not in self.sessions:
             # Session interruption is defined using a success status
             # but with empty session (that's the protocol, I didn't design it).
-            log.debug('Session interrupted: %s not in %s', session_id, self.sessions)
+            log.info('Session interrupted -- unknown ID: %s', session_id)
+            log.debug('Session map: %s', self.sessions)
             request.setResponseCode(200)
             return json.dumps(dict(session='', data=''))
 
@@ -200,11 +203,11 @@ class TerminalServerMixin(object):
         # 2) long polling requests are suspended until there is activity from the terminal
         keys = request.args.get('keys', None)
         if keys:
-            session.handle_keys(keys[0])
+            for key in keys:
+                session.handle_keys(key)
             return ""  # responses to this kind of requests are ignored
-        else:
-            session.enqueue(request)
 
+        session.enqueue(request)
         return NOT_DONE_YET
 
     def get_terminal_protocol(self, request):
