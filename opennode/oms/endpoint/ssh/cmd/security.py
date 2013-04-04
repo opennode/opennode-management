@@ -1,5 +1,6 @@
 import collections
 import logging
+import os
 import transaction
 
 from grokcore.component import implements
@@ -14,6 +15,7 @@ from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.cmdline import MergeListAction
+from opennode.oms.model.model.base import IContainer
 from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.passwd import add_user, update_passwd, UserManagementError
@@ -319,18 +321,20 @@ class ChownCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('user', help='User name')
-        parser.add_argument('path', help='Ownership change target')
+        parser.add_argument('paths', nargs='+', help='List of paths')
+        parser.add_argument('-R', action='store_true', help='Change ownership recursively', default=False,
+                            required=False)
         return parser
 
     @defer.inlineCallbacks
     def execute(self, args):
         interaction = self.protocol.interaction
         current_user = interaction.participations[0].principal
-        principals = map(lambda p: p.id, effective_principals(current_user))
+        eff_principals = map(lambda p: p.id, effective_principals(current_user))
 
-        if 'admins' not in principals:
+        if 'admins' not in eff_principals:
             self.write('Permission denied: only admins can change ownership: %s\n'
-                       % ', '.join(principals))
+                       % ', '.join(eff_principals))
             return
 
         auth = getUtility(IAuthentication, context=None)
@@ -340,17 +344,26 @@ class ChownCmd(Cmd):
             self.write('No such user: %s\n' % (args.user))
             return
 
-        @db.transact
-        def set_owner():
-            target = self.traverse(args.path)
+        def set_owner(path):
+            target = self.traverse(path)
+
             if not target:
-                self.write('Not found: %s\n' % args.path)
+                self.write('Not found: %s\n' % path)
                 return
 
             if target.__transient__:
-                self.write("Transient object %s cannot have its owner changed\n" % args.path)
-                log.warning("Transient object %s cannot have its owner changed", args.path)
+                self.write("Transient object %s cannot have its owner changed\n" % path)
                 return
+
             target.__owner__ = principal
 
-        yield set_owner()
+            if IContainer.providedBy(target) and args.R:
+                for item in target.listcontent():
+                    set_owner(os.path.join(path, item.__name__))
+
+        @db.transact
+        def set_owner_all():
+            for path in args.paths:
+                set_owner(path)
+
+        yield set_owner_all()
