@@ -50,7 +50,7 @@ class ModelFieldFiltrable(Adapter):
             fieldvalue = field.get(schema(self.context))
             return matches(value, fieldvalue)
 
-        return all(any_field(term.lower()) if ':' not in term else specific_field(*term.split(':')[0:2])
+        return all(any_field(term.lower()) if ':' not in term else specific_field(*term.split(':', 1))
                    for term in terms)
 
 
