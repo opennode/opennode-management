@@ -1,5 +1,6 @@
 import functools
 import inspect
+import logging
 import random
 import subprocess
 import threading
@@ -177,14 +178,14 @@ def transact(fun):
 
         cfg = get_config()
 
-        def trace(msg, t):
+        def trace(msg, t, force=False):
             ch = '/'
             if msg == "BEGINNING":
                 ch = '\\'
-            if cfg.getboolean('debug', 'trace_transactions', False):
+            if cfg.getboolean('debug', 'trace_transactions', False) or force:
                 log.msg("%s\ttx:%s %s\tin %s from %s, line %s %s" %
                         (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch),
-                        system='transaction')
+                        system='transaction', logLevel=logging.ERROR)
 
         retries = cfg.getint('db', 'conflict_retries')
 
@@ -218,11 +219,11 @@ def transact(fun):
                     _context.x = None
                     return make_persistent_proxy(result, context)
                 except ReadConflictError as e:
-                    trace("GOT READ CONFLICT IN RW TRANSACT, retrying %s" % i, t)
+                    log.msg("GOT READ CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
                     retrying = True
                     time.sleep(random.random() * 0.1)
                 except ConflictError as e:
-                    trace("GOT WRITE CONFLICT IN RW TRANSACT, retrying %s" % i, t)
+                    trace("GOT WRITE CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
                     retrying = True
                     time.sleep(random.random() * 0.1)
         raise e
