@@ -962,12 +962,13 @@ class CatLogCmd(Cmd):
         if logfilename == 'stdout':
             log.msg('System is configured to log to stdout. Cannot cat to omsh terminal',
                     system='catlog')
-            defer.returnValue(None)
+            return
 
         nr_of_lines = int(args.n) if args.n is not None else 10
 
         outputCb = utils.getProcessOutput("tail",
                                           args=('-n %s' % nr_of_lines, logfilename),
                                           errortoo=True)
+
         outputCb.addCallback(lambda output: self.write(output))
         yield outputCb
