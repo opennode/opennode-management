@@ -950,6 +950,8 @@ class CatLogCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-n', help='Number of lines to output')
+        parser.add_argument('-u', action='store_true', required=False, default=False,
+                            help='Display just user log')
         return parser
 
     @defer.inlineCallbacks

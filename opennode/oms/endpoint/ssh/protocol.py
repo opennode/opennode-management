@@ -175,7 +175,7 @@ class OmsShellProtocol(InteractiveTerminal):
             log.msg("Got exception executing '%s': %s" % self.last_error, system='protocol')
 
             if get_config().getboolean('debug', 'print_exceptions'):
-                traceback.print_tb(self.last_error[1][2])
+                log.err(system='ssh')
 
             self.terminal.write("Command returned an unhandled error: %s\n" % e)
             self.terminal.write("type last_error for more details\n")

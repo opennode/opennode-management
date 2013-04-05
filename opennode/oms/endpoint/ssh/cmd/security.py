@@ -1,4 +1,5 @@
 import collections
+import functools
 import logging
 import os
 import transaction
@@ -25,6 +26,55 @@ from opennode.oms.zodb import db
 
 
 log = logging.getLogger(__name__)
+
+
+def require_admins_or_same_user(f):
+    @functools.wraps(f)
+    def _require_admins_or_same_user(self, args):
+        principals = map(lambda p: p.id, effective_principals(self.user))
+
+        if args.u not in (None, self.user.id) and 'admins' not in principals:
+            self.write('Permission denied: admins not in effective permissions: %s\n'
+                       % ', '.join(principals))
+            return
+
+        return f(self, args)
+    return _require_admins_or_same_user
+
+
+def require_admins_only(f):
+    @functools.wraps(f)
+    def _require_admins_only(self, args):
+        principals = map(lambda p: p.id, effective_principals(self.user))
+
+        if 'admins' not in principals:
+            self.write('Permission denied: admins not in effective permissions: %s\n'
+                       % ', '.join(principals))
+            return
+
+        return f(self, args)
+    return _require_admins_only
+
+
+def require_admins(allow_same_user=False):
+    if not allow_same_user:
+        return require_admins_only
+    else:
+        return require_admins_or_same_user
+
+
+def require_admins_or_same_user(f):
+    @functools.wraps(f)
+    def _require_admins_or_same_user(self, args):
+        principals = map(lambda p: p.id, effective_principals(self.user))
+
+        if args.u not in (None, self.user.id) and 'admins' not in principals:
+            self.write('Permission denied: admins not in effective permissions: %s\n'
+                       % ', '.join(principals))
+            return
+
+        return f(self, args)
+    return _require_admins_or_same_user
 
 
 class WhoAmICmd(Cmd):
@@ -245,6 +295,7 @@ class IdCmd(Cmd):
 
     def execute(self, args):
         interaction = self.protocol.interaction
+
         if not interaction:
             return self.write('user: oms.anonymous\n')
 
@@ -271,15 +322,9 @@ class AddUserCmd(Cmd):
                             "groups the user belongs to", required=False, default=None)
         return parser
 
+    @require_admins_only
     def execute(self, args):
         try:
-            interaction = self.protocol.interaction
-            current_user = interaction.participations[0].principal
-            principals = map(lambda p: p.id, effective_principals(current_user))
-            if 'admins' not in principals:
-                self.write('Permission denied: admins not in effective permissions: %s\n' %
-                           ', '.join(principals))
-                return
             add_user(args.user, args.password, group=args.g)
         except UserManagementError as e:
             self.write('%s\n' % str(e))
@@ -297,18 +342,9 @@ class PasswdCmd(Cmd):
                             "groups the user belongs to", required=False, default=None)
         return parser
 
+    @require_admins_or_same_user
     def execute(self, args):
         try:
-            interaction = self.protocol.interaction
-            current_user = interaction.participations[0].principal
-            if args.u is None:
-                args.u = current_user.id
-
-            principals = map(lambda p: p.id, effective_principals(current_user))
-            if args.u != current_user and 'admins' not in principals:
-                self.write('Permission denied: admins not in effective permissions: %s\n'
-                           % ', '.join(principals))
-                return
             update_passwd(args.u, password=args.password, group=args.g)
         except UserManagementError as e:
             self.write('%s\n' % str(e))
@@ -326,17 +362,9 @@ class ChownCmd(Cmd):
                             required=False)
         return parser
 
+    @require_admins_only
     @defer.inlineCallbacks
     def execute(self, args):
-        interaction = self.protocol.interaction
-        current_user = interaction.participations[0].principal
-        eff_principals = map(lambda p: p.id, effective_principals(current_user))
-
-        if 'admins' not in eff_principals:
-            self.write('Permission denied: only admins can change ownership: %s\n'
-                       % ', '.join(eff_principals))
-            return
-
         auth = getUtility(IAuthentication, context=None)
         principal = auth.getPrincipal(args.user)
 

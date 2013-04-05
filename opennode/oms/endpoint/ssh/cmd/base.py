@@ -168,6 +168,13 @@ class Cmd(object):
     def unregister(self):
         Proc.unregister(self.pid)
 
+    @property
+    def user(self):
+        if self.protocol.interaction:
+            return self.protocol.interaction.participations[0].principal
+        else:
+            return None
+
 
 class CommandContextExtractor(Subscription):
     implements(IContextExtractor)
