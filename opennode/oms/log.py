@@ -3,11 +3,15 @@ import logging.config
 import os
 import re
 
+from Queue import Queue, Empty
+
 from twisted.python import log
 from zope.component import getUtility
 from zope.authentication.interfaces import IAuthentication
 
 from opennode.oms.config import get_config
+from opennode.oms.model.model.eventlog import UserEventLog
+from opennode.oms.zodb import db
 
 
 try:
@@ -84,6 +88,9 @@ def setup_logging():
     logging.warn('Logging level is set to %s' %
                  logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
 
+    logger = logging.getLogger(UserLogger.name)
+    logger.addHandler(UserEventLogZODBHandler())
+
     observer = OmsPythonLoggingObserver()
     return observer.emit
 
@@ -116,6 +123,8 @@ def load_config_in_varous_formats(filename):
 
 
 def config_defaults():
+    logging.captureWarnings(True)
+
     log_filename = get_config().get('logging', 'file')
     log_level = get_config().getstring('logging', 'level', 'INFO')
 
@@ -167,8 +176,54 @@ def get_config_filenames():
     return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
 
 
+class UserEventLogZODBHandler(logging.Handler):
+    """ Python logging handler to store log records into ZODB UserEventLog containers """
+
+    storage = {}
+
+    def __init__(self):
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        if not getattr(record, 'username', None):
+            return
+
+        log.msg('Storing a log record for %s' % record.username, system='usereventlog-handler')
+        if record.username not in self.storage:
+            self.storage[record.username] = Queue(1)
+
+        userqueue = self.storage[record.username]
+        userqueue.put(record)
+
+        log.msg('Stored a log record for %s. %s' % (record.username, userqueue.qsize()),
+                system='usereventlog-handler')
+
+        @db.transact
+        def store_to_db():
+            log.msg('Flushing user event log buffer...', system='usereventlog-hanlder')
+            root = db.get_root()['oms_root']
+            eventlog = root['eventlog']
+
+            for username, queue in self.storage.iteritems():
+                try:
+                    while True:
+                        record = queue.get_nowait()
+                        if username not in eventlog.listnames():
+                            eventlog.add(UserEventLog(username))
+                        eventlog[username].add(record)
+                except Empty:
+                    pass
+
+        if userqueue.full():
+            d = store_to_db()
+            d.addCallback(lambda r: log.msg('Storing a batch of user events complete...',
+                                            system='usereventlog-handler'))
+            d.addErrback(log.err, system='usereventlog-handler')
+
+
 class UserLogger(object):
-    logger = logging.getLogger('opennode.oms.userlog')
+    name = 'opennode.oms.userlog'
+    logger = logging.getLogger(name)
 
     def __init__(self, principal=None, subject=None, owner=None):
         self.subject = subject
@@ -179,6 +234,7 @@ class UserLogger(object):
             self.principal = auth.getPrincipal('root')
         else:
             self.principal = principal
+
 
     def log(self, msg, *args, **kw):
         self.logger.log(logging.INFO, msg, *args,

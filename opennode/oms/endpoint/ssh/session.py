@@ -7,6 +7,7 @@ from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 
 from opennode.oms.endpoint.ssh.protocol import OmsShellProtocol
+from opennode.oms.log import UserLogger
 
 
 class BatchOmsShellProtocol(OmsShellProtocol):
@@ -45,6 +46,8 @@ class OmsTerminalSessionTransport(TerminalSessionTransport):
         TerminalSessionTransport.__init__(self, proto, chainedProtocol, avatar, width, height)
 
         chainedProtocol.terminalProtocol.logged_in(avatar.principal)
+        logger = UserLogger(principal=avatar.principal)
+        logger.log('User logged in')
 
 
 class OmsSSHSession(SSHSession):
