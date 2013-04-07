@@ -10,7 +10,6 @@ from zope.component import getUtility
 from zope.authentication.interfaces import IAuthentication
 
 from opennode.oms.config import get_config
-from opennode.oms.model.model.eventlog import UserEventLog
 from opennode.oms.zodb import db
 
 
@@ -183,41 +182,28 @@ class UserEventLogZODBHandler(logging.Handler):
 
     def __init__(self):
         logging.Handler.__init__(self)
+        self.queue = Queue(16)
 
     def emit(self, record):
         if not getattr(record, 'username', None):
             return
 
-        log.msg('Storing a log record for %s' % record.username, system='usereventlog-handler')
-        if record.username not in self.storage:
-            self.storage[record.username] = Queue(1)
-
-        userqueue = self.storage[record.username]
-        userqueue.put(record)
-
-        log.msg('Stored a log record for %s. %s' % (record.username, userqueue.qsize()),
-                system='usereventlog-handler')
+        self.queue.put(record)
 
         @db.transact
-        def store_to_db():
-            log.msg('Flushing user event log buffer...', system='usereventlog-hanlder')
-            root = db.get_root()['oms_root']
-            eventlog = root['eventlog']
+        def flush():
+            eventlog = db.get_root()['oms_root']['eventlog']
+            try:
+                while True:
+                    if self.queue.empty():
+                        break
+                    record = self.queue.get_nowait()
+                    eventlog.add_event(record)
+            except Empty:
+                pass
 
-            for username, queue in self.storage.iteritems():
-                try:
-                    while True:
-                        record = queue.get_nowait()
-                        if username not in eventlog.listnames():
-                            eventlog.add(UserEventLog(username))
-                        eventlog[username].add(record)
-                except Empty:
-                    pass
-
-        if userqueue.full():
-            d = store_to_db()
-            d.addCallback(lambda r: log.msg('Storing a batch of user events complete...',
-                                            system='usereventlog-handler'))
+        if not self.queue.empty():
+            d = flush()
             d.addErrback(log.err, system='usereventlog-handler')
 
 
@@ -234,7 +220,6 @@ class UserLogger(object):
             self.principal = auth.getPrincipal('root')
         else:
             self.principal = principal
-
 
     def log(self, msg, *args, **kw):
         self.logger.log(logging.INFO, msg, *args,

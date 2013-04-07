@@ -951,7 +951,7 @@ class CatLogCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-n', help='Number of lines to output')
         parser.add_argument('-u', action='store_true', required=False, default=False,
-                            help='Display just user log')
+                            help='Display user log')
         return parser
 
     @defer.inlineCallbacks
@@ -966,9 +966,22 @@ class CatLogCmd(Cmd):
 
         nr_of_lines = int(args.n) if args.n is not None else 10
 
-        outputCb = utils.getProcessOutput("tail",
-                                          args=('-n %s' % nr_of_lines, logfilename),
-                                          errortoo=True)
+        if not args.u:
+            outputCb = utils.getProcessOutput("tail",
+                                              args=('-n %s' % nr_of_lines, logfilename),
+                                              errortoo=True)
 
-        outputCb.addCallback(lambda output: self.write(output))
-        yield outputCb
+            outputCb.addCallback(lambda output: self.write(output))
+            yield outputCb
+
+        @db.ro_transact
+        def get_user_log():
+            eventlog = db.get_root()['oms_root']['eventlog']
+            if self.user.id not in eventlog.listnames():
+                return
+            usereventlog = eventlog[self.user.id]
+
+            for event in usereventlog.listcontent():
+                self.write('%s %s %s\n' % (event.timestamp, event.levelname, event.message))
+
+        yield get_user_log()
