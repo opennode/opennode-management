@@ -24,7 +24,7 @@ class IUserEventLogContainer(IContainer):
 
 
 class IUserEvent(Interface):
-    timestamp = schema.Float(title=u'Timestamp', description=u'Timestamp of event recording')
+    timestamp = schema.TextLine(title=u'Timestamp', description=u'Timestamp of event recording')
     message = schema.TextLine(title=u'Message')
     levelname = schema.TextLine(title=u'Log level')
     thread = schema.Int(title=u'Thread ID')
