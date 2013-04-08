@@ -142,7 +142,7 @@ class SearchContainer(ReadonlyContainer):
         try:
             self.catalog.index_doc(self.ids.register(real_obj), real_obj)
         except NotYet:
-            log.err("cannot index object %s because not yet committed" % (obj,), system='search')
+            log.msg("cannot index object %s because it's not yet committed" % obj, system='search')
 
     def _index_object(self, obj):
         real_obj = follow_symlinks(obj)
@@ -152,7 +152,7 @@ class SearchContainer(ReadonlyContainer):
         try:
             self.catalog.unindex_doc(self.ids.register(obj))
         except NotYet:
-            log.msg("cannot index object because not yet committed", system='search')
+            log.msg("cannot unindex object %s because it's not yet committed" % obj, system='search')
 
     def search(self, **kwargs):
         # HACK, we should be able to setup a persistent utility
@@ -222,7 +222,6 @@ class ClearIndexAction(Action):
         @db.transact
         def doit():
             search = db.get_root()['oms_root']['search']
-
             search.clear()
 
         return doit()
@@ -254,6 +253,7 @@ class ReindexAction(Action):
 
                     if IModel.providedBy(item) and not isinstance(item, Symlink):
                         objs.add(item)
+
                     if IContainer.providedBy(item):
                         collect(item)
 
@@ -261,6 +261,7 @@ class ReindexAction(Action):
 
             for obj in objs:
                 search.index_object(obj)
+
             cmd.write("reindexed %s objects\n" % (len(objs)))
 
         return doit()
