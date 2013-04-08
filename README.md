@@ -6,6 +6,8 @@ hosting the OMS [Knot cloud management platform](https://github.com/opennode/ope
 
 OMS main documentation is generated and can be [viewed online](http://opennodecloud.com/docs/opennode.oms.core/index.html).
 
+[![Build Status](https://gate1.hep.kbfi.ee:10000/job/opennode-management/badge/icon)](https://gate1.hep.kbfi.ee:10000/job/opennode-management/)
+
 Requirements
 ============
 
