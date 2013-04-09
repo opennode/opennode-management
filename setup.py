@@ -41,5 +41,6 @@ setup(
         "pyOpenSSL==0.13",
         "netaddr==0.7.6",
         "BeautifulSoup==3.2.0",
-        "pam==0.1.3"],
+        "pam==0.1.3",
+        "pympler==0.3.1"],
 )
