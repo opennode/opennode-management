@@ -42,9 +42,7 @@ class IndexerDaemonProcess(DaemonProcess):
                         IndexerDaemonProcess.queue = self.black_hole
 
             except Exception:
-                import traceback
-                traceback.print_exc()
-                pass
+                log.err(system='indexer')
 
             yield async_sleep(1)
 

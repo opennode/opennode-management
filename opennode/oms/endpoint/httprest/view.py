@@ -126,7 +126,7 @@ class ContainerView(DefaultView):
             qlist = request.args.get('q', [])
             qlist = map(lambda q: q.decode('utf-8'), qlist)
             limit = int(request.args.get('limit', [0])[0])
-            offset = int(request.args.get('offset', [0])[0])
+            offset = int(request.args.get('offset', [0])[0]) - 1
 
         def secure_filter_match(item, q):
             try:
@@ -138,11 +138,14 @@ class ContainerView(DefaultView):
             for q in qlist:
                 items = filter(lambda item: secure_filter_match(item, q), items)
 
-        if limit or offset:
-            items = items[offset:limit]
 
         children = filter(None, [secure_render_recursive(item) for item in items
                                  if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)])
+
+        total_children = len(items)
+
+        if limit or offset:
+            items = items[offset:limit]
 
         # backward compatibility:
         # top level results for pure containers are plain lists
@@ -151,6 +154,8 @@ class ContainerView(DefaultView):
 
         if not top_level or depth > 0:
             container_properties['children'] = children
+            container_properties['totalChildren'] = total_children
+
         return self.filter_attributes(request, container_properties)
 
     def blacklisted(self, item):
