@@ -172,7 +172,7 @@ def config_defaults():
 
 
 def get_config_filenames():
-    return ['logging.conf', '~/.oms-logging.conf', '/etc/opennode/logging.conf']
+    return ['~/.oms-logging.conf', '/etc/opennode/logging.conf', 'logging.conf']
 
 
 class UserEventLogZODBHandler(logging.Handler):
