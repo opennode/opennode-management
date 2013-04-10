@@ -84,6 +84,7 @@ def setup_logging():
     else:
         config_defaults()
 
+    logging.warn('Read config from %s' % filename)
     logging.warn('Logging level is set to %s' %
                  logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
 
@@ -224,5 +225,5 @@ class UserLogger(object):
     def log(self, msg, *args, **kw):
         self.logger.log(logging.INFO, msg, *args,
                         extra={'username': self.principal.id if self.principal else '-',
-                               'subject': self.subject or '-',
+                               'subject': str(self.subject) or '-',
                                'owner': self.owner[0] if self.owner else '-'}, **kw)
