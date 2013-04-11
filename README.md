@@ -116,5 +116,6 @@ to modify attributes of objects.
 License
 -------
 
-OpenNode Management Service is released under an open-source GPLv3 license. Commercial licensing is possible, please
-contact <info@opennodecloud.com> for more information.
+OpenNode Management Service is released under an open-source
+[Apache v2](http://www.apache.org/licenses/LICENSE-2.0) license. Commercial support
+is possible, please contact <info@opennodecloud.com> for more information.
