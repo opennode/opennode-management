@@ -14,6 +14,8 @@ setup(
                                    '../../opennode-oms.conf',
                                    '../../oms_permissions',
                                    '../../oms_groups',
+                                   '../../oms_acl',
+                                   '../../logging.conf',
                                    ]},
     namespace_packages = ['opennode'],
     entry_points = {'console_scripts': ['omsd = opennode.oms.daemon:run',
