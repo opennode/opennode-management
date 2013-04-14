@@ -11,6 +11,7 @@ from zope.interface import implements
 from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import IProcess, DaemonProcess, Proc
 from opennode.oms.util import subscription_factory, async_sleep
+from opennode.oms.zodb import db
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
         self.interval = config.getint('debug', 'memory_profiler_interval', 0)
         self.track = config.getint('debug', 'memory_profiler_track_changes', 0)
         self.paused = False
+        self.verbose = config.getint('debug', 'memory_profiler_verbose', 0)
         self.summary_tracker = tracker.SummaryTracker()
 
     @defer.inlineCallbacks
@@ -177,10 +179,25 @@ class MemoryProfileCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-t', action='store_true', help='Force tracking changes')
+        parser.add_argument('-s', help='Show details for particular types')
+        parser.add_argument('-d', action='store_true', help='Step into debugger')
+        parser.add_argument('-b', action='store_true', help='Step into debugger in DB thread')
         return parser
 
     @defer.inlineCallbacks
     def execute(self, args):
+        if args.d:
+            import ipdb; ipdb.set_trace()
+            return
+
+        if args.b:
+            @db.ro_transact
+            def get_db_object(path):
+                import ipdb; ipdb.set_trace()
+                return self.traverse(path)
+            yield get_db_object('/')
+            return
+
         if args.t:
             mpdaemon = find_daemon_in_proc(MemoryProfilerDaemonProcess)
             oldtrack = mpdaemon.track
@@ -189,6 +206,17 @@ class MemoryProfileCmd(Cmd):
         handler = CommandInterfaceWriter(self)
         logger.addHandler(handler)
 
+        def keystrokeReceived(keyID, mod):
+            logger.removeHandler(handler)
+            if args.t:
+                mpdaemon.track = oldtrack
+            r = self.protocol._orig_keystrokeReceived(keyID, mod)
+            self.protocol.keystrokeReceived = self.protocol._orig_keystrokeReceived
+            return r
+
+        self.protocol._orig_keystrokeReceived = self.protocol.keystrokeReceived
+        self.protocol.keystrokeReceived = keystrokeReceived
+
         try:
             while True:
                 yield async_sleep(1)
@@ -196,3 +224,5 @@ class MemoryProfileCmd(Cmd):
             logger.removeHandler(handler)
             if args.t:
                 mpdaemon.track = oldtrack
+
+            self.protocol.keystrokeReceived = self.protocol._orig_keystrokeReceived
