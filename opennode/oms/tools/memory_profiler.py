@@ -2,6 +2,7 @@ import logging
 
 from pympler import summary
 from pympler import tracker
+from pympler import muppy
 from pympler.util import stringutils
 from twisted.python import log
 from twisted.internet import defer
@@ -23,7 +24,7 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
 
     def __init__(self):
         config = get_config()
-        self.interval = config.getint('debug', 'memory_profiler_interval', 0)
+        self.interval = config.getint('debug', 'memory_profiler_interval', 60)
         self.track = config.getint('debug', 'memory_profiler_track_changes', 0)
         self.paused = False
         self.verbose = config.getint('debug', 'memory_profiler_verbose', 0)
@@ -41,10 +42,28 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                         yield self.track_changes()
                     else:
                         yield self.collect_and_dump()
+                        yield self.collect_and_dump_userevent()
             except Exception:
                 log.err(system=self.__name__)
 
             yield async_sleep(self.interval)
+
+    def collect_and_dump_userevent(self):
+        log.msg('Profiling memory for UserEvent objects...', system=self.__name__)
+        all_objects = muppy.get_objects()
+        from opennode.oms.model.model.eventlog import UserEvent
+        from sys import getsizeof
+        userevents = muppy.filter(all_objects, Type=UserEvent)
+        logger.info('UserEvent profile follows (%s rows)' % len(userevents))
+        rrows = [['object', 'raw', 'size', 'referents']] + \
+            [[str(ue), repr(ue), str(getsizeof(ue)), muppy.get_referents(ue)]
+             for ue in sorted(userevents, key=lambda x: x._index)]
+        logger.info('UserEvent profile follows (%s rows)' % len(rrows))
+        rows = _format_table(rrows)
+        for row in rows:
+            logger.info(row)
+        log.msg('Profiling UserEvent memory done', system=self.__name__)
+        return defer.succeed(None)
 
     def collect_and_dump(self):
         log.msg('Profiling memory...', system=self.__name__)
