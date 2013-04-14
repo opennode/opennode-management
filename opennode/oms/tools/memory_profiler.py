@@ -48,22 +48,33 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
 
             yield async_sleep(self.interval)
 
+    @db.ro_transact
     def collect_and_dump_userevent(self):
         log.msg('Profiling memory for UserEvent objects...', system=self.__name__)
-        all_objects = muppy.get_objects()
-        from opennode.oms.model.model.eventlog import UserEvent
-        from sys import getsizeof
-        userevents = muppy.filter(all_objects, Type=UserEvent)
-        logger.info('UserEvent profile follows (%s rows)' % len(userevents))
-        rrows = [['object', 'raw', 'size', 'referents']] + \
-            [[str(ue), repr(ue), str(getsizeof(ue)), muppy.get_referents(ue)]
-             for ue in sorted(userevents, key=lambda x: x._index)]
-        logger.info('UserEvent profile follows (%s rows)' % len(rrows))
-        rows = _format_table(rrows)
-        for row in rows:
-            logger.info(row)
-        log.msg('Profiling UserEvent memory done', system=self.__name__)
-        return defer.succeed(None)
+        try:
+            all_objects = muppy.get_objects()
+            from opennode.oms.model.model.eventlog import UserEvent
+            from sys import getsizeof
+            import gc
+            userevents = muppy.filter(all_objects, Type=UserEvent)
+            logger.info('UserEvent profile follows (%s rows)' % len(userevents))
+            data = []
+            for ue in sorted(userevents, key=lambda x: x._index):
+                for ref in gc.get_referrers(ue):
+                    referrers = []
+                    try:
+                        referrers.append(str(ref))
+                    except Exception:
+                        referrers.append('ClientDisconnected')
+                data.append((referrers, str(ue), repr(ue), str(getsizeof(ue))))
+            rrows = [('object', 'raw', 'size', 'referrers')] + data
+            rows = _format_table(rrows)
+            for row in rows:
+                logger.info(row)
+            log.msg('Profiling UserEvent memory done', system=self.__name__)
+        except Exception, e:
+            import traceback
+            logger.error(traceback.format_exc(e))
 
     def collect_and_dump(self):
         log.msg('Profiling memory...', system=self.__name__)
