@@ -13,7 +13,7 @@ from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.endpoint.httprest.base import HttpRestView, IHttpRestView
-from opennode.oms.endpoint.httprest.root import BadRequest
+from opennode.oms.endpoint.httprest.root import BadRequest, NotFound
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.endpoint.ssh.cmdline import ArgumentParsingError
@@ -36,6 +36,9 @@ class DefaultView(HttpRestView):
     context(object)
 
     def render_GET(self, request):
+        if not request.interaction.checkPermission('view', self.context):
+            raise NotFound()
+
         data = model_to_dict(self.context)
 
         data['id'] = self.context.__name__
@@ -105,7 +108,8 @@ class ContainerView(DefaultView):
             return self.filter_attributes(request, container_properties)
 
         exclude = [excluded.strip() for excluded in request.args.get('exclude', [''])[0].split(',')]
-        items = [follow_symlinks(i) for i in self.context.listcontent() if i.__name__ not in exclude]
+        items = [follow_symlinks(i) for i in self.context.listcontent() if
+                 request.interaction.checkPermission('view', i) and i.__name__ not in exclude]
 
         def secure_render_recursive(item):
             try:
