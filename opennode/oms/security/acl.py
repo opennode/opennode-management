@@ -48,11 +48,8 @@ def preload_acl_line(path, permspec, filename='-', lineno='-'):
         log.warning("Transient object %s always inherits permissions from its parent", path)
         return
 
-    if permspec == 'inherit':
-        obj.inherit_permissions = True
-        return
-    elif permspec == 'noinherit':
-        obj.inherit_permissions = False
+    if permspec in ('inherit', 'noinherit'):
+        obj.inherit_permissions = (permspec == 'inherit')
         return
 
     auth = getUtility(IAuthentication, context=None)

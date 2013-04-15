@@ -42,24 +42,74 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                         yield self.track_changes()
                     else:
                         yield self.collect_and_dump()
-                        yield self.collect_and_dump_userevent()
+                        #yield self.collect_and_dump_userevent()
             except Exception:
                 log.err(system=self.__name__)
 
             yield async_sleep(self.interval)
 
-    @db.ro_transact
     def collect_and_dump_userevent(self):
         log.msg('Profiling memory for UserEvent objects...', system=self.__name__)
         try:
-            all_objects = muppy.get_objects()
-            from opennode.oms.model.model.eventlog import UserEvent
-            from sys import getsizeof
             import gc
+            import inspect
+            from sys import getsizeof
+            from BTrees.OOBTree import OOBucket
+            from ZEO.Exceptions import ClientDisconnected
+            from opennode.oms.model.model.eventlog import UserEvent
+
+            data = []
+            all_objects = muppy.get_objects()
             userevents = muppy.filter(all_objects, Type=UserEvent)
             logger.info('UserEvent profile follows (%s rows)' % len(userevents))
-            data = []
+
+            gc.collect()
+
             for ue in sorted(userevents, key=lambda x: x._index):
+                referrers = []
+                for ref in gc.get_referrers(ue):
+                    try:
+                        if inspect.isframe(ref):
+                            continue # local object ref
+                        elif isinstance(ref, list):
+                            referrers.append('list len=%s id=%x' % (len(ref), id(ref)))
+                        elif isinstance(ref, OOBucket):
+                            referrers.append('OOBucket len=%s id=%x' % (len(ref), id(ref)))
+                        else:
+                            sref = repr(ref)
+                            referrers.append(sref)
+                    except ClientDisconnected:
+                        referrers.append('ClientDisconnected')
+
+                data.append((referrers, str(ue), repr(ue), str(getsizeof(ue))))
+
+            rrows = [('object', 'raw', 'size', 'referrers')] + data
+            rows = _format_table(rrows)
+            for row in rows:
+                logger.info(row)
+
+            log.msg('Profiling UserEvent memory done', system=self.__name__)
+            del all_objects
+            gc.collect()
+        except Exception, e:
+            import traceback
+            logger.error(traceback.format_exc(e))
+            return defer.fail(None)
+
+        return defer.succeed(None)
+
+    @db.ro_transact
+    def collect_and_dump_compute(self):
+        log.msg('Profiling memory for Compute objects...', system=self.__name__)
+        try:
+            all_objects = muppy.get_objects()
+            from opennode.knot.model.compute import Compute
+            from sys import getsizeof
+            import gc
+            userevents = muppy.filter(all_objects, Type=Compute)
+            logger.info('Compute profile follows (%s rows)' % len(userevents))
+            data = []
+            for ue in userevents:
                 for ref in gc.get_referrers(ue):
                     referrers = []
                     try:
@@ -71,10 +121,11 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
             rows = _format_table(rrows)
             for row in rows:
                 logger.info(row)
-            log.msg('Profiling UserEvent memory done', system=self.__name__)
+            log.msg('Profiling Compute memory done', system=self.__name__)
         except Exception, e:
             import traceback
             logger.error(traceback.format_exc(e))
+
 
     def collect_and_dump(self):
         log.msg('Profiling memory...', system=self.__name__)
