@@ -190,6 +190,7 @@ class UserEventLogZODBHandler(logging.Handler):
             return
 
         self.format(record)
+        assert hasattr(record, 'asctime')
         self.queue.put(record)
 
         @db.transact
