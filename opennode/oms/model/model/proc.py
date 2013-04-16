@@ -6,6 +6,8 @@ from collections import OrderedDict
 from grokcore.component import querySubscriptions, Adapter, context, subscribe, baseclass
 from twisted.python import log
 from zope import schema
+from zope.authentication.interfaces import IAuthentication
+from zope.component import getUtility
 from zope.component import provideSubscriptionAdapter
 from zope.interface import Interface, implements, alsoProvides
 
@@ -86,6 +88,11 @@ class Task(ReadonlyContainer):
         self.ptid = ptid
         self.signal_handler = signal_handler
         self.principal = principal
+        if principal is not None:
+            self.__owner__ = principal
+        else:
+            auth = getUtility(IAuthentication, context=None)
+            self.__owner__ = auth.getPrincipal('root')
         self.write_buffer = write_buffer
 
         # XXX: Workaround to handle ON-425
@@ -173,6 +180,7 @@ class Proc(ReadonlyContainer):
 
 class CompletedProc(ReadonlyContainer):
     __name__ = 'completed'
+    _inherit_permissions = True
 
     def __init__(self, parent, tasks):
         self.__parent__ = parent

@@ -162,7 +162,8 @@ class Cmd(object):
             subj = subj.remove_persistent_proxy()
         assert type(subj) is tuple, "subject of '%s' must be a tuple, got %s" % (self.name, type(subj))
 
-        self.pid = Proc.register(d, subj, command_line, ptid, write_buffer=self.write_buffer)
+        self.pid = Proc.register(d, subj, command_line, ptid, write_buffer=self.write_buffer,
+                                 principal=self.protocol.principal)
         defer.returnValue(self.pid)
 
     def unregister(self):
