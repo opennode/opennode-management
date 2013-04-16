@@ -1,7 +1,10 @@
+import gc
 import logging
+from pprint import pformat
 
 from pympler import summary
 from pympler import tracker
+from pympler import muppy
 from pympler.util import stringutils
 from twisted.python import log
 from twisted.internet import defer
@@ -11,6 +14,7 @@ from zope.interface import implements
 from opennode.oms.config import get_config
 from opennode.oms.model.model.proc import IProcess, DaemonProcess, Proc
 from opennode.oms.util import subscription_factory, async_sleep
+from opennode.oms.zodb import db
 
 
 logger = logging.getLogger(__name__)
@@ -22,9 +26,10 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
 
     def __init__(self):
         config = get_config()
-        self.interval = config.getint('debug', 'memory_profiler_interval', 0)
+        self.interval = config.getint('debug', 'memory_profiler_interval', 60)
         self.track = config.getint('debug', 'memory_profiler_track_changes', 0)
         self.paused = False
+        self.verbose = config.getint('debug', 'memory_profiler_verbose', 0)
         self.summary_tracker = tracker.SummaryTracker()
 
     @defer.inlineCallbacks
@@ -39,10 +44,69 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                         yield self.track_changes()
                     else:
                         yield self.collect_and_dump()
+                        if self.verbose:
+                            yield self.collect_and_dump_garbage()
+                            yield self.collect_and_dump_root()
             except Exception:
                 log.err(system=self.__name__)
 
             yield async_sleep(self.interval)
+
+    def collect_and_dump_garbage(self):
+        logger.info('Uncollectable garbage list follows')
+        objects = gc.garbage
+        logger.info(pformat(objects))
+        return defer.succeed(None)
+
+
+    def collect_and_dump_root(self):
+        log.msg('Profiling memory for OmsRoot objects...', system=self.__name__)
+        try:
+            import inspect
+            from sys import getsizeof
+            from BTrees.OOBTree import OOBucket
+            from ZEO.Exceptions import ClientDisconnected
+            from opennode.oms.model.model.root import OmsRoot
+
+            data = []
+            all_objects = muppy.get_objects()
+            roots = muppy.filter(all_objects, Type=OmsRoot)
+            logger.info('Root profile follows (%s rows)' % len(roots))
+
+            gc.collect()
+
+            for ue in roots:
+                referrers = []
+                for ref in gc.get_referrers(ue):
+                    try:
+                        if inspect.isframe(ref):
+                            continue # local object ref
+                        elif isinstance(ref, list):
+                            referrers.append('list len=%s id=%x' % (len(ref), id(ref)))
+                        elif isinstance(ref, OOBucket):
+                            referrers.append('OOBucket len=%s id=%x' % (len(ref), id(ref)))
+                        else:
+                            sref = repr(ref)
+                            referrers.append(sref)
+                    except ClientDisconnected:
+                        referrers.append('ClientDisconnected')
+
+                data.append((referrers, str(ue), repr(ue), str(getsizeof(ue))))
+
+            rrows = [('object', 'raw', 'size', 'referrers')] + data
+            rows = _format_table(rrows)
+            for row in rows:
+                logger.info(row)
+
+            log.msg('Profiling Omsroot memory done', system=self.__name__)
+            del all_objects
+            gc.collect()
+            return defer.succeed(None)
+        except Exception, e:
+            import traceback
+            logger.error(traceback.format_exc(e))
+            return defer.fail(None)
+
 
     def collect_and_dump(self):
         log.msg('Profiling memory...', system=self.__name__)
@@ -177,10 +241,25 @@ class MemoryProfileCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('-t', action='store_true', help='Force tracking changes')
+        parser.add_argument('-s', help='Show details for particular types')
+        parser.add_argument('-d', action='store_true', help='Step into debugger')
+        parser.add_argument('-b', action='store_true', help='Step into debugger in DB thread')
         return parser
 
     @defer.inlineCallbacks
     def execute(self, args):
+        if args.d:
+            import ipdb; ipdb.set_trace()
+            return
+
+        if args.b:
+            @db.ro_transact
+            def get_db_object(path):
+                import ipdb; ipdb.set_trace()
+                return self.traverse(path)
+            yield get_db_object('/')
+            return
+
         if args.t:
             mpdaemon = find_daemon_in_proc(MemoryProfilerDaemonProcess)
             oldtrack = mpdaemon.track
@@ -189,6 +268,17 @@ class MemoryProfileCmd(Cmd):
         handler = CommandInterfaceWriter(self)
         logger.addHandler(handler)
 
+        def keystrokeReceived(keyID, mod):
+            logger.removeHandler(handler)
+            if args.t:
+                mpdaemon.track = oldtrack
+            r = self.protocol._orig_keystrokeReceived(keyID, mod)
+            self.protocol.keystrokeReceived = self.protocol._orig_keystrokeReceived
+            return r
+
+        self.protocol._orig_keystrokeReceived = self.protocol.keystrokeReceived
+        self.protocol.keystrokeReceived = keystrokeReceived
+
         try:
             while True:
                 yield async_sleep(1)
@@ -196,3 +286,5 @@ class MemoryProfileCmd(Cmd):
             logger.removeHandler(handler)
             if args.t:
                 mpdaemon.track = oldtrack
+
+            self.protocol.keystrokeReceived = self.protocol._orig_keystrokeReceived

@@ -77,8 +77,9 @@ class UserEventLog(Container):
         if rawevent.username != self.__name__:
             return
 
-        if self.sizelimit is not None and self.sizelimit <= len(self._items):
-            del self._items[min(self._items.keys())]
+        if self.sizelimit is not None:
+            while self.sizelimit <= len(self._items):
+                del self._items[min(self._items.keys())]
 
         self.cur_index += 1
         item = UserEvent(rawevent, self.cur_index)
