@@ -1,4 +1,6 @@
+import gc
 import logging
+from pprint import pformat
 
 from pympler import summary
 from pympler import tracker
@@ -42,30 +44,37 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                         yield self.track_changes()
                     else:
                         yield self.collect_and_dump()
-                        #yield self.collect_and_dump_userevent()
+                        yield self.collect_and_dump_garbage()
+                        yield self.collect_and_dump_root()
             except Exception:
                 log.err(system=self.__name__)
 
             yield async_sleep(self.interval)
 
-    def collect_and_dump_userevent(self):
-        log.msg('Profiling memory for UserEvent objects...', system=self.__name__)
+    def collect_and_dump_garbage(self):
+        logger.info('Uncollectable garbage list follows')
+        objects = gc.garbage
+        logger.info(pformat(objects))
+        return defer.succeed(None)
+
+
+    def collect_and_dump_root(self):
+        log.msg('Profiling memory for OmsRoot objects...', system=self.__name__)
         try:
-            import gc
             import inspect
             from sys import getsizeof
             from BTrees.OOBTree import OOBucket
             from ZEO.Exceptions import ClientDisconnected
-            from opennode.oms.model.model.eventlog import UserEvent
+            from opennode.oms.model.model.root import OmsRoot
 
             data = []
             all_objects = muppy.get_objects()
-            userevents = muppy.filter(all_objects, Type=UserEvent)
-            logger.info('UserEvent profile follows (%s rows)' % len(userevents))
+            roots = muppy.filter(all_objects, Type=OmsRoot)
+            logger.info('Root profile follows (%s rows)' % len(roots))
 
             gc.collect()
 
-            for ue in sorted(userevents, key=lambda x: x._index):
+            for ue in roots:
                 referrers = []
                 for ref in gc.get_referrers(ue):
                     try:
@@ -88,43 +97,14 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
             for row in rows:
                 logger.info(row)
 
-            log.msg('Profiling UserEvent memory done', system=self.__name__)
+            log.msg('Profiling Omsroot memory done', system=self.__name__)
             del all_objects
             gc.collect()
+            return defer.succeed(None)
         except Exception, e:
             import traceback
             logger.error(traceback.format_exc(e))
             return defer.fail(None)
-
-        return defer.succeed(None)
-
-    @db.ro_transact
-    def collect_and_dump_compute(self):
-        log.msg('Profiling memory for Compute objects...', system=self.__name__)
-        try:
-            all_objects = muppy.get_objects()
-            from opennode.knot.model.compute import Compute
-            from sys import getsizeof
-            import gc
-            userevents = muppy.filter(all_objects, Type=Compute)
-            logger.info('Compute profile follows (%s rows)' % len(userevents))
-            data = []
-            for ue in userevents:
-                for ref in gc.get_referrers(ue):
-                    referrers = []
-                    try:
-                        referrers.append(str(ref))
-                    except Exception:
-                        referrers.append('ClientDisconnected')
-                data.append((referrers, str(ue), repr(ue), str(getsizeof(ue))))
-            rrows = [('object', 'raw', 'size', 'referrers')] + data
-            rows = _format_table(rrows)
-            for row in rows:
-                logger.info(row)
-            log.msg('Profiling Compute memory done', system=self.__name__)
-        except Exception, e:
-            import traceback
-            logger.error(traceback.format_exc(e))
 
 
     def collect_and_dump(self):
