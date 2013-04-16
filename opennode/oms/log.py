@@ -184,13 +184,14 @@ class UserEventLogZODBHandler(logging.Handler):
     def __init__(self):
         logging.Handler.__init__(self)
         self.queue = Queue(16)
+        self.setFormatter(logging.Formatter('%(asctime)s'))
 
     def emit(self, record):
         if not getattr(record, 'username', None):
             return
 
         self.format(record)
-        assert hasattr(record, 'asctime')
+        assert hasattr(record, 'asctime'), str(record)
         self.queue.put(record)
 
         @db.transact
