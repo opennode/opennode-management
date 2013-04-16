@@ -44,8 +44,9 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                         yield self.track_changes()
                     else:
                         yield self.collect_and_dump()
-                        yield self.collect_and_dump_garbage()
-                        yield self.collect_and_dump_root()
+                        if self.verbose:
+                            yield self.collect_and_dump_garbage()
+                            yield self.collect_and_dump_root()
             except Exception:
                 log.err(system=self.__name__)
 
