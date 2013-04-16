@@ -189,6 +189,7 @@ class UserEventLogZODBHandler(logging.Handler):
         if not getattr(record, 'username', None):
             return
 
+        self.format(record)
         self.queue.put(record)
 
         @db.transact
