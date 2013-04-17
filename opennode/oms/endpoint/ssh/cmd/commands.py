@@ -637,7 +637,8 @@ class FileCmd(Cmd):
 
     def _do_file(self, path, obj):
         ifaces = ', '.join(obj.get_features())
-        return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
+        return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__,
+                                           ':' if ifaces else '', ifaces))
 
     @db.ro_transact(proxy=False)
     def subject(self, args):
