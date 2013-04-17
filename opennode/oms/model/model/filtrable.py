@@ -21,11 +21,7 @@ class ModelFieldFiltrable(Adapter):
             if isinstance(value, unicode):
                 value = value.encode('utf-8')
 
-            if isinstance(value, str):
-                if keyword in value:
-                    return True
-
-            if isinstance(value, list) or isinstance(value, set):
+            if isinstance(value, list) or isinstance(value, set) or isinstance(value, str):
                 if keyword in value:
                     return True
 

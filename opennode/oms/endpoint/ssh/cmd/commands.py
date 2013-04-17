@@ -12,6 +12,7 @@ from twisted.python import log
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility
 from zope.component import provideSubscriptionAdapter, provideAdapter, handle
+from zope.security.interfaces import Unauthorized
 from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.endpoint.ssh.editor import Editor
@@ -209,10 +210,18 @@ class ListDirContentsCmd(Cmd):
                 return item.__name__
 
         def make_long_lines(container):
+            def get_symlink_nicknames(item):
+                for method in (lambda item: [canonical_path(item)],
+                               lambda item: getattr(follow_symlinks(item), 'nicknames', [])):
+                    try:
+                        for n in method(item):
+                            yield n
+                    except Unauthorized:
+                        log.err(system='security')
+
             def nick(item):
-                if isinstance(item, Symlink):
-                    return [canonical_path(item)] + getattr(follow_symlinks(item), 'nicknames', [])
-                return getattr(item, 'nicknames', [])
+                return (get_symlink_nicknames(item) if isinstance(item, Symlink)
+                        else getattr(item, 'nicknames', []))
 
             def owner(item):
                 return item.__owner__ or 'root'
@@ -628,7 +637,8 @@ class FileCmd(Cmd):
 
     def _do_file(self, path, obj):
         ifaces = ', '.join(obj.get_features())
-        return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__, ':' if ifaces else '', ifaces))
+        return (path + ":", "%s%s %s\n" % (type(removeSecurityProxy(obj)).__name__,
+                                           ':' if ifaces else '', ifaces))
 
     @db.ro_transact(proxy=False)
     def subject(self, args):

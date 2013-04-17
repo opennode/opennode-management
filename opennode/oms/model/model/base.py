@@ -95,7 +95,15 @@ class Model(persistent.Persistent):
 
     __transient__ = False
 
-    inherit_permissions = False
+    _inherit_permissions = False
+
+    def set_inherit_permissions(self, value):
+        self._inherit_permissions = value
+
+    def get_inherit_permissions(self):
+        return self._inherit_permissions or self.__transient__
+
+    inherit_permissions = property(get_inherit_permissions, set_inherit_permissions)
 
     def set_owner(self, principal):
         prinrole = interfaces.IPrincipalRoleManager(self)
