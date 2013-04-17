@@ -21,6 +21,10 @@ class DetachedProtocol(object):
         else:
             self.interaction = interaction
 
+    @property
+    def principal(self):
+        return self.interaction.participations[0].principal
+
     def write(self, *args, **kwargs):
         data = ''.join(map(str, args))
         if get_config().getboolean('general', 'log_detached', False):
