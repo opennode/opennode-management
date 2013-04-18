@@ -291,3 +291,13 @@ def timeout(secs):
             defer.returnValue(rawResult)
         return _timeout
     return wrap
+
+
+def lazy_all(bool_functions, *args, **kwargs):
+    """ Functions like standard all(), but lazily, by calling functions from the bool_functions list
+    and evaluating their results as booleans. Only calls functions until the first False result.
+    """
+    for bf in bool_functions:
+        if not bf(*args, **kwargs):
+            return False
+    return True
