@@ -26,7 +26,6 @@ setup(
                                         ]},
     install_requires = [
         "setuptools", # Redundant but removes a warning
-        "winpdb",
         "Twisted==12.3.0",
         "pyasn1==0.1.2", # required by Twisted conch
         "transaction==1.3.0",
