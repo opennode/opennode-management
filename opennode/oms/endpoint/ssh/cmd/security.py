@@ -207,42 +207,9 @@ class GetAclCmd(Cmd):
                 self.write("%s:%s:-%s\n" % formatted_perms(user_deny[principal]))
 
 
-class SetAclCmd(Cmd):
-    implements(ICmdArgumentsSyntax)
+class SetAclMixin(object):
 
-    command('setfacl')
-
-    def arguments(self):
-        parser = VirtualConsoleArgumentParser()
-        parser.add_argument('paths', nargs='+')
-        group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('-i', action='store_true',
-                           help='Set object to inherit permissions from its parent(s)',
-                           default=False)
-        group.add_argument('-m', action='append',
-                           help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
-        group.add_argument('-d', action='append',
-                           help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
-        group.add_argument('-x', action='append',
-                           help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
-        return parser
-
-    @db.ro_transact
-    def execute(self, args):
-        try:
-            for path in args.paths:
-                obj = self.traverse(path)
-                if obj.__transient__:
-                    self.write("Transient object %s always inherits permissions from its parent\n" % path)
-                    log.warning("Transient object %s always inherits permissions from its parent", path)
-                    continue
-                with self.protocol.interaction:
-                    self._do_set_acl(obj, args.i, args.m, args.d, args.x)
-        except NoSuchPermission as e:
-            self.write("No such permission '%s'\n" % (e.message))
-            transaction.abort()
-
-    def _do_set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms):
+    def set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
         obj.inherit_permissions = inherit
@@ -279,6 +246,42 @@ class SetAclCmd(Cmd):
             mod_perm("Unsetting", prinrole.unsetRoleForPrincipal, p)
 
         transaction.commit()
+
+
+class SetAclCmd(Cmd, SetAclMixin):
+    implements(ICmdArgumentsSyntax)
+
+    command('setfacl')
+
+    def arguments(self):
+        parser = VirtualConsoleArgumentParser()
+        parser.add_argument('paths', nargs='+')
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-i', action='store_true',
+                           help='Set object to inherit permissions from its parent(s)',
+                           default=False)
+        group.add_argument('-m', action='append',
+                           help="add an Allow ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-d', action='append',
+                           help="add an Deny ace: {u:[user]:permspec|g:[group]:permspec}")
+        group.add_argument('-x', action='append',
+                           help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
+        return parser
+
+    @db.ro_transact
+    def execute(self, args):
+        try:
+            for path in args.paths:
+                obj = self.traverse(path)
+                if obj.__transient__:
+                    self.write("Transient object %s always inherits permissions from its parent\n" % path)
+                    log.warning("Transient object %s always inherits permissions from its parent", path)
+                    continue
+                with self.protocol.interaction:
+                    self.set_acl(obj, args.i, args.m, args.d, args.x)
+        except NoSuchPermission as e:
+            self.write("No such permission '%s'\n" % (e.message))
+            transaction.abort()
 
 
 class IdCmd(Cmd):
