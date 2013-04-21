@@ -43,7 +43,10 @@ class DefaultView(HttpRestView):
 
         data['id'] = self.context.__name__
         data['__type__'] = type(removeSecurityProxy(self.context)).__name__
-        data['url'] = ILocation(self.context).get_url()
+        try:
+            data['url'] = ILocation(self.context).get_url()
+        except Unauthorized:
+            data['url'] = ''
 
         interaction = get_interaction(self.context)
         data['permissions'] = effective_perms(interaction, self.context) if interaction else []
@@ -116,9 +119,7 @@ class ContainerView(DefaultView):
                 return IHttpRestView(item).render_recursive(request, depth - 1)
             except Unauthorized:
                 permissions = effective_perms(get_interaction(item), item)
-                if 'view' not in permissions:
-                    return
-                else:
+                if 'view' in permissions:
                     return dict(access='denied', permissions=permissions,
                                 __type__=type(removeSecurityProxy(item)).__name__)
 
@@ -141,7 +142,6 @@ class ContainerView(DefaultView):
         if qlist:
             for q in qlist:
                 items = filter(lambda item: secure_filter_match(item, q), items)
-
 
         children = filter(None, [secure_render_recursive(item) for item in items
                                  if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)])
