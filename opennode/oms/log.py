@@ -226,7 +226,10 @@ class UserLogger(object):
             self.principal = principal
 
     def log(self, msg, *args, **kw):
-        self.logger.log(logging.INFO, msg, *args,
+        try:
+            self.logger.log(logging.INFO, msg, *args,
                         extra={'username': self.principal.id if self.principal else '-',
                                'subject': str(self.subject) or '-',
                                'owner': self.owner[0] if self.owner else '-'}, **kw)
+        except TypeError:
+            logging.getLogger('LOGERROR').error('Not all arguments converted: %s %s', msg, args)
