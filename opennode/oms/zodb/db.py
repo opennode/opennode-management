@@ -9,7 +9,7 @@ import transaction
 
 from ZEO.ClientStorage import ClientStorage
 from ZODB.FileStorage import FileStorage
-from ZODB.POSException import ConflictError, ReadConflictError
+from ZODB.POSException import ConflictError, ReadConflictError, StorageTransactionError
 from grokcore.component import subscribe
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
@@ -227,6 +227,16 @@ def transact(fun):
                     trace("GOT WRITE CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
                     retrying = True
                     time.sleep(random.random() * 0.1)
+                except StorageTransactionError as e:
+                    if e.msg == "Duplicate tpc_begin calls for same transaction":
+                        # This is most likely due to transactions initiated inside an ongoing transaction
+                        trace("StorageTransactionError IN RW TRANSACT, ignoring", t, force=True)
+                    else:
+                        raise
+                except:
+                    trace('ABORTING AFTER BAD COMMIT ATTEMPT', t)
+                    transaction.abort()
+                    raise
         raise e
 
     @functools.wraps(fun)
