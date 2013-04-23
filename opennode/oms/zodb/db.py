@@ -169,6 +169,7 @@ def transact(fun):
     if not _threadpool:
         init_threadpool()
 
+    @functools.wraps(fun)
     def run_in_tx(fun, *args, **kwargs):
         if not _db:
             raise Exception('DB not initalized')
@@ -260,6 +261,7 @@ def _ro_transact(fun, proxy=True):
     if not _threadpool:
         init_threadpool()
 
+    @functools.wraps(fun)
     def run_in_tx(fun, *args, **kwargs):
         context = context_from_method(fun, args, kwargs)
         _context.x = context
