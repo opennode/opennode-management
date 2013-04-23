@@ -186,8 +186,11 @@ def transact(fun):
             if msg == "BEGINNING":
                 ch = '\\'
             if cfg.getboolean('debug', 'trace_transactions', False) or force:
-                log.error("%s\ttx:%s %s\tin %s from %s, line %s %s" %
-                          (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch))
+                trace_fun = log.error
+            else:
+                trace_fun = log.debug
+            trace_fun("%s\ttx:%s %s\tin %s from %s, line %s %s" %
+                      (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch))
 
         retries = cfg.getint('db', 'conflict_retries')
 
