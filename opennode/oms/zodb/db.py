@@ -13,7 +13,6 @@ from ZODB.POSException import ConflictError, ReadConflictError, StorageTransacti
 from grokcore.component import subscribe
 from twisted.internet import reactor, defer
 from twisted.internet.threads import deferToThreadPool
-from twisted.python import log
 from twisted.python.threadable import isInIOThread
 from twisted.python.threadpool import ThreadPool
 from zope.component import handle
@@ -36,6 +35,9 @@ _threadpool = None
 _connection = threading.local()
 _testing = False
 _context = threading.local()
+
+
+log = logging.getLogger(__name__)
 
 
 class RollbackException(Exception):
@@ -89,7 +91,7 @@ def init(test=False):
     if _db and not test:
         return
 
-    log.msg("Initializing zodb", system='db')
+    log.info("Initializing zodb")
     handle(BeforeDatabaseInitalizedEvent())
 
     if not test:
@@ -184,9 +186,8 @@ def transact(fun):
             if msg == "BEGINNING":
                 ch = '\\'
             if cfg.getboolean('debug', 'trace_transactions', False) or force:
-                log.msg("%s\ttx:%s %s\tin %s from %s, line %s %s" %
-                        (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch),
-                        system='transaction', logLevel=logging.ERROR)
+                log.error("%s\ttx:%s %s\tin %s from %s, line %s %s" %
+                          (msg, t.description, ch, fun, fun.__module__, inspect.getsourcelines(fun)[1], ch))
 
         retries = cfg.getint('db', 'conflict_retries')
 
@@ -201,7 +202,7 @@ def transact(fun):
                 transaction.abort()
                 return
             except:
-                log.msg('rolling back', system='db')
+                log.info('rolling back')
                 trace("ABORTING", t)
                 transaction.abort()
                 raise
@@ -220,13 +221,13 @@ def transact(fun):
                     _context.x = None
                     return make_persistent_proxy(result, context)
                 except ReadConflictError as e:
-                    log.msg("GOT READ CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
+                    trace("GOT READ CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
                     retrying = True
-                    time.sleep(random.random() * 0.1)
+                    time.sleep(random.random() * 0.2)
                 except ConflictError as e:
                     trace("GOT WRITE CONFLICT IN RW TRANSACT, retrying %s" % i, t, force=True)
                     retrying = True
-                    time.sleep(random.random() * 0.1)
+                    time.sleep(random.random() * 0.2)
                 except StorageTransactionError as e:
                     if e.msg == "Duplicate tpc_begin calls for same transaction":
                         # This is most likely due to transactions initiated inside an ongoing transaction
@@ -322,7 +323,7 @@ def context(obj):
 def assert_proxy(obj):
     if any((not (isinstance(obj, PersistentProxy)), isinstance(obj, basestring), isinstance(obj, int),
             isinstance(obj, float), isinstance(obj, defer.Deferred))):
-        log.msg("Should be a db proxy %s %s" % (type(obj), obj))
+        log.error("Should be a db proxy %s %s" % (type(obj), obj))
         import traceback
         traceback.print_stack()
     assert any((isinstance(obj, PersistentProxy),
@@ -335,7 +336,7 @@ def assert_proxy(obj):
 def assert_not_proxy(obj):
     if any(isinstance(obj, PersistentProxy), isinstance(obj, basestring), isinstance(obj, int),
            isinstance(obj, float), isinstance(obj, defer.Deferred)):
-        log.msg("Should be a db proxy %s %s" % (type(obj), obj))
+        log.error("Should be a db proxy %s %s" % (type(obj), obj))
         import traceback
         traceback.print_stack()
     assert any(not (isinstance(obj, PersistentProxy), isinstance(obj, basestring), isinstance(obj, int),
