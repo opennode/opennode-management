@@ -229,7 +229,7 @@ def transact(fun):
                     retrying = True
                     time.sleep(random.random() * 0.2)
                 except StorageTransactionError as e:
-                    if e.msg == "Duplicate tpc_begin calls for same transaction":
+                    if e.args and e.args[0] == "Duplicate tpc_begin calls for same transaction":
                         # This is most likely due to transactions initiated inside an ongoing transaction
                         trace("StorageTransactionError IN RW TRANSACT, ignoring", t, force=True)
                     else:
