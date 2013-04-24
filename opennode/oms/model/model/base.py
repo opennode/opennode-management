@@ -1,4 +1,5 @@
 import persistent
+import logging
 from uuid import uuid4
 
 from BTrees.OOBTree import OOBTree
@@ -17,6 +18,9 @@ from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
 from opennode.oms.model.form import ModelCreatedEvent, ModelMovedEvent, TmpObj
 from zope.component import handle
+
+
+logger = logging.getLogger(__name__)
 
 
 class IModel(Interface):
@@ -97,6 +101,10 @@ class Model(persistent.Persistent):
 
     _inherit_permissions = False
 
+    def _p_resolveConflict(self, oldState, savedState, newState):
+        logger.debug('Resolve conflict: %s -> %s -> %s, choosing last', oldState, savedState, newState)
+        return newState
+
     def set_inherit_permissions(self, value):
         self._inherit_permissions = value
 
@@ -116,7 +124,7 @@ class Model(persistent.Persistent):
         owners = map(lambda p: p[0],
                    filter(lambda p: p[1].getName() == 'Allow',
                           owners))
-        assert len(owners) <= 1, 'There must be only one owner, got %s instead' % owners
+        assert len(owners) <= 1, 'There must only be one owner, got %s instead' % owners
         if len(owners) == 1:
             return owners[0]
 
@@ -128,9 +136,6 @@ class Model(persistent.Persistent):
 
     def implemented_interfaces(self):
         return self.class_implemented_interfaces() + list(directlyProvidedBy(self).interfaces())
-
-    def _p_resolveConflict(self, oldState, savedState, newState):
-        return newState
 
     @classmethod
     def get_class_features(cls):
