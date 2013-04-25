@@ -3,7 +3,6 @@ import os
 import re
 import time
 
-import transaction
 import zope.schema
 from grokcore.component import implements, Adapter, Subscription, baseclass, order
 from twisted.conch.insults.insults import modes
@@ -411,10 +410,9 @@ class MoveCmd(Cmd):
 
         # `add` will take care of removing the old parent.
         dest.add(src)
+
         if rename:
             dest.rename(src.__name__, rename)
-
-        transaction.commit()
 
     @db.ro_transact(proxy=False)
     def subject(self, args):
@@ -454,8 +452,6 @@ class SetAttrCmd(Cmd):
             form.apply()
         else:
             form.write_errors(to=self)
-
-        transaction.commit()
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -949,8 +945,6 @@ class EditCmd(Cmd):
                 form.apply()
             else:
                 form.write_errors(to=self)
-
-            transaction.commit()
 
 
 class CatLogCmd(Cmd):
