@@ -359,6 +359,3 @@ class Container(AddingContainer):
 
     def __delitem__(self, key):
         del self._items[key]
-
-
-

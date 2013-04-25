@@ -44,7 +44,7 @@ def ensure_base_dir():
         os.chdir(basedir)
 
 
-def add_user(user, password, group=None):
+def add_user(user, password, group=None, uid=None):
     passwd_file = get_config().get('auth', 'passwd_file')
     with open(passwd_file) as f:
         for line in f:
@@ -52,7 +52,7 @@ def add_user(user, password, group=None):
                 raise UserManagementError("User %s already exists" % user)
 
     with open(passwd_file, 'a') as f:
-        f.write('%s:%s:%s\n' % (user, hash_pw(password), group or 'users'))
+        f.write('%s:%s:%s:%s\n' % (user, hash_pw(password), group or 'users', uid))
 
 
 def delete_user(user):
@@ -84,16 +84,28 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
 
     with open(passwd_file, 'w') as f:
         for line in lines:
+            def parse_line(line):
+                user, pw, groups = line.split(':', 2)
+
+                if ':' in groups:
+                    groups, uid = groups.split(':', 1)
+                else:
+                    uid = None
+
+                return user, pw, groups, uid
+
             if line.startswith(user + ':'):
-                user, old_pw, groups = line.split(':')
+                user, old_pw, groups, uid = parse_line(line)
                 if group:
                     groups = group + '\n'
+
                 if pw is None:
                     pw = old_pw
 
-                f.write('%s:%s:%s' % (user, pw, groups))
+                f.write('%s:%s:%s:%s\n' % (user, pw, groups, uid))
             else:
-                f.write(line)
+                user, old_pw, groups, uid = parse_line(line)
+                f.write('%s:%s:%s:%s\n' % (user, pw, groups, uid))
 
 
 def run():
