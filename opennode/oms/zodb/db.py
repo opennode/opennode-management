@@ -199,27 +199,26 @@ def transact(fun):
             try:
                 t = transaction.begin()
                 t.note("%s" % (random.randint(0, 1000000)))
-                trace("BEGINNING", t)
+                trace("BEGIN", t)
                 result = fun(*args, **kwargs)
             except RollbackException:
                 transaction.abort()
                 return
             except:
-                log.info('rolling back')
-                trace("ABORTING", t)
+                trace("ROLLBACK ON ERROR", t)
                 transaction.abort()
                 raise
             else:
                 try:
                     if isinstance(result, RollbackValue):
-                        trace("V ROLLBACK", t)
+                        trace("ROLLBACK", t)
                         result = result.value
                         transaction.abort()
                     else:
-                        trace("COMMITTING", t)
+                        trace("COMMIT", t)
                         transaction.commit()
                         if retrying:
-                            trace("SUCCEEDED COMMITTING, AFTER %s attempts" % i, t)
+                            trace("Succeeded commit, after %s attempts" % i, t)
 
                     _context.x = None
                     return make_persistent_proxy(result, context)
@@ -238,7 +237,8 @@ def transact(fun):
                     else:
                         raise
                 except:
-                    trace('ABORTING AFTER BAD COMMIT ATTEMPT', t)
+                    log.err(system='db')
+                    trace('ABORT: bad commit attempt', t)
                     transaction.abort()
                     raise
         raise e
