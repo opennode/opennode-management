@@ -35,14 +35,6 @@ class IModel(Interface):
         """Returns the interfaces implemented by this model."""
 
 
-class IPreValidateHook(Interface):
-    """ GlobalUtility interface for performing pre-execute checks on model changes and cancelling them,
-    when any of the checks fail """
-
-    def check(self):
-        """ Perform the pre-validate check """
-
-
 class IContainer(IModel):
 
     def __getitem__(key):
@@ -367,3 +359,6 @@ class Container(AddingContainer):
 
     def __delitem__(self, key):
         del self._items[key]
+
+
+
