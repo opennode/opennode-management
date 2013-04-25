@@ -323,12 +323,13 @@ class AddUserCmd(Cmd):
         parser.add_argument('password')
         parser.add_argument('-g', help="group(s): comma separated list of "
                             "groups the user belongs to", required=False, default=None)
+        parser.add_argument('-i', '--uid', help="user ID", required=False, default=0)
         return parser
 
     @require_admins_only
     def execute(self, args):
         try:
-            add_user(args.user, args.password, group=args.g)
+            add_user(args.user, args.password, group=args.g, uid=args.uid)
         except UserManagementError as e:
             self.write('%s\n' % str(e))
 
