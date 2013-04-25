@@ -27,10 +27,12 @@ from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory, Mo
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
+from opennode.oms.model.model.hooks import PreValidateHookMixin
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.schema import Path, get_schema_fields, model_to_dict
 from opennode.oms.model.traversal import canonical_path
+from opennode.oms.util import blocking_yield
 from opennode.oms.zodb import db
 
 
@@ -433,25 +435,39 @@ class SetAttrCmd(Cmd):
     def subject(self, args):
         return tuple((self.traverse(args.path),))
 
-    @db.transact
+    @defer.inlineCallbacks
     def execute(self, args):
-        obj = self.traverse(args.path)
+        obj = (yield db.ro_transact(self.traverse)(args.path))
         if not obj:
             self.write("No such object: %s\n" % args.path)
             return
 
-        raw_data = args.keywords
+        vh = PreValidateHookMixin(obj)
+        try:
+            yield vh.validate_hook(self.protocol.principal)
+        except Exception:
+            msg = 'Canceled executing "%s" due to validate_hook failure' % self._name
+            self.write('%s\n' % msg)
+            log.msg(msg, system='set')
+            return
 
-        if args.verbose:
-            for key, value in raw_data.items():
-                self.write("Setting %s=%s\n" % (key, value))
+        @db.transact
+        def apply():
+            obj = self.traverse(args.path)
+            raw_data = args.keywords
 
-        form = RawDataApplier(raw_data, obj)
+            if args.verbose:
+                for key, value in raw_data.items():
+                    self.write("Setting %s=%s\n" % (key, value))
 
-        if not form.errors:
-            form.apply()
-        else:
-            form.write_errors(to=self)
+            form = RawDataApplier(raw_data, obj)
+
+            if not form.errors:
+                form.apply()
+            else:
+                form.write_errors(to=self)
+
+        yield apply()
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -482,6 +498,11 @@ class CreateObjCmd(Cmd):
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
 
+    @defer.inlineCallbacks
+    def validate_hook(self, obj):
+        vh = PreValidateHookMixin(obj)
+        yield vh.validate_hook(self.protocol.principal)
+
     @db.transact
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
@@ -489,22 +510,32 @@ class CreateObjCmd(Cmd):
         form = RawDataValidatingFactory(args.keywords, model_cls,
                                         marker=getattr(self.current_obj, '__contains__', None))
 
-        if not form.errors:
-            obj = form.create()
-            obj_id = self.current_obj.add(obj)
-
-            interaction = self.protocol.interaction
-            if not interaction:
-                auth = getUtility(IAuthentication, context=None)
-                principal = auth.getPrincipal(None)
-            else:
-                principal = interaction.participations[0].principal
-
-            obj.__owner__ = principal
-
-            self.write("%s\n" % obj_id)
-        else:
+        if form.errors:
             form.write_errors(to=self)
+            return
+
+        obj = form.create()
+
+        vh = PreValidateHookMixin(obj)
+        try:
+            blocking_yield(vh.validate_hook(self.protocol.principal))
+        except Exception:
+            msg = 'Canceled executing "%s" due to validate_hook failure' % self._name
+            self.write('%s\n' % msg)
+            log.msg(msg, system='set')
+
+        obj_id = self.current_obj.add(obj)
+
+        interaction = self.protocol.interaction
+        if not interaction:
+            auth = getUtility(IAuthentication, context=None)
+            principal = auth.getPrincipal(None)
+        else:
+            principal = interaction.participations[0].principal
+
+        obj.__owner__ = principal
+
+        self.write("%s\n" % obj_id)
 
 
 class SetOrMkCmdDynamicArguments(Adapter):

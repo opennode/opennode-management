@@ -21,6 +21,9 @@ class PreValidateHookMixin(object):
 
     context = None
 
+    def __init__(self, context=None):
+        self.context = context
+
     @defer.inlineCallbacks
     def validate_hook(self, principal):
         """
