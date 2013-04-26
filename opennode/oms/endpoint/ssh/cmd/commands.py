@@ -498,11 +498,6 @@ class CreateObjCmd(Cmd):
         parser.add_argument('type', choices=choices, help="object type to be created")
         return parser
 
-    @defer.inlineCallbacks
-    def validate_hook(self, obj):
-        vh = PreValidateHookMixin(obj)
-        yield vh.validate_hook(self.protocol.principal)
-
     @db.transact
     def execute(self, args):
         model_cls = creatable_models.get(args.type)
@@ -520,7 +515,7 @@ class CreateObjCmd(Cmd):
         try:
             blocking_yield(vh.validate_hook(self.protocol.principal))
         except Exception:
-            msg = 'Canceled executing "%s" due to validate_hook failure' % self._name
+            msg = 'Cancelled executing "%s" due to validate_hook failure' % self.name
             self.write('%s\n' % msg)
             log.msg(msg, system='set')
 
