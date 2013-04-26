@@ -518,6 +518,7 @@ class CreateObjCmd(Cmd):
             msg = 'Cancelled executing "%s" due to validate_hook failure' % self.name
             self.write('%s\n' % msg)
             log.msg(msg, system='set')
+            return
 
         obj_id = self.current_obj.add(obj)
 

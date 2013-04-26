@@ -57,7 +57,7 @@ class PamAuthChecker(object):
     def requestAvatarId(self, credentials):
         if pam.authenticate(credentials.username, credentials.password):
             log.info('Successful login with PAM for %s' % credentials.username)
-            auth = getUtility(IAuthentication, context=None)
+            auth = getUtility(IAuthentication)
             oms_user = User(credentials.username)
             oms_user.groups.extend(get_linux_groups_for_user(credentials.username))
             log.info(' Adding user groups: %s' % ', '.join(oms_user.groups))
