@@ -58,7 +58,6 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
         logger.info(pformat(objects))
         return defer.succeed(None)
 
-
     def collect_and_dump_root(self):
         log.msg('Profiling memory for OmsRoot objects...', system=self.__name__)
         try:
@@ -80,7 +79,7 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
                 for ref in gc.get_referrers(ue):
                     try:
                         if inspect.isframe(ref):
-                            continue # local object ref
+                            continue  # local object ref
                         elif isinstance(ref, list):
                             referrers.append('list len=%s id=%x' % (len(ref), id(ref)))
                         elif isinstance(ref, OOBucket):
@@ -106,7 +105,6 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
             import traceback
             logger.error(traceback.format_exc(e))
             return defer.fail(None)
-
 
     def collect_and_dump(self):
         log.msg('Profiling memory...', system=self.__name__)
@@ -249,13 +247,15 @@ class MemoryProfileCmd(Cmd):
     @defer.inlineCallbacks
     def execute(self, args):
         if args.d:
-            import ipdb; ipdb.set_trace()
+            import ipdb
+            ipdb.set_trace()
             return
 
         if args.b:
             @db.ro_transact
             def get_db_object(path):
-                import ipdb; ipdb.set_trace()
+                import ipdb
+                ipdb.set_trace()
                 return self.traverse(path)
             yield get_db_object('/')
             return

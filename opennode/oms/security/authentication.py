@@ -278,5 +278,5 @@ def reload_users(stream):
                 uid = None
             oms_user = User(user.strip(), uid=uid)
             oms_user.groups = [group.strip() for group in groups.split(',') if group.strip()]
-            log.debug('Loaded user %s', oms_user)
+            log.debug('Loaded %s', oms_user)
             auth.registerPrincipal(oms_user)
