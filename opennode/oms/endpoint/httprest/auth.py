@@ -113,7 +113,8 @@ class HttpRestAuthenticationUtility(GlobalUtility):
 
         user, timestamp = head.split(':')
         if int(timestamp) / 1000.0 + get_config().getint('auth', 'token_ttl') < time.time():
-            raise Forbidden("Expired authentication token (%s s ago)" % (time.time() - int(timestamp) / 1000.0))
+            raise Forbidden("Expired authentication token (%s s ago)" %
+                            (time.time() - int(timestamp) / 1000.0))
 
         return user
 
@@ -140,7 +141,10 @@ class AuthView(HttpRestView):
 
         body = request.content.getvalue()
 
-        if body:
+        if request.args.get('username') and request.args.get('password'):
+            credentials = UsernamePassword(request.args.get('username')[0],
+                                           request.args.get('password')[0])
+        elif body:
             try:
                 params = json.loads(body)
             except ValueError:

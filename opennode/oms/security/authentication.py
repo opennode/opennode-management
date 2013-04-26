@@ -272,11 +272,11 @@ def reload_users(stream):
             log.error("Invalid password file format: '%s':%s" % (stream.name, lineno))
         else:
             if ':' in groups:
-                uid, groups = groups.split(':', 1)
-                uid = int(uid) if uid != 'None' else None
+                groups, uid = groups.split(':', 1)
+                uid = int(uid) if uid.strip() != 'None' else None
             else:
                 uid = None
             oms_user = User(user.strip(), uid=uid)
             oms_user.groups = [group.strip() for group in groups.split(',') if group.strip()]
-
+            log.debug('Loaded user %s', oms_user)
             auth.registerPrincipal(oms_user)
