@@ -237,7 +237,6 @@ def transact(fun):
                     else:
                         raise
                 except:
-                    log.err(system='db')
                     trace('ABORT: bad commit attempt', t)
                     transaction.abort()
                     raise
