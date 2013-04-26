@@ -276,7 +276,7 @@ def reload_users(stream):
                 uid = int(uid) if uid != 'None' else None
             else:
                 uid = None
-            oms_user = User(user.strip(), uid=uid,
-                            groups=[group.strip() for group in groups.split(',') if group.strip()])
+            oms_user = User(user.strip(), uid=uid)
+            oms_user.groups = [group.strip() for group in groups.split(',') if group.strip()]
 
             auth.registerPrincipal(oms_user)

@@ -7,10 +7,10 @@ from zope.security.interfaces import IPrincipal, IInteraction
 class User(object):
     implements(IPrincipal)
 
-    def __init__(self, id, uid=None, groups=[]):
+    def __init__(self, id, uid=None):
         self.id = id
         self.uid = uid
-        self.groups = groups
+        self.groups = []
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.id)
