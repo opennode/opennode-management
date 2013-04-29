@@ -520,8 +520,6 @@ class CreateObjCmd(Cmd):
             log.msg(msg, system='set')
             return
 
-        obj_id = self.current_obj.add(obj)
-
         interaction = self.protocol.interaction
         if not interaction:
             auth = getUtility(IAuthentication, context=None)
@@ -530,6 +528,8 @@ class CreateObjCmd(Cmd):
             principal = interaction.participations[0].principal
 
         obj.__owner__ = principal
+
+        obj_id = self.current_obj.add(obj)
 
         self.write("%s\n" % obj_id)
 

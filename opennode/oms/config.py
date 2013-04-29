@@ -120,7 +120,7 @@ class OmsConfig(OmsBaseConfig):
         self.update(config_filenames)
 
     def update(self, config_filenames=NO_DEFAULT):
-        if config_filenames == self.NO_DEFAULT:
+        if config_filenames is self.NO_DEFAULT:
             conf_requirements = [i for i in querySubscriptions(object(), IRequiredConfigurationFiles)
                                  if type(i) not in _loaded_config_requirements]
 
