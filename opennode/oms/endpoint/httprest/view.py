@@ -25,7 +25,7 @@ from opennode.oms.model.model.byname import ByNameContainer
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.search import SearchContainer, SearchResult
 from opennode.oms.model.model.stream import IStream, StreamSubscriber
-from opennode.oms.model.model.symlink import follow_symlinks
+from opennode.oms.model.model.symlink import Symlink, follow_symlinks
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import get_interaction
@@ -51,7 +51,7 @@ class DefaultView(HttpRestView):
         interaction = get_interaction(self.context)
         data['permissions'] = effective_perms(interaction, self.context) if interaction else []
 
-        # XXX: Temporary hack--simplejson can't serialize sets
+        # XXX: simplejson can't serialize sets
         if 'tags' in data:
             data['tags'] = list(data['tags'])
 
@@ -111,8 +111,13 @@ class ContainerView(DefaultView):
             return self.filter_attributes(request, container_properties)
 
         exclude = [excluded.strip() for excluded in request.args.get('exclude', [''])[0].split(',')]
-        items = [follow_symlinks(i) for i in self.context.listcontent() if
-                 request.interaction.checkPermission('view', i) and i.__name__ not in exclude]
+
+        def preconditions(obj):
+            yield request.interaction.checkPermission('view', obj)
+            yield obj.__name__ not in exclude
+            yield obj.target.__parent__ == obj.__parent__ if type(obj) is Symlink else True
+
+        items = map(follow_symlinks, filter(preconditions, self.context.listcontent()))
 
         def secure_render_recursive(item):
             try:
