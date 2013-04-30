@@ -117,7 +117,7 @@ class ContainerView(DefaultView):
             yield obj.__name__ not in exclude
             yield obj.target.__parent__ == obj.__parent__ if type(obj) is Symlink else True
 
-        items = map(follow_symlinks, filter(preconditions, self.context.listcontent()))
+        items = map(follow_symlinks, filter(lambda obj: all(preconditions(obj)), self.context.listcontent()))
 
         def secure_render_recursive(item):
             try:
