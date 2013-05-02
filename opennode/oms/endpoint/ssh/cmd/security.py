@@ -17,6 +17,7 @@ from opennode.oms.endpoint.ssh.cmd.directives import command
 from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsoleArgumentParser
 from opennode.oms.endpoint.ssh.cmdline import MergeListAction
 from opennode.oms.model.model.base import IContainer
+from opennode.oms.model.model.symlink import follow_symlinks
 from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.passwd import add_user, update_passwd, UserManagementError
@@ -209,7 +210,7 @@ class GetAclCmd(Cmd):
 
 class SetAclMixin(object):
 
-    def set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms):
+    def set_acl(self, obj, inherit, allow_perms, deny_perms, del_perms, recursive=False):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
         obj.inherit_permissions = inherit
@@ -236,16 +237,26 @@ class SetAclMixin(object):
                 self.write("%s permission '%s', principal '%s'\n" % (what, role, principal))
                 setter(role, principal)
 
-        for p in allow_perms or []:
-            mod_perm("Allowing", prinrole.assignRoleToPrincipal, p)
+        def apply_perms(prinrole):
+            for p in allow_perms or []:
+                mod_perm("Allowing", prinrole.assignRoleToPrincipal, p)
 
-        for p in deny_perms or []:
-            mod_perm("Denying", prinrole.removeRoleFromPrincipal, p)
+            for p in deny_perms or []:
+                mod_perm("Denying", prinrole.removeRoleFromPrincipal, p)
 
-        for p in del_perms or []:
-            mod_perm("Unsetting", prinrole.unsetRoleForPrincipal, p)
+            for p in del_perms or []:
+                mod_perm("Unsetting", prinrole.unsetRoleForPrincipal, p)
 
-        transaction.commit()
+        apply_perms(prinrole)
+
+        seen = [obj]
+        if recursive and IContainer.providedBy(obj):
+            for sobj in obj.listitems():
+                if follow_symlinks(sobj) not in seen:
+                    prinrole = IPrincipalRoleManager(sobj)
+                    sobj.inherit_permissions = inherit
+                    seen.append(follow_symlinks(sobj))
+                    apply_perms(prinrole)
 
 
 class SetAclCmd(Cmd, SetAclMixin):
@@ -256,8 +267,11 @@ class SetAclCmd(Cmd, SetAclMixin):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
+        parser.add_argument('-R', '--recursive', action='store_true',
+                            help='Apply permissions recursively')
+
         group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('-i', action='store_true',
+        group.add_argument('-i', '--inherit', action='store_true',
                            help='Set object to inherit permissions from its parent(s)',
                            default=False)
         group.add_argument('-m', action='append',
@@ -268,7 +282,7 @@ class SetAclCmd(Cmd, SetAclMixin):
                            help="remove an ace: {u:[user]:permspec|g:[group]:permspec}")
         return parser
 
-    @db.ro_transact
+    @db.transact
     def execute(self, args):
         try:
             for path in args.paths:
@@ -278,7 +292,7 @@ class SetAclCmd(Cmd, SetAclMixin):
                     log.warning("Transient object %s always inherits permissions from its parent", path)
                     continue
                 with self.protocol.interaction:
-                    self.set_acl(obj, args.i, args.m, args.d, args.x)
+                    self.set_acl(obj, args.inherit, args.m, args.d, args.x, recursive=args.recursive)
         except NoSuchPermission as e:
             self.write("No such permission '%s'\n" % (e.message))
             transaction.abort()
