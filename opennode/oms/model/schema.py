@@ -120,7 +120,6 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
             got_unauthorized = True
             log.warning('Object %s (attribute %s of %s): access unauthorized!', obj, key, schema(obj),
                         exc_info=sys.exc_info())
-            data[key] = field.get(schema(obj))
             continue
     if got_unauthorized and not data:
         raise Unauthorized((obj, "any attribute", 'read'))
