@@ -18,6 +18,7 @@ from opennode.oms.endpoint.ssh.cmdline import ICmdArgumentsSyntax, VirtualConsol
 from opennode.oms.endpoint.ssh.cmdline import MergeListAction
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.symlink import follow_symlinks
+from opennode.oms.model.traversal import canonical_path
 from opennode.oms.security.acl import NoSuchPermission
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.passwd import add_user, update_passwd, UserManagementError
@@ -208,10 +209,11 @@ class GetAclCmd(Cmd):
             if principal in user_deny:
                 self.write("%s:%s:-%s\n" % formatted_perms(user_deny[principal]))
 
-        if recursive and IContainer.providedBy(obj):
-            for sobj in obj.listitems():
+        if recursive and IContainer.providedBy(follow_symlinks(obj)):
+            for sobj in follow_symlinks(obj).listcontent():
                 if follow_symlinks(sobj) not in seen:
                     seen.append(sobj)
+                    self.write('%s:\n' % canonical_path(sobj))
                     self._do_print_acl(sobj, verbose, recursive, seen)
 
 
@@ -258,7 +260,7 @@ class SetAclMixin(object):
 
         seen = [obj]
         if recursive and IContainer.providedBy(obj):
-            for sobj in obj.listitems():
+            for sobj in obj.listcontent():
                 if follow_symlinks(sobj) not in seen:
                     prinrole = IPrincipalRoleManager(sobj)
                     sobj.inherit_permissions = inherit
