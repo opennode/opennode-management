@@ -160,7 +160,8 @@ class GetAclCmd(Cmd):
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('paths', nargs='+')
-        parser.add_argument('-v', action='store_true', help="show grants for every permission")
+        parser.add_argument('-v', action='store_true', help='Show grants for every permission')
+        parser.add_argument('-R', '--recursive', action='store_true', help='Print permissions recursively')
         return parser
 
     @db.ro_transact
@@ -171,9 +172,9 @@ class GetAclCmd(Cmd):
                 self.write("No such object %s\n" % path)
                 continue
 
-            self._do_print_acl(obj, args.v)
+            self._do_print_acl(obj, args.v, args.recursive, [obj])
 
-    def _do_print_acl(self, obj, verbose):
+    def _do_print_acl(self, obj, verbose, recursive, seen):
         prinrole = IPrincipalRoleManager(obj)
         auth = getUtility(IAuthentication, context=None)
 
@@ -206,6 +207,12 @@ class GetAclCmd(Cmd):
                 self.write("%s:%s:+%s\n" % formatted_perms(user_allow[principal]))
             if principal in user_deny:
                 self.write("%s:%s:-%s\n" % formatted_perms(user_deny[principal]))
+
+        if recursive and IContainer.providedBy(obj):
+            for sobj in obj.listitems():
+                if follow_symlinks(sobj) not in seen:
+                    seen.append(sobj)
+                    self._do_print_acl(sobj, verbose, recursive, seen)
 
 
 class SetAclMixin(object):
