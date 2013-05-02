@@ -1,4 +1,6 @@
 from collections import OrderedDict
+import logging
+import sys
 
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
@@ -9,6 +11,9 @@ from zope.security.proxy import removeSecurityProxy
 from zope.security.interfaces import Unauthorized
 
 from opennode.oms.util import get_direct_interfaces
+
+
+log = logging.getLogger(__name__)
 
 
 class Path(TextLine):
@@ -97,8 +102,6 @@ class DictFromUnicode(Adapter):
         return self.context._type([convert(k, v) for k, v in res.items()])
 
 
-# XXX: Might not be the best place nor name for it, but at least the
-# duplication has been eliminated for now.
 def model_to_dict(obj, use_titles=False, use_fields=False):
     data = OrderedDict()
     got_unauthorized = False
@@ -115,6 +118,9 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
         except Unauthorized:
             # skip field
             got_unauthorized = True
+            log.warning('Object %s (attribute %s of %s): access unauthorized!', obj, key, schema(obj),
+                        exc_info=sys.exc_info())
+            data[key] = field.get(schema(obj))
             continue
     if got_unauthorized and not data:
         raise Unauthorized((obj, "any attribute", 'read'))
