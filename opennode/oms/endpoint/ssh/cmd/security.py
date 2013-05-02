@@ -65,20 +65,6 @@ def require_admins(allow_same_user=False):
         return require_admins_or_same_user
 
 
-def require_admins_or_same_user(f):
-    @functools.wraps(f)
-    def _require_admins_or_same_user(self, args):
-        principals = map(lambda p: p.id, effective_principals(self.user))
-
-        if args.u not in (None, self.user.id) and 'admins' not in principals:
-            self.write('Permission denied: admins not in effective permissions: %s\n'
-                       % ', '.join(principals))
-            return
-
-        return f(self, args)
-    return _require_admins_or_same_user
-
-
 class WhoAmICmd(Cmd):
     command('whoami')
 
