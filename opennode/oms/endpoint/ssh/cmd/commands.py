@@ -23,10 +23,11 @@ from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualC
                                                GroupDictAction, VirtualConsoleArgumentParser)
 from opennode.oms.endpoint.ssh.colored_columnize import columnize
 from opennode.oms.endpoint.ssh.terminal import BLUE, CYAN, GREEN
-from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory, ModelDeletedEvent
+from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory
 from opennode.oms.model.model import creatable_models
 from opennode.oms.model.model.base import IContainer, IIncomplete
 from opennode.oms.model.model.bin import ICommand
+from opennode.oms.model.model.events import ModelDeletedEvent
 from opennode.oms.model.model.hooks import PreValidateHookMixin
 from opennode.oms.model.model.proc import Proc
 from opennode.oms.model.model.symlink import Symlink, follow_symlinks

@@ -2,11 +2,12 @@ import inspect
 
 import zope.schema
 from zope.component import handle
-from zope.interface import Interface, implements
 from zope.schema.interfaces import IFromUnicode, WrongType, RequiredMissing
 from zope.security.proxy import removeSecurityProxy
 
 from opennode.oms.model.schema import get_schemas, get_schema_fields
+from opennode.oms.model.model.events import ModelModifiedEvent
+
 from opennode.oms.util import query_adapter_for_class
 
 
@@ -19,52 +20,6 @@ class UnknownAttribute(zope.schema.ValidationError):
 
 class NoSchemaFound(zope.schema.ValidationError):
     """No schema found for object"""
-
-
-class IModelModifiedEvent(Interface):
-    """Model was modified"""
-
-
-class IModelCreatedEvent(Interface):
-    """Model was created"""
-
-
-class IModelMovedEvent(Interface):
-    """Model was moved"""
-
-
-class IModelDeletedEvent(Interface):
-    """Model was deleted"""
-
-
-class ModelModifiedEvent(object):
-    implements(IModelModifiedEvent)
-
-    def __init__(self, original, modified):
-        self.original = original
-        self.modified = modified
-
-
-class ModelCreatedEvent(object):
-    implements(IModelCreatedEvent)
-
-    def __init__(self, container):
-        self.container = container
-
-
-class ModelMovedEvent(object):
-    implements(IModelMovedEvent)
-
-    def __init__(self, fromContainer, toContainer):
-        self.fromContainer = fromContainer
-        self.toContainer = toContainer
-
-
-class ModelDeletedEvent(object):
-    implements(IModelDeletedEvent)
-
-    def __init__(self, container):
-        self.container = container
 
 
 class RawDataValidator(object):

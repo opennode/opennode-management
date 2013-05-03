@@ -16,7 +16,8 @@ from zope.securitypolicy import interfaces
 
 from opennode.oms.security.directives import permissions
 from opennode.oms.util import get_direct_interfaces, exception_logger
-from opennode.oms.model.form import ModelCreatedEvent, ModelMovedEvent, TmpObj
+from opennode.oms.model.form import TmpObj
+from opennode.oms.model.model.events import ModelCreatedEvent, ModelMovedEvent, OwnerChangedEvent
 from zope.component import handle
 
 
@@ -118,12 +119,14 @@ class Model(persistent.Persistent):
         prinrole.unsetRoleForPrincipal('owner', self.__owner__)
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
+        if principal is not None and principal.id != self.__owner__:
+            handle(self, OwnerChangedEvent(self.__owner__, principal))
+
     def get_owner(self):
         prinrole = interfaces.IPrincipalRoleManager(self)
         owners = prinrole.getPrincipalsForRole('owner')
         owners = map(lambda p: p[0],
-                   filter(lambda p: p[1].getName() == 'Allow',
-                          owners))
+                   filter(lambda p: p[1].getName() == 'Allow', owners))
         assert len(owners) <= 1, 'There must only be one owner, got %s instead' % owners
         if len(owners) == 1:
             return owners[0]

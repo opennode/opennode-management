@@ -17,11 +17,12 @@ from opennode.oms.endpoint.httprest.root import BadRequest, NotFound
 from opennode.oms.endpoint.ssh.cmd.security import effective_perms
 from opennode.oms.endpoint.ssh.detached import DetachedProtocol
 from opennode.oms.endpoint.ssh.cmdline import ArgumentParsingError
-from opennode.oms.model.form import RawDataApplier, ModelDeletedEvent
+from opennode.oms.model.form import RawDataApplier
 from opennode.oms.model.location import ILocation
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.model.bin import ICommand
 from opennode.oms.model.model.byname import ByNameContainer
+from opennode.oms.model.model.events import ModelDeletedEvent
 from opennode.oms.model.model.filtrable import IFiltrable
 from opennode.oms.model.model.search import SearchContainer, SearchResult
 from opennode.oms.model.model.stream import IStream, StreamSubscriber
