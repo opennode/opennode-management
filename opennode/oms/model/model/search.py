@@ -18,7 +18,7 @@ from zope.security.proxy import removeSecurityProxy
 from .actions import ActionsContainerExtension, Action, action
 from .base import ReadonlyContainer, AddingContainer, Model, IDisplayName, IContainer, IModel, Container
 from .symlink import Symlink, follow_symlinks
-from opennode.oms.model.form import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
+from opennode.oms.model.model.events import IModelModifiedEvent, IModelCreatedEvent, IModelDeletedEvent
 
 
 class ITokenized(Interface):

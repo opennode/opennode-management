@@ -10,7 +10,7 @@ from opennode.oms.model.model.proc import IProcess, Proc, DaemonProcess
 from opennode.oms.model.model.search import ReindexAction
 from opennode.oms.util import subscription_factory, async_sleep
 from opennode.oms.zodb import db
-from opennode.oms.model.form import IModelDeletedEvent
+from opennode.oms.model.model.events import IModelDeletedEvent
 from opennode.oms.model.traversal import canonical_path, traverse_path
 
 

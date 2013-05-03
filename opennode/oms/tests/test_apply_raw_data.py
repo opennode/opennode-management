@@ -3,7 +3,8 @@ from zope import schema
 from zope.component import adapter, provideHandler
 from zope.interface import Interface, implements
 
-from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory, IModelModifiedEvent
+from opennode.oms.model.form import RawDataApplier, RawDataValidatingFactory
+from opennode.oms.model.model.events import IModelModifiedEvent
 
 
 class IFoo(Interface):
