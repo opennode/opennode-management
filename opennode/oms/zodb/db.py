@@ -232,10 +232,11 @@ def transact(fun):
                     time.sleep(random.random() * 0.2)
                 except StorageTransactionError as e:
                     if e.args and e.args[0] == "Duplicate tpc_begin calls for same transaction":
-                        # This is most likely due to transactions initiated inside an ongoing transaction
-                        trace("StorageTransactionError IN RW TRANSACT, ignoring", t, force=True)
-                    else:
-                        raise
+                        # This may happen when an object attached to one connection is used in anther
+                        # connection's transaction. Check and compare _p_jar attributes of all objects
+                        # involved in this transaction! They all must be the same.
+                        trace("DUPLICATE tpc_begin IN RW TRANSACT", t, force=True)
+                    raise
                 except:
                     trace('ABORT: bad commit attempt', t)
                     transaction.abort()
