@@ -101,7 +101,8 @@ class PersistentProxy(object):
     # proxying (special cases)
     #
     def __getattribute__(self, name):
-        ensure_fixed_up(self, name, 'read')
+        # XXX: a radical hack: let's allow reading outside a transaction, should be fine, if carefully done
+        #ensure_fixed_up(self, name, 'read')
 
         res = getattr(object.__getattribute__(self, "_obj"), name)
         if name not in ['__providedBy__']:
