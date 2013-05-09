@@ -371,8 +371,8 @@ class ChownCmd(Cmd):
         parser = VirtualConsoleArgumentParser()
         parser.add_argument('user', help='User name')
         parser.add_argument('paths', nargs='+', help='List of paths')
-        parser.add_argument('-R', action='store_true', help='Change ownership recursively', default=False,
-                            required=False)
+        parser.add_argument('-R', '--recursive', action='store_true',
+                            help='Change ownership recursively', default=False, required=False)
         return parser
 
     @require_admins_only
@@ -398,7 +398,7 @@ class ChownCmd(Cmd):
 
             target.__owner__ = principal
 
-            if IContainer.providedBy(target) and args.R:
+            if IContainer.providedBy(target) and args.recursive:
                 for item in target.listcontent():
                     set_owner(os.path.join(path, item.__name__))
 

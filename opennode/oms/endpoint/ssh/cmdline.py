@@ -17,11 +17,12 @@ class ArgumentParsingError(Exception):
 
 class ArgumentParsingInterrupted(ArgumentParsingError):
 
-    def __init__(self):
-        pass
+    def __init__(self, status, message=None):
+        self.status = status
+        self.message = message
 
     def __str__(self):
-        return 'ArgumentParsingInterrupted()'
+        return 'ArgumentParsingInterrupted(%s)' % self.message
 
 
 class InstrumentableArgumentParser(argparse.ArgumentParser):
@@ -42,7 +43,7 @@ class InstrumentableArgumentParser(argparse.ArgumentParser):
         return super(InstrumentableArgumentParser, self)._print_message(message, self.file)
 
     def exit(self, status=0, message=None):
-        raise ArgumentParsingInterrupted
+        raise ArgumentParsingInterrupted(status, message)
 
     def error(self, message):
         print >>self.file, message
