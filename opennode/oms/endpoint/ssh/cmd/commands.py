@@ -1005,15 +1005,17 @@ class CatLogCmd(Cmd):
 
             outputCb.addCallback(lambda output: self.write(output))
             yield outputCb
+            return
 
         @db.ro_transact
         def get_user_log():
             eventlog = db.get_root()['oms_root']['eventlog']
             if self.user.id not in eventlog.listnames():
                 return
+
             usereventlog = eventlog[self.user.id]
 
-            for event in usereventlog.listcontent():
+            for event in sorted(usereventlog.listcontent(), key=lambda event: event.timestamp, reverse=True):
                 self.write('%s %s %s\n' % (event.timestamp, event.levelname, event.message))
 
         yield get_user_log()
