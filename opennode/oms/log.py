@@ -179,8 +179,6 @@ def get_config_filenames():
 class UserEventLogZODBHandler(logging.Handler):
     """ Python logging handler to store log records into ZODB UserEventLog containers """
 
-    storage = {}
-
     def __init__(self):
         logging.Handler.__init__(self)
         self.queue = Queue(16)
@@ -228,8 +226,8 @@ class UserLogger(object):
     def log(self, msg, *args, **kw):
         try:
             self.logger.log(logging.INFO, msg, *args,
-                        extra={'username': self.principal.id if self.principal else '-',
-                               'subject': str(self.subject) or '-',
-                               'owner': self.owner if self.owner else '-'}, **kw)
+                            extra={'username': self.principal.id if self.principal else '-',
+                                   'subject': str(self.subject) or '-',
+                                   'owner': str(self.owner) if self.owner else '-'}, **kw)
         except TypeError:
             logging.getLogger('LOGERROR').error('Not all arguments converted: %s %s', msg, args)
