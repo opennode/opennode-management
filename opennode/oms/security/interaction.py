@@ -179,6 +179,10 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
         cache_principal_roles[principal] = roles
         return roles
 
+    def __str__(self):
+        return '<OmsSecurityPolicy [%s]>' % ','.join(['%s' % p.principal for p in self.participations])
+
+    __repr__ = __str__
 
 class SessionStub(object):
     def __init__(self, principal=None):
