@@ -1,12 +1,17 @@
+import logging
 import re
 
 from grokcore.component import Adapter, implements, baseclass
 from zope.interface import Interface
+from zope.security.interfaces import Unauthorized
 
 from opennode.oms.model.model.symlink import follow_symlinks
 
 
 __all__ = ['traverse_path', 'traverse1']
+
+
+log = logging.getLogger(__name__)
 
 
 class ITraverser(Interface):
@@ -81,9 +86,18 @@ def traverse1(path):
 
 def canonical_path(item):
     path = []
+    e = None
     while item:
-        assert item.__name__ is not None, '%s.__name__ is None' % item
-        item = follow_symlinks(item)
-        path.insert(0, item.__name__)
+        try:
+            assert item.__name__ is not None, '%s.__name__ is None' % item
+            item = follow_symlinks(item)
+            path.insert(0, item.__name__)
+        except Unauthorized as e_:
+            e = e_
+            pass
         item = item.__parent__
+
+    if e:
+        log.warning('Unauthorized caught on canonical_path construction. Path is truncated.')
+
     return '/'.join(path)
