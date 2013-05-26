@@ -1,4 +1,5 @@
 import grp
+import functools
 import hashlib
 import logging
 import os
@@ -21,7 +22,7 @@ from twisted.python import filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
-from zope.security.management import system_user
+from zope.security.management import newInteraction, endInteraction, restoreInteraction, system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalpermission import principalPermissionManager
 from zope.securitypolicy.principalrole import principalRoleManager
@@ -280,3 +281,30 @@ def reload_users(stream):
             oms_user.groups = [group.strip() for group in groups.split(',') if group.strip()]
             log.debug('Loaded %s', oms_user)
             auth.registerPrincipal(oms_user)
+
+
+def sudo(f):
+    @functools.wraps(f)
+    def _sudo_wrapper(*args, **kwargs):
+        try:
+            endInteraction()
+            newInteraction()
+            res = f(*args, **kwargs)
+            return res
+        finally:
+            restoreInteraction()
+    return _sudo_wrapper
+
+
+def async_sudo(f):
+    @functools.wraps(f)
+    @defer.inlineCallbacks
+    def _sudo_wrapper(*args, **kwargs):
+        try:
+            endInteraction()
+            newInteraction()
+            res = yield defer.maybeDeferred(f, *args, **kwargs)
+            defer.returnValue(res)
+        finally:
+            restoreInteraction()
+    return _sudo_wrapper
