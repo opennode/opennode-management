@@ -184,6 +184,7 @@ class OmsSecurityPolicy(ZopeSecurityPolicy):
 
     __repr__ = __str__
 
+
 class SessionStub(object):
     def __init__(self, principal=None):
         self.principal = principal
