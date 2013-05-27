@@ -1,5 +1,4 @@
 import grp
-import functools
 import hashlib
 import logging
 import os
@@ -24,7 +23,7 @@ from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
 from zope.security._definitions import thread_local
 from zope.security.checker import getChecker
-from zope.security.management import endInteraction, restoreInteraction, system_user
+from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalpermission import principalPermissionManager
 from zope.securitypolicy.principalrole import principalRoleManager
@@ -33,7 +32,7 @@ from zope.securitypolicy.rolepermission import rolePermissionManager
 from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
-from opennode.oms.security import acl, checker, interaction
+from opennode.oms.security import acl, checker
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group
