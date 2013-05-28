@@ -1,4 +1,5 @@
 import inspect
+import logging
 
 import zope.schema
 from zope.component import handle
@@ -12,6 +13,9 @@ from opennode.oms.util import query_adapter_for_class
 
 
 __all__ = ['RawDataApplier', 'RawDataValidatingFactory']
+
+
+log = logging.getLogger(__name__)
 
 
 class UnknownAttribute(zope.schema.ValidationError):
@@ -184,7 +188,11 @@ class TmpObj(object):
         original_attrs = {}
         for name, value in self.__dict__['modified_attrs'].items():
             original_attrs[name] = getattr(self.__dict__['obj'], name, None)
-            setattr(self.__dict__['obj'], name, value)
+            try:
+                setattr(self.__dict__['obj'], name, value)
+            except AttributeError, e:
+                log.error('%s: %s=%s', e, name, value)
+                raise
 
         # properties could alter the effective value of what we set
         # so we need to read back the actual values from the object
