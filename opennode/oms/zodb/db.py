@@ -304,6 +304,84 @@ def _ro_transact(fun, proxy=True):
     return wrapper
 
 
+def data_integrity_validator(fun):
+    """Runs a callable inside all available threads in the threadpool within a readonly ZODB transaction.
+
+    Calls function that is expected to assert some expectations about DB data and throw an exception if
+    anything is wrong.
+
+    Usage:
+
+        >>> @data_integrity_validator
+        ... def assert_some_value(obj, field, expected):
+        ....    assert getattr(obj, field) == expected
+
+    This will run the assertion on all open database connections and assert that all values are as expected
+
+    Transaction is always rolled back.
+    """
+
+    if not _threadpool:
+        init_threadpool()
+
+    _done_threads = set()
+    _all_done = threading.Event()
+
+    @functools.wraps(fun)
+    def run_in_tx(fun, *args, **kwargs):
+        context = context_from_method(fun, args, kwargs)
+        _context.x = context
+
+        if not _db:
+            raise Exception('DB not initalized')
+
+        thread = threading.currentThread()
+        log.debug('integrity: validating %s: %s', thread, fun)
+
+        try:
+            transaction.begin()
+            _context.x = None
+
+            if thread in _done_threads:
+                return
+
+            fun(*args, **kwargs)
+        except:
+            log.error('integrity: FAILED! %s (%s)', thread, fun)
+        else:
+            log.debug('integrity: PASSED! %s (%s)', thread, fun)
+        finally:
+            transaction.abort()
+            _done_threads.add(thread)
+            if not _threadpool.waiters or all(thread in _done_threads for thread in _threadpool.waiters):
+                _all_done.set()
+            _all_done.wait()
+            log.debug('integrity: %s done', thread)
+
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        log.debug('integrity: started: %s', fun)
+
+        if not _testing:
+            deferred_list = []
+            for thread in _threadpool.waiters:
+                if thread in _done_threads:
+                    continue
+                d = deferToThreadPool(reactor, _threadpool, run_in_tx, fun, *args, **kwargs)
+                deferred_list.append(d)
+            dl = defer.DeferredList(deferred_list)
+
+            if not _threadpool.waiters or all(thread in _done_threads for thread in _threadpool.waiters):
+                _all_done.set()
+
+            def signal_end(r):
+                _all_done.set()
+            dl.addBoth(signal_end)
+            return dl
+    return wrapper
+
+
+
 def ref(obj):
     return obj._p_oid
 
