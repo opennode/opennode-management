@@ -347,16 +347,13 @@ def data_integrity_validator(fun):
 
             fun(*args, **kwargs)
         except:
-            log.error('integrity: FAILED! %s (%s)', thread, fun)
+            log.error('integrity: FAILED! %s (%s)', thread, fun, exc_info=True)
         else:
             log.debug('integrity: PASSED! %s (%s)', thread, fun)
         finally:
             transaction.abort()
             _done_threads.add(thread)
-            if not _threadpool.waiters or all(thread in _done_threads for thread in _threadpool.waiters):
-                _all_done.set()
             _all_done.wait()
-            log.debug('integrity: %s done', thread)
 
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
@@ -364,19 +361,19 @@ def data_integrity_validator(fun):
 
         if not _testing:
             deferred_list = []
+
+            if len(_threadpool.working) > 0:
+                log.info('integrity: There are working threads while testing %s: %s',
+                         fun, _threadpool.working)
+
             for thread in _threadpool.waiters:
                 if thread in _done_threads:
                     continue
                 d = deferToThreadPool(reactor, _threadpool, run_in_tx, fun, *args, **kwargs)
                 deferred_list.append(d)
+
             dl = defer.DeferredList(deferred_list)
-
-            if not _threadpool.waiters or all(thread in _done_threads for thread in _threadpool.waiters):
-                _all_done.set()
-
-            def signal_end(r):
-                _all_done.set()
-            dl.addBoth(signal_end)
+            _all_done.set()
             return dl
     return wrapper
 
