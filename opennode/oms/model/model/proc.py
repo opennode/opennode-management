@@ -238,5 +238,5 @@ def start_daemons(event):
         Proc().start_daemons()
     except Exception as e:
         log.msg("Got exception while starting daemons", system='proc')
-        if get_config().get_boolean('debug', 'print_exceptions'):
+        if get_config().getboolean('debug', 'print_exceptions'):
             log.err(e, system='proc')
