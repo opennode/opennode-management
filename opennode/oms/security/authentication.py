@@ -21,6 +21,8 @@ from twisted.python import filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
+from zope.security._definitions import thread_local
+from zope.security.checker import getChecker
 from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalpermission import principalPermissionManager
@@ -30,7 +32,8 @@ from zope.securitypolicy.rolepermission import rolePermissionManager
 from opennode.oms.core import IApplicationInitializedEvent
 from opennode.oms.config import get_config
 from opennode.oms.endpoint.ssh.pubkey import InMemoryPublicKeyCheckerDontUse
-from opennode.oms.security import acl
+from opennode.oms.security import acl, checker
+from opennode.oms.security.interaction import new_interaction
 from opennode.oms.security.permissions import Role
 from opennode.oms.security.principals import User, Group
 
@@ -280,3 +283,31 @@ def reload_users(stream):
             oms_user.groups = [group.strip() for group in groups.split(',') if group.strip()]
             log.debug('Loaded %s', oms_user)
             auth.registerPrincipal(oms_user)
+
+
+class Sudo(object):
+
+    def __init__(self, obj):
+        self._obj = obj
+        try:
+            self.checker = getChecker(self._obj)
+        except TypeError:
+            self.checker = None
+        else:
+            if not isinstance(self.checker, checker.Checker):
+                log.debug('self.checker is %s', self.checker)
+                self.checker = thread_local
+
+    def __enter__(self):
+        if self.checker is None:
+            return
+
+        self.checker.previous_interaction = self.checker.interaction
+        self.checker.interaction = new_interaction('root')
+
+    def __exit__(self, *args):
+        if self.checker is None:
+            return
+
+        self.checker.interaction = self.checker.previous_interaction
+        del self.checker.previous_interaction

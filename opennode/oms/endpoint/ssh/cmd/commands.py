@@ -447,7 +447,7 @@ class SetAttrCmd(Cmd):
         try:
             yield vh.validate_hook(self.protocol.principal)
         except Exception:
-            msg = 'Canceled executing "%s" due to validate_hook failure' % self._name
+            msg = 'Canceled executing "set" due to validate_hook failure'
             self.write('%s\n' % msg)
             log.msg(msg, system='set')
             return

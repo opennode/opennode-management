@@ -25,10 +25,10 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
     __name__ = 'memory-profiler'
 
     def __init__(self):
+        super(MemoryProfilerDaemonProcess, self).__init__(self)
         config = get_config()
         self.interval = config.getint('debug', 'memory_profiler_interval', 60)
         self.track = config.getint('debug', 'memory_profiler_track_changes', 0)
-        self.paused = False
         self.verbose = config.getint('debug', 'memory_profiler_verbose', 0)
         self.summary_tracker = tracker.SummaryTracker()
 
