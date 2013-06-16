@@ -133,6 +133,7 @@ class Proc(ReadonlyContainer):
 
     def start_daemons(self):
         for i in querySubscriptions(self, IProcess):
+            log.msg('Starting %s' % i, system='proc')
             self.spawn(i)
 
     def spawn(self, process):

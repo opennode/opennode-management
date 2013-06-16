@@ -88,8 +88,12 @@ def setup_logging():
     logging.warn('Logging level is set to %s' %
                  logging.getLevelName(logging.getLogger('root').getEffectiveLevel()))
 
-    logger = logging.getLogger(UserLogger.name)
-    logger.addHandler(UserEventLogZODBHandler())
+    if get_config().getboolean('logging', 'user_eventlog', True):
+        logging.info('User event log enabled')
+        logger = logging.getLogger(UserLogger.name)
+        logger.addHandler(UserEventLogZODBHandler())
+    else:
+        logging.info('User event log disabled')
 
     observer = OmsPythonLoggingObserver()
     return observer.emit
