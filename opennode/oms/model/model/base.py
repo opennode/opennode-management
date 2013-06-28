@@ -291,19 +291,19 @@ class AddingContainer(ReadonlyContainer):
 
     """
 
-    def can_contain(self, item):
+    def can_contain(self, obj_or_cls):
         from opennode.oms.model.model.symlink import Symlink
 
         if isinstance(self.__contains__, InterfaceClass):
-            if isinstance(item, Symlink):
-                item = item.target
-            if isinstance(item, type) and hasattr(item, '__markers__'):
-                for item in item.__markers__:
+            if isinstance(obj_or_cls, Symlink):
+                item = obj_or_cls.target
+            if isinstance(obj_or_cls, type) and hasattr(obj_or_cls, '__markers__'):
+                for item in obj_or_cls.__markers__:
                     if self.__contains__ == item:
                         return True
-            return self.__contains__.providedBy(item) or self.__contains__.implementedBy(item)
+            return self.__contains__.providedBy(obj_or_cls) or self.__contains__.implementedBy(obj_or_cls)
         else:
-            return isinstance(item, self.__contains__) or issubclass(item, self.__contains__)
+            return isinstance(obj_or_cls, self.__contains__) or issubclass(obj_or_cls, self.__contains__)
 
     def _new_id(self):
         return str(uuid4())
