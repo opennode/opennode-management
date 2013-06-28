@@ -296,7 +296,7 @@ class AddingContainer(ReadonlyContainer):
 
         if isinstance(self.__contains__, InterfaceClass):
             if isinstance(obj_or_cls, Symlink):
-                item = obj_or_cls.target
+                obj_or_cls = obj_or_cls.target
             if isinstance(obj_or_cls, type) and hasattr(obj_or_cls, '__markers__'):
                 for item in obj_or_cls.__markers__:
                     if self.__contains__ == item:
