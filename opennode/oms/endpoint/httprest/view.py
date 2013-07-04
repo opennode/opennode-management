@@ -176,13 +176,12 @@ class SearchView(ContainerView):
 
     def render_GET(self, request):
         q = request.args.get('q', [''])[0]
-        q = q.decode('utf-8')
 
         if not q:
             return super(SearchView, self).render_GET(request)
 
         search = db.get_root()['oms_root']['search']
-        res = SearchResult(search, q)
+        res = SearchResult(search, q.decode('utf-8'))
 
         return IHttpRestView(res).render_GET(request)
 
