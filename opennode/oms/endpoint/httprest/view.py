@@ -207,9 +207,9 @@ class StreamView(HttpRestView):
                 data = self.cached_subscriptions[subscription_hash]
             else:
                 raise BadRequest("Unknown subscription hash")
+        elif not request.content.getvalue():
+            return {}
         else:
-            if not request.content.getvalue() and not request.args.get('subscription_hash', [''])[0]:
-                return {}
             data = json.load(request.content)
             subscription_hash = sha1(request.content.getvalue()).hexdigest()
             self.cached_subscriptions[subscription_hash] = data
