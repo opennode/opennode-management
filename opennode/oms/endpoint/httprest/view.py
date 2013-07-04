@@ -145,17 +145,16 @@ class ContainerView(DefaultView):
             except Unauthorized:
                 return
 
-        if qlist:
-            for q in qlist:
-                items = filter(lambda item: secure_filter_match(item, q), items)
+        for q in qlist:
+            items = filter(lambda item: secure_filter_match(item, q), items)
 
         children = filter(None, [secure_render_recursive(item) for item in items
                                  if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)])
 
-        total_children = len(items)
+        total_children = len(children)
 
         if limit or offset:
-            items = items[offset:limit]
+            children = children[offset : offset + limit]
 
         # backward compatibility:
         # top level results for pure containers are plain lists
