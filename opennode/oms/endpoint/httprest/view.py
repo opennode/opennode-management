@@ -145,17 +145,16 @@ class ContainerView(DefaultView):
             except Unauthorized:
                 return
 
-        if qlist:
-            for q in qlist:
-                items = filter(lambda item: secure_filter_match(item, q), items)
+        for q in qlist:
+            items = filter(lambda item: secure_filter_match(item, q), items)
 
         children = filter(None, [secure_render_recursive(item) for item in items
                                  if queryAdapter(item, IHttpRestView) and not self.blacklisted(item)])
 
-        total_children = len(items)
+        total_children = len(children)
 
         if limit or offset:
-            items = items[offset:limit]
+            children = children[offset : offset + limit]
 
         # backward compatibility:
         # top level results for pure containers are plain lists
@@ -177,13 +176,12 @@ class SearchView(ContainerView):
 
     def render_GET(self, request):
         q = request.args.get('q', [''])[0]
-        q = q.decode('utf-8')
 
         if not q:
             return super(SearchView, self).render_GET(request)
 
         search = db.get_root()['oms_root']['search']
-        res = SearchResult(search, q)
+        res = SearchResult(search, q.decode('utf-8'))
 
         return IHttpRestView(res).render_GET(request)
 
@@ -209,9 +207,9 @@ class StreamView(HttpRestView):
                 data = self.cached_subscriptions[subscription_hash]
             else:
                 raise BadRequest("Unknown subscription hash")
+        elif not request.content.getvalue():
+            return {}
         else:
-            if not request.content.getvalue() and not request.args.get('subscription_hash', [''])[0]:
-                return {}
             data = json.load(request.content)
             subscription_hash = sha1(request.content.getvalue()).hexdigest()
             self.cached_subscriptions[subscription_hash] = data

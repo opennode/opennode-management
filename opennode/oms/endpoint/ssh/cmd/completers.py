@@ -92,7 +92,9 @@ class CommandCompleter(PathCompleter):
         # TODO: check that only 'executables' and 'directories' are returned.
         paths = yield super(CommandCompleter, self).complete(token, parsed, parser, **kwargs)
 
-        defer.returnValue([value for value in list(cmds) + list(set(paths).difference(i + '*' for i in cmds)) if value.startswith(token)])
+        defer.returnValue([value for value in
+                           list(cmds) + list(set(paths).difference(i + '*' for i in cmds))
+                           if value.startswith(token)])
 
     @db.ro_transact
     def _scan_search_path(self, protocol):

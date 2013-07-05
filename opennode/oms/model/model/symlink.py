@@ -32,6 +32,9 @@ class Symlink(Model):
     def __str__(self):
         return 'Symlink(%s)' % self.target
 
+    def __repr__(self):
+        return 'Symlink(%s)' % self.target
+
 
 def follow_symlinks(item):
     """Returns the object pointed to a symlink chain."""
