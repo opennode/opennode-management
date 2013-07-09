@@ -106,6 +106,7 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
     data = OrderedDict()
     got_unauthorized = False
 
+    error_attributes = []
     for key, field, schema in get_schema_fields(obj):
         if use_fields:
             key = field
@@ -118,9 +119,10 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
         except Unauthorized:
             # skip field
             got_unauthorized = True
+            error_attributes.append(key)
             log.warning('Object %s (attribute %s of %s): access unauthorized!', obj, key, schema(obj),
                         exc_info=sys.exc_info())
             continue
     if got_unauthorized and not data:
-        raise Unauthorized((obj, "any attribute", 'read'))
+        raise Unauthorized((obj, error_attributes, 'read'))
     return data
