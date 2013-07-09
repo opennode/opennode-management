@@ -131,15 +131,15 @@ class ContainerView(DefaultView):
 
         qlist = []
         limit = None
-        offset = 1
+        offset = 0
 
         if top_level:
             qlist = request.args.get('q', [])
             qlist = map(lambda q: q.decode('utf-8'), qlist)
             limit = int(request.args.get('limit', [0])[0])
-            offset = int(request.args.get('offset', [1])[0])
+            offset = int(request.args.get('offset', [1])[0]) - 1
             if offset <= 0:
-                offset = 1
+                offset = 0
 
         def secure_filter_match(item, q):
             try:
@@ -155,7 +155,7 @@ class ContainerView(DefaultView):
 
         total_children = len(children)
 
-        if limit or offset:
+        if limit is not None or offset:
             children = children[offset : offset + limit]
 
         # backward compatibility:
