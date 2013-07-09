@@ -155,7 +155,7 @@ class ContainerView(DefaultView):
 
         total_children = len(children)
 
-        if limit is not None or offset:
+        if (limit is not None and limit != 0) or offset:
             children = children[offset : offset + limit]
 
         # backward compatibility:
