@@ -131,13 +131,15 @@ class ContainerView(DefaultView):
 
         qlist = []
         limit = None
-        offset = 0
+        offset = 1
 
         if top_level:
             qlist = request.args.get('q', [])
             qlist = map(lambda q: q.decode('utf-8'), qlist)
             limit = int(request.args.get('limit', [0])[0])
-            offset = int(request.args.get('offset', [0])[0])
+            offset = int(request.args.get('offset', [1])[0])
+            if offset <= 0:
+                offset = 1
 
         def secure_filter_match(item, q):
             try:
