@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from nose.tools import eq_, assert_raises
@@ -17,6 +18,7 @@ from opennode.oms.model.schema import model_to_dict
 from opennode.oms.tests.test_compute import Compute
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import OmsSecurityPolicy
+from opennode.oms.security import passwd
 from opennode.oms.security.principals import User
 from opennode.oms.tests.util import run_in_reactor
 
@@ -176,3 +178,103 @@ class SecurityTestCase(unittest.TestCase):
 
         with assert_raises(Exception):
             list(dummy())
+
+
+class MockConfig(object):
+
+    _settings = {'auth': {
+        'passwd_file': '/tmp/oms_passwd'
+    }}
+
+    def get_base_dir(self):
+        return '/tmp'
+
+
+    def get(self, key, inkey):
+        return self._settings[key][inkey]
+
+
+config = MockConfig()
+
+
+def mock_get_config():
+    global config
+    return config
+
+
+class TestPasswd(unittest.TestCase):
+
+    username = 'test_update_passwd'
+
+    def setUp(self):
+        self.orig_get_config = passwd.get_config
+        passwd.get_config = mock_get_config
+        passwd.delete_user(self.username)
+        self.assertRaises(self.failureException,
+                          self.assertUserExists, self.username)
+
+    def tearDown(self):
+        passwd.get_config = self.orig_get_config
+
+    def find_user_line(self, username):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        with open(passwd_file) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if line.startswith(username + ':'):
+                return line
+
+    def assertUserExists(self, username):
+        self.assertTrue(self.find_user_line(username))
+
+    def assertUserPassword(self, username, password):
+        pw = passwd.hash_pw(password)
+
+        line = self.find_user_line(username)
+        self.assertTrue(line)
+        _, pwu, group = line.split(':', 2)
+        self.assertEquals(pw, pwu)
+
+    def assertUserGroup(self, username, group):
+        line = self.find_user_line(username)
+        self.assertTrue(line)
+        _, _, groupu = line.split(':', 2)
+        if ':' in groupu:
+            groupu, _ = groupu.split(':', 1)
+
+        self.assertEquals(groupu, group)
+
+    def test_add_delete_user(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'w') as f:
+                f.write('')
+
+        try:
+            passwd.add_user(self.username, 'password')
+            self.assertUserExists(self.username)
+        finally:
+            passwd.delete_user(self.username)
+
+        passwd.delete_user(self.username)
+        self.assertRaises(self.failureException,
+                          self.assertUserExists, self.username)
+
+
+    def test_update_passwd(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'w') as f:
+                f.write('')
+
+        passwd.add_user(self.username, 'password')
+        self.assertUserExists(self.username)
+
+        try:
+            passwd.update_passwd(self.username, password='newpasword',
+                                 force_askpass=False, group='somegroup')
+            self.assertUserExists(self.username)
+            self.assertUserPassword(self.username, 'newpassword')
+        finally:
+            passwd.delete_user(self.username)

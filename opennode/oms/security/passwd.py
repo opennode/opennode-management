@@ -94,10 +94,12 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
 
                 return user, pw, groups, uid
 
+            line = line.rstrip('\n')
+
             if line.startswith(user + ':'):
                 user, old_pw, groups, uid = parse_line(line)
                 if group:
-                    groups = group + '\n'
+                    groups = group
 
                 if pw is None:
                     pw = old_pw
