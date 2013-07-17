@@ -102,8 +102,7 @@ class AuthenticationUtility(GlobalUtility):
 
 # checkers
 def ssha_hash(user, password, encoded_password):
-    salt = decode(encoded_password[6:])[-4:]
-
+    salt = decode(encoded_password[6:])[20:]
     h = hashlib.sha1(password)
     h.update(salt)
     return "{SSHA}" + encode(h.digest() + salt).rstrip()
