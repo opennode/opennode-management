@@ -12,6 +12,7 @@ from zope.component import provideSubscriptionAdapter
 from zope.interface import implements
 
 from opennode.oms.config import get_config
+from opennode.oms.endpoint.ssh.cmd.security import require_admins_only
 from opennode.oms.model.model.proc import IProcess, DaemonProcess, Proc
 from opennode.oms.util import subscription_factory, async_sleep
 from opennode.oms.zodb import db
@@ -244,8 +245,10 @@ class MemoryProfileCmd(Cmd):
         parser.add_argument('-b', action='store_true', help='Step into debugger in DB thread')
         return parser
 
+    @require_admins_only
     @defer.inlineCallbacks
     def execute(self, args):
+
         if args.d:
             import ipdb
             ipdb.set_trace()

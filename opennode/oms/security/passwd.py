@@ -59,7 +59,7 @@ def add_user(user, password, group=None, uid=None):
                 raise UserManagementError("User %s already exists" % user)
 
     with open(passwd_file, 'a') as f:
-        f.write('%s:%s:%s:%s\n' % (user, hash_pw(password, saltf=get_salt_dummy), group or 'users', uid))
+        f.write('%s:%s:%s:%s\n' % (user, hash_pw(password), group or 'users', uid))
 
 
 def delete_user(user):
@@ -87,9 +87,6 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
     if not found:
         raise UserManagementError("User %s doesn't exist" % user)
 
-    pw = hash_pw(ask_password() if password is None and (force_askpass or not group) else password,
-                 saltf=get_salt_dummy)
-
     with open(passwd_file, 'w') as f:
         for line in lines:
             def parse_line(line):
@@ -105,6 +102,11 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
             line = line.rstrip('\n')
 
             if line.startswith(user + ':'):
+
+
+                pw = hash_pw(ask_password() if password is None
+                             and (force_askpass or not group) else password)
+
                 user, old_pw, groups, uid = parse_line(line)
                 if group:
                     groups = group
@@ -115,7 +117,7 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
                 f.write('%s:%s:%s:%s\n' % (user, pw, groups, uid))
             else:
                 user, old_pw, groups, uid = parse_line(line)
-                f.write('%s:%s:%s:%s\n' % (user, pw, groups, uid))
+                f.write('%s:%s:%s:%s\n' % (user, old_pw, groups, uid))
 
 
 def run():

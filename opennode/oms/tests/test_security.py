@@ -240,7 +240,6 @@ class TestPasswd(unittest.TestCase):
 
     def assertUserPassword(self, username, password):
         line = self.find_user_line(username)
-        self.assertTrue(line)
         _, pwu, group = line.split(':', 2)
         pw = authentication.ssha_hash(username, password, pwu)
         self.assertEquals(pw, pwu)
@@ -305,21 +304,25 @@ class TestPasswd(unittest.TestCase):
             sha1 = passwd.hashlib.sha1
             encode = passwd.encode
             ssha_hash = authentication.ssha_hash
+            get_salt = passwd.get_salt
 
             try:
+                passwd.get_salt = passwd.get_salt_dummy
                 passwd.hashlib.sha1 = DummySha1
                 passwd.encode = lambda x: x
                 passwd.decode = lambda x: x
-                authentication.ssha_hash = lambda u, x, y: '{SSHA}' + x
+                authentication.ssha_hash = lambda u, x, y: '{SSHA}' + x + y[-4:]
 
                 passwd.update_passwd(self.username, password='newpassword',
                                      force_askpass=False, group='somegroup')
+
                 self.assertUserExists(self.username)
                 self.assertUserPassword(self.username, 'newpassword')
             finally:
                 passwd.hashlib.sha1 = sha1
                 passwd.encode = encode
                 authentication.ssha_hash = ssha_hash
+                passwd.get_salt = get_salt
 
             passwd.update_passwd(self.username, password='newpassword',
                                  force_askpass=False, group='somegroup')
