@@ -207,13 +207,23 @@ class TestPasswd(unittest.TestCase):
     username = 'test_update_passwd'
 
     def setUp(self):
-        self.orig_get_config = passwd.get_config
         passwd.get_config = mock_get_config
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'a'):
+                pass
+
+        self.orig_get_config = passwd.get_config
+
         passwd.delete_user(self.username)
+
         self.assertRaises(self.failureException,
                           self.assertUserExists, self.username)
 
     def tearDown(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        os.unlink(passwd_file)
         passwd.get_config = self.orig_get_config
 
     def find_user_line(self, username):
@@ -316,16 +326,10 @@ class TestPasswd(unittest.TestCase):
             self.assertUserExists(self.username)
             self.assertUserPassword(self.username, 'newpassword')
 
-
         finally:
             passwd.delete_user(self.username)
 
     def test_update_passwd(self):
-        passwd_file = passwd.get_config().get('auth', 'passwd_file')
-        if not os.path.exists(passwd_file):
-            with open(passwd_file, 'w') as f:
-                f.write('')
-
         passwd.add_user(self.username, 'password')
         self.assertUserExists(self.username)
         self.assertUserPassword(self.username, 'password')
