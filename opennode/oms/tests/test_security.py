@@ -344,3 +344,29 @@ class TestPasswd(unittest.TestCase):
             self.assertUserPassword(self.username, 'newpassword')
         finally:
             passwd.delete_user(self.username)
+
+    def test_update_password_changes_single_record(self):
+        passwd.add_user(self.username, 'password')
+        passwd.add_user(self.username + '1', 'password')
+        passwd.add_user(self.username + '2', 'password')
+        self.assertUserExists(self.username)
+        self.assertUserExists(self.username + '1')
+        self.assertUserExists(self.username + '2')
+
+        self.assertUserPassword(self.username, 'password')
+        self.assertUserPassword(self.username + '1', 'password')
+        self.assertUserPassword(self.username + '2', 'password')
+
+        try:
+            passwd.update_passwd(self.username, password='newpassword',
+                                 force_askpass=False, group='somegroup')
+            self.assertUserExists(self.username)
+            self.assertUserPassword(self.username, 'newpassword')
+            self.assertUserPassword(self.username + '1', 'password')
+            self.assertUserPassword(self.username + '2', 'password')
+        finally:
+            passwd.delete_user(self.username)
+            passwd.delete_user(self.username + '1')
+            passwd.delete_user(self.username + '2')
+
+
