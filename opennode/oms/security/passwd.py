@@ -30,9 +30,16 @@ def ask_password():
     return pw
 
 
-def hash_pw(password):
-    salt = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                   for x in xrange(4))
+def get_salt():
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(4))
+
+
+def get_salt_dummy():
+    return ''
+
+
+def hash_pw(password, saltf=get_salt):
+    salt = saltf()
     h = hashlib.sha1(password)
     h.update(salt)
     return "{SSHA}" + encode(h.digest() + salt).rstrip()
@@ -52,7 +59,7 @@ def add_user(user, password, group=None, uid=None):
                 raise UserManagementError("User %s already exists" % user)
 
     with open(passwd_file, 'a') as f:
-        f.write('%s:%s:%s:%s\n' % (user, hash_pw(password), group or 'users', uid))
+        f.write('%s:%s:%s:%s\n' % (user, hash_pw(password, saltf=get_salt_dummy), group or 'users', uid))
 
 
 def delete_user(user):
@@ -80,7 +87,8 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
     if not found:
         raise UserManagementError("User %s doesn't exist" % user)
 
-    pw = hash_pw(ask_password() if password is None and (force_askpass or not group) else password)
+    pw = hash_pw(ask_password() if password is None and (force_askpass or not group) else password,
+                 saltf=get_salt_dummy)
 
     with open(passwd_file, 'w') as f:
         for line in lines:
@@ -94,10 +102,12 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
 
                 return user, pw, groups, uid
 
+            line = line.rstrip('\n')
+
             if line.startswith(user + ':'):
                 user, old_pw, groups, uid = parse_line(line)
                 if group:
-                    groups = group + '\n'
+                    groups = group
 
                 if pw is None:
                     pw = old_pw

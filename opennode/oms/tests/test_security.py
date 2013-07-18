@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from nose.tools import eq_, assert_raises
@@ -15,8 +16,10 @@ from zope.securitypolicy.principalpermission import principalPermissionManager a
 from opennode.oms.model.model.base import IContainer
 from opennode.oms.model.schema import model_to_dict
 from opennode.oms.tests.test_compute import Compute
+from opennode.oms.security import authentication
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import OmsSecurityPolicy
+from opennode.oms.security import passwd
 from opennode.oms.security.principals import User
 from opennode.oms.tests.util import run_in_reactor
 
@@ -176,3 +179,161 @@ class SecurityTestCase(unittest.TestCase):
 
         with assert_raises(Exception):
             list(dummy())
+
+
+class MockConfig(object):
+
+    _settings = {'auth': {
+        'passwd_file': '/tmp/oms_passwd'
+    }}
+
+    def get_base_dir(self):
+        return '/tmp'
+
+    def get(self, key, inkey):
+        return self._settings[key][inkey]
+
+
+config = MockConfig()
+
+
+def mock_get_config():
+    global config
+    return config
+
+
+class TestPasswd(unittest.TestCase):
+
+    username = 'test_update_passwd'
+
+    def setUp(self):
+        self.orig_get_config = passwd.get_config
+        passwd.get_config = mock_get_config
+        passwd.delete_user(self.username)
+        self.assertRaises(self.failureException,
+                          self.assertUserExists, self.username)
+
+    def tearDown(self):
+        passwd.get_config = self.orig_get_config
+
+    def find_user_line(self, username):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        with open(passwd_file) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if line.startswith(username + ':'):
+                return line
+
+    def assertUserExists(self, username):
+        self.assertTrue(self.find_user_line(username))
+
+    def assertUserPassword(self, username, password):
+        line = self.find_user_line(username)
+        self.assertTrue(line)
+        _, pwu, group = line.split(':', 2)
+        pw = authentication.ssha_hash(username, password, pwu)
+        self.assertEquals(pw, pwu)
+
+    def assertUserGroup(self, username, group):
+        line = self.find_user_line(username)
+        self.assertTrue(line)
+        _, _, groupu = line.split(':', 2)
+        if ':' in groupu:
+            groupu, _ = groupu.split(':', 1)
+
+        self.assertEquals(groupu, group)
+
+    def test_password_hash_consistency_with_random_salt(self):
+        hash_passwd = passwd.hash_pw('password', saltf=passwd.get_salt)
+        hash_auth = authentication.ssha_hash('', 'password', hash_passwd)
+        self.assertEquals(hash_passwd, hash_auth)
+
+    def test_password_hash_consistency_with_no_salt(self):
+        hash_passwd = passwd.hash_pw('password', saltf=passwd.get_salt_dummy)
+        hash_auth = authentication.ssha_hash('', 'password', hash_passwd)
+        self.assertEquals(hash_passwd, hash_auth)
+
+    def test_add_delete_user(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'w') as f:
+                f.write('')
+
+        try:
+            passwd.add_user(self.username, 'password')
+            self.assertUserExists(self.username)
+            self.assertUserPassword(self.username, 'password')
+        finally:
+            passwd.delete_user(self.username)
+
+        passwd.delete_user(self.username)
+        self.assertRaises(self.failureException,
+                          self.assertUserExists, self.username)
+
+    def test_update_passwd_mock(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'w') as f:
+                f.write('')
+
+        passwd.add_user(self.username, 'password')
+        self.assertUserExists(self.username)
+        self.assertUserPassword(self.username, 'password')
+
+        try:
+            class DummySha1(object):
+                def __init__(self, string):
+                    self.string = string
+
+                def update(self, string):
+                    pass
+
+                def digest(self):
+                    return self.string
+
+            sha1 = passwd.hashlib.sha1
+            encode = passwd.encode
+            ssha_hash = authentication.ssha_hash
+
+            try:
+                passwd.hashlib.sha1 = DummySha1
+                passwd.encode = lambda x: x
+                passwd.decode = lambda x: x
+                authentication.ssha_hash = lambda u, x, y: '{SSHA}' + x
+
+                passwd.update_passwd(self.username, password='newpassword',
+                                     force_askpass=False, group='somegroup')
+                self.assertUserExists(self.username)
+                self.assertUserPassword(self.username, 'newpassword')
+            finally:
+                passwd.hashlib.sha1 = sha1
+                passwd.encode = encode
+                authentication.ssha_hash = ssha_hash
+
+            passwd.update_passwd(self.username, password='newpassword',
+                                 force_askpass=False, group='somegroup')
+            self.assertUserExists(self.username)
+            self.assertUserPassword(self.username, 'newpassword')
+
+
+        finally:
+            passwd.delete_user(self.username)
+
+    def test_update_passwd(self):
+        passwd_file = passwd.get_config().get('auth', 'passwd_file')
+        if not os.path.exists(passwd_file):
+            with open(passwd_file, 'w') as f:
+                f.write('')
+
+        passwd.add_user(self.username, 'password')
+        self.assertUserExists(self.username)
+        self.assertUserPassword(self.username, 'password')
+
+        try:
+            passwd.update_passwd(self.username, password='newpassword',
+                                 force_askpass=False, group='somegroup')
+            self.assertUserExists(self.username)
+            self.assertUserPassword(self.username, 'newpassword')
+        finally:
+            passwd.delete_user(self.username)
