@@ -302,10 +302,34 @@ class IdCmd(Cmd):
     def subject(self, args):
         return tuple()
 
+    def _print_user(self, user):
+        groups = user.groups
+        self.write('user: %s\n'
+                   'groups: %s\n'
+                   'effective_principals: %s\n' %
+                   (user.id,
+                    ' '.join(map(str, groups)),
+                    ' '.join(map(lambda p: p.id, effective_principals(user)))))
+
     def arguments(self):
-        return VirtualConsoleArgumentParser()
+        p = VirtualConsoleArgumentParser()
+        principals = map(lambda p: p.id, effective_principals(self.user))
+        if 'admins' in principals:
+            p.add_argument('-u', '--user', help='Check user by name (admins only)')
+        return p
 
     def execute(self, args):
+        principals = map(lambda p: p.id, effective_principals(self.user))
+
+        if 'admins' in principals and getattr(args, 'user', None):
+            auth = getUtility(IAuthentication, context=None)
+            user = auth.getPrincipal(args.user)
+            if not user:
+                self.write('User not found: %s\n' % args.user)
+            else:
+                self._print_user(user)
+            return
+
         interaction = self.protocol.interaction
 
         if not interaction:
@@ -313,13 +337,7 @@ class IdCmd(Cmd):
 
         for participation in interaction.participations:
             user = participation.principal
-            groups = user.groups
-            self.write('user: %s\n'
-                       'groups: %s\n'
-                       'effective_principals: %s\n' %
-                       (user.id,
-                        ' '.join(map(str, groups)),
-                        ' '.join(map(lambda p: p.id, effective_principals(user)))))
+            self._print_user(user)
 
 
 class AddUserCmd(Cmd):
