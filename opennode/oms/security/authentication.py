@@ -44,6 +44,7 @@ log = logging.getLogger(__name__)
 _checkers = None
 
 if _platform == "linux" or _platform == "linux2":
+    from twisted.internet import inotify
     conf_reload_notifier = inotify.INotify()
     conf_reload_notifier.startReading()
 
