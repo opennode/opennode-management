@@ -62,8 +62,9 @@ def create_application():
 
     return application
 
-
-monkey_patch_epollreactor()
+from sys import platform as _platform
+if get_config().getboolean('debug', 'debug_epollreactor', False):
+    monkey_patch_epollreactor()
 
 defer.Deferred.debug = get_config().getboolean('debug', 'deferred_debug', False)
 logger = setup_logging()

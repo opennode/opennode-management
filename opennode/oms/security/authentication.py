@@ -7,6 +7,7 @@ import pam
 import pwd
 import sys
 import time
+from sys import platform as _platform
 
 from base64 import decodestring as decode
 from base64 import encodestring as encode
@@ -16,7 +17,7 @@ from twisted.cred.checkers import FilePasswordDB
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword
 from twisted.cred.error import UnauthorizedLogin
-from twisted.internet import inotify, defer
+from twisted.internet import defer
 from twisted.python import filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
@@ -41,8 +42,10 @@ from opennode.oms.security.principals import User, Group
 log = logging.getLogger(__name__)
 
 _checkers = None
-conf_reload_notifier = inotify.INotify()
-conf_reload_notifier.startReading()
+
+if _platform == "linux" or _platform == "linux2":
+    conf_reload_notifier = inotify.INotify()
+    conf_reload_notifier.startReading()
 
 
 def get_linux_groups_for_user(user):
@@ -125,7 +128,8 @@ def setup_conf_reload_watch(path, handler):
         time.sleep(1)
         handler(filepath.open())
 
-    conf_reload_notifier.watch(filepath.FilePath(path),
+    if _platform == "linux" or _platform == "linux2":
+        conf_reload_notifier.watch(filepath.FilePath(path),
                                callbacks=[delayed_handler])
 
 
