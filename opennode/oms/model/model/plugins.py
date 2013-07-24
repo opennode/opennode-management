@@ -104,9 +104,6 @@ class Plugins(ReadonlyContainer):
 
         config.update()
 
-        for plugin in plugins:
-            plugin.initialize()
-
 
 @subscribe(IApplicationInitializedEvent)
 def load_plugins(event):
