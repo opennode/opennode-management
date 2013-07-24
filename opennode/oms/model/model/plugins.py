@@ -88,15 +88,10 @@ class Plugins(ReadonlyContainer):
         else:
             plugin = plugin_class()
 
-        if IPlugin.implementedBy(plugin_class):
-            plugin.initialize()
-
         return plugin
 
     def load_plugins(self):
         plugins = []
-
-        config.update()
 
         for entrypoint in self.load_eggs(sys.path):
             plugin = self.load_plugin(entrypoint)
@@ -105,6 +100,11 @@ class Plugins(ReadonlyContainer):
             plugins.append(pinfo)
             self._items[entrypoint.name] = pinfo
 
+        config.update()
+
+        for plugin in plugins:
+            if IPlugin.implementedBy(type(plugin)):
+                plugin.initialize()
 
 @subscribe(IApplicationInitializedEvent)
 def load_plugins(event):
