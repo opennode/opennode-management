@@ -273,7 +273,7 @@ class CommandView(DefaultView):
         protocol.interaction = get_interaction(self.context) or request.interaction
 
         args = convert_args(request.args)
-        args = filter(lambda a: a, args)
+        args = filter(args)
         cmd = self.context.cmd(protocol)
         # Setting write_buffer to a list makes command save the output to the buffer too
         cmd.write_buffer = []

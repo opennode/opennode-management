@@ -91,10 +91,14 @@ def log_wrapper(self, f, server):
         """
         Log a request's result to the logfile, by default in combined log format.
         """
+        if hasattr(request, 'interaction'):
+            principals = map(lambda pp: pp.principal.id, request.interaction.participations)
+        else:
+            principals = []
         if hasattr(self, "logFile"):
             line = '%s %s - %s "%s" %d %s "%s" "%s"\n' % (
                 request.getClientIP(),
-                map(lambda pp: pp.principal.id, request.interaction.participations),
+                principals,
                 self._logDateTime,
                 '%s %s %s' % (self._escape(request.method),
                               self._escape(request.uri),
@@ -131,7 +135,8 @@ class HttpRestServer(resource.Resource):
 
         @deferred
         def on_error(error):
-            log.msg("Error while rendering http %s" % error, system='httprest')
+            log.msg("Error while rendering http %s", system='httprest')
+            log.err(error, system='httprest')
 
         return NOT_DONE_YET
 
@@ -282,6 +287,7 @@ class HttpRestServer(resource.Resource):
             # Avoid that changes in format of security token will require every user
             # to flush the cookies
             principal = 'oms.anonymous'
+
         if principal != 'oms.anonymous':
             authentication_utility.renew_token(request, token)
 
