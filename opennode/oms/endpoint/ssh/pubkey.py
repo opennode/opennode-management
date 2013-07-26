@@ -29,6 +29,6 @@ class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
 
     def _checkKey(self, credentials, key):
         try:
-            return keys.Key.fromString(data=key).blob() == credentials.blob
+            return keys.Key.fromString(data=key).blob() == getattr(credentials, 'blob', None)
         except Exception:
             log.err(system='ssh-pubkey')
