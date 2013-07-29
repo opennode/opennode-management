@@ -203,11 +203,12 @@ class HttpRestServer(resource.Resource):
             return authentication_utility.get_token(request)
 
     def find_view(self, obj, unresolved_path):
-        view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
 
-        sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
+        sub_view_factory = queryAdapter(obj, IHttpRestSubViewFactory)
         if sub_view_factory:
-            view = sub_view_factory.resolve(unresolved_path[1:])
+            view = sub_view_factory.resolve(unresolved_path)
+        else:
+            view = queryAdapter(obj, IHttpRestView)
 
         if not view:
             raise NotFound
