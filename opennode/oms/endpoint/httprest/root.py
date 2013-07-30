@@ -85,6 +85,15 @@ class BadRequest(HttpStatus):
     status_description = "Bad Request"
 
 
+class MethodNotAllowed(HttpStatus):
+    status_code = 405
+    status_description = "Method not allowed"
+
+    def __init__(self, msg, allow):
+        HttpStatus.__init__(self, msg)
+        self.headers = {'Allow': ','.join(allow)}
+
+
 def log_wrapper(self, f, server):
     @functools.wraps(f)
     def log_(request):
@@ -202,18 +211,20 @@ class HttpRestServer(resource.Resource):
         else:
             return authentication_utility.get_token(request)
 
-    def find_view(self, obj, unresolved_path):
+    def find_view(self, obj, unresolved_path, method):
+        view = queryAdapter(obj, IHttpRestView)
 
-        sub_view_factory = queryAdapter(obj, IHttpRestSubViewFactory)
-        if sub_view_factory:
-            view = sub_view_factory.resolve(unresolved_path)
-        else:
-            view = queryAdapter(obj, IHttpRestView)
+        if len(unresolved_path) == 0:
+            return view
 
-        if not view:
+        subview_factory = queryAdapter(obj, IHttpRestSubViewFactory)
+
+        subview = subview_factory.resolve(unresolved_path, method) if subview_factory else None
+
+        if not subview:
             raise NotFound
 
-        return view
+        return subview
 
     @db.transact
     def handle_request(self, request):
@@ -238,7 +249,8 @@ class HttpRestServer(resource.Resource):
         if self.use_security_proxy:
             obj = proxy_factory(obj, interaction)
 
-        view = self.find_view(obj, unresolved_path)
+        view = self.find_view(obj, unresolved_path, request.method)
+
         needs_rw_transaction = view.rw_transaction(request)
 
         # create a security proxy if we have a secured interaction
@@ -256,8 +268,8 @@ class HttpRestServer(resource.Resource):
                 return getattr(view, method, None)
             except zope.security.interfaces.Unauthorized:
                 from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
-
-                if token or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
+                auth_util = getUtility(IHttpRestAuthenticationUtility)
+                if token or not auth_util.get_basic_auth_credentials(request):
                     raise Forbidden('User does not have permission to access this resource')
                 raise Unauthorized()
 

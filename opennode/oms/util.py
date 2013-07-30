@@ -1,5 +1,6 @@
 import functools
 import inspect
+import json
 import time
 import threading
 
@@ -52,6 +53,7 @@ def get_direct_interface(obj):
     interfaces = get_direct_interfaces(obj)
     if not interfaces:
         return None
+
     if len(interfaces) == 1:
         return interfaces[0]
     else:
@@ -76,8 +78,8 @@ class Singleton(type):
 
 
 def subscription_factory(cls, *args, **kwargs):
-    """Utility which allows to to quickly register a subscription adapters which returns new instantiated objects
-    of a given class
+    """Utility which allows to to quickly register a subscription adapters which returns new
+    instantiated objects of a given class
 
     >>> provideSubscriptionAdapter(subscription_factory(MetricsDaemonProcess), adapts=(IProc,))
 
@@ -291,3 +293,10 @@ def timeout(secs):
             defer.returnValue(rawResult)
         return _timeout
     return wrap
+
+
+class JsonSetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)

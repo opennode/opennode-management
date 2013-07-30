@@ -38,7 +38,7 @@ class DefaultView(HttpRestView):
 
     def render_GET(self, request):
         if not request.interaction.checkPermission('view', self.context):
-            raise NotFound()
+            raise NotFound
 
         data = model_to_dict(self.context)
 
@@ -74,7 +74,7 @@ class DefaultView(HttpRestView):
             return form.error_dict()
 
     def put_filter_attributes(self, request, data):
-        """Offer the possibility to subclasses to massage the received json before default behavior."""
+        """Offer the possibility for subclasses to massage the received json before default behavior."""
         return data
 
     def render_DELETE(self, request):
