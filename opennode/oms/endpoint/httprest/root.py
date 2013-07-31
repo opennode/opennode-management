@@ -200,13 +200,13 @@ class HttpRestServer(resource.Resource):
     def check_auth(self, request):
         from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
-        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
-        credentials = authentication_utility.get_basic_auth_credentials(request)
+        authenticator = getUtility(IHttpRestAuthenticationUtility)
+        credentials = authenticator.get_basic_auth_credentials(request)
         if credentials:
-            blocking_yield(authentication_utility.authenticate(request, credentials, basic_auth=True))
-            return authentication_utility.generate_token(credentials)
+            blocking_yield(authenticator.authenticate(request, credentials, basic_auth=True))
+            return authenticator.generate_token(credentials)
         else:
-            return authentication_utility.get_token(request)
+            return authenticator.get_token(request)
 
     def find_view(self, obj, unresolved_path, method):
         view = queryAdapter(obj, IHttpRestView)
