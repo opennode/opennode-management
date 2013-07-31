@@ -1,5 +1,6 @@
-import json
 import functools
+import json
+import logging
 import zope.security.interfaces
 
 from twisted.internet import defer
@@ -14,6 +15,7 @@ from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.util import blocking_yield
+from opennode.oms.util import JsonSetEncoder
 from opennode.oms.zodb import db
 
 
@@ -144,7 +146,6 @@ class HttpRestServer(resource.Resource):
 
         @deferred
         def on_error(error):
-            log.msg("Error while rendering http %s", system='httprest')
             log.err(error, system='httprest')
 
         return NOT_DONE_YET
@@ -165,10 +166,6 @@ class HttpRestServer(resource.Resource):
         ret = None
         try:
             ret = yield self.handle_request(request)
-            if ret is EmptyResponse:
-                raise ret
-        except EmptyResponse:
-            pass
         except HttpStatus as exc:
             request.setResponseCode(exc.status_code, exc.status_description)
             for name, value in exc.headers.items():
@@ -186,18 +183,18 @@ class HttpRestServer(resource.Resource):
             failure.Failure().printTraceback(request)
         else:
             # allow views to take full control of output streaming
-            if ret != NOT_DONE_YET:
+            if ret not in (NOT_DONE_YET, EmptyResponse):
                 def render(obj):
                     if isinstance(obj, set):
                         return list(obj)  # safeguard against dumping sets
                     if hasattr(obj, '__str__'):
                         return str(obj)
-                    log.msg("RENDERING ERROR, cannot json serialize %s" % obj, system='httprest')
-                    raise TypeError
+                    log.msg("Cannot json serialize %s" % obj, system='httprest', logLevel=logging.ERROR)
+                    raise TypeError('Serializing to JSON: %s' % obj)
 
-                request.write(json.dumps(ret, indent=2, default=render) + '\n')
+                request.write(json.dumps(ret, indent=2, default=render, cls=JsonSetEncoder) + '\n')
         finally:
-            if ret != NOT_DONE_YET:
+            if ret is not NOT_DONE_YET:
                 request.finish()
 
     def check_auth(self, request):
@@ -228,10 +225,8 @@ class HttpRestServer(resource.Resource):
 
     @db.transact
     def handle_request(self, request):
-        """Takes a request, maps it to a domain object and a
-        corresponding IHttpRestView, and returns the rendered output
-        of that view.
-
+        """Takes a request, maps it to a domain object and a corresponding IHttpRestView
+        and returns the rendered output of that view.
         """
         token = self.check_auth(request)
 
@@ -273,18 +268,17 @@ class HttpRestServer(resource.Resource):
                     raise Forbidden('User does not have permission to access this resource')
                 raise Unauthorized()
 
-        for method in ('render_' + request.method, 'render'):
-            # hasattr will return false on unauthorized fields
+        for method in ('render_' + request.method,
+                       'render_' + request.method.lower(),
+                       'render'):
+
             renderer = get_renderer(view, method)
             if renderer:
                 res = renderer(request)
+                log.msg('%s %s renderer returned: %s' % (view, request, res), system='http')
+                return res if needs_rw_transaction else db.RollbackValue(res)
 
-                if needs_rw_transaction:
-                    return res
-                else:
-                    return db.RollbackValue(res)
-
-        raise NotImplementedError("method %s not implemented\n" % request.method)
+        raise NotImplementedError("Method %s is not implemented\n" % request.method)
 
     def get_interaction(self, request, token):
         # TODO: we can quickly disable rest auth
