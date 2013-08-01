@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import traceback
 import Queue
 
 from grokcore.component import context
@@ -292,6 +293,9 @@ class CommandView(DefaultView):
             d.addBoth(q.put)
             d.chainDeferred(d0)
 
+        # Command methods may be synchronous (that are executed inline, without deferreds) or asynchronous
+        # We want synchronous methods to be executed in a separate thread, not to block this request's
+        # thread.
         dt = threads.deferToThread(execute, cmd, args)
 
         if request.args.get('asynchronous', []):
@@ -300,8 +304,29 @@ class CommandView(DefaultView):
             dt.addBoth(lambda r: threads.deferToThread(q.get, True, 60))
             dt.addCallback(lambda r: reactor.callFromThread(self.write_results, request, pid, cmd))
 
-            def errhandler(e, pid, cmd):
+            def handleArgumentParsingError(e, pid, cmd):
                 e.trap(ArgumentParsingError)
-                raise BadRequest(str(e))
-            dt.addErrback(errhandler, pid, cmd)
+                log.err(e, system='http-cmd')
+                request.setResponseCode(400)
+                request.write(str(e.value))
+                request.finish()
+
+            def handleQueueEmpty(e, pid, cmd):
+                e.trap(Queue.Empty)
+                msg = 'Timeout waiting for command %s (%s) to complete' % (request.path, args)
+                log.msg(msg, system='http-cmd')
+                request.setResponseCode(408)
+                request.write(msg)
+                request.finish()
+
+            def handleUnknownError(e, pid, cmd):
+                e.trap(Exception)
+                log.err(e, system='http-cmd')
+                request.setResponseCode(500)
+                request.write(''.join(traceback.format_exc(e.value)))
+                request.finish()
+
+            dt.addErrback(handleArgumentParsingError, pid, cmd)
+            dt.addErrback(handleQueueEmpty, pid, cmd)
+            dt.addErrback(handleUnknownError, pid, cmd)
         return NOT_DONE_YET
