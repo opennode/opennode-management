@@ -320,7 +320,7 @@ class CommandView(DefaultView):
             e.trap(Queue.Empty)
             msg = 'Timeout waiting for command %s (%s) to complete' % (request.path, args)
             log.msg(msg, system='http-cmd')
-            request.setResponseCode(408)
+            request.setResponseCode(500)
             request.write(msg)
             request.finish()
 
