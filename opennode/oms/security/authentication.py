@@ -166,8 +166,8 @@ def setup_groups(event):
 
     groups_file = get_config().get('auth', 'groups_file')
     if not os.path.exists(groups_file):
-        log.msg("Groups file doesn't exist, generating a default groups file, "
-                "use `bin/groups` to customize it", system='auth')
+        log.info("Groups file doesn't exist, generating a default groups file, "
+                 "use `bin/groups` to customize it", system='auth')
         with closing(open(groups_file, 'w')) as f:
             f.write(pkg_resources.resource_stream(__name__, os.path.join('../../../', 'oms_groups')).read())
 
