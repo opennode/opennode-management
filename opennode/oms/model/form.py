@@ -118,6 +118,7 @@ class RawDataApplier(RawDataValidator):
     def apply(self):
         assert not self.errors, "There must be no validation errors"
         self.tmp_obj.apply()
+        return self.obj
 
 
 class RawDataValidatingFactory(RawDataValidator):

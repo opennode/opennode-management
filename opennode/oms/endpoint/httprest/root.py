@@ -183,16 +183,9 @@ class HttpRestServer(resource.Resource):
             failure.Failure().printTraceback(request)
         else:
             # allow views to take full control of output streaming
-            if ret not in (NOT_DONE_YET, EmptyResponse):
-                def render(obj):
-                    if isinstance(obj, set):
-                        return list(obj)  # safeguard against dumping sets
-                    if hasattr(obj, '__str__'):
-                        return str(obj)
-                    log.msg("Cannot json serialize %s" % obj, system='httprest', logLevel=logging.ERROR)
-                    raise TypeError('Serializing to JSON: %s' % obj)
-
-                request.write(json.dumps(ret, indent=2, default=render, cls=JsonSetEncoder) + '\n')
+            if ret is not NOT_DONE_YET and ret is not EmptyResponse:
+                json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
+                request.write(json_data)
         finally:
             if ret is not NOT_DONE_YET:
                 request.finish()
@@ -208,7 +201,7 @@ class HttpRestServer(resource.Resource):
         else:
             return authenticator.get_token(request)
 
-    def find_view(self, obj, unresolved_path, method):
+    def find_view(self, obj, unresolved_path, request):
         view = queryAdapter(obj, IHttpRestView)
 
         if len(unresolved_path) == 0:
@@ -216,7 +209,7 @@ class HttpRestServer(resource.Resource):
 
         subview_factory = queryAdapter(obj, IHttpRestSubViewFactory)
 
-        subview = subview_factory.resolve(unresolved_path, method) if subview_factory else None
+        subview = subview_factory.resolve(unresolved_path, request) if subview_factory else None
 
         if not subview:
             raise NotFound
@@ -244,7 +237,7 @@ class HttpRestServer(resource.Resource):
         if self.use_security_proxy:
             obj = proxy_factory(obj, interaction)
 
-        view = self.find_view(obj, unresolved_path, request.method)
+        view = self.find_view(obj, unresolved_path, request)
 
         needs_rw_transaction = view.rw_transaction(request)
 
@@ -275,7 +268,6 @@ class HttpRestServer(resource.Resource):
             renderer = get_renderer(view, method)
             if renderer:
                 res = renderer(request)
-                log.msg('%s %s renderer returned: %s' % (view, request, res), system='http')
                 return res if needs_rw_transaction else db.RollbackValue(res)
 
         raise NotImplementedError("Method %s is not implemented\n" % request.method)
