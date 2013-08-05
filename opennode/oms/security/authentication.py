@@ -203,9 +203,9 @@ def setup_permissions(event):
     passwd_file = get_config().get('auth', 'passwd_file')
     if not os.path.exists(passwd_file):
         print "User account and password file doesn't exist"
-        print "please set up at least one admin account with `bin/passwd`, e.g:"
+        print "please set up at least one admin account with `bin/omspasswd`, e.g:"
         print
-        print "  <OMS_ROOT>/bin/passwd -a john -g admins"
+        print "  <OMS_ROOT>/bin/omspasswd -a john -g admins"
         sys.exit(1)
 
     reload_users(file(passwd_file))
