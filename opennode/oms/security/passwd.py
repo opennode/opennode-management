@@ -90,34 +90,33 @@ def update_passwd(user, password=None, force_askpass=False, group=None):
     with open(passwd_file, 'w') as f:
         for line in lines:
             def parse_line(line):
-                user, pw, groups = line.split(':', 2)
+                _user, pw, groups = line.split(':', 2)
 
                 if ':' in groups:
                     groups, uid = groups.split(':', 1)
                 else:
                     uid = None
 
-                return user, pw, groups, uid
+                return _user, pw, groups, uid
 
             line = line.rstrip('\n')
 
             if line.startswith(user + ':'):
-
-
                 pw = hash_pw(ask_password() if password is None
                              and (force_askpass or not group) else password)
 
-                user, old_pw, groups, uid = parse_line(line)
+                _user, old_pw, groups, uid = parse_line(line)
+
                 if group:
                     groups = group
 
                 if pw is None:
                     pw = old_pw
 
-                f.write('%s:%s:%s:%s\n' % (user, pw, groups, uid))
+                f.write('%s:%s:%s:%s\n' % (_user, pw, groups, uid))
             else:
-                user, old_pw, groups, uid = parse_line(line)
-                f.write('%s:%s:%s:%s\n' % (user, old_pw, groups, uid))
+                _user, old_pw, groups, uid = parse_line(line)
+                f.write('%s:%s:%s:%s\n' % (_user, old_pw, groups, uid))
 
 
 def run():
