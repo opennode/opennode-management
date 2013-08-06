@@ -333,15 +333,18 @@ class TestPasswd(unittest.TestCase):
             passwd.delete_user(self.username)
 
     def test_update_passwd(self):
+        passwd.add_user(self.username + 'asdfghj', 'asdfghjkl')
         passwd.add_user(self.username, 'password')
+        passwd.add_user(self.username + 'poiuytr', 'poiuytr')
         self.assertUserExists(self.username)
         self.assertUserPassword(self.username, 'password')
 
         try:
-            passwd.update_passwd(self.username, password='newpassword',
+            passwd.update_passwd(self.username, password='pdadsdasdas',
                                  force_askpass=False, group='somegroup')
             self.assertUserExists(self.username)
-            self.assertUserPassword(self.username, 'newpassword')
+            self.assertUserPassword(self.username, 'pdadsdasdas')
+            self.assertRaises(self.failureException, self.assertUserPassword, self.username, 'p')
         finally:
             passwd.delete_user(self.username)
 
@@ -368,5 +371,3 @@ class TestPasswd(unittest.TestCase):
             passwd.delete_user(self.username)
             passwd.delete_user(self.username + '1')
             passwd.delete_user(self.username + '2')
-
-
