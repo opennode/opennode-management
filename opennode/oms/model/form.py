@@ -118,6 +118,7 @@ class RawDataApplier(RawDataValidator):
     def apply(self):
         assert not self.errors, "There must be no validation errors"
         self.tmp_obj.apply()
+        return self.obj
 
 
 class RawDataValidatingFactory(RawDataValidator):
@@ -137,7 +138,7 @@ class RawDataValidatingFactory(RawDataValidator):
             argnames = []
 
         kwargs, rest = {}, {}
-        for name, value in self.data.items():
+        for name, value in self.data.iteritems():
             (kwargs if name in argnames else rest)[name] = getattr(self.tmp_obj, name)
 
         for argname in argnames:

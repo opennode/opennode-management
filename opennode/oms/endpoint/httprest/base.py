@@ -15,7 +15,7 @@ class IHttpRestView(Interface):
 
 
 class IHttpRestSubViewFactory(Interface):
-    def resolve(path):
+    def resolve(path, method):
         """Resolve a view for a given sub path"""
 
 

@@ -1,5 +1,6 @@
-import json
 import functools
+import json
+import logging
 import zope.security.interfaces
 
 from twisted.internet import defer
@@ -14,6 +15,7 @@ from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
 from opennode.oms.util import blocking_yield
+from opennode.oms.util import JsonSetEncoder
 from opennode.oms.zodb import db
 
 
@@ -85,6 +87,15 @@ class BadRequest(HttpStatus):
     status_description = "Bad Request"
 
 
+class MethodNotAllowed(HttpStatus):
+    status_code = 405
+    status_description = "Method not allowed"
+
+    def __init__(self, msg, allow):
+        HttpStatus.__init__(self, msg)
+        self.headers = {'Allow': ','.join(allow)}
+
+
 def log_wrapper(self, f, server):
     @functools.wraps(f)
     def log_(request):
@@ -135,7 +146,6 @@ class HttpRestServer(resource.Resource):
 
         @deferred
         def on_error(error):
-            log.msg("Error while rendering http %s", system='httprest')
             log.err(error, system='httprest')
 
         return NOT_DONE_YET
@@ -156,10 +166,6 @@ class HttpRestServer(resource.Resource):
         ret = None
         try:
             ret = yield self.handle_request(request)
-            if ret is EmptyResponse:
-                raise ret
-        except EmptyResponse:
-            pass
         except HttpStatus as exc:
             request.setResponseCode(exc.status_code, exc.status_description)
             for name, value in exc.headers.items():
@@ -177,49 +183,43 @@ class HttpRestServer(resource.Resource):
             failure.Failure().printTraceback(request)
         else:
             # allow views to take full control of output streaming
-            if ret != NOT_DONE_YET:
-                def render(obj):
-                    if isinstance(obj, set):
-                        return list(obj)  # safeguard against dumping sets
-                    if hasattr(obj, '__str__'):
-                        return str(obj)
-                    log.msg("RENDERING ERROR, cannot json serialize %s" % obj, system='httprest')
-                    raise TypeError
-
-                request.write(json.dumps(ret, indent=2, default=render) + '\n')
+            if ret is not NOT_DONE_YET and ret is not EmptyResponse:
+                json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
+                request.write(json_data)
         finally:
-            if ret != NOT_DONE_YET:
+            if ret is not NOT_DONE_YET:
                 request.finish()
 
     def check_auth(self, request):
         from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
-        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
-        credentials = authentication_utility.get_basic_auth_credentials(request)
+        authenticator = getUtility(IHttpRestAuthenticationUtility)
+        credentials = authenticator.get_basic_auth_credentials(request)
         if credentials:
-            blocking_yield(authentication_utility.authenticate(request, credentials, basic_auth=True))
-            return authentication_utility.generate_token(credentials)
+            blocking_yield(authenticator.authenticate(request, credentials, basic_auth=True))
+            return authenticator.generate_token(credentials)
         else:
-            return authentication_utility.get_token(request)
+            return authenticator.get_token(request)
 
-    def find_view(self, obj, unresolved_path):
-        view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0] if unresolved_path else '')
+    def find_view(self, obj, unresolved_path, request):
+        view = queryAdapter(obj, IHttpRestView)
 
-        sub_view_factory = queryAdapter(view, IHttpRestSubViewFactory)
-        if sub_view_factory:
-            view = sub_view_factory.resolve(unresolved_path[1:])
+        if len(unresolved_path) == 0:
+            return view
 
-        if not view:
+        subview_factory = queryAdapter(obj, IHttpRestSubViewFactory)
+
+        subview = subview_factory.resolve(unresolved_path, request) if subview_factory else None
+
+        if not subview:
             raise NotFound
 
-        return view
+        return subview
 
     @db.transact
     def handle_request(self, request):
-        """Takes a request, maps it to a domain object and a
-        corresponding IHttpRestView, and returns the rendered output
-        of that view.
-
+        """Takes a request, maps it to a domain object and a corresponding IHttpRestView
+        and returns the rendered output of that view.
         """
         token = self.check_auth(request)
 
@@ -237,7 +237,8 @@ class HttpRestServer(resource.Resource):
         if self.use_security_proxy:
             obj = proxy_factory(obj, interaction)
 
-        view = self.find_view(obj, unresolved_path)
+        view = self.find_view(obj, unresolved_path, request)
+
         needs_rw_transaction = view.rw_transaction(request)
 
         # create a security proxy if we have a secured interaction
@@ -255,23 +256,21 @@ class HttpRestServer(resource.Resource):
                 return getattr(view, method, None)
             except zope.security.interfaces.Unauthorized:
                 from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
-
-                if token or not getUtility(IHttpRestAuthenticationUtility).get_basic_auth_credentials(request):
+                auth_util = getUtility(IHttpRestAuthenticationUtility)
+                if token or not auth_util.get_basic_auth_credentials(request):
                     raise Forbidden('User does not have permission to access this resource')
                 raise Unauthorized()
 
-        for method in ('render_' + request.method, 'render'):
-            # hasattr will return false on unauthorized fields
+        for method in ('render_' + request.method,
+                       'render_' + request.method.lower(),
+                       'render'):
+
             renderer = get_renderer(view, method)
             if renderer:
                 res = renderer(request)
+                return res if needs_rw_transaction else db.RollbackValue(res)
 
-                if needs_rw_transaction:
-                    return res
-                else:
-                    return db.RollbackValue(res)
-
-        raise NotImplementedError("method %s not implemented\n" % request.method)
+        raise NotImplementedError("Method %s is not implemented\n" % request.method)
 
     def get_interaction(self, request, token):
         # TODO: we can quickly disable rest auth
@@ -280,16 +279,16 @@ class HttpRestServer(resource.Resource):
 
         from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
-        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
+        authenticator = getUtility(IHttpRestAuthenticationUtility)
         try:
-            principal = authentication_utility.get_principal(token)
+            principal = authenticator.get_principal(token)
         except:
             # Avoid that changes in format of security token will require every user
             # to flush the cookies
             principal = 'oms.anonymous'
 
         if principal != 'oms.anonymous':
-            authentication_utility.renew_token(request, token)
+            authenticator.renew_token(request, token)
 
         if request.method == 'OPTIONS':
             principal = 'oms.rest_options'

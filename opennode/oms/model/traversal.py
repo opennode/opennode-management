@@ -26,6 +26,22 @@ class Traverser(Adapter):
     baseclass()
 
 
+def parse_path(path):
+    if not path or path == '/':
+        return []
+
+    path = re.sub(r'\/+', '/', path)
+
+    if path.endswith('/'):
+        path = path[:-1]
+
+    if path.startswith('/'):
+        path = path[1:]
+
+    path = path.split('/')
+    return path
+
+
 def traverse_path(obj, path):
     """Starting from the given object, traverses all its descendant
     objects to find an object that matches the given path.
@@ -35,17 +51,10 @@ def traverse_path(obj, path):
     part of the path that could not be resolved.
 
     """
+    path = parse_path(path)
 
-    if not path or path == '/':
+    if not path:
         return [obj], []
-
-    path = re.sub(r'\/+', '/', path)
-    if path.endswith('/'):
-        path = path[:-1]
-    if path.startswith('/'):
-        path = path[1:]
-
-    path = path.split('/')
 
     ret = [obj]
     while path:
