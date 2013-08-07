@@ -42,7 +42,9 @@ class TerminalTestCase(unittest.TestCase):
 
     def test_FF(self):
         self.shell.keystrokeReceived(CTRL_L, None)
-        eq_(self.terminal.method_calls, [('eraseDisplay', (), {}), ('cursorHome', (), {}), ('write', (self.shell.ps[self.shell.pn],), {})])
+        eq_(self.terminal.method_calls, [('eraseDisplay', (), {}),
+                                         ('cursorHome', (), {}),
+                                         ('write', (self.shell.ps[self.shell.pn],), {})])
 
     def test_delete(self):
         msg = "hello world"

@@ -202,10 +202,14 @@ class HttpRestServer(resource.Resource):
             return authenticator.get_token(request)
 
     def find_view(self, obj, unresolved_path, request):
-        view = queryAdapter(obj, IHttpRestView)
 
         if len(unresolved_path) == 0:
+            view = queryAdapter(obj, IHttpRestView)
             return view
+        else:
+            view = queryAdapter(obj, IHttpRestView, name=unresolved_path[0])
+            if view:
+                return view
 
         subview_factory = queryAdapter(obj, IHttpRestSubViewFactory)
 
