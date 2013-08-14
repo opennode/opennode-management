@@ -1,5 +1,6 @@
 import json
 import hmac
+import logging
 import time
 
 from base64 import urlsafe_b64encode as encodestring, urlsafe_b64decode as decodestring
@@ -18,6 +19,9 @@ from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest, Unauthorized, Forbidden
 from opennode.oms.security.authentication import checkers
 from opennode.oms.util import blocking_yield
+
+
+log = logging.getLogger(__name__)
 
 
 class IHttpRestAuthenticationUtility(Interface):
@@ -81,7 +85,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                     avatar = yield i.requestAvatarId(credentials)
                     break
                 except UnauthorizedLogin:
-                    print 'Unauthorized thrown by', i, 'on', credentials.username
+                    log.error('Unauthorized thrown by %s on %s' % (i, credentials.username))
                     continue
 
         if avatar:
