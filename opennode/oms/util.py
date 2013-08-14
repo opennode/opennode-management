@@ -299,4 +299,6 @@ class JsonSetEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
             return list(obj)
+        if hasattr(obj, '__str__'):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)

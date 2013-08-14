@@ -166,6 +166,10 @@ class HttpRestServer(resource.Resource):
         ret = None
         try:
             ret = yield self.handle_request(request)
+            # allow views to take full control of output streaming
+            if ret is not NOT_DONE_YET and ret is not EmptyResponse:
+                json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
+                request.write(json_data)
         except HttpStatus as exc:
             request.setResponseCode(exc.status_code, exc.status_description)
             for name, value in exc.headers.items():
@@ -181,11 +185,6 @@ class HttpRestServer(resource.Resource):
             request.write("%s %s\n\n" % (500, "Server Error"))
             log.err(system='httprest')
             failure.Failure().printTraceback(request)
-        else:
-            # allow views to take full control of output streaming
-            if ret is not NOT_DONE_YET and ret is not EmptyResponse:
-                json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
-                request.write(json_data)
         finally:
             if ret is not NOT_DONE_YET:
                 request.finish()
