@@ -288,7 +288,7 @@ class CommandView(DefaultView):
 
         q = Queue.Queue()
 
-        def cancel_execute(d):
+        def cancel_execute(_, d):
             d.cancel()
 
         def execute(q, cmd, args):
