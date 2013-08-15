@@ -127,7 +127,7 @@ class VirtualConsoleHelpFormatter(argparse.HelpFormatter):
 
     def format_help(self):
         help = super(VirtualConsoleHelpFormatter, self).format_help()
-        return re.sub(r'=(\w*)', r'\1 =', help)
+        return re.sub(r'=(\w*)\s(\w*)', r'\1=\2', help)
 
 
 class GroupDictAction(argparse.Action):
