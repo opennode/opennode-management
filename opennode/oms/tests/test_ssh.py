@@ -539,7 +539,7 @@ class SshTestCase(unittest.TestCase):
         self._cmd('set computes/%s -h' % cid)
 
         with assert_mock(self.terminal) as t:
-            assert 'hostname = ' in current_call(t).arg
+            assert 'hostname=' in current_call(t).arg
 
     @run_in_reactor
     def test_parsing_error_message(self):
