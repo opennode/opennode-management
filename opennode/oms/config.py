@@ -62,8 +62,12 @@ def gen_config_file_names(module, name):
 
     base_dir = os.path.dirname(os.path.dirname(module.__path__[0]))
     return [i % name for i in ['%s/opennode-%%s.conf' % base_dir,
+                               '%s/%%s.conf' % base_dir,
                                './opennode-%s.conf',
-                               '/etc/opennode/opennode-%s.conf']]
+                               './%s.conf',
+                               '/etc/opennode/opennode-%s.conf',
+                               '/etc/opennode/%s.conf'
+                              ]]
 
 
 class OmsBaseConfig(ConfigParser):
