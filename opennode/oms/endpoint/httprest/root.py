@@ -152,7 +152,6 @@ class HttpRestServer(resource.Resource):
 
     @defer.inlineCallbacks
     def _render(self, request):
-        request.setHeader('Content-type', 'application/json')
         origin = request.getHeader('Origin')
         if origin:
             request.setHeader('Access-Control-Allow-Origin', origin)
@@ -168,6 +167,7 @@ class HttpRestServer(resource.Resource):
             ret = yield self.handle_request(request)
             # allow views to take full control of output streaming
             if ret is not NOT_DONE_YET and ret is not EmptyResponse:
+                request.setHeader('Content-Type', 'application/json')
                 json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
                 request.write(json_data)
         except HttpStatus as exc:
