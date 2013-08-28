@@ -82,8 +82,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
         if credentials:
             for i in checkers():
                 try:
-                    log.debug('Authenticating using %s on %s:%s' % (i, credentials.username,
-                                                                    credentials.password))
+                    log.debug('Authenticating using %s on %s:%s' % (i, credentials.username))
                     avatar = yield i.requestAvatarId(credentials)
                     break
                 except UnauthorizedLogin:
