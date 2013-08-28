@@ -181,6 +181,7 @@ class HttpRestServer(resource.Resource):
             if exc.message:
                 request.write("%s\n" % exc.message)
         except Exception:
+            request.setHeader('Content-Type', 'text/plain')
             request.setResponseCode(500, "Server Error")
             request.write("%s %s\n\n" % (500, "Server Error"))
             log.err(system='httprest')

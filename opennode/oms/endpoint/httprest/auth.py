@@ -82,11 +82,15 @@ class HttpRestAuthenticationUtility(GlobalUtility):
         if credentials:
             for i in checkers():
                 try:
+                    log.debug('Authenticating using %s on %s:%s' % (i, credentials.username,
+                                                                    credentials.password))
                     avatar = yield i.requestAvatarId(credentials)
                     break
                 except UnauthorizedLogin:
-                    log.error('Unauthorized thrown by %s on %s' % (i, credentials.username))
+                    log.warning('Authentication failed with %s on %s!' % (i, credentials.username))
                     continue
+                else:
+                    log.debug('Authentication successful using %s on %s!' % (i, credentials.username))
 
         if avatar:
             token = self.generate_token(credentials)
@@ -102,7 +106,7 @@ class HttpRestAuthenticationUtility(GlobalUtility):
         return self._generate_token(credentials.username)
 
     def _generate_token(self, username):
-        # XXX: todo real cryptographic token
+        # TODO: register sessions
         head = '%s:%s' % (username, int(time.time() * 1000))
         signature = hmac.new(self.token_key, head).digest()
         return encodestring('%s;%s' % (head, signature)).strip()
@@ -138,6 +142,7 @@ class AuthView(HttpRestView):
 
     # Should be render_GET but ONC (i.e. ExtJS) cannot attach a request body to GET requests
     def render(self, request):
+        log.info('Incoming authentication request from %s' % request.getClientIP())
         authentication_utility = getUtility(IHttpRestAuthenticationUtility)
 
         # enable basic auth only if explicitly requested

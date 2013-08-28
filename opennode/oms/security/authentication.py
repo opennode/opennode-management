@@ -115,9 +115,10 @@ def ssha_hash(user, password, encoded_password):
 def checkers():
     global _checkers
     if _checkers is None:
-        pam_checker = PamAuthChecker() if get_config().getboolean('auth', 'use_pam') else None
+        pam_checker = PamAuthChecker() if get_config().getboolean('auth', 'use_pam', False) else None
         password_checker = FilePasswordDB(get_config().get('auth', 'passwd_file'), hash=ssha_hash)
-        pubkey_checker = InMemoryPublicKeyCheckerDontUse()
+        pubkey_checker = (InMemoryPublicKeyCheckerDontUse()
+                          if get_config().getboolean('auth', 'use_inmemory_pkcheck', False) else None)
         _checkers = filter(None, [pam_checker, password_checker, pubkey_checker])
     return _checkers
 
