@@ -307,12 +307,11 @@ class Sudo(object):
         if self.checker is None:
             return
 
-        self.checker.previous_interaction = self.checker.interaction
+        self.previous_interaction = self.checker.interaction
         self.checker.interaction = new_interaction('root')
 
     def __exit__(self, *args):
         if self.checker is None:
             return
 
-        self.checker.interaction = self.checker.previous_interaction
-        del self.checker.previous_interaction
+        self.checker.interaction = self.previous_interaction
