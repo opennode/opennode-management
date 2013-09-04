@@ -115,7 +115,12 @@ class ContainerView(DefaultView):
         exclude = [excluded.strip() for excluded in request.args.get('exclude', [''])[0].split(',')]
 
         def preconditions(obj):
-            yield request.interaction.checkPermission('view', obj)
+            try:
+                yield request.interaction.checkPermission('view', obj)
+            except Exception as e:
+                log.msg('Error accessing %s to check view permission' % obj)
+                log.err(e)
+                yield
             yield obj.__name__ not in exclude
             yield obj.target.__parent__ == obj.__parent__ if type(obj) is Symlink else True
 

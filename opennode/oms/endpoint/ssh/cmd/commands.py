@@ -232,15 +232,20 @@ class ListDirContentsCmd(Cmd):
                                                                   follow_symlinks(subobj)),
                                            owner(subobj),
                                            pretty_name(subobj),
-                                           ' : '.join(nick(subobj)))).encode('utf8'))
+                                           ' : '.join(nick(subobj)))).encode('utf-8'))
                     for subobj in container]
 
         def make_short_lines(container):
             return columnize([pretty_name(subobj) for subobj in container], displaywidth=self.protocol.width)
 
-        container = (sorted(filter(lambda i: self.protocol.interaction.checkPermission('view', i),
-                                   obj.listcontent()),
-                            key=lambda o: o.__name__)
+        def filter_by_permission(i):
+            try:
+                return self.protocol.interaction.checkPermission('view', i)
+            except Exception as e:
+                log.msg('Error accessing %s' % i, system='ls')
+                log.err(e)
+
+        container = (sorted(filter(filter_by_permission, obj.listcontent()), key=lambda o: o.__name__)
                      if IContainer.providedBy(obj) and not self.opts_dir
                      else [obj])
 
