@@ -298,6 +298,7 @@ class Sudo(object):
             self.checker = getChecker(self._obj)
         except TypeError:
             self.checker = None
+            log.debug('Checker could not be found!')
         else:
             if not isinstance(self.checker, checker.Checker):
                 log.debug('self.checker is %s', self.checker)

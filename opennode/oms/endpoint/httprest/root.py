@@ -274,7 +274,7 @@ class HttpRestServer(resource.Resource):
                 res = renderer(request)
                 return res if needs_rw_transaction else db.RollbackValue(res)
 
-        raise NotImplementedError("Method %s is not implemented\n" % request.method)
+        raise NotImplementedError("Method %s is not implemented in %s\n" % (request.method, view))
 
     def get_interaction(self, request, token):
         # TODO: we can quickly disable rest auth
