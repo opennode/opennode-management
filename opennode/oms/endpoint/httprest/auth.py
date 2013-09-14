@@ -17,7 +17,7 @@ from opennode.oms.config import get_config
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest, Unauthorized, Forbidden
-from opennode.oms.security.authentication import checkers
+from opennode.oms.security.authentication import checkers, KeystoneChecker
 from opennode.oms.util import blocking_yield
 
 
@@ -76,6 +76,13 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             except:
                 raise BadRequest("The Authorization header was not parsable")
 
+    def get_keystone_auth_credentials(self, request):
+        keystone_token = request.requestHeaders.getRawHeaders('X-Auth-Token', [None])[0]
+        log.info('Detected keystone token')
+        log.debug('Token: %s' % keystone_token)
+        return keystone_token
+
+    
     @defer.inlineCallbacks
     def authenticate(self, request, credentials, basic_auth=False):
         avatar = None
@@ -100,6 +107,26 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                 raise Unauthorized({'status': 'failed'})
             else:
                 raise Forbidden({'status': 'failed'})
+
+
+    @defer.inlineCallbacks
+    def authenticate_keystone(self, request, keystone_token):
+        log.debug('Keystone token: %s' % keystone_token)
+        avatar = None
+        try:
+            avatar = yield KeystoneChecker().requestAvatarId(keystone_token)
+            print avatar
+        except UnauthorizedLogin:
+            log.warning('Authentication failed with Keystone token: %s' % keystone_token)
+            
+        if avatar:
+            # emulate OMS behaviour - to allow switchover to OMS-based clients
+            token = self._generate_token(avatar)
+            self.emit_token(request, token)
+            defer.returnValue({'status': 'success', 'token': token})
+        else:
+            raise Unauthorized({'status': 'failed'})
+
 
     def generate_token(self, credentials):
         return self._generate_token(credentials.username)

@@ -194,10 +194,15 @@ class HttpRestServer(resource.Resource):
         from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
 
         authenticator = getUtility(IHttpRestAuthenticationUtility)
-        credentials = authenticator.get_basic_auth_credentials(request)
-        if credentials:
-            blocking_yield(authenticator.authenticate(request, credentials, basic_auth=True))
-            return authenticator.generate_token(credentials)
+        http_credentials = authenticator.get_basic_auth_credentials(request)
+        keystone_token = authenticator.get_keystone_auth_credentials(request)
+        if http_credentials:
+            blocking_yield(authenticator.authenticate(request, http_credentials, basic_auth=True))
+            return authenticator.generate_token(http_credentials)
+        elif keystone_token:
+            keystone_credential = blocking_yield(authenticator.authenticate_keystone(request, keystone_token))
+            print keystone_credential
+            return keystone_credential
         else:
             return authenticator.get_token(request)
 
