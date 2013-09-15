@@ -292,8 +292,8 @@ def reload_users(stream):
 class Sudo(object):
 
     def __init__(self, obj):
-        assert type(self._obj) is Proxy
         self._obj = obj
+        assert type(self._obj) is Proxy
 
     def __enter__(self):
         _checker = getChecker(self._obj)
