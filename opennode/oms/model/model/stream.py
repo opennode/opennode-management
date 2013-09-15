@@ -9,6 +9,7 @@ from zope.interface import implements
 from .base import ReadonlyContainer, Model, IModel, IContainerExtender
 from opennode.oms.config import get_config
 from opennode.oms.model.model.events import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
+from opennode.oms.security.authentication import Sudo
 from collections import defaultdict
 
 
@@ -49,7 +50,8 @@ class TransientStream(Adapter):
     @property
     def data(self):
         from opennode.oms.model.traversal import canonical_path
-        return self.transient_store[canonical_path(self.context)]
+        path = canonical_path(self.context)
+        return self.transient_store[path]
 
     def events(self, after, limit=None):
         # XXX: if nobody fills the data (func issues) then we return fake data
