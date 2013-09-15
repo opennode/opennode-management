@@ -295,7 +295,7 @@ class Sudo(object):
     def __init__(self, obj):
         self._obj = obj
         try:
-            self.checker = getChecker(self._obj)
+            self.checker = getChecker(checker.proxy_factory(self._obj))
         except TypeError:
             self.checker = None
             log.debug('Checker could not be found!')
