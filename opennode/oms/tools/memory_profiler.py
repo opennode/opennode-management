@@ -28,19 +28,21 @@ class MemoryProfilerDaemonProcess(DaemonProcess):
     def __init__(self):
         super(MemoryProfilerDaemonProcess, self).__init__()
         config = get_config()
+        self.enabled = config.getboolean('daemon', 'memory-profiler', False)
         self.interval = config.getint('debug', 'memory_profiler_interval', 60)
         self.track = config.getint('debug', 'memory_profiler_track_changes', 0)
         self.verbose = config.getint('debug', 'memory_profiler_verbose', 0)
         self.summary_tracker = tracker.SummaryTracker()
+         
 
     @defer.inlineCallbacks
     def run(self):
-        if self.track:
+        if self.enabled and self.track:
             yield self.collect_and_dump()
 
         while True:
             try:
-                if not self.paused:
+                if self.enabled and not self.paused:
                     if self.track:
                         yield self.track_changes()
                     else:
