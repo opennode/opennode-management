@@ -9,7 +9,6 @@ from zope.interface import implements
 from .base import ReadonlyContainer, Model, IModel, IContainerExtender
 from opennode.oms.config import get_config
 from opennode.oms.model.model.events import IModelModifiedEvent, IModelDeletedEvent, IModelCreatedEvent
-from opennode.oms.security.authentication import Sudo
 from collections import defaultdict
 
 
