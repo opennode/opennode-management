@@ -120,8 +120,8 @@ class KeystoneChecker(object):
             log.info('Successful login with Keystone token, extracted data: %s' % token_info)
             log.debug('Token: %s' % token)
         except Exception, e:
-            print e
-            log.warning(' Authentication failed with Keystone for %s' % token)
+            log.debug('Exception while validating Keystone token', exc_info=True)
+            log.warning(' Authentication failed with Keystone token')
             return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
         # extract avatar info from the token
@@ -129,7 +129,7 @@ class KeystoneChecker(object):
         oms_user = User(token_info['username'])
         # extract group information from the token
         oms_user.groups.extend(token_info['groups'])
-        log.info('Adding user groups: %s' % ', '.join(token_info['groups']))
+        log.debug('Adding user groups: %s' % ', '.join(token_info['groups']))
         for g in oms_user.groups:
             auth.registerPrincipal(Group(g))
         auth.registerPrincipal(oms_user)

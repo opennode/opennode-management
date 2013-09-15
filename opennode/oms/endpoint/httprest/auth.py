@@ -82,7 +82,6 @@ class HttpRestAuthenticationUtility(GlobalUtility):
         log.debug('Token: %s' % keystone_token)
         return keystone_token
 
-    
     @defer.inlineCallbacks
     def authenticate(self, request, credentials, basic_auth=False):
         avatar = None
@@ -108,16 +107,16 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             else:
                 raise Forbidden({'status': 'failed'})
 
-
     @defer.inlineCallbacks
     def authenticate_keystone(self, request, keystone_token):
         log.debug('Keystone token: %s' % keystone_token)
         avatar = None
         try:
+            # avatar will be username from the keystone token info
             avatar = yield KeystoneChecker().requestAvatarId(keystone_token)
-            print avatar
         except UnauthorizedLogin:
-            log.warning('Authentication failed with Keystone token: %s' % keystone_token)
+            log.warning('Authentication failed with Keystone token')
+            log.debug('Token: %s' % keystone_token, exc_info=True)
             
         if avatar:
             # emulate OMS behaviour - to allow switchover to OMS-based clients
@@ -126,7 +125,6 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             defer.returnValue({'status': 'success', 'token': token})
         else:
             raise Unauthorized({'status': 'failed'})
-
 
     def generate_token(self, credentials):
         return self._generate_token(credentials.username)
