@@ -7,7 +7,9 @@ import pam
 import pwd
 import sys
 import time
+import subprocess
 from sys import platform as _platform
+import json
 
 from base64 import decodestring as decode
 from base64 import encodestring as encode
@@ -73,6 +75,64 @@ class PamAuthChecker(object):
             return defer.succeed(credentials.username)
         log.warning(' Authentication failed with PAM for %s' % credentials.username)
         return defer.fail(UnauthorizedLogin('Invalid credentials'))
+
+
+class KeystoneChecker(object):
+    """ Validate Keystone token """
+    credentialInterfaces = IUsernamePassword
+    implements(ICredentialsChecker)
+
+    def validate_and_parse_keystone_token(self, cms_token):
+        """Validate Keystone CMS token.
+        
+        Partially taken from Keystone's common/cms.py module."""
+        signing_cert_file_name = get_config().get('keystone', 'signing_cert_file_name')
+        ca_file_name = get_config().get('keystone', 'ca_file_name')
+        openssl_cmd = get_config().get('keystone', 'openssl_cmd')
+        process = subprocess.Popen([openssl_cmd, "cms", "-verify",
+                                  "-certfile",
+                                  signing_cert_file_name,
+                                  "-CAfile", ca_file_name,
+                                              "-inform", "PEM",
+                                              "-nosmimecap", "-nodetach",
+                                              "-nocerts", "-noattr"],
+                                             stdin=subprocess.PIPE,
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.PIPE)
+        output, err = process.communicate(cms_token)
+        retcode = process.poll()
+        if retcode:
+            raise
+        token_info = json.loads(output)
+        #print json.dumps(token_info, sort_keys=True,
+        #          indent=4, separators=(',', ': '))
+        res = {'username': str(token_info['access']['user']['username']),
+               'groups': [str(role['name']) for role in token_info['access']['user']['roles']]}
+        return res
+
+
+    def requestAvatarId(self, token):
+        # validate credential signature
+        token_info = None
+        try:
+            token_info = self.validate_and_parse_keystone_token(token)
+            log.info('Successful login with Keystone token, extracted data: %s' % token_info)
+            log.debug('Token: %s' % token)
+        except Exception, e:
+            log.debug('Exception while validating Keystone token', exc_info=True)
+            log.warning(' Authentication failed with Keystone token')
+            return defer.fail(UnauthorizedLogin('Invalid credentials'))
+
+        # extract avatar info from the token
+        auth = getUtility(IAuthentication)
+        oms_user = User(token_info['username'])
+        # extract group information from the token
+        oms_user.groups.extend(token_info['groups'])
+        log.debug('Adding user groups: %s' % ', '.join(token_info['groups']))
+        for g in oms_user.groups:
+            auth.registerPrincipal(Group(g))
+        auth.registerPrincipal(oms_user)
+        return defer.succeed(token_info['username'])
 
 
 class AuthenticationUtility(GlobalUtility):
