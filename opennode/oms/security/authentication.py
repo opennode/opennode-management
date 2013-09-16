@@ -87,9 +87,9 @@ class KeystoneChecker(object):
         """Validate Keystone CMS token.
         
         Partially taken from Keystone's common/cms.py module."""
-        signing_cert_file_name = '/Users/ilja/workspace/keystone/keystone/common/signing_cert.pem'
-        ca_file_name = '/Users/ilja/workspace/keystone/keystone/common/cacert.pem'
-        openssl_cmd = '/usr/local/Cellar/openssl/1.0.1e/bin/openssl'
+        signing_cert_file_name = get_config().get('keystone', 'signing_cert_file_name')
+        ca_file_name = get_config().get('keystone', 'ca_file_name')
+        openssl_cmd = get_config().get('keystone', 'openssl_cmd')
         process = subprocess.Popen([openssl_cmd, "cms", "-verify",
                                   "-certfile",
                                   signing_cert_file_name,
