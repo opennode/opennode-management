@@ -94,11 +94,10 @@ def traverse1(path):
 
 def canonical_path(item):
     path = []
-    from opennode.oms.security.authentication import Sudo
+    from opennode.oms.security.authentication import sudo
     while item:
-        with Sudo(item):
-            assert item.__name__ is not None, '%s.__name__ is None' % item
-            item = follow_symlinks(item)
-            path.insert(0, item.__name__)
-            item = item.__parent__
+        p = sudo(follow_symlinks(sudo(item)))
+        assert p.__name__ is not None, '%s.__name__ is None' % p
+        path.insert(0, p.__name__)
+        item = p.__parent__
     return '/'.join(path)

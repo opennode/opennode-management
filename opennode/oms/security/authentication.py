@@ -22,8 +22,7 @@ from twisted.python import filepath
 from zope.authentication.interfaces import IAuthentication
 from zope.component import getUtility, provideUtility, queryUtility
 from zope.interface import implements
-from zope.security._definitions import thread_local
-from zope.security.checker import getChecker
+from zope.security.proxy import Proxy, getObject, getChecker
 from zope.security.management import system_user
 from zope.securitypolicy.interfaces import IRole
 from zope.securitypolicy.principalpermission import principalPermissionManager
@@ -294,25 +293,19 @@ class Sudo(object):
 
     def __init__(self, obj):
         self._obj = obj
-        try:
-            self.checker = getChecker(self._obj)
-        except TypeError:
-            self.checker = None
-            log.debug('Checker could not be found!')
-        else:
-            if not isinstance(self.checker, checker.Checker):
-                log.debug('self.checker is %s', self.checker)
-                self.checker = thread_local
+        assert type(self._obj) is Proxy
 
     def __enter__(self):
-        if self.checker is None:
-            return
-
-        self.previous_interaction = self.checker.interaction
-        self.checker.interaction = new_interaction('root')
+        _checker = getChecker(self._obj)
+        self.previous_interaction = _checker.interaction
+        _checker.interaction = new_interaction('root')
+        return self._obj
 
     def __exit__(self, *args):
-        if self.checker is None:
-            return
+        getChecker(self._obj).interaction = self.previous_interaction
 
-        self.checker.interaction = self.previous_interaction
+
+def sudo(obj):
+    """ System utility to elevate privileges to certain object accesses """
+    obj = getObject(obj) if type(obj) is Proxy else obj
+    return checker.proxy_factory(obj, new_interaction('root'))

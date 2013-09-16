@@ -5,7 +5,7 @@ from collections import defaultdict
 from twisted.internet.defer import Deferred
 from zope.interface import implements
 from zope.security._definitions import thread_local
-from zope.security._proxy import _Proxy as Proxy
+from zope.security.proxy import Proxy
 from zope.security.checker import _available_by_default, getCheckerForInstancesOf
 from zope.security.checker import CheckerPublic, TracebackSupplement, getChecker
 from zope.security.interfaces import INameBasedChecker, Unauthorized, ForbiddenAttribute
@@ -33,7 +33,7 @@ def get_interaction(obj):
     try:
         checker = getChecker(obj)
     except TypeError:
-        return None
+        return
 
     if isinstance(checker, Checker):
         return checker.interaction
@@ -144,7 +144,7 @@ class Checker(object):
 
         __traceback_supplement__ = (TracebackSupplement, obj)
         __traceback_supplement__
-        raise Unauthorized(obj, name, permission)
+        raise Unauthorized(obj, name, permission, self.interaction)
 
     def check_setattr(self, obj, name):
         'See IChecker'
