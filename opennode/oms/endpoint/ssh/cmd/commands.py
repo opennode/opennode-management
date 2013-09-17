@@ -310,6 +310,8 @@ class CatObjectCmd(Cmd):
                 in zip(model_to_dict(obj).items(), model_to_dict(obj, use_titles=True).keys())
                 if key in attrs or not attrs]
 
+        log.msg('data: %s' % data, system='cat-cmd')
+
         if data:
             max_title_len = max(len(title) for key, _, title in data)
             for key, value, title in data:
@@ -322,6 +324,8 @@ class CatObjectCmd(Cmd):
                     if not isinstance(value, tuple):
                         strings = sorted(strings)
                     pretty_value = ', '.join(strings)
+                elif key in ('mtime', 'ctime'):
+                    pretty_value = datetime.datetime.fromtimestamp(value).isoformat()
                 else:
                     pretty_value = value
                 self.write("%s\t%s\n" % ((title.encode('utf8') + ':').ljust(max_title_len),

@@ -1,4 +1,5 @@
 import persistent
+import time
 import logging
 from uuid import uuid4
 
@@ -90,9 +91,16 @@ class IMarkable(Interface):
                           value_type=schema.Choice(source=MarkerSourceBinder()))
 
 
+
+class ITimestamp(Interface):
+    """ Mixin schema for additional mtime/ctime attributes """
+    ctime = schema.Float(title=u'Created', required=True)
+    mtime = schema.Float(title=u"Last modified", required=False)
+
+
 class Model(persistent.Persistent):
 
-    implements(IModel, IAttributeAnnotatable)
+    implements(IModel, IAttributeAnnotatable, ITimestamp)
     permissions(dict(__name__='view'))
 
     __parent__ = None
@@ -101,6 +109,22 @@ class Model(persistent.Persistent):
     __transient__ = False
 
     _inherit_permissions = False
+
+    _ctime = None
+    _mtime = None
+    _mtime_blacklist = ('inherit_permissions', 'owner', 'features', 'oid', 'metadata')
+
+    @property
+    def ctime(self):
+        if self._ctime is None:
+            self._ctime = time.time()
+        return self._ctime
+
+    @property
+    def mtime(self):
+        if self._mtime is None:
+            self._mtime = time.time()
+        return self._mtime
 
     def _p_resolveConflict(self, oldState, savedState, newState):
         logger.debug('Resolve conflict: %s -> %s -> %s, choosing last', oldState, savedState, newState)
@@ -183,6 +207,13 @@ class Model(persistent.Persistent):
                     alsoProvides(self, marker)
 
     features = property(get_features, set_features)
+
+    def __setattr__(self, name, value):
+        super(Model, self).__setattr__(name, value)
+        if not name.startswith('_') and name not in self._mtime_blacklist:
+            # useful debug info, but very verbose
+            #logger.debug('setattr: %s: %s' % (self, name))
+            self._mtime = time.time()
 
 
 class IContainerExtender(Interface):
