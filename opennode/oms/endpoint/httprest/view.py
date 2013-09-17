@@ -310,7 +310,7 @@ class CommandView(DefaultView):
         asynchronous = request.args.get('asynchronous', [])
 
         if not asynchronous:
-            dt.addBoth(lambda r: threads.deferToThread(q.get, True, 60))
+            dt.addBoth(lambda r: threads.deferToThread(q.get, True, 300))
 
         dt.addCallback(lambda r: reactor.callFromThread(self.write_results, request, pid, cmd))
 
