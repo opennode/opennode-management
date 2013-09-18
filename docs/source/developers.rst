@@ -44,9 +44,8 @@ GIT guidelines
     This can be easily achieved by setting a per-repository setting `git config branch.master.rebase true`, which and/or setting a global
     setting with `git config --global branch.autosetuprebase always` so that every new git clone will get this setting for free.
 
- 2. If you are merging local branches before pull rebasing to master, it's always preferred to first pull rebase master on local master,
-    then `git rebase master` in one of the feature branch, then `git rebase <lastbranch>` in each of the other branches, and finally
-    merge in master (which should be a fast forward merge).
+ 2. Develop the task in a separate branch, then issue a pull request against the master branch.
+
 
  3. Keep separate things in separate commits, i.e. use `git add -p` in order to split unrelated changes in separate commits,
     and interacitve rebase `git rebase -i` in order to curate (split/merge) commits before pushing it to the public repo.
