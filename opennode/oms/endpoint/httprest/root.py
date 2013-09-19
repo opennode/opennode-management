@@ -172,7 +172,6 @@ class HttpRestServer(resource.Resource):
             if ret is not NOT_DONE_YET and ret is not EmptyResponse:
                 request.setHeader('Content-Type', 'application/json')
                 json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
-                
                 request.setHeader('Content-Length', intToBytes(len(json_data)))
                 request.write(json_data)
         except HttpStatus as exc:
