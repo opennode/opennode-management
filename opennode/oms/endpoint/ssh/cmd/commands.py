@@ -228,11 +228,14 @@ class ListDirContentsCmd(Cmd):
             def owner(item):
                 return item.__owner__ or 'root'
 
-            return [(('%s %s\t%s\t%s\n' % (pretty_effective_perms(self.protocol.interaction,
-                                                                  follow_symlinks(subobj)),
-                                           owner(subobj),
-                                           pretty_name(subobj),
-                                           ' : '.join(nick(subobj)))).encode('utf-8'))
+            return [(('%s %s %s\t%s\t%s\n' % (pretty_effective_perms(self.protocol.interaction,
+                                                                     follow_symlinks(subobj)),
+                                              owner(subobj),
+                                              datetime.datetime.fromtimestamp(subobj.mtime).isoformat()
+                                                if not subobj.__transient__
+                                                else '         <transient>         ',
+                                              pretty_name(subobj),
+                                              ' : '.join(nick(subobj)))).encode('utf-8'))
                     for subobj in container]
 
         def make_short_lines(container):
@@ -310,6 +313,8 @@ class CatObjectCmd(Cmd):
                 in zip(model_to_dict(obj).items(), model_to_dict(obj, use_titles=True).keys())
                 if key in attrs or not attrs]
 
+        log.msg('data: %s' % data, system='cat-cmd')
+
         if data:
             max_title_len = max(len(title) for key, _, title in data)
             for key, value, title in data:
@@ -322,6 +327,8 @@ class CatObjectCmd(Cmd):
                     if not isinstance(value, tuple):
                         strings = sorted(strings)
                     pretty_value = ', '.join(strings)
+                elif key in ('mtime', 'ctime'):
+                    pretty_value = datetime.datetime.fromtimestamp(value).isoformat()
                 else:
                     pretty_value = value
                 self.write("%s\t%s\n" % ((title.encode('utf8') + ':').ljust(max_title_len),

@@ -148,7 +148,7 @@ class SshTestCase(unittest.TestCase):
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
-            t.write('a---r-v-x root\tby-name/\t\n')
+            t.write('a---r-v-x root          <transient>         \tby-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
@@ -178,6 +178,8 @@ class SshTestCase(unittest.TestCase):
         for folder in self.tlds:
             self._cmd('cat %s' % folder)
             with assert_mock(self.terminal) as t:
+                skip(t, 1)
+                skip(t, 1)
                 t.write("user@oms:/# ")
             self.terminal.reset_mock()
 
