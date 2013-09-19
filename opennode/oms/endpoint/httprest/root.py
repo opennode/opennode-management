@@ -7,6 +7,8 @@ from twisted.internet import defer
 from twisted.python import log, failure
 from twisted.web import resource
 from twisted.web.server import NOT_DONE_YET
+from twisted.python.compat import intToBytes
+
 from zope.component import queryAdapter, getUtility
 
 from opennode.oms.config import get_config
@@ -170,6 +172,8 @@ class HttpRestServer(resource.Resource):
             if ret is not NOT_DONE_YET and ret is not EmptyResponse:
                 request.setHeader('Content-Type', 'application/json')
                 json_data = json.dumps(ret, indent=2, cls=JsonSetEncoder)
+                
+                request.setHeader('Content-Length', intToBytes(len(json_data)))
                 request.write(json_data)
         except HttpStatus as exc:
             request.setResponseCode(exc.status_code, exc.status_description)
@@ -184,7 +188,9 @@ class HttpRestServer(resource.Resource):
         except Exception:
             request.setHeader('Content-Type', 'text/plain')
             request.setResponseCode(500, "Server Error")
-            request.write("%s %s\n\n" % (500, "Server Error"))
+            error_message = "%s %s\n\n" % (500, "Server Error")
+            request.setHeader('Content-Length', intToBytes(len(error_message)))
+            request.write(error_message)
             log.err(system='httprest')
             failure.Failure().printTraceback(request)
         finally:
