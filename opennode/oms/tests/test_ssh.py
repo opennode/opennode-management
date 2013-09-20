@@ -1,5 +1,5 @@
+import datetime
 import unittest
-
 import mock
 import transaction
 import zope.schema
@@ -153,14 +153,16 @@ class SshTestCase(unittest.TestCase):
             no_more_calls(t)
 
         computes = db.get_root()['oms_root']['computes']
-        cid = computes.add(self.make_compute())
+        compute = self.make_compute()
+        cid = computes.add(compute)
         transaction.commit()
 
         self.terminal.reset_mock()
         self._cmd('ls /computes -l')
         with assert_mock(self.terminal) as t:
-            t.write('a---r-v-x root\t%s@\t/machines/%s : tux-for-test\n' % (cid, cid))
-            t.write('a---r-v-x root\tby-name/\t\n')
+            t.write('a---r-v-x root %s\t%s@\t/machines/%s : tux-for-test\n' %
+                    (datetime.datetime.fromtimestamp(compute.mtime).isoformat(), cid, cid))
+            t.write('a---r-v-x root           <transient>        \tby-name/\t\n')
             skip(t, 1)
             no_more_calls(t)
 
