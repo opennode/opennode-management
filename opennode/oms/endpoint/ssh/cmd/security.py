@@ -376,7 +376,7 @@ class PasswdCmd(Cmd):
     @require_admins_or_same_user
     def execute(self, args):
         try:
-            update_passwd(args.u, password=args.password, group=args.g)
+            update_passwd(args.u or self.user.id, password=args.password, group=args.g)
         except UserManagementError as e:
             self.write('%s\n' % str(e))
 

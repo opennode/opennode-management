@@ -166,15 +166,6 @@ class SshTestCase(unittest.TestCase):
             skip(t, 1)
             no_more_calls(t)
 
-        # TODO: put back this when we find another leaf object.
-
-        #self.terminal.reset_mock()
-        #self._cmd('ls /computes/%s -l' % cid)
-        #with assert_mock(self.terminal) as t:
-        #    t.write('%s/\ttux-for-test\n' % cid)
-        #    skip(t, 1)
-        #    no_more_calls(t)
-
     @run_in_reactor
     def test_cat_folders(self):
         for folder in self.tlds:

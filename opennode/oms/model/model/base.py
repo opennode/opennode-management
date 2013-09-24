@@ -114,6 +114,10 @@ class Model(persistent.Persistent):
     _mtime = None
     _mtime_blacklist = ('inherit_permissions', 'owner', 'features', 'oid', 'metadata')
 
+    def __init__(self, *args, **kwargs):
+        self._ctime = self._mtime = time.time()
+        super(Model, self).__init__(self, *args, **kwargs)
+
     @property
     def ctime(self):
         if self._ctime is None:
