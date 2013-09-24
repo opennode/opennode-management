@@ -184,7 +184,8 @@ class SecurityTestCase(unittest.TestCase):
 class MockConfig(object):
 
     _settings = {'auth': {
-        'passwd_file': '/tmp/oms_passwd'
+        'passwd_file': '/tmp/oms_passwd',
+        'restricted_users': ''
     }}
 
     def get_base_dir(self):
