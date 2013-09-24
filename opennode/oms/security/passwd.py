@@ -51,7 +51,12 @@ def ensure_base_dir():
         os.chdir(basedir)
 
 
-def add_user(user, password, group=None, uid=None):
+def add_user(user, password, group=None, uid=None, force=False):
+    restricted_users = get_config().get('auth', 'restricted_users', '').split(',')
+
+    if user in map(string.strip, restricted_users) and not force:
+        raise UserManagementError('User %s is restricted! Adding permission denied!' % user)
+
     passwd_file = get_config().get('auth', 'passwd_file')
     with open(passwd_file) as f:
         for line in f:
@@ -74,8 +79,13 @@ def delete_user(user):
             f.write(line)
 
 
-def update_passwd(user, password=None, force_askpass=False, group=None):
+def update_passwd(user, password=None, force_askpass=False, group=None, force=False):
     passwd_file = get_config().get('auth', 'passwd_file')
+    restricted_users = get_config().get('auth', 'restricted_users', '').split(',')
+
+    if user in map(string.strip, restricted_users) and not force:
+        raise UserManagementError('User %s is restricted! Update permission denied!' % user)
+
     with open(passwd_file) as f:
         lines = f.readlines()
 
@@ -158,7 +168,7 @@ def run():
 
             print "ok"
         else:
-            update_passwd(args.user, args.s)
+            update_passwd(args.user, args.s, force=True)
     except UserManagementError as e:
         print e
         sys.exit(1)
