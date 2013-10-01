@@ -57,7 +57,7 @@ def add_user(user, password, group=None, uid=None, force=False):
     if user in map(string.strip, restricted_users) and not force:
         raise UserManagementError('User %s is restricted! Adding permission denied!' % user)
 
-    passwd_file = get_config().get('auth', 'passwd_file')
+    passwd_file = get_config().getstring('auth', 'passwd_file')
     with open(passwd_file) as f:
         for line in f:
             if line.startswith(user + ':'):
@@ -81,7 +81,7 @@ def delete_user(user):
 
 def update_passwd(user, password=None, force_askpass=False, group=None, force=False):
     passwd_file = get_config().get('auth', 'passwd_file')
-    restricted_users = get_config().get('auth', 'restricted_users').split(',')
+    restricted_users = get_config().getstring('auth', 'restricted_users', '').split(',')
 
     if user in map(string.strip, restricted_users) and not force:
         raise UserManagementError('User %s is restricted! Update permission denied!' % user)
