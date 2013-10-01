@@ -194,6 +194,14 @@ class MockConfig(object):
     def get(self, key, inkey):
         return self._settings[key][inkey]
 
+    def getstring(self, key, inkey, default=object()):
+        try:
+            return self._settings[key][inkey]
+        except KeyError:
+            if default is not self.NO_DEFAULT:
+                return default
+            raise
+
 
 config = MockConfig()
 
