@@ -66,7 +66,9 @@ def gen_config_file_names(module, name):
                                './opennode-%s.conf',
                                './%s.conf',
                                '/etc/opennode/opennode-%s.conf',
-                               '/etc/opennode/%s.conf'
+                               '/etc/opennode/%s.conf',
+                               # OMS config can always override module-specific settings
+                               '/etc/opennode/oms.conf',
                               ]]
 
 
