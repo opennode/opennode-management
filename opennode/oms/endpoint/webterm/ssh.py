@@ -172,7 +172,7 @@ class ShellChannel(channel.SSHChannel):
         def on_success(ignored):
             if self.conn.command:
                 self.conn.sendRequest(self, 'exec',
-                                      common.NS(self.conn.command),
+                                      common.NS(str(self.conn.command)),
                                       wantReply=1)
             else:
                 self.conn.sendRequest(self, 'shell', '', wantReply=1)
