@@ -5,7 +5,7 @@ import sys
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
-from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder
+from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder, Bool
 from zope.schema.interfaces import IFromUnicode
 from zope.security.proxy import removeSecurityProxy
 from zope.security.interfaces import Unauthorized
@@ -100,6 +100,17 @@ class DictFromUnicode(Adapter):
                     IFromUnicode(self.context.value_type).fromUnicode(unicode(v)))
 
         return self.context._type([convert(k, v) for k, v in res.items()])
+
+
+class BoolFromUnicode(Adapter):
+    implements(IFromUnicode)
+    context(Bool)
+
+    def fromUnicode(self, value):
+        if type(value) is bool:
+            return value
+
+        return (value in ('True', 'true'))
 
 
 def model_to_dict(obj, use_titles=False, use_fields=False):

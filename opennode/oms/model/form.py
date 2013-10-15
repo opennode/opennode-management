@@ -81,7 +81,7 @@ class RawDataValidator(object):
             from_unicode = IFromUnicode(field)
 
             try:
-                if not raw_value and field.required:
+                if raw_value is None and field.required:
                     raise RequiredMissing(name)
 
                 try:
