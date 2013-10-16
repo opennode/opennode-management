@@ -44,7 +44,7 @@ class RawDataValidator(object):
 
         if self.fields:
             raw_data = dict(self.data)
-            errors = self._validate_fields(raw_data, errors)
+            errors.extend(self._validate_fields(raw_data))
             if raw_data:
                 for key in raw_data:
                     errors.append((key, UnknownAttribute()))
@@ -64,7 +64,8 @@ class RawDataValidator(object):
         self._errors = errors
         return errors
 
-    def _validate_fields(self, raw_data, errors):
+    def _validate_fields(self, raw_data):
+        errors = []
         for name, field, schema in self.fields:
             if name not in raw_data:
                 continue
@@ -80,7 +81,7 @@ class RawDataValidator(object):
             from_unicode = IFromUnicode(field)
 
             try:
-                if not raw_value and field.required:
+                if raw_value is None and field.required:
                     raise RequiredMissing(name)
 
                 try:

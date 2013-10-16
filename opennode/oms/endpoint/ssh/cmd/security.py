@@ -58,6 +58,20 @@ def require_admins_only(f):
     return _require_admins_only
 
 
+def require_admins_only_action(f):
+    @functools.wraps(f)
+    def _require_admins_only_action(self, cmd, args):
+        principals = map(lambda p: p.id, effective_principals(cmd.user))
+
+        if 'admins' not in principals:
+            cmd.write('Permission denied: admins not in effective permissions: %s\n'
+                       % ', '.join(principals))
+            return
+
+        return f(self, cmd, args)
+    return _require_admins_only_action
+
+
 def require_admins(allow_same_user=False):
     if not allow_same_user:
         return require_admins_only
