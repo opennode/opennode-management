@@ -1,27 +1,38 @@
 import json
-import hmac
 import logging
-import time
 
-from base64 import urlsafe_b64encode as encodestring, urlsafe_b64decode as decodestring
 from grokcore.component import GlobalUtility, context, name
 from grokcore.security import require
 from twisted.internet import defer
 from twisted.cred.credentials import UsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.web.guard import BasicCredentialFactory
+from twisted.python.components import registerAdapter
+from twisted.web.server import Session
 from zope.component import getUtility
-from zope.interface import Interface, implements
+from zope.interface import Interface, implements, Attribute
 
-from opennode.oms.config import get_config
 from opennode.oms.model.model.root import OmsRoot
 from opennode.oms.endpoint.httprest.base import HttpRestView
 from opennode.oms.endpoint.httprest.root import BadRequest, Unauthorized, Forbidden
-from opennode.oms.security.authentication import checkers, KeystoneChecker
+from opennode.oms.security.authentication import checkers
 from opennode.oms.util import blocking_yield
 
 
 log = logging.getLogger(__name__)
+
+
+class ISessionStorage(Interface):
+    username = Attribute("A username to be stored in a session object")
+
+
+class SessionStorage(object):
+    implements(ISessionStorage)
+
+    def __init__(self, session, username='oms.anonymous'):
+        self.username = username
+
+registerAdapter(SessionStorage, Session, ISessionStorage)
 
 
 class IHttpRestAuthenticationUtility(Interface):
@@ -34,38 +45,14 @@ class IHttpRestAuthenticationUtility(Interface):
         throws HttpStatus exceptions in case of failure. Returns a deferred.
 
         """
-
-    # XXX: use a principal instead of the credentials
-    def generate_token(self, credentials):
-        """Generates a secure token for the given credentials"""
-
-    def get_principal(self, token):
-        """Retrieves a principal for a token"""
+    def get_twisted_session(request):
+        """Returns twisted session object for a given request if it's not expired"""
 
 
 class HttpRestAuthenticationUtility(GlobalUtility):
     implements(IHttpRestAuthenticationUtility)
 
     realm = 'OMS'
-
-    token_key = get_config().get('auth', 'token_key')
-
-    def get_token(self, request):
-        cookie = request.getCookie('oms_auth_token')
-        if cookie:
-            return cookie
-
-        header = request.getHeader('X-OMS-Security-Token')
-        if header:
-            return header
-
-        param = request.args.get('security_token', [None])[0]
-        if param:
-            return param
-
-    def emit_token(self, request, token):
-        request.addCookie('oms_auth_token', token, path='/')
-        request.responseHeaders.addRawHeader('X-OMS-Security-Token', token)
 
     def get_basic_auth_credentials(self, request):
         basic_auth = request.requestHeaders.getRawHeaders('Authorization', [None])[0]
@@ -76,83 +63,43 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             except:
                 raise BadRequest("The Authorization header was not parsable")
 
-    def get_keystone_auth_credentials(self, request):
-        keystone_token = request.requestHeaders.getRawHeaders('X-Auth-Token', [None])[0]
-        log.info('Detected keystone token')
-        log.debug('Token: %s' % keystone_token)
-        return keystone_token
+    def get_twisted_session(self, request):
+        cookiename = b"_".join([b'TWISTED_SESSION'] + request.sitepath)
+        sessionCookie = request.getCookie(cookiename)
+        if sessionCookie:
+            try:
+                session = request.site.getSession(sessionCookie)
+            except KeyError:
+                return None
+            else:
+                session.touch()
+                return session
 
     @defer.inlineCallbacks
     def authenticate(self, request, credentials, basic_auth=False):
-        avatar = None
         if credentials:
             for i in checkers():
                 try:
                     log.debug('Authenticating using %s on %s' % (i, credentials.username))
                     avatar = yield i.requestAvatarId(credentials)
-                    break
+                    if avatar:
+                        session = request.getSession()
+                        ISessionStorage(session).username = credentials.username
+                        log.debug('Authentication successful using %s on %s!' % (i, credentials.username))
+                        defer.returnValue({'status': 'success'})
+                        return
                 except UnauthorizedLogin:
                     log.warning('Authentication failed with %s on %s!' % (i, credentials.username))
                     continue
-                else:
-                    log.debug('Authentication successful using %s on %s!' % (i, credentials.username))
-
-        if avatar:
-            token = self.generate_token(credentials)
-            self.emit_token(request, token)
-            defer.returnValue({'status': 'success', 'token': token})
-        else:
-            if basic_auth:
-                raise Unauthorized({'status': 'failed'})
-            else:
-                raise Forbidden({'status': 'failed'})
-
-    @defer.inlineCallbacks
-    def authenticate_keystone(self, request, keystone_token):
-        log.debug('Keystone token: %s' % keystone_token)
-        avatar = None
-        try:
-            # avatar will be username from the keystone token info
-            avatar = yield KeystoneChecker().requestAvatarId(keystone_token)
-        except UnauthorizedLogin:
-            log.warning('Authentication failed with Keystone token')
-            log.debug('Token: %s' % keystone_token, exc_info=True)
-            
-        if avatar:
-            # emulate OMS behaviour - to allow switchover to OMS-based clients
-            token = self._generate_token(avatar)
-            self.emit_token(request, token)
-            defer.returnValue({'status': 'success', 'token': token})
-        else:
+        # Credentials are not provided, still there might be a valid session
+        session = self.get_twisted_session(request)
+        if session:
+            defer.returnValue({'status': 'success'})
+            return
+        if basic_auth:
             raise Unauthorized({'status': 'failed'})
-
-    def generate_token(self, credentials):
-        return self._generate_token(credentials.username)
-
-    def _generate_token(self, username):
-        # TODO: register sessions
-        head = '%s:%s' % (username, int(time.time() * 1000))
-        signature = hmac.new(self.token_key, head).digest()
-        return encodestring('%s;%s' % (head, signature)).strip()
-
-    def get_principal(self, token):
-        if not token:
-            return 'oms.anonymous'
-
-        head, signature = decodestring(token).split(';', 1)
-        if signature != hmac.new(self.token_key, head).digest():
-            raise Forbidden("Invalid authentication token")
-
-        user, timestamp = head.split(':')
-        if int(timestamp) / 1000.0 + get_config().getint('auth', 'token_ttl') < time.time():
-            raise Forbidden("Expired authentication token (%s s ago)" %
-                            (time.time() - int(timestamp) / 1000.0))
-
-        return user
-
-    def renew_token(self, request, token):
-        new_token = self._generate_token(self.get_principal(token))
-        self.emit_token(request, new_token)
+        else:
+            raise Forbidden({'status': 'failed'})
 
 
 class AuthView(HttpRestView):
@@ -181,7 +128,7 @@ class AuthView(HttpRestView):
             try:
                 params = json.loads(body)
             except ValueError:
-                raise BadRequest("The request body not JSON-parsable")
+                raise BadRequest("The request body is not JSON-parsable")
 
             # cannot be unicode
             username = str(params['username'])
@@ -192,9 +139,10 @@ class AuthView(HttpRestView):
             credentials = authentication_utility.get_basic_auth_credentials(request)
 
         # if already authenticated, return success even if the request didn't provide auth credentials
-        if not credentials and request.interaction.checkPermission('rest', object):
+        session = authentication_utility.get_twisted_session(request)
+        if not credentials and session:
+            log.debug('Authentication successful reusing valid session for %s!' % ISessionStorage(session).username)
             return {'status': 'success'}
-
         # XXX: refactor HttpRestServer.handle_request so that it's not a db.transact
         # so that we can use a defer.inlineCallback here
         return blocking_yield(authentication_utility.authenticate(request, credentials, basic_auth))
@@ -207,7 +155,10 @@ class LogoutView(HttpRestView):
     realm = 'OMS'
 
     def render_GET(self, request):
-        request.addCookie('oms_auth_token', '', expires='Wed, 01 Jan 2000 00:00:00 GMT')
+        authentication_utility = getUtility(IHttpRestAuthenticationUtility)
+        session = authentication_utility.get_twisted_session(request)
+        if session:
+            session.expire()
         return {'status': 'success'}
 
 
