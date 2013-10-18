@@ -149,7 +149,7 @@ class Model(persistent.Persistent):
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
         if principal is not None and principal.id != oldowner:
-            handle(self, OwnerChangedEvent(oldowner, principal))
+            handle(self, OwnerChangedEvent(oldowner, principal.id))
 
     def get_owner(self):
         prinrole = interfaces.IPrincipalRoleManager(self)
