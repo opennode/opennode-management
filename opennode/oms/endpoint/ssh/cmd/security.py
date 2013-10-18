@@ -405,6 +405,7 @@ class ChownCmd(Cmd):
         parser.add_argument('paths', nargs='+', help='List of paths')
         parser.add_argument('-R', '--recursive', action='store_true',
                             help='Change ownership recursively', default=False, required=False)
+        parser.add_argument('-l', '--limit', type=int, default=5, help='Recursion limit (default=5)')
         return parser
 
     @require_admins_only
@@ -417,7 +418,7 @@ class ChownCmd(Cmd):
             self.write('No such user: %s\n' % (args.user))
             return
 
-        def set_owner(path):
+        def set_owner(path, level):
             target = self.traverse(path)
 
             if not target:
@@ -430,13 +431,13 @@ class ChownCmd(Cmd):
 
             target.__owner__ = principal
 
-            if IContainer.providedBy(target) and args.recursive:
+            if IContainer.providedBy(target) and args.recursive and level < args.limit:
                 for item in target.listcontent():
-                    set_owner(os.path.join(path, item.__name__))
+                    set_owner(os.path.join(path, item.__name__), level + 1)
 
         @db.transact
         def set_owner_all():
             for path in args.paths:
-                set_owner(path)
+                set_owner(path, 0)
 
         yield set_owner_all()
