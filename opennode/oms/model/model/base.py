@@ -229,7 +229,7 @@ class SuppressEvents(object):
     def __enter__(self):
         setattr(self.model, '__supress_events', True)
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         delattr(self.model, '__suppress_events')
 
 
