@@ -144,11 +144,12 @@ class Model(persistent.Persistent):
 
     def set_owner(self, principal):
         prinrole = interfaces.IPrincipalRoleManager(self)
-        prinrole.unsetRoleForPrincipal('owner', self.__owner__)
+        oldowner = self.__owner__
+        prinrole.unsetRoleForPrincipal('owner', oldowner)
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
-        if principal is not None and principal.id != self.__owner__:
-            handle(self, OwnerChangedEvent(self.__owner__, principal))
+        if principal is not None and principal.id != oldowner:
+            handle(self, OwnerChangedEvent(oldowner, principal))
 
     def get_owner(self):
         prinrole = interfaces.IPrincipalRoleManager(self)
