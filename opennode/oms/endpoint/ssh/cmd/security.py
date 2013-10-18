@@ -406,6 +406,8 @@ class ChownCmd(Cmd):
         parser.add_argument('-R', '--recursive', action='store_true',
                             help='Change ownership recursively', default=False, required=False)
         parser.add_argument('-l', '--limit', type=int, default=5, help='Recursion limit (default=5)')
+        parser.add_argument('-q', '--quiet', action='store_true', help='Supress console warnings about '
+                            'transient objects')
         return parser
 
     @require_admins_only
@@ -426,7 +428,8 @@ class ChownCmd(Cmd):
                 return
 
             if target.__transient__:
-                self.write("Transient object %s cannot have its owner changed\n" % path)
+                if not args.quiet:
+                    self.write("Transient object %s cannot have its owner changed\n" % path)
                 return
 
             target.__owner__ = principal
