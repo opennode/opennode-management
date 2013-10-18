@@ -148,7 +148,7 @@ class Model(persistent.Persistent):
         prinrole.unsetRoleForPrincipal('owner', oldowner)
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
-        if (not getattr(self, '__suppress_events', False) and
+        if (not hasattr(self, '__suppress_events') and
                 principal is not None and principal.id != oldowner):
             handle(self, OwnerChangedEvent(oldowner, principal.id))
 
@@ -227,7 +227,7 @@ class SuppressEvents(object):
         self.model = model
 
     def __enter__(self):
-        setattr(self.model, '__supress_events', True)
+        setattr(self.model, '__suppress_events', True)
 
     def __exit__(self, exc_type, exc_value, traceback):
         delattr(self.model, '__suppress_events')
@@ -363,7 +363,7 @@ class AddingContainer(ReadonlyContainer):
         old_parent = item.__parent__
         res = self._add(item)
 
-        if not getattr(self, '__suppress_events', False):
+        if not hasattr(self, '__suppress_events'):
             if old_parent is not None and old_parent is not self:
                 handle(item, ModelMovedEvent(item.__parent__, self))
             else:
