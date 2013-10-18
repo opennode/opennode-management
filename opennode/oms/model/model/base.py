@@ -148,7 +148,8 @@ class Model(persistent.Persistent):
         prinrole.unsetRoleForPrincipal('owner', oldowner)
         prinrole.assignRoleToPrincipal('owner', principal.id)
 
-        if principal is not None and principal.id != oldowner:
+        if (not getattr(self, '__suppress_events', False) and
+                principal is not None and principal.id != oldowner):
             handle(self, OwnerChangedEvent(oldowner, principal.id))
 
     def get_owner(self):
@@ -219,6 +220,17 @@ class Model(persistent.Persistent):
             # useful debug info, but very verbose
             #logger.debug('setattr: %s: %s' % (self, name))
             self._mtime = time.time()
+
+
+class SuppressEvents(object):
+    def __init__(self, model):
+        self.model = model
+
+    def __enter__(self):
+        setattr(self.model, '__supress_events', True)
+
+    def __exit__(self):
+        delattr(self.model, '__suppress_events')
 
 
 class IContainerExtender(Interface):
@@ -351,10 +363,11 @@ class AddingContainer(ReadonlyContainer):
         old_parent = item.__parent__
         res = self._add(item)
 
-        if old_parent is not None and old_parent is not self:
-            handle(item, ModelMovedEvent(item.__parent__, self))
-        else:
-            handle(item, ModelCreatedEvent(self))
+        if not getattr(self, '__suppress_events', False):
+            if old_parent is not None and old_parent is not self:
+                handle(item, ModelMovedEvent(item.__parent__, self))
+            else:
+                handle(item, ModelCreatedEvent(self))
         return res
 
     def rename(self, old_name, new_name):
