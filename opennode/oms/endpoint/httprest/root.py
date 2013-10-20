@@ -15,7 +15,6 @@ from opennode.oms.endpoint.httprest.base import IHttpRestView, IHttpRestSubViewF
 from opennode.oms.model.traversal import traverse_path
 from opennode.oms.security.checker import proxy_factory
 from opennode.oms.security.interaction import new_interaction
-from opennode.oms.util import blocking_yield
 from opennode.oms.util import JsonSetEncoder
 from opennode.oms.zodb import db
 
@@ -74,8 +73,7 @@ class Unauthorized(HttpStatus):
     status_code = 401
     status_description = "Authorization Required"
 
-    headers = {'WWW-Authenticate': 'Basic realm=OMS',
-               'Set-Cookie': 'oms_auth_token=;expires=Wed, 01 Jan 2000 00:00:00 GMT'}
+    headers = {'WWW-Authenticate': 'Basic realm=OMS'}
 
 
 class Forbidden(HttpStatus):
@@ -196,14 +194,12 @@ class HttpRestServer(resource.Resource):
                 request.finish()
 
     def check_auth(self, request):
-        from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
+        from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility, ISessionStorage
 
         authenticator = getUtility(IHttpRestAuthenticationUtility)
-        http_credentials = authenticator.get_basic_auth_credentials(request)
-
-        if http_credentials:
-            blocking_yield(authenticator.authenticate(request, http_credentials,
-                                                      basic_auth=True))
+        session = authenticator.get_twisted_session(request)
+        if session:
+            return ISessionStorage(session).username
 
     def find_view(self, obj, unresolved_path, request):
 
@@ -221,7 +217,6 @@ class HttpRestServer(resource.Resource):
 
         if not subview:
             raise NotFound
-
         return subview
 
     @db.transact
@@ -229,7 +224,7 @@ class HttpRestServer(resource.Resource):
         """Takes a request, maps it to a domain object and a corresponding IHttpRestView
         and returns the rendered output of that view.
         """
-        self.check_auth(request)
+        principal = self.check_auth(request)
 
         oms_root = db.get_root()['oms_root']
         objs, unresolved_path = traverse_path(oms_root, request.path[1:])
@@ -239,7 +234,7 @@ class HttpRestServer(resource.Resource):
 
         obj = objs[-1]
 
-        interaction = self.get_interaction(request)
+        interaction = self.get_interaction(request, principal)
         request.interaction = interaction
 
         if self.use_security_proxy:
@@ -263,39 +258,26 @@ class HttpRestServer(resource.Resource):
             try:
                 return getattr(view, method, None)
             except zope.security.interfaces.Unauthorized:
-                from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility
-                auth_util = getUtility(IHttpRestAuthenticationUtility)
-                if not auth_util.get_basic_auth_credentials(request):
-                    raise Forbidden('User does not have permission to access this resource')
-                raise Unauthorized()
+                raise Forbidden('User does not have permission to access this resource')
 
         for method in ('render_' + request.method,
                        'render_' + request.method.lower(),
                        'render'):
-
             renderer = get_renderer(view, method)
             if renderer:
-                res = renderer(request)
+                from opennode.oms.endpoint.httprest.auth import AuthView
+                if isinstance(view, AuthView) and renderer.__name__ == 'render':
+                    res = renderer(request, self.use_keystone_tokens)
+                else:
+                    res = renderer(request)
                 return res if needs_rw_transaction else db.RollbackValue(res)
 
         raise NotImplementedError("Method %s is not implemented in %s\n" % (request.method, view))
 
-    def get_interaction(self, request):
+    def get_interaction(self, request, principal='oms.anonymous'):
         # TODO: we can quickly disable rest auth
         # if get_config().getboolean('auth', 'enable_anonymous'):
         #     return None
-
-        from opennode.oms.endpoint.httprest.auth import IHttpRestAuthenticationUtility, ISessionStorage
-
-        authenticator = getUtility(IHttpRestAuthenticationUtility)
-        session = authenticator.get_twisted_session(request)
-
-        if session:
-            principal = ISessionStorage(session).username
-        else:
-            principal = 'oms.anonymous'
-
         if request.method == 'OPTIONS':
             principal = 'oms.rest_options'
-
         return new_interaction(principal)
