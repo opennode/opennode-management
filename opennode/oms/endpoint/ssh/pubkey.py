@@ -18,8 +18,12 @@ class InMemoryPublicKeyCheckerDontUse(SSHPublicKeyDatabase):
     def checkKey(self, credentials):
         """Accepts any user name"""
         log.msg('Checking key for creds: %s' % credentials, system='ssh-pubkey', logLevel=DEBUG)
-        home = os.environ["HOME"]
-        with open('%s/.ssh/authorized_keys' % home) as f:
+        home = os.environ("HOME")
+        if home is not None:
+            key_path = '%s/.ssh/authorized_keys' % home
+        else:
+            key_path = '/etc/opennode/authorized_keys'
+        with open(key_path) as f:
             for key in f:
                 if self._checkKey(credentials, key):
                     log.msg('Check success, found matching key', system='ssh-pubkey', logLevel=DEBUG)
