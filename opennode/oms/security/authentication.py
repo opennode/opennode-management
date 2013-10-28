@@ -84,7 +84,7 @@ class KeystoneChecker(object):
 
     def validate_and_parse_keystone_token(self, cms_token):
         """Validate Keystone CMS token.
-        
+
         Partially taken from Keystone's common/cms.py module."""
         signing_cert_file_name = get_config().get('keystone', 'signing_cert_file_name')
         ca_file_name = get_config().get('keystone', 'ca_file_name')

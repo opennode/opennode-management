@@ -1,12 +1,13 @@
 from collections import OrderedDict
 import logging
+import re
 import sys
 
 from grokcore.component import context, Adapter, baseclass
 from zope.component import getSiteManager, implementedBy
 from zope.interface import implements
-from zope.schema import TextLine, List, Set, Tuple, Dict, getFieldsInOrder, Bool
-from zope.schema.interfaces import IFromUnicode
+from zope.schema import DottedName, TextLine, List, Set, Tuple, Dict, getFieldsInOrder, Bool
+from zope.schema.interfaces import IFromUnicode, InvalidDottedName
 from zope.security.proxy import removeSecurityProxy
 from zope.security.interfaces import Unauthorized
 
@@ -14,6 +15,34 @@ from opennode.oms.util import get_direct_interfaces
 
 
 log = logging.getLogger(__name__)
+
+
+_isdotted = re.compile(
+    r"([a-zA-Z][a-zA-Z0-9_-]*)"
+    r"([.][a-zA-Z][a-zA-Z0-9_-]*)*"
+    # use the whole line
+    r"$").match
+
+
+class InvalidRestrictedHostname(InvalidDottedName):
+    pass
+
+
+class RestrictedHostname(DottedName):
+
+    def __init__(self, *args, **kwargs):
+        super(RestrictedHostname, self).__init__(*args, **kwargs)
+
+    def _validate(self, value):
+        # Not a mistake: we want the TextLine validation, but not the original DottedName validation
+        super(DottedName, self)._validate(value)
+        if not _isdotted(value):
+            raise InvalidRestrictedHostname(value)
+        dots = value.count(".")
+        if dots < self.min_dots:
+            raise InvalidDottedName("too few dots; %d required" % self.min_dots, value)
+        if self.max_dots is not None and dots > self.max_dots:
+            raise InvalidDottedName("too many dots; no more than %d allowed" % self.max_dots, value)
 
 
 class Path(TextLine):
