@@ -25,7 +25,9 @@ _isdotted = re.compile(
 
 
 class InvalidRestrictedHostname(InvalidDottedName):
-    pass
+
+    def __init__(self, *args, **kw):
+        super(InvalidRestrictedHostname, self).__init__(*args, **kw)
 
 
 class RestrictedHostname(DottedName):
