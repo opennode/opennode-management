@@ -1,5 +1,5 @@
 OpenNode Management Service
----------------------------
+===========================
 
 OpenNode Management Service (OMS) is a modular framework for creating management applications. Its initial target was
 hosting the OMS [Knot cloud management platform](https://github.com/opennode/opennode-knot).
@@ -7,28 +7,73 @@ hosting the OMS [Knot cloud management platform](https://github.com/opennode/ope
 OMS main documentation is generated and can be [viewed online](http://opennodecloud.com/docs/opennode.oms.core/index.html).
 
 Requirements
-============
+------------
 
-Currently the only requirement is Python 2.7.
+Currently the only requirements are Python 2.7, its headers, GCC and GNU Make.
 
-On Mac OS X, Python 2.7 can be installed either manually, using
-MacPorts by running `sudo port install python27`, or using Homebrew by
-running `brew install python`.
+### Mac OS X
 
-Setup
-=====
+1. Install Python 2.7 in one of the ways:
 
-1. `git clone git@github.com:opennode/opennode-management.git`.
+    * using MacPorts
 
-2. Boostrap buildout: `python boostrap.py -v 1.7.0`
+            sudo port install python27
+        
+    * using Homebrew
 
-3. Run buildout: `bin/buildout`
+            brew install python
 
-4. Setup user accounts with the `bin/passwd` utility
+    * manually
 
-5. Start the Twisted twistd server on port 8080 by executing
-   `bin/omsd`
+### Ubuntu
 
+On Ubuntu Python 2.7 is shipped out of the box, so no installation is needed.
+
+1. Install build tools:
+
+        sudo apt-get install --yes g++ make
+
+2. Install Python headers:
+
+        sudo apt-get install --yes python-dev
+
+
+Building
+========
+
+1. Get the code:
+
+        git clone git@github.com:opennode/opennode-management.git
+
+2. Boostrap buildout:
+
+        cd opennode-management
+        python bootstrap.py -v 2.1.1
+
+3. Run buildout:
+
+        bin/buildout
+
+__Note:__ Steps 2 and 3 may fail with timeout error. It happens due to heavy load on PyPi package repository. It is safe to repeat the failed command once again.
+
+__Note:__ Steps 1 and 2 must be done only once. The 3rd one must be done each time `buildout.cfg` gets changed.
+
+Running
+=======
+
+1. Setup user accounts with the `bin/omspasswd` utility:
+
+        bin/omspasswd -g admins -a john
+        bin/omspasswd -g users -a jane
+
+2. Start OpenNode Management Service:
+
+        bin/omsd
+
+3. It should be possible to log into OMS shell using credentials specified in 1st step:
+
+        ssh -l john localhost -p 6022
+    
 Testing
 =======
 
