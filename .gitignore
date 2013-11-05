@@ -35,6 +35,9 @@ oms.db
 twistd.pid
 *.log
 
+# Virtualenv
+venv
+
 # Misc
 .*.swp
 *.orig

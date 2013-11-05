@@ -29,6 +29,8 @@ Currently the only requirements are Python 2.7, its headers, GCC and GNU Make.
 
 On Ubuntu Python 2.7 is shipped out of the box, so no installation is needed.
 
+To work-around version incompatibility between system-wide setuptools and the one needed for buildout, virtualenv is needed. This work-around, though, results in a warning `BROKEN_DASH_S_WARNING` each time a script in `bin/` is run. It can be safely ignored.
+
 1. Install build tools:
 
         sudo apt-get install --yes g++ make
@@ -37,6 +39,9 @@ On Ubuntu Python 2.7 is shipped out of the box, so no installation is needed.
 
         sudo apt-get install --yes python-dev
 
+3. Install Virtualenv:
+
+        sudo apt-get install --yes python-virtualenv
 
 Building
 ========
@@ -44,19 +49,31 @@ Building
 1. Get the code:
 
         git clone git@github.com:opennode/opennode-management.git
+        cd opennode-management
 
 2. Boostrap buildout:
 
-        cd opennode-management
-        python bootstrap.py -v 2.1.1
+    * Without Virtualenv:
+
+            python bootstrap.py -v 1.7.0
+
+    * With Virtualenv:
+
+            virtualenv --setuptools venv
+            venv/bin/pip install setuptools==1.3
+            venv/bin/python bootstrap.py -v 1.7.0
 
 3. Run buildout:
 
         bin/buildout
 
+4. Restrict access to Python egg cache to avoid future warnings:
+
+        chmod go-rwx -R $HOME/.python-eggs
+
 __Note:__ Steps 2 and 3 may fail with timeout error. It happens due to heavy load on PyPi package repository. It is safe to repeat the failed command once again.
 
-__Note:__ Steps 1 and 2 must be done only once. The 3rd one must be done each time `buildout.cfg` gets changed.
+__Note:__ Steps 1, 2 and 4 must be done only once. The 3rd one must be done each time `buildout.cfg` gets changed.
 
 Running
 =======
