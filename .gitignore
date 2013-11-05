@@ -1,14 +1,11 @@
+# Eclipse/PyDev
 .project
 .pydevproject
-*.log
-.coverage
-*.pyc
-twistd.pid
-oms.db
-*~
-/db/
+
+# Max OS
 .DS_Store
-/db_*
+
+# Buildout
 *.egg-info
 *.egg
 RELEASE-VERSION
@@ -18,6 +15,9 @@ eggnest/*.cfg
 parts
 bin
 .installed.cfg
+.mr.developer.cfg
+
+# Build and run artifacts
 docs/Makefile
 docs/make.bat
 docs/html
@@ -25,7 +25,21 @@ docs/doctrees
 installer/oms_roles
 installer/oms_passwd
 installer/omsdrc
-.mr.developer.cfg
 build
+.coverage
+
+*.pyc
+oms.db
+/db/
+/db_*
+twistd.pid
+*.log
+
+# Virtualenv
+venv
+
+# Misc
 .*.swp
 *.orig
+*~
+
