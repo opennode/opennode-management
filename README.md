@@ -14,15 +14,12 @@ Currently the only requirements are Python 2.7, its headers, GCC and GNU Make.
 ### Mac OS X
 
 1. Install Python 2.7 in one of the ways:
-
     * using MacPorts
 
             sudo port install python27
-        
     * using Homebrew
 
             brew install python
-
     * manually
 
 ### Ubuntu
@@ -52,11 +49,9 @@ Building
         cd opennode-management
 
 2. Boostrap buildout:
-
     * Without Virtualenv:
 
             python bootstrap.py -v 1.7.0
-
     * With Virtualenv:
 
             virtualenv --setuptools venv
