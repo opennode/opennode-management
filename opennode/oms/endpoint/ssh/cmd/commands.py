@@ -17,7 +17,7 @@ from zope.security.proxy import removeSecurityProxy
 from opennode.oms.endpoint.ssh.editor import Editor
 from opennode.oms.endpoint.ssh.editable import IEditable
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
-from opennode.oms.endpoint.ssh.cmd.security import pretty_effective_perms
+from opennode.oms.endpoint.ssh.cmd.security import pretty_effective_perms, require_admins_only
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
                                                GroupDictAction, VirtualConsoleArgumentParser)
@@ -473,14 +473,31 @@ class SetAttrCmd(Cmd):
                 for key, value in raw_data.items():
                     self.write("Setting %s=%s\n" % (key, value))
 
-            form = RawDataApplier(raw_data, obj)
+            if getattr(args, 'admin', False):
+                setattr(obj, '_admin_access', True)
 
-            if not form.errors:
-                form.apply()
-            else:
-                form.write_errors(to=self)
+            try:
+                form = RawDataApplier(raw_data, obj)
+
+                if not form.errors:
+                    form.apply()
+                else:
+                    form.write_errors(to=self)
+            finally:
+                if hasattr(obj, '_admin_access'):
+                    delattr(obj, '_admin_access')
 
         yield apply()
+
+
+class AdminSetAttrCmd(SetAttrCmd):
+
+    command('suset')
+
+    @require_admins_only
+    def execute(self, args):
+        args.admin = True
+        return super(AdminSetAttrCmd, self).execute(args)
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
@@ -845,7 +862,8 @@ class TaskListCmd(Cmd):
             tasks = Proc().dead_tasks
 
         max_key_len = max(3, *[len(i) for i in Proc().content().keys()])
-        max_user_len = max(3, *[len(i.principal.id) for i in Proc().content().values() if getattr(i, 'principal', None)])
+        max_user_len = max(3, *[len(i.principal.id) for i in Proc().content().values()
+                                if getattr(i, 'principal', None)])
 
         self.write("%s    %s%s TIME CMD\n" % ("TID".rjust(max_key_len),
                                            "PTID    ".rjust(max_key_len) if args.l else '',

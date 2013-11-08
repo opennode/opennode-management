@@ -1,3 +1,4 @@
+import functools
 import persistent
 import time
 import logging
@@ -12,6 +13,7 @@ from zope.interface import implements, directlyProvidedBy, Interface, Attribute
 from zope.interface.interface import InterfaceClass
 from zope.schema.interfaces import IContextSourceBinder
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
+from zope.security.interfaces import ForbiddenAttribute
 from zope.security.proxy import removeSecurityProxy
 from zope.securitypolicy import interfaces
 
@@ -91,11 +93,19 @@ class IMarkable(Interface):
                           value_type=schema.Choice(source=MarkerSourceBinder()))
 
 
-
 class ITimestamp(Interface):
     """ Mixin schema for additional mtime/ctime attributes """
     ctime = schema.Float(title=u'Created', required=True)
     mtime = schema.Float(title=u"Last modified", required=False)
+
+
+def require_admins(f):
+    @functools.wraps(f)
+    def _require_admins(self, *args):
+        if not getattr(self, '_admin_access', False):
+            raise ForbiddenAttribute((f, self))
+        return f(self, *args)
+    return _require_admins
 
 
 class Model(persistent.Persistent):
