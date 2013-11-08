@@ -150,8 +150,10 @@ def model_to_dict(obj, use_titles=False, use_fields=False):
             key = key.encode('utf8')
         else:
             key = field.title
+
         try:
-            data[key] = field.get(schema(obj))
+            schema_d = schema(obj)
+            data[key] = field.get(schema_d)
         except Unauthorized:
             # skip field
             got_unauthorized = True

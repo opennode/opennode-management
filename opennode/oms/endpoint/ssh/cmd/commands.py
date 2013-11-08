@@ -291,6 +291,7 @@ class CatObjectCmd(Cmd):
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
+    ## XXX: why transact and not ro_transact???
     @db.transact
     def execute(self, args):
         attrs = []
