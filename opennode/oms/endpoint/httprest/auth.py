@@ -90,12 +90,10 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                 try:
                     log.debug('Authenticating using %s on %s' % (i, credentials.username))
                     avatar = yield i.requestAvatarId(credentials)
+                    log.debug('Authentication successful using %s on %s!' % (i, credentials.username))
                     break
                 except UnauthorizedLogin:
                     log.warning('Authentication failed with %s on %s!' % (i, credentials.username))
-                    continue
-                else:
-                    log.debug('Authentication successful using %s on %s!' % (i, credentials.username))
 
         if avatar:
             token = self.generate_token(credentials)
