@@ -17,6 +17,7 @@ from zope.security.proxy import removeSecurityProxy
 from opennode.oms.endpoint.ssh.editor import Editor
 from opennode.oms.endpoint.ssh.editable import IEditable
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
+from opennode.oms.endpoint.ssh.cmd.security import effective_principals
 from opennode.oms.endpoint.ssh.cmd.security import pretty_effective_perms, require_admins_only
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
@@ -473,8 +474,13 @@ class SetAttrCmd(Cmd):
                 for key, value in raw_data.items():
                     self.write("Setting %s=%s\n" % (key, value))
 
-            if getattr(args, 'admin', False):
+            principals = map(lambda p: p.id, effective_principals(self.user))
+
+            if 'admins' in principals:
                 setattr(obj, '_admin_access', True)
+            elif getattr(obj, '_admin_access', False):
+                log.msg('WARNING: admin access in SetAttrCmd when accessed by non-admin (%s: %s)!'
+                        % (self.user, principals), system='set-cmd')
 
             try:
                 form = RawDataApplier(raw_data, obj)
@@ -488,16 +494,6 @@ class SetAttrCmd(Cmd):
                     delattr(obj, '_admin_access')
 
         yield apply()
-
-
-class AdminSetAttrCmd(SetAttrCmd):
-
-    command('suset')
-
-    @require_admins_only
-    def execute(self, args):
-        args.admin = True
-        return super(AdminSetAttrCmd, self).execute(args)
 
 
 provideSubscriptionAdapter(CommonArgs, adapts=(SetAttrCmd, ))
