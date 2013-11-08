@@ -21,7 +21,7 @@ def create_http_server():
     rest_server = HttpRestServer(avatar=None)
     site = server.Site(resource=rest_server)
     tcp_server = internet.TCPServer(get_config().getint('rest', 'port'), site,
-                                    interface=get_config().getstring('ssh', 'interface', ''))
+                                    interface=get_config().getstring('rest', 'interface', ''))
 
     return tcp_server
 
