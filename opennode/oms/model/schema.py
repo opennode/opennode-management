@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 _isdotted = re.compile(
-    r"([a-zA-Z][a-zA-Z0-9_-]*)"
+    r"([a-zA-Z0-9][a-zA-Z0-9_-]*)"
     r"([.][a-zA-Z][a-zA-Z0-9_-]*)*"
     # use the whole line
     r"$").match
