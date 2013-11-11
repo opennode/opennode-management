@@ -1,7 +1,9 @@
 import functools
 import inspect
 import logging
+import pickle
 import random
+import struct
 import subprocess
 import threading
 import time
@@ -386,6 +388,15 @@ def ref(obj):
 def deref(obj_id):
     assert isinstance(obj_id, str)
     return get_connection().get(obj_id)
+
+
+def load_object(oid, tid):
+    if tid:
+        oid_s = struct.pack('!q', int(oid, 0))
+        tid_s = struct.pack('!q', int(tid, 0))
+        return pickle.loads(get_db().storage.loadSerial(oid_s, tid_s))
+    else:
+        return deref(oid)
 
 
 def get(obj, name):

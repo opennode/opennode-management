@@ -118,7 +118,7 @@ class KeystoneChecker(object):
             token_info = self.validate_and_parse_keystone_token(token)
             log.info('Successful login with Keystone token, extracted data: %s' % token_info)
             log.debug('Token: %s' % token)
-        except Exception, e:
+        except Exception:
             log.debug('Exception while validating Keystone token', exc_info=True)
             log.warning(' Authentication failed with Keystone token')
             return defer.fail(UnauthorizedLogin('Invalid credentials'))

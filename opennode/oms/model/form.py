@@ -88,7 +88,8 @@ class RawDataValidator(object):
                     value = from_unicode.fromUnicode(raw_value)
                 except (ValueError, TypeError):
                     raise WrongType(name)
-            # TODO: make this more descriptive as to which validation failed, where was it defined etc.
+            # TODO: make this more descriptive as to which validation failed,
+            # where was it defined etc.
             except zope.schema.ValidationError as exc:
                 errors.append((name, exc))
             else:
@@ -116,9 +117,9 @@ class RawDataApplier(RawDataValidator):
         self.data = data
         self.obj = obj
 
-    def apply(self):
+    def apply(self, ignore_readonly=False):
         assert not self.errors, "There must be no validation errors"
-        self.tmp_obj.apply()
+        self.tmp_obj.apply(ignore_readonly=ignore_readonly)
         return self.obj
 
 
@@ -131,7 +132,10 @@ class RawDataValidatingFactory(RawDataValidator):
         self.data = data
         self.model = model
 
-    def create(self):
+    # ingore_readonly is needed to restore objects with readonly fields
+    # using importexport without issues. It really makes it ignore all
+    # AttributeErrors
+    def create(self, ignore_readonly=False):
         assert not self.errors, "There must be no validation errors"
         if inspect.ismethod(self.model.__init__):
             argnames = inspect.getargspec(self.model.__init__).args[1:]
@@ -151,7 +155,11 @@ class RawDataValidatingFactory(RawDataValidator):
         obj = self.model(**kwargs)
 
         for name, value in rest.items():
-            setattr(obj, name, value)
+            try:
+                setattr(obj, name, value)
+            except AttributeError:
+                if not ignore_readonly:
+                    raise
 
         return obj
 
@@ -186,7 +194,10 @@ class TmpObj(object):
         if getattr(self, name, object()) != value:
             self.__dict__['modified_attrs'][name] = value
 
-    def apply(self):
+    # ingore_readonly is needed to restore objects with readonly fields
+    # using importexport without issues. It really makes it ignore all
+    # AttributeErrors
+    def apply(self, ignore_readonly=False):
         original_attrs = {}
         for name, value in self.__dict__['modified_attrs'].items():
             original_attrs[name] = getattr(self.__dict__['obj'], name, None)
@@ -194,7 +205,8 @@ class TmpObj(object):
                 setattr(self.__dict__['obj'], name, value)
             except AttributeError, e:
                 log.error('%s: %s=%s', e, name, value)
-                raise
+                if not ignore_readonly:
+                    raise
 
         # properties could alter the effective value of what we set
         # so we need to read back the actual values from the object

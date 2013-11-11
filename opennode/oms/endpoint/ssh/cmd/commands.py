@@ -18,7 +18,7 @@ from opennode.oms.endpoint.ssh.editor import Editor
 from opennode.oms.endpoint.ssh.editable import IEditable
 from opennode.oms.endpoint.ssh.cmd.base import Cmd
 from opennode.oms.endpoint.ssh.cmd.security import effective_principals
-from opennode.oms.endpoint.ssh.cmd.security import pretty_effective_perms, require_admins_only
+from opennode.oms.endpoint.ssh.cmd.security import pretty_effective_perms
 from opennode.oms.endpoint.ssh.cmd.directives import command, alias
 from opennode.oms.endpoint.ssh.cmdline import (ICmdArgumentsSyntax, IContextualCmdArgumentsSyntax,
                                                GroupDictAction, VirtualConsoleArgumentParser)
@@ -292,7 +292,7 @@ class CatObjectCmd(Cmd):
     def subject(self, args):
         return tuple(self.traverse(path) for path in args.paths)
 
-    @db.transact
+    @db.ro_transact
     def execute(self, args):
         attrs = []
         for i in args.o or []:
