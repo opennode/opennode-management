@@ -20,7 +20,8 @@ def create_http_server():
 
     rest_server = HttpRestServer(avatar=None)
     site = server.Site(resource=rest_server)
-    tcp_server = internet.TCPServer(get_config().getint('rest', 'port'), site)
+    tcp_server = internet.TCPServer(get_config().getint('rest', 'port'), site,
+                                    interface=get_config().getstring('rest', 'interface', ''))
 
     return tcp_server
 
@@ -39,7 +40,8 @@ def create_ssh_server():
         the_portal.registerChecker(ch)
 
     conch_factory = ConchFactory(the_portal)
-    ssh_server = internet.TCPServer(get_config().getint('ssh', 'port'), conch_factory)
+    ssh_server = internet.TCPServer(get_config().getint('ssh', 'port'), conch_factory,
+                                    interface=get_config().getstring('ssh', 'interface', ''))
 
     return ssh_server
 
@@ -62,7 +64,6 @@ def create_application():
 
     return application
 
-from sys import platform as _platform
 if get_config().getboolean('debug', 'debug_epollreactor', False):
     monkey_patch_epollreactor()
 
