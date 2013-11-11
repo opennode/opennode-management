@@ -12,15 +12,16 @@ from opennode.oms.zodb import db
 
 
 class DBAdminCat(Cmd):
-    """Represents the fact that there is no command yet."""
+    """ Renders objects stored in ZODB by their OID (optionally also transaction ID),
+    in case when POSKeyErrors appear. Helps troubleshoot ZODB storage issues. """
     implements(ICmdArgumentsSyntax)
 
     command('dbcat')
 
     def arguments(self):
         parser = VirtualConsoleArgumentParser()
-        parser.add_argument('oids', nargs='+')
-        parser.add_argument('--tid', nargs='?')
+        parser.add_argument('oids', nargs='+', help="List of OIDs to retrieve from DB")
+        parser.add_argument('--tid', nargs='?', help="Transaction ID which the objects to retrieve for")
         return parser
 
     @require_admins_only

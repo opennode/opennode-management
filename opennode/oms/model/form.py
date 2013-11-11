@@ -88,7 +88,8 @@ class RawDataValidator(object):
                     value = from_unicode.fromUnicode(raw_value)
                 except (ValueError, TypeError):
                     raise WrongType(name)
-            # TODO: make this more descriptive as to which validation failed, where was it defined etc.
+            # TODO: make this more descriptive as to which validation failed,
+            # where was it defined etc.
             except zope.schema.ValidationError as exc:
                 errors.append((name, exc))
             else:
@@ -131,6 +132,9 @@ class RawDataValidatingFactory(RawDataValidator):
         self.data = data
         self.model = model
 
+    # ingore_readonly is needed to restore objects with readonly fields
+    # using importexport without issues. It really makes it ignore all
+    # AttributeErrors
     def create(self, ignore_readonly=False):
         assert not self.errors, "There must be no validation errors"
         if inspect.ismethod(self.model.__init__):
@@ -190,6 +194,9 @@ class TmpObj(object):
         if getattr(self, name, object()) != value:
             self.__dict__['modified_attrs'][name] = value
 
+    # ingore_readonly is needed to restore objects with readonly fields
+    # using importexport without issues. It really makes it ignore all
+    # AttributeErrors
     def apply(self, ignore_readonly=False):
         original_attrs = {}
         for name, value in self.__dict__['modified_attrs'].items():
