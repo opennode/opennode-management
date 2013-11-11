@@ -64,7 +64,14 @@ class HttpRestAuthenticationUtility(GlobalUtility):
             return param
 
     def emit_token(self, request, token):
+        # Overwrite cookies and headers to avoid duplication, see OMS-101.
+        # Note, the implementation is somewhat hackish.
+        request.cookies = [cookie for cookie in request.cookies if not cookie.startswith('oms_auth_token')]
         request.addCookie('oms_auth_token', token, path='/')
+
+        if request.responseHeaders.hasHeader('X-OMS-Security-Token'):
+            request.responseHeaders.removeHeader('X-OMS-Security-Token')
+
         request.responseHeaders.addRawHeader('X-OMS-Security-Token', token)
 
     def get_basic_auth_credentials(self, request):
@@ -96,10 +103,12 @@ class HttpRestAuthenticationUtility(GlobalUtility):
                     log.warning('Authentication failed with %s on %s!' % (i, credentials.username))
 
         if avatar:
+            # XXX: Can replace with renew_token or vice versa
             token = self.generate_token(credentials)
             self.emit_token(request, token)
             defer.returnValue({'status': 'success', 'token': token})
         else:
+            # XXX: Not composable
             if basic_auth:
                 raise Unauthorized({'status': 'failed'})
             else:
