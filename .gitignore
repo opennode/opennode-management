@@ -2,6 +2,10 @@
 .project
 .pydevproject
 
+# Idea/PyCharm
+*.iml
+.idea
+
 # Max OS
 .DS_Store
 
