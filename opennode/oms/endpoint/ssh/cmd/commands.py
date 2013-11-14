@@ -286,6 +286,8 @@ class CatObjectCmd(Cmd):
         parser.add_argument('paths', nargs='+')
         parser.add_argument('-o', action='append')
         parser.add_argument('-H', action='store_true')
+        parser.add_argument('-l', action='store_true', default=False,
+                            help='Show each item of a collection property on its own line')
         return parser
 
     @db.ro_transact(proxy=False)
@@ -304,9 +306,9 @@ class CatObjectCmd(Cmd):
             if not obj:
                 self.write("No such object: %s\n" % path)
             else:
-                self._do_cat(obj, attrs, path if args.H else None)
+                self._do_cat(obj, attrs, args.l, path if args.H else None)
 
-    def _do_cat(self, obj, attrs, filename=None):
+    def _do_cat(self, obj, attrs, multiline, filename=None):
         name = '%s: ' % filename if filename else ''
 
         data = [(key, value, name + title)
@@ -317,22 +319,30 @@ class CatObjectCmd(Cmd):
         log.msg('data: %s' % data, system='cat-cmd')
 
         if data:
-            max_title_len = max(len(title) for key, _, title in data)
+            max_title_len = max(len(title) for key, _, title in data) + 1
             for key, value, title in data:
                 if isinstance(value, dict):
+                    if multiline:
+                        separator = '\n ' + ' ' * max_title_len
+                    else:
+                        separator = ', '
                     # security proxies don't mimic tuple() perfectly
                     # thus cannot be passed to "%" directly
-                    pretty_value = ', '.join(['%s:%s' % tuple(i) for i in value.items()])
+                    pretty_value = separator.join(['%s: %s' % tuple(i) for i in value.items()])
                 elif hasattr(value, '__iter__'):
                     strings = [str(i) for i in value]
                     if not isinstance(value, tuple):
                         strings = sorted(strings)
-                    pretty_value = ', '.join(strings)
+                    if multiline:
+                        separator = '\n ' + ' ' * max_title_len
+                    else:
+                        separator = ', '
+                    pretty_value = separator.join(strings)
                 elif key in ('mtime', 'ctime'):
                     pretty_value = datetime.datetime.fromtimestamp(value).isoformat()
                 else:
                     pretty_value = value
-                self.write("%s\t%s\n" % ((title.encode('utf8') + ':').ljust(max_title_len),
+                self.write("%s %s\n" % ((title.encode('utf8') + ':').ljust(max_title_len),
                                          str(pretty_value).encode('utf8')))
 
         if not attrs and IIncomplete.providedBy(obj):

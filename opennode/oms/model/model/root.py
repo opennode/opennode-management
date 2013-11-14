@@ -49,6 +49,7 @@ class RootContainerExtension(Subscription):
     context(OmsRoot)
 
     def extend(self):
+        # XXX: This is not really DRY: which one should be shown 'bin', or Bin.__name__?
         return {'bin': Bin(),
                 'proc': Proc(),
                 'plugins': Plugins(),
