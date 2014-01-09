@@ -1,6 +1,5 @@
 import functools
 import json
-import logging
 import zope.security.interfaces
 
 from twisted.internet import defer
@@ -163,7 +162,7 @@ class HttpRestServer(resource.Resource):
             request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS, HEAD')
         request.setHeader('Access-Control-Allow-Headers',
-                          'Origin, Content-Type, Cache-Control, X-Requested-With')
+                          'Origin, Content-Type, Cache-Control, X-Requested-With, Authorization')
 
         ret = None
         try:
