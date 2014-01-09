@@ -30,6 +30,9 @@ class EtcConfigSection(Model):
 
 
 class EtcConfig(ReadonlyContainer):
+    """
+    Runtime configuration.
+    """
     implements(IEtcConfig)
 
     __contains__ = IEtcConfigSection
