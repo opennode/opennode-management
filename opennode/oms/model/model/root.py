@@ -6,7 +6,6 @@ from grokcore.component import Subscription, context, implements
 from .base import ReadonlyContainer, IContainerInjector, IContainerExtender
 
 from .bin import Bin
-from .log import Log
 from .proc import Proc
 from .search import SearchContainer
 from .stream import StreamSubscriber
@@ -39,7 +38,7 @@ class RootContainerInjector(Subscription):
     context(OmsRoot)
 
     def inject(self):
-        return {'log': Log(),
+        return {
                 'search': SearchContainer(),
                 }
 
