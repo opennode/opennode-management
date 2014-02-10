@@ -40,6 +40,9 @@ class HttpStatus(Exception):
 
     headers = {}
 
+    def __str__(self):
+        return '%s: %s' % (self.status_description, self.body)
+
 
 class NotFound(HttpStatus):
     status_code = 404
