@@ -112,18 +112,21 @@ def update_passwd(user, password=None, force_askpass=False, group=None, force=Fa
             line = line.rstrip('\n')
 
             if line.startswith(user + ':'):
-                pw = hash_pw(ask_password() if password is None
-                             and (force_askpass or not group) else password)
+                try:
+                    newpw = hash_pw(ask_password() if password is None
+                                 and (force_askpass or not group) else password)
+                except UserManagementError:
+                    newpw = password
 
-                _user, old_pw, groups, uid = parse_line(line)
+                _user, oldpw, groups, uid = parse_line(line)
 
                 if group:
                     groups = group
 
-                if pw is None:
-                    pw = old_pw
+                if newpw is None:
+                    newpw = oldpw
 
-                f.write('%s:%s:%s:%s\n' % (_user, pw, groups, uid))
+                f.write('%s:%s:%s:%s\n' % (_user, newpw, groups, uid))
             else:
                 _user, old_pw, groups, uid = parse_line(line)
                 f.write('%s:%s:%s:%s\n' % (_user, old_pw, groups, uid))
