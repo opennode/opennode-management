@@ -54,8 +54,8 @@ def ensure_base_dir():
 def add_user(user, password, group=None, uid=None, force=False):
     restricted_users = get_config().getstring('auth', 'restricted_users', '').split(',')
 
-    if user in map(string.strip, restricted_users) and not force:
-        raise UserManagementError('User %s is restricted! Adding permission denied!' % user)
+    if user in [ruser.strip() for ruser in restricted_users] and not force:
+        raise UserManagementError('User "%s" is restricted! Adding permission denied!' % user)
 
     passwd_file = get_config().getstring('auth', 'passwd_file')
     with open(passwd_file) as f:
