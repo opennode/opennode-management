@@ -40,31 +40,24 @@ class StaticJsonResource(JsonResource):
         return self._data
 
 
-class SwaggerResource(JsonResource):
-    def __init__(self, base_path="http://localhost:8080"):
-        Resource.__init__(self)
+# TODO: Handle Containers containing Containers, e.g. Computes/OpenVZContainer/IVirtualCompute
+# TODO: Handle AddingContainer
+# TODO: Handle ByNameContainer
+# TODO: Make use of txswagger model
+class BasicContainerDescriptor(object):
+    def __init__(self, container, base_path):
+        self.container = container
         self.base_path = base_path
 
-    def getChild(self, path, request):
-        containers = dict(self.get_containers())
+    def get_apis(self):
+        item_name = self.get_container_item_name()
 
-        try:
-            container = containers[path]
-        except KeyError:
-            return NoResource()
-
-        item_name = self.get_container_item_name(container)
-
-        # TODO: Handle Containers containing Containers, e.g. Computes/OpenVZContainer/IVirtualCompute
-        # TODO: Make use of txswagger model
-        # TODO: Extract get_* into txswagger SpecProvider
-        # TODO: Handle AddingContainer
-        # TODO: Handle ByNameContainer
+        # For each api in container
+        #  For each operation in container
         # TODO: Describe error responses
-        # TODO: Handle OMS model to swagger model conversion
         apis = [
             {
-                "path": "/%s" % path,
+                "path": "/%s" % self.base_path,
                 # "description": "Configuration section list",
                 "operations": [
                     {
@@ -87,7 +80,7 @@ class SwaggerResource(JsonResource):
                 ]
             },
             {
-                "path": "/%s/{name}" % path,
+                "path": "/%s/{name}" % self.base_path,
                 # "description": "Configuration section retrieval",
                 "operations": [
                     {
@@ -109,6 +102,42 @@ class SwaggerResource(JsonResource):
                 ]
             }
         ]
+        return apis
+
+    def get_models(self):
+        # TODO: Handle OMS model to swagger model conversion
+        return {}
+
+    def get_container_item_name(self):
+        try:
+            itemName = self.container.__contains__.__name__
+        except AttributeError:
+            # XXX: Hack for Plugins, its __contains__ attribute is missing
+            itemName = 'UndocumentedItem'
+
+        # XXX: Hack for some containers containing interfaces, others classes
+        import re
+        if re.match('^I[A-Z]', itemName):
+            itemName = itemName[1:]
+
+        return itemName
+
+
+class SwaggerResource(JsonResource):
+    def __init__(self, base_path="http://localhost:8080"):
+        Resource.__init__(self)
+        self.base_path = base_path
+
+    def getChild(self, path, request):
+        containers = dict(self.get_containers())
+
+        try:
+            container = containers[path]
+        except KeyError:
+            return NoResource()
+
+        # TODO: Infer descriptor class from container
+        descriptor = BasicContainerDescriptor(container, path)
 
         return StaticJsonResource({
             "apiVersion": "0.1",
@@ -116,8 +145,8 @@ class SwaggerResource(JsonResource):
             "basePath": self.base_path,
             "resourcePath": "/%s" % path,
             "produces": ["application/json"],
-            "models": {},  # TODO: Infer models
-            "apis": apis
+            "models": descriptor.get_models(),
+            "apis": descriptor.get_apis()
         })
 
     def get_data(self):
@@ -137,20 +166,6 @@ class SwaggerResource(JsonResource):
             return container.__doc__.strip().splitlines()[0].strip().strip('.')
         except (AttributeError, IndexError):
             return 'Not documented'
-
-    def get_container_item_name(self, container):
-        try:
-            itemName = container.__contains__.__name__
-        except AttributeError:
-            # XXX: Hack for Plugins, its __contains__ attribute is missing
-            itemName = 'UndocumentedItem'
-
-        # XXX: Hack for some containers containing interfaces, others classes
-        import re
-        if re.match('^I[A-Z]', itemName):
-            itemName = itemName[1:]
-
-        return itemName
 
     def get_containers(self):
         from itertools import chain
