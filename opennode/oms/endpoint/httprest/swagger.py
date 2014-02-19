@@ -148,19 +148,18 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                 ]
             },
             {
-                "path": "/%s/{object}" % self.base_path,
+                "path": "/%s/{entity}" % self.base_path,
                 "operations": [
                     {
                         "method": "GET",
-                        "summary": "GET CDMI object (CDMI way)",
-                        "nickname": "getContainer",
+                        "summary": "GET CDMI container or object",
+                        "nickname": "getEntity",
                         "type": "void",
-                        "consumes": ["application/cdmi-object"],
-                        "produces": ["application/cdmi-object"],
+                        "produces": ["application/cdmi-container", "application/cdmi-object"],
                         "parameters": [
                             {
                                 "paramType": "path",
-                                "name": "object",
+                                "name": "entity",
                                 "dataType": "string",
                                 "defaultValue": "",
                                 "required": True
@@ -170,9 +169,9 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                                 "name": "x-cdmi-specification-version",
                                 "dataType": "string",
                                 "defaultValue": "1.0.2",
-                                "required": True
+                                "required": False
                             },
-                            ],
+                        ],
                         "errorResponses": []
                     },
                 ]
@@ -185,6 +184,8 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                         "summary": "Create CDMI container",
                         "nickname": "createContainer",
                         "type": "void",
+                        "consumes": ["application/cdmi-container"],
+                        "produces": ["application/cdmi-container"],
                         "parameters": [
                             {
                                 "paramType": "path",
@@ -217,7 +218,7 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                 "operations": [
                     {
                         "method": "PUT",
-                        "summary": "Create CDMI object (CDMI way)",
+                        "summary": "Create CDMI object",
                         "nickname": "createObject",
                         "type": "void",
                         "produces": ["application/cdmi-object"],
@@ -234,7 +235,7 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                                 "paramType": "body",
                                 "name": "body",
                                 "dataType": "CdmiEntity",
-                                "defaultValue": """{\n "value": "",\n "valuetransferencoding": "utf-8"\n}""",
+                                "defaultValue": "",
                                 "required": True
                             },
                             {
@@ -270,7 +271,7 @@ class StoxyContainerDescriptor(BasicContainerDescriptor):
                                 "name": "x-cdmi-specification-version",
                                 "dataType": "string",
                                 "defaultValue": "1.0.2",
-                                "required": True
+                                "required": False
                             },
                         ],
                         "errorResponses": []
