@@ -121,6 +121,204 @@ class BasicContainerDescriptor(object):
         return itemName
 
 
+# TODO: Move to stoxy code base
+class StoxyContainerDescriptor(BasicContainerDescriptor):
+    def get_apis(self):
+        # TODO: Describe error responses
+        apis = [
+            {
+                "path": "/%s" % self.base_path,
+                "operations": [
+                    {
+                        "method": "GET",
+                        "summary": "List CDMI container contents",
+                        "nickname": "getContents",
+                        "type": "void",
+                        "parameters": [
+                            {
+                                "paramType": "header",
+                                "name": "x-cdmi-specification-version",
+                                "dataType": "string",
+                                "defaultValue": "1.0.2",
+                                "required": False
+                            },
+                        ],
+                        "errorResponses": []
+                    },
+                ]
+            },
+            {
+                "path": "/%s/{object}" % self.base_path,
+                "operations": [
+                    {
+                        "method": "GET",
+                        "summary": "GET CDMI object (CDMI way)",
+                        "nickname": "getContainer",
+                        "type": "void",
+                        "consumes": ["application/cdmi-object"],
+                        "produces": ["application/cdmi-object"],
+                        "parameters": [
+                            {
+                                "paramType": "path",
+                                "name": "object",
+                                "dataType": "string",
+                                "defaultValue": "",
+                                "required": True
+                            },
+                            {
+                                "paramType": "header",
+                                "name": "x-cdmi-specification-version",
+                                "dataType": "string",
+                                "defaultValue": "1.0.2",
+                                "required": True
+                            },
+                            ],
+                        "errorResponses": []
+                    },
+                ]
+            },
+            {
+                "path": "/%s/{container}" % self.base_path,
+                "operations": [
+                    {
+                        "method": "PUT",
+                        "summary": "Create CDMI container",
+                        "nickname": "createContainer",
+                        "type": "void",
+                        "parameters": [
+                            {
+                                "paramType": "path",
+                                "name": "container",
+                                "dataType": "string",
+                                "defaultValue": "",
+                                "required": True
+                            },
+                            {
+                                "paramType": "body",
+                                "name": "body",
+                                "dataType": "CdmiEntity",
+                                "defaultValue": "",
+                                "required": True
+                            },
+                            {
+                                "paramType": "header",
+                                "name": "x-cdmi-specification-version",
+                                "dataType": "string",
+                                "defaultValue": "1.0.2",
+                                "required": True
+                            },
+                        ],
+                        "errorResponses": []
+                    },
+                ]
+            },
+            {
+                "path": "/%s/{object}" % self.base_path,
+                "operations": [
+                    {
+                        "method": "PUT",
+                        "summary": "Create CDMI object (CDMI way)",
+                        "nickname": "createObject",
+                        "type": "void",
+                        "produces": ["application/cdmi-object"],
+                        "consumes": ["application/cdmi-object"],
+                        "parameters": [
+                            {
+                                "paramType": "path",
+                                "name": "object",
+                                "dataType": "string",
+                                "defaultValue": "",
+                                "required": True
+                            },
+                            {
+                                "paramType": "body",
+                                "name": "body",
+                                "dataType": "CdmiEntity",
+                                "defaultValue": """{\n "value": "",\n "valuetransferencoding": "utf-8"\n}""",
+                                "required": True
+                            },
+                            {
+                                "paramType": "header",
+                                "name": "x-cdmi-specification-version",
+                                "dataType": "string",
+                                "defaultValue": "1.0.2",
+                                "required": True
+                            },
+                        ],
+                        "errorResponses": []
+                    },
+                ]
+            },
+            {
+                "path": "/%s/{entity}" % self.base_path,
+                "operations": [
+                    {
+                        "method": "DELETE",
+                        "summary": "Delete CDMI container or object",
+                        "nickname": "deleteEntity",
+                        "type": "void",
+                        "parameters": [
+                            {
+                                "paramType": "path",
+                                "name": "entity",
+                                "dataType": "string",
+                                "defaultValue": "",
+                                "required": True
+                            },
+                            {
+                                "paramType": "header",
+                                "name": "x-cdmi-specification-version",
+                                "dataType": "string",
+                                "defaultValue": "1.0.2",
+                                "required": True
+                            },
+                        ],
+                        "errorResponses": []
+                    },
+                ]
+            },
+        ]
+        return apis
+
+    def get_models(self):
+        return {
+            "CdmiEntity": {
+                "id": "CdmiEntity",
+                "required": [
+                    "value",
+                    "valuetransferencoding"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    },
+                    "valuetransferencoding": {
+                        "type": "string",
+                        "description": "Transfer Encoding",
+                        "enum": [
+                            "utf-8",
+                            "base64",
+                        ]
+                    },
+                }
+            }
+        }
+
+    def get_container_item_name(self):
+        try:
+            itemName = self.container.__contains__.__name__
+        except AttributeError:
+            # XXX: Hack for Plugins, its __contains__ attribute is missing
+            itemName = 'UndocumentedItem'
+
+        # XXX: Hack for some containers containing interfaces, others classes
+        import re
+        if re.match('^I[A-Z]', itemName):
+            itemName = itemName[1:]
+
+        return itemName
+
+
 class SwaggerResource(JsonResource):
     def __init__(self, base_path="http://localhost:8080"):
         Resource.__init__(self)
@@ -135,7 +333,10 @@ class SwaggerResource(JsonResource):
             return NoResource()
 
         # TODO: Infer descriptor class from container
-        descriptor = BasicContainerDescriptor(container, path)
+        if path == 'storage':
+            descriptor = StoxyContainerDescriptor(container, path)
+        else:
+            descriptor = BasicContainerDescriptor(container, path)
 
         return StaticJsonResource({
             "apiVersion": "0.1",
