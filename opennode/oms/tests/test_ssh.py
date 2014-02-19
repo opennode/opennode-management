@@ -27,7 +27,7 @@ from opennode.oms.zodb import db
 
 class SshTestCase(unittest.TestCase):
 
-    tlds = ['bin', 'computes', 'log', 'machines', 'proc', 'search', 'stream']
+    tlds = ['bin', 'computes', 'machines', 'proc', 'search', 'stream']
 
     @run_in_reactor
     @clean_db
