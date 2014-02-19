@@ -58,13 +58,12 @@ class BasicContainerDescriptor(object):
         apis = [
             {
                 "path": "/%s" % self.base_path,
-                # "description": "Configuration section list",
                 "operations": [
                     {
                         "method": "GET",
                         "summary": "List %ss" % item_name,
                         "notes": "",
-                        # "responseClass": "EtcConfig",
+                        "type": "void",
                         "nickname": "get%ss" % item_name,
                         "parameters": [
                             {
@@ -81,12 +80,11 @@ class BasicContainerDescriptor(object):
             },
             {
                 "path": "/%s/{name}" % self.base_path,
-                # "description": "Configuration section retrieval",
                 "operations": [
                     {
                         "method": "GET",
                         "nickname": "get%sByName" % item_name,
-                        # "responseClass": "EtcConfigSection",
+                        "type": "void",  # TODO: Use corresponding model as type
                         "parameters": [
                             {
                                 "paramType": "path",
