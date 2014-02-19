@@ -181,6 +181,10 @@ class HttpRestServer(resource.Resource):
             request.setResponseCode(exc.status_code, exc.status_description)
             for name, value in exc.headers.items():
                 request.responseHeaders.addRawHeader(name, value)
+            # emit a header with location of the trusted keystone instance
+            if get_config().getboolean('auth', 'use_keystone', False):
+                keystone_uri = get_config().getstring('keystone', 'keystone_uri')
+                request.setHeader('WWW-Authenticate', 'Keystone uri=%s' % keystone_uri)
             if exc.body:
                 request.write(json.dumps(exc.body))
             else:
