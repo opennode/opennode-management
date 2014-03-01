@@ -19,6 +19,14 @@ def create_http_server():
     from opennode.oms.endpoint.httprest.root import HttpRestServer
 
     rest_server = HttpRestServer(avatar=None)
+
+    # TODO: Get doc endpoint from config
+    api_docs_endpoint = 'api-docs'
+    if api_docs_endpoint is not None:
+        from opennode.oms.endpoint.httprest.swagger import SwaggerResource
+        api_doc = SwaggerResource()
+        rest_server.putChild(api_docs_endpoint, api_doc)
+
     site = server.Site(resource=rest_server)
     tcp_server = internet.TCPServer(get_config().getint('rest', 'port'), site,
                                     interface=get_config().getstring('rest', 'interface', ''))

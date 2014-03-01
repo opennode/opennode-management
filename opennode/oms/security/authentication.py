@@ -82,6 +82,25 @@ class KeystoneChecker(object):
     credentialInterfaces = IUsernamePassword
     implements(ICredentialsChecker)
 
+    # Taken from OpenStack Keystone
+    def token_to_cms(self, signed_text):
+        copy_of_text = signed_text.replace('-', '/')
+
+        formatted = "-----BEGIN CMS-----\n"
+        line_length = 64
+        while len(copy_of_text) > 0:
+            if (len(copy_of_text) > line_length):
+                formatted += copy_of_text[:line_length]
+                copy_of_text = copy_of_text[line_length:]
+            else:
+                formatted += copy_of_text
+                copy_of_text = ""
+            formatted += "\n"
+
+        formatted += "-----END CMS-----\n"
+    
+        return formatted
+
     def validate_and_parse_keystone_token(self, cms_token):
         """Validate Keystone CMS token.
 
@@ -99,15 +118,16 @@ class KeystoneChecker(object):
                                              stdin=subprocess.PIPE,
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.PIPE)
-        output, err = process.communicate(cms_token)
+        output, err = process.communicate(self.token_to_cms(cms_token))
         retcode = process.poll()
         if retcode:
-            raise
+            log.info('Token validation has failed, return code: %s' % retcode)
+            raise UnauthorizedLogin()
         token_info = json.loads(output)
         #print json.dumps(token_info, sort_keys=True,
         #          indent=4, separators=(',', ': '))
         res = {'username': str(token_info['access']['user']['username']),
-               'groups': [str(role['name']) for role in token_info['access']['user']['roles']]}
+               'groups': [str(token_info['access']['token']['tenant']['name'])]}
         return res
 
 
@@ -120,7 +140,7 @@ class KeystoneChecker(object):
             log.debug('Token: %s' % token)
         except Exception:
             log.debug('Exception while validating Keystone token', exc_info=True)
-            log.warning(' Authentication failed with Keystone token')
+            log.warning('Authentication failed with Keystone token')
             return defer.fail(UnauthorizedLogin('Invalid credentials'))
 
         # extract avatar info from the token
